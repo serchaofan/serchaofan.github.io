@@ -165,6 +165,141 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-iSCSI学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/29/iSCSI学习笔记-1/">iSCSI学习笔记-1</a>
+    </h1>
+  
+
+        
+        <a href="/2018/01/29/iSCSI学习笔记-1/" class="archive-article-date">
+  	<time datetime="2018-01-29T00:32:43.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-01-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="iSCSI学习笔记-1"><a href="#iSCSI学习笔记-1" class="headerlink" title="iSCSI学习笔记-1"></a>iSCSI学习笔记-1</h2><p><strong>第一篇iSCSI笔记主要是基础配置，包含以下内容</strong></p>
+<ul>
+<li>iSCSI介绍</li>
+<li>iSCSI基础搭建</li>
+</ul>
+<h5 id="常见存储方式"><a href="#常见存储方式" class="headerlink" title="常见存储方式"></a>常见存储方式</h5><ul>
+<li>DAS 直接附加存储：外接存储设备直接连在服务器内部总线上，数据存储设备是整个服务器结构的一部分。</li>
+<li>NAS 网络接入存储：存储设备独立于服务器，作为文件服务器独立存在与网络中。存储设备通过标准的网络拓扑（如以太网）添加到一群计算机。</li>
+<li>SAN 存储区域网络：创造了存储的网络化。包含两种部署方式<ol>
+<li>FCSAN：使用光纤通道</li>
+<li>IPSAN：使用IP通道（如以太网线与iSCSI技术）</li>
+</ol>
+</li>
+</ul>
+<h5 id="SCSI与iSCSI"><a href="#SCSI与iSCSI" class="headerlink" title="SCSI与iSCSI"></a>SCSI与iSCSI</h5><ul>
+<li>SCSI 小型计算机系统接口：一种通用接口标准，多用于服务器系统级接口。SCSI 结构基于C/S模式，其通常应用环境是：设备互相靠近，并且这些设备由 SCSI 总线连接。</li>
+<li>iSCSI Internet小型计算机系统接口：一种基于TCP/IP的协议，用于建立管理IP存储设备、主机与客户机之间的连接，并创建SAN。SAN 使得 SCSI 协议应用于高速数据传输网络成为可能，这种传输以数据块级别（block-level）在多个数据存储网络间进行。</li>
+</ul>
+<p>iSCSI 的主要功能是在 TCP/IP 网络上的主机系统（启动器 initiator）和存储设备（目标器 target）之间进行大量数据的封装和可靠传输。此外，iSCSI 提供了在 IP 网络封装 SCSI 命令，且运行在 TCP 上。</p>
+<ul>
+<li>服务器：target   </li>
+<li>客户端：initiator</li>
+</ul>
+<h4 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h4><p>环境<br></p>
+<ul>
+<li>CentOS7，内核3.10</li>
+<li>两台虚拟机，system1与system2，system1为服务器，system2为客户端</li>
+<li>虚拟机网段192.168.163.0/24</li>
+<li>system1 IP：192.168.163.100/24</li>
+<li>system2 IP：192.168.163.102/24</li>
+</ul>
+<p>首先搭建服务器<br></p>
+<ol>
+<li>安装target与targetcli并开机启动<br><br>服务器端要安装的服务为targetd，还需安装targetcli程序进行配置<br><br><code>yum install targetd targetcli</code> <br><br><code>systemctl enable targetd target</code><br><br><code>systemctl start targetd target</code></li>
+<li>确保系统有空闲可用的裸磁盘<br><br>本处选择/dev/sdc1，大小5G<br></li>
+<li>进入<code>targetcli</code>程序配置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">目录结构</span><br><span class="line">o- /                </span><br><span class="line">  o- backstores     </span><br><span class="line">  | o- block        </span><br><span class="line">  | o- fileio       </span><br><span class="line">  | o- pscsi        </span><br><span class="line">  | o- ramdisk      </span><br><span class="line">  o- iscsi          </span><br><span class="line">  o- loopback</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>进入block，创建设备disk1<br><br><code>create dev=/dev/sdc1 name=disk1</code><br><br>另一种写法<br><br><code>create disk1 /dev/sdc1</code><br><br>然后进入iscsi目录，设置服务器端识别号<br></p>
+<blockquote>
+<p>识别号规范：iqn.年-月.域名反置:服务器主机名<br></p>
+</blockquote>
+<p><code>create wwn=iqn.2018-01.com.example:system1</code><br><br>该标识符可以自己设定如上配置，也可让系统自动生成直接在iscsi目录中<code>create</code><br><br>设置后iscsi目录结构如下<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">o- iscsi </span><br><span class="line">  o- iqn.2018-01.com.example:system1 </span><br><span class="line">    o- tpg1 </span><br><span class="line">      o- acls </span><br><span class="line">      o- luns </span><br><span class="line">      o- portals </span><br><span class="line">        o- 0.0.0.0:3260</span><br></pre></td></tr></table></figure></p>
+<p>进入acls/ 添加客户端身份标识<br><br><code>create wwn=iqn.2018-01.com.example:system2</code><br><br>进入luns/ 给该组设置可用的存储设备<br><br><code>create /backstores/block/disk1</code><br><br>disk1就是block中创建的设备名<br><br>此时iscsi目录结构<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">o- iscsi </span><br><span class="line">  o- iqn.2018-01.com.example:system1 </span><br><span class="line">    o- tpg1 </span><br><span class="line">      o- acls </span><br><span class="line">      | o- iqn.2018-01.com.example:system2 </span><br><span class="line">      |   o- mapped_lun0 </span><br><span class="line">      o- luns </span><br><span class="line">      | o- lun0 </span><br><span class="line">      o- portals </span><br><span class="line">        o- 0.0.0.0:3260</span><br></pre></td></tr></table></figure></p>
+<p>进入portals/ 修改服务端端口号<br><br>有可能里面没有默认配置，直接创建。若有默认配置就先删除再创建<br><code>delete 0.0.0.0 ip_port=3260</code><br><br><code>create 192.168.163.100 3260</code><br><br>此处ip地址为服务器端IP，端口号为3260<br><br>全部配置完exit退出配置程序</p>
+<ol>
+<li>防火墙放行对应端口号，重启服务<br><br>端口号3260，且tcp端口放行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port=3260/tcp</span><br><span class="line">firewall-cmd --reload</span><br><span class="line">systemctl restart targetd target</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>然后是客户端搭建<br></p>
+<ol>
+<li>安装客户端软件<br><br><code>yum install iscsi-initiator-utils</code><br></li>
+<li>设置客户端识别号<br><br>该文件需要自己输入配置，输入客户端的识别码<br><br><code>vim /etc/iscsi/initiatorname.iscsi</code><br><br><code>initiatorname=iqn.2018-01.com.example:system2</code><br></li>
+<li>启动服务<br><br><code>systemctl enable iscsi iscsid</code><br><br><code>systemctl start iscsi iscsid</code><br></li>
+<li>获取硬盘<br><br><code>iscsiadm -m discovery -t st -p 192.168.163.100 -l</code><br><blockquote>
+<p>iscsiadm 用于管理iSCSI数据库配置文件的命令行工具<br><br>-m discovery 表示发现查找<br><br>-t senbtargets  表示发布的target，简写st <br><br>-p IP 指定服务器地址 <br><br>-l 表示login，可不加</p>
+</blockquote>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">连接成功信息:</span><br><span class="line">Logging in to [iface: default, target: iqn.2018-01.com.example:system1, portal: 192.168.163.100,3260] (multiple)</span><br><span class="line">Login to [iface: default, target: iqn.2018-01.com.example:system1, portal: 192.168.163.100,3260] successful.</span><br></pre></td></tr></table></figure>
+<p>通过命令<code>lsblk</code>查看是否拿到<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@system2 ~]# lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda               8:0    0   20G  0 disk </span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0   19G  0 part </span><br><span class="line">  ├─centos-root 253:0    0   17G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0    2G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0    5G  0 disk </span><br><span class="line">sr0              11:0    1 1024M  0 rom</span><br></pre></td></tr></table></figure></p>
+<p>发现出现了sdb，大小为5G，已成功获取<br></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">linuxserver</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/01/29/iSCSI学习笔记-1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-hello-world" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -318,7 +453,7 @@
 <p>然后配置解析数据信息文件/var/named/example.com.zone<br><br>配置文件有模板，可复制/var/named/named.localhost并改名<br><br>最好将文件名改为域名.zone<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">$TTL 1D</span><br><span class="line">@       IN SOA  example.com. root.example.com. (</span><br><span class="line">                                0   ;   serial    //更新序列号</span><br><span class="line">                                1D    ; refresh   //更新时间</span><br><span class="line">                                1H    ; retry     //重试延时</span><br><span class="line">                                1W    ; expire    //失效时间</span><br><span class="line">                                3H )  ; minimum   //无效解析记录的缓存时间</span><br><span class="line">        NS      ns.example.com.</span><br><span class="line">ns      IN A    192.168.163.102</span><br><span class="line">        IN MX 10        mail.example.com.</span><br><span class="line">mail    IN A    192.168.163.102</span><br><span class="line">www     IN A    192.168.163.102</span><br><span class="line"></span><br><span class="line">// TTL 指定资源记录存放在缓存中的时间，单位秒，一般直接调用$TTL的值</span><br><span class="line">// @为当前域，根据主配置文件的zone区域决定</span><br><span class="line">// IN是网络类型，表示自身</span><br><span class="line">// SOA记录：起始授权记录，在一个区域一定是唯一的，定义区域的全局参数</span><br><span class="line">// example.com. DNS区域地址（完整的，要加.根域）</span><br><span class="line">// root.example.com. 服务器邮箱地址（完整）</span><br><span class="line">//NS记录：名称服务器记录，在一个区域至少一条，记录区域的授权服务器，一般就指定为主机名ns</span><br><span class="line">//该记录下一行就指定该服务器的ip地址</span><br><span class="line">//ns 为主机名 A为地址记录，写域名对应IP</span><br><span class="line">//MX邮件交换记录：指定邮件服务器，用于根据收件人地址后缀定位邮件服务器</span><br><span class="line">//其他主机名也是一样</span><br></pre></td></tr></table></figure></p>
 <p>至此基础配置完成，重启服务</p>
 <ol>
-<li>使用命令<code>nslookup</code><br><br>输入域名测试<br><img src="nslookup.png" alt="nslookup"></li>
+<li>使用命令<code>nslookup</code><br><br>输入域名测试<br><img src="file://C:/hexo/blog/source/_postsns/lookup.png" alt="nslookup"></li>
 </ol>
 
       
