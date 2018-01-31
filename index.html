@@ -165,6 +165,103 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Chrony学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2018/01/31/Chrony学习笔记-1/">Chrony学习笔记-1</a>
+    </h1>
+  
+
+        
+        <a href="/2018/01/31/Chrony学习笔记-1/" class="archive-article-date">
+  	<time datetime="2018-01-31T14:42:55.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2018-01-31</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="Chrony学习笔记-1"><a href="#Chrony学习笔记-1" class="headerlink" title="Chrony学习笔记-1"></a>Chrony学习笔记-1</h2><p><strong>chrony笔记主要是基础配置，包含以下内容</strong></p>
+<ul>
+<li>chrony介绍</li>
+<li>chrony配置</li>
+</ul>
+<h5 id="NTP协议介绍"><a href="#NTP协议介绍" class="headerlink" title="NTP协议介绍"></a>NTP协议介绍</h5><p>NTP全称Network Time Protocol网络时间协议，用于同步计算机时间。保证局域网服务器与时间服务器的时间保持一致，并支持使用加密确认的方式防止恶意协议攻击。<br></p>
+<p>自CentOS7.2后，chronyd服务代替原来的ntpd服务，性能提高且配置简单。</p>
+<p>根据红帽文档，chronyd与ntpd的区别在于：</p>
+<ul>
+<li>chronyd使用更好的算法，同步精度、速度与对系统的影响都比ntpd更好。</li>
+<li>chronyd可以在更大的范围内调整系统时间速率，且能在时钟损坏或不稳定的计算机上正常工作。</li>
+<li>当网络故障时，chronyd仍能很好地工作，而ntpd必须定时轮询时间参考才能正常工作。</li>
+<li>chronyd可以快速适应时钟速率的突然变化，ntpd则需要一段时间才能稳定。</li>
+<li>chronyd提供对孤立网络的支持，手动输入校准时间，并通过算法计算实时时间，估计计算机增减时间的速率，从而调整时间。</li>
+</ul>
+<h4 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h4><p>环境</p>
+<ul>
+<li>CentOS7.4 </li>
+</ul>
+<p>步骤</p>
+<ol>
+<li>安装chrony服务（默认已安装）<br> <code>yum install chrony</code><br><br> 安装完后会有两个程序，一个chronyd服务，一个chronyc监控配置程序。</li>
+<li>启动服务，设置开机自启<br><br> <code>systemctl start chronyd</code><br><br> <code>systemctl enable chronyd</code><br></li>
+<li><p>chrony的配置文件/etc/chrony.conf</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">server ntp.sjtu.edu.cn iburst</span><br><span class="line">server s1a.time.edu.cn iburst</span><br><span class="line">server s1b.time.edu.cn iburst</span><br><span class="line">server s1d.time.edu.cn iburst</span><br><span class="line">//server 添加时间服务器，能添加很多</span><br><span class="line"></span><br><span class="line">driftfile /var/lib/chrony/drift</span><br><span class="line">//chronyd中的校准文件，根据实际时间计算出计算机增减时间的比率，能在重启后做出补偿</span><br><span class="line"></span><br><span class="line">makestep 1.0 3</span><br><span class="line">//当系统时钟漂移过快后，会通过很长的调整期纠正，该命令指定在调整期大于某阈值时才调整</span><br><span class="line">//此处是当偏移大于1秒，系统时钟调整3次。</span><br><span class="line"></span><br><span class="line">rtcsync</span><br><span class="line">//启用内核模式，系统时间每11分钟拷贝到实时时钟</span><br><span class="line"></span><br><span class="line">#allow 192.168.0.0/16</span><br><span class="line">//允许指定网段或主机使用服务</span><br><span class="line"></span><br><span class="line">#keyfile /etc/chrony.keys  </span><br><span class="line">//设置密钥文件，可做NTP加密</span><br><span class="line"></span><br><span class="line">logdir /var/log/chrony</span><br><span class="line">//设置日志文件</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>防火墙放行并重启服务<br><br><code>firewall-cmd --permanent --add-service=ntp</code><br><br><code>firewall-cmd --permanent --add-rich-rule=&#39;rule family=ipv4 port port=123 protocol=udp accept&#39;</code><br><br><code>firewall-cmd --reload</code><br><br><code>systemctl restart chronyd</code></p>
+</li>
+<li><p>查看同步源信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">chronyc sourcestats</span><br><span class="line">//查看同步源状态</span><br><span class="line">210 Number of sources = 4</span><br><span class="line">Name/IP Address            NP  NR  Span  Frequency  Freq Skew  Offset  Std Dev</span><br><span class="line">==============================================================================</span><br><span class="line">202.120.2.100.dns.sjtu.e&gt;   0   0     0     +0.000   2000.000     +0ns  4000ms</span><br><span class="line">10.112.202.in-addr.arpa.&gt;   0   0     0     +0.000   2000.000     +0ns  4000ms</span><br><span class="line">ntpa.nic.edu.cn             0   0     0     +0.000   2000.000     +0ns  4000ms</span><br><span class="line">time.njnet.edu.cn           4   3    10   +810.140  43784.844  +7121us    14ms</span><br><span class="line"></span><br><span class="line">chronyc sources //查看同步源，结果与上一条类似</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>自动同步时间<br><br><code>chronyc sources -v</code></p>
+</li>
+</ol>
+<p>若要局域网内同步时间，只要客户端都安装chrony，且配置文件的server设置为此服务器ip即可。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2018/01/31/Chrony学习笔记-1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-iSCSI学习笔记-1" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
