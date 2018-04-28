@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="iSCSI学习笔记-1第一篇iSCSI笔记主要是基础配置，包含以下内容  iSCSI介绍 iSCSI基础搭建">
+<meta name="keywords" content="linuxserver">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iSCSI学习笔记-1">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/01/29/iSCSI学习笔记-1/index.html">
+<meta property="og:site_name" content="我的小站">
+<meta property="og:description" content="iSCSI学习笔记-1第一篇iSCSI笔记主要是基础配置，包含以下内容  iSCSI介绍 iSCSI基础搭建">
+<meta property="og:updated_time" content="2018-01-29T12:27:02.365Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iSCSI学习笔记-1">
+<meta name="twitter:description" content="iSCSI学习笔记-1第一篇iSCSI笔记主要是基础配置，包含以下内容  iSCSI介绍 iSCSI基础搭建">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/01/29/iSCSI学习笔记-1/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>iSCSI学习笔记-1 | 我的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">我的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Startseite</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archiv</a>
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/01/29/iSCSI学习笔记-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="我的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iSCSI学习笔记-1
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+
+              
+                
+              
+
+              <time title="Post created: 2018-01-29 08:32:43 / Updated at: 20:27:02" itemprop="dateCreated datePublished" datetime="2018-01-29T08:32:43+08:00">2018-01-29</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="iSCSI学习笔记-1"><a href="#iSCSI学习笔记-1" class="headerlink" title="iSCSI学习笔记-1"></a>iSCSI学习笔记-1</h2><p><strong>第一篇iSCSI笔记主要是基础配置，包含以下内容</strong></p>
+<ul>
+<li>iSCSI介绍</li>
+<li>iSCSI基础搭建</li>
+</ul>
+<a id="more"></a>
+<h5 id="常见存储方式"><a href="#常见存储方式" class="headerlink" title="常见存储方式"></a>常见存储方式</h5><ul>
+<li>DAS 直接附加存储：外接存储设备直接连在服务器内部总线上，数据存储设备是整个服务器结构的一部分。</li>
+<li>NAS 网络接入存储：存储设备独立于服务器，作为文件服务器独立存在与网络中。存储设备通过标准的网络拓扑（如以太网）添加到一群计算机。</li>
+<li>SAN 存储区域网络：创造了存储的网络化。包含两种部署方式<ol>
+<li>FCSAN：使用光纤通道</li>
+<li>IPSAN：使用IP通道（如以太网线与iSCSI技术）</li>
+</ol>
+</li>
+</ul>
+<h5 id="SCSI与iSCSI"><a href="#SCSI与iSCSI" class="headerlink" title="SCSI与iSCSI"></a>SCSI与iSCSI</h5><ul>
+<li>SCSI 小型计算机系统接口：一种通用接口标准，多用于服务器系统级接口。SCSI 结构基于C/S模式，其通常应用环境是：设备互相靠近，并且这些设备由 SCSI 总线连接。</li>
+<li>iSCSI Internet小型计算机系统接口：一种基于TCP/IP的协议，用于建立管理IP存储设备、主机与客户机之间的连接，并创建SAN。SAN 使得 SCSI 协议应用于高速数据传输网络成为可能，这种传输以数据块级别（block-level）在多个数据存储网络间进行。</li>
+</ul>
+<p>iSCSI 的主要功能是在 TCP/IP 网络上的主机系统（启动器 initiator）和存储设备（目标器 target）之间进行大量数据的封装和可靠传输。此外，iSCSI 提供了在 IP 网络封装 SCSI 命令，且运行在 TCP 上。</p>
+<ul>
+<li>服务器：target   </li>
+<li>客户端：initiator</li>
+</ul>
+<h4 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h4><p>环境<br></p>
+<ul>
+<li>CentOS7，内核3.10</li>
+<li>两台虚拟机，system1与system2，system1为服务器，system2为客户端</li>
+<li>虚拟机网段192.168.163.0/24</li>
+<li>system1 IP：192.168.163.100/24</li>
+<li>system2 IP：192.168.163.102/24</li>
+</ul>
+<p>首先搭建服务器<br></p>
+<ol>
+<li>安装target与targetcli并开机启动<br><br>服务器端要安装的服务为targetd，还需安装targetcli程序进行配置<br><br><code>yum install targetd targetcli</code> <br><br><code>systemctl enable targetd target</code><br><br><code>systemctl start targetd target</code></li>
+<li>确保系统有空闲可用的裸磁盘<br><br>本处选择/dev/sdc1，大小5G<br></li>
+<li>进入<code>targetcli</code>程序配置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">目录结构</span><br><span class="line">o- /                </span><br><span class="line">  o- backstores     </span><br><span class="line">  | o- block        </span><br><span class="line">  | o- fileio       </span><br><span class="line">  | o- pscsi        </span><br><span class="line">  | o- ramdisk      </span><br><span class="line">  o- iscsi          </span><br><span class="line">  o- loopback</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>进入block，创建设备disk1<br><br><code>create dev=/dev/sdc1 name=disk1</code><br><br>另一种写法<br><br><code>create disk1 /dev/sdc1</code><br><br>然后进入iscsi目录，设置服务器端识别号<br></p>
+<blockquote>
+<p>识别号规范：iqn.年-月.域名反置:服务器主机名<br></p>
+</blockquote>
+<p><code>create wwn=iqn.2018-01.com.example:system1</code><br><br>该标识符可以自己设定如上配置，也可让系统自动生成直接在iscsi目录中<code>create</code><br><br>设置后iscsi目录结构如下<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">o- iscsi </span><br><span class="line">  o- iqn.2018-01.com.example:system1 </span><br><span class="line">    o- tpg1 </span><br><span class="line">      o- acls </span><br><span class="line">      o- luns </span><br><span class="line">      o- portals </span><br><span class="line">        o- 0.0.0.0:3260</span><br></pre></td></tr></table></figure></p>
+<p>进入acls/ 添加客户端身份标识<br><br><code>create wwn=iqn.2018-01.com.example:system2</code><br><br>进入luns/ 给该组设置可用的存储设备<br><br><code>create /backstores/block/disk1</code><br><br>disk1就是block中创建的设备名<br><br>此时iscsi目录结构<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">o- iscsi </span><br><span class="line">  o- iqn.2018-01.com.example:system1 </span><br><span class="line">    o- tpg1 </span><br><span class="line">      o- acls </span><br><span class="line">      | o- iqn.2018-01.com.example:system2 </span><br><span class="line">      |   o- mapped_lun0 </span><br><span class="line">      o- luns </span><br><span class="line">      | o- lun0 </span><br><span class="line">      o- portals </span><br><span class="line">        o- 0.0.0.0:3260</span><br></pre></td></tr></table></figure></p>
+<p>进入portals/ 修改服务端端口号<br><br>有可能里面没有默认配置，直接创建。若有默认配置就先删除再创建<br><code>delete 0.0.0.0 ip_port=3260</code><br><br><code>create 192.168.163.100 3260</code><br><br>此处ip地址为服务器端IP，端口号为3260<br><br>全部配置完exit退出配置程序</p>
+<ol>
+<li>防火墙放行对应端口号，重启服务<br><br>端口号3260，且tcp端口放行<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port=3260/tcp</span><br><span class="line">firewall-cmd --reload</span><br><span class="line">systemctl restart targetd target</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>然后是客户端搭建<br></p>
+<ol>
+<li>安装客户端软件<br><br><code>yum install iscsi-initiator-utils</code><br></li>
+<li>设置客户端识别号<br><br>该文件需要自己输入配置，输入客户端的识别码<br><br><code>vim /etc/iscsi/initiatorname.iscsi</code><br><br><code>initiatorname=iqn.2018-01.com.example:system2</code><br></li>
+<li>启动服务<br><br><code>systemctl enable iscsi iscsid</code><br><br><code>systemctl start iscsi iscsid</code><br></li>
+<li>获取硬盘<br><br><code>iscsiadm -m discovery -t st -p 192.168.163.100 -l</code><br><blockquote>
+<p>iscsiadm 用于管理iSCSI数据库配置文件的命令行工具<br><br>-m discovery 表示发现查找<br><br>-t senbtargets  表示发布的target，简写st <br><br>-p IP 指定服务器地址 <br><br>-l 表示login，可不加</p>
+</blockquote>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">连接成功信息:</span><br><span class="line">Logging in to [iface: default, target: iqn.2018-01.com.example:system1, portal: 192.168.163.100,3260] (multiple)</span><br><span class="line">Login to [iface: default, target: iqn.2018-01.com.example:system1, portal: 192.168.163.100,3260] successful.</span><br></pre></td></tr></table></figure>
+<p>通过命令<code>lsblk</code>查看是否拿到<br><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@system2 ~]# lsblk</span><br><span class="line">NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda               8:0    0   20G  0 disk </span><br><span class="line">├─sda1            8:1    0    1G  0 part /boot</span><br><span class="line">└─sda2            8:2    0   19G  0 part </span><br><span class="line">  ├─centos-root 253:0    0   17G  0 lvm  /</span><br><span class="line">  └─centos-swap 253:1    0    2G  0 lvm  [SWAP]</span><br><span class="line">sdb               8:16   0    5G  0 disk </span><br><span class="line">sr0              11:0    1 1024M  0 rom</span><br></pre></td></tr></table></figure></p>
+<p>发现出现了sdb，大小为5G，已成功获取<br></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/linuxserver/" rel="tag"># linuxserver</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/28/hello-world/" rel="next" title="我的小站">
+                <i class="fa fa-chevron-left"></i> 我的小站
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/01/31/Chrony学习笔记-1/" rel="prev" title="Chrony学习笔记-1">
+                Chrony学习笔记-1 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">Artikel</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">Tags</span>
+                  
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#iSCSI学习笔记-1"><span class="nav-number">1.</span> <span class="nav-text">iSCSI学习笔记-1</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#常见存储方式"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">常见存储方式</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#SCSI与iSCSI"><span class="nav-number">1.0.0.2.</span> <span class="nav-text">SCSI与iSCSI</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实验"><span class="nav-number">1.0.1.</span> <span class="nav-text">实验</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Erstellt mit  <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.5.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Muse</a> v6.2.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

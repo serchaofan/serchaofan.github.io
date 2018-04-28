@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Docker 容器网络主要是对docker文档的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 容器间通信">
+<meta name="keywords" content="docker">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker网络学习笔记-1">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/04/27/Docker网络学习笔记-1/index.html">
+<meta property="og:site_name" content="我的小站">
+<meta property="og:description" content="Docker 容器网络主要是对docker文档的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 容器间通信">
+<meta property="og:image" content="c:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/bridge.png">
+<meta property="og:image" content="c:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/host.png">
+<meta property="og:image" content="c:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/container.jpg">
+<meta property="og:image" content="c:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/bridge3.png">
+<meta property="og:updated_time" content="2018-04-27T16:15:47.015Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Docker网络学习笔记-1">
+<meta name="twitter:description" content="Docker 容器网络主要是对docker文档的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 容器间通信">
+<meta name="twitter:image" content="c:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/bridge.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/04/27/Docker网络学习笔记-1/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Docker网络学习笔记-1 | 我的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">我的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="Toggle navigation bar">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />Startseite</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />Archiv</a>
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/04/27/Docker网络学习笔记-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="我的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Docker网络学习笔记-1
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Veröffentlicht am</span>
+              
+
+              
+                
+              
+
+              <time title="Post created: 2018-04-27 13:04:48" itemprop="dateCreated datePublished" datetime="2018-04-27T13:04:48+08:00">2018-04-27</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">Edited on</span>
+                
+                <time title="Updated at: 2018-04-28 00:15:47" itemprop="dateModified" datetime="2018-04-28T00:15:47+08:00">2018-04-28</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Docker-容器网络"><a href="#Docker-容器网络" class="headerlink" title="Docker 容器网络"></a>Docker 容器网络</h2><p><strong>主要是对docker文档的翻译以及自己的学习笔记</strong></p>
+<p>本篇涉及知识点：</p>
+<ul>
+<li>Docker网络模式</li>
+<li>跨主机网络</li>
+<li>容器间通信</li>
+</ul>
+<a id="more"></a>
+<h3 id="Docker网络模式"><a href="#Docker网络模式" class="headerlink" title="Docker网络模式"></a>Docker网络模式</h3><p>目前Docker容器共有5种网络模式：</p>
+<ul>
+<li>桥接模式（bridge）</li>
+<li>主机模式（host）</li>
+<li>容器模式（container）</li>
+<li>无网络模式（none）</li>
+<li>用户自定义模式（user-defined）</li>
+</ul>
+<p>当安装完docker后，会默认创建三个网络，可通过<code>docker network ls</code>查看<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># docker network ls</span><br><span class="line">NETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">01ec14a3a84c        bridge              bridge              local</span><br><span class="line">56d5a7a9b06c        host                host                local</span><br><span class="line">9cbd2d449df7        none                null                local</span><br></pre></td></tr></table></figure></p>
+<p>用户可在运行容器时通过<code>--network=</code>指定网络。</p>
+<p><strong>桥接模式bridge</strong></p>
+<p>bridge是docker默认选择的网络，而网桥就是docker0通过<code>ifconfig</code>即可看到。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># ifconfig</span><br><span class="line">docker0: flags=4099&lt;UP,BROADCAST,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0</span><br><span class="line">        ether 02:42:4a:58:10:fb  txqueuelen 0  (Ethernet)</span><br><span class="line">        RX packets 0  bytes 0 (0.0 B)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 0  bytes 0 (0.0 B)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br></pre></td></tr></table></figure></p>
+<p>创建容器时若未指定network或网桥，就会默认挂到docker0网桥上。<br>docker0的网段为172.17.0.0/16，网关地址为172.17.0.1，可通过<code>docker inspect bridge</code>查看。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># docker inspect bridge</span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;bridge&quot;,</span><br><span class="line">        ......</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;172.17.0.0/16&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;172.17.0.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">    ......</span><br></pre></td></tr></table></figure></p>
+<p>docker daemon会创建一对对等接口：虚拟网桥上的vethxxx和容器的eth0。veth放置在宿主机的命名空间中，将宿主机上的所有网络为bridge的容器都连接到这个内部网络中，同时daemon会从网桥的私有地址空间中分配一个IP地址和子网给该容器。<br><img src="C:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/bridge.png" alt="bridge"><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># ifconfig</span><br><span class="line">......</span><br><span class="line">veth7576df5: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::9023:faff:fe28:14b3  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether 92:23:fa:28:14:b3  txqueuelen 0  (Ethernet)</span><br><span class="line">        RX packets 0  bytes 0 (0.0 B)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 8  bytes 648 (648.0 B)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br><span class="line"></span><br><span class="line">vethab244c0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::d047:b2ff:fee4:89c8  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether d2:47:b2:e4:89:c8  txqueuelen 0  (Ethernet)</span><br><span class="line">        RX packets 1065  bytes 3534746 (3.3 MiB)</span><br><span class="line">        RX errors 0  dropped 0  overruns 0  frame 0</span><br><span class="line">        TX packets 988  bytes 203582 (198.8 KiB)</span><br><span class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</span><br><span class="line">......</span><br></pre></td></tr></table></figure></p>
+<p>连接同一个bridge网络的容器间能够通过IP地址互相通信。<br>由于运行容器默认使用bridge网络，所以若要运行对外提供访问的服务，如web服务，就必须暴露端口，通过<code>-p</code>（指定容器暴露端口）或<code>-P</code>（发布容器所有端口）发布容器暴露的端口。</p>
+<p>Docker在bridge网络上不支持服务自动发现。如果需要通过容器名实现容器间的互相通信，就要设置连接属性<code>--link=容器名:别名</code>（官方并不推荐）。</p>
+<p><strong>主机模式host</strong></p>
+<p>在此模式下，容器网络与宿主机网络间的隔离将被禁止，容器共享宿主机的网络命名空间，使容器直接暴露在公共网络中。因此，需要通过端口映射（Port Mapping）进行协调。</p>
+<p><img src="C:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/host.png" alt="host"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"># docker run -it --network=host alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">br-7673688a6ae1 Link encap:Ethernet  HWaddr 02:42:DC:D4:64:FA</span><br><span class="line">          inet addr:172.22.0.1  Bcast:172.22.255.255  Mask:255.255.0.0</span><br><span class="line">          UP BROADCAST MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:0 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)</span><br><span class="line"></span><br><span class="line">docker0   Link encap:Ethernet  HWaddr 02:42:81:58:18:0C</span><br><span class="line">          inet addr:172.17.0.1  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">          inet6 addr: fe80::42:81ff:fe58:180c/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:2797 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:2813 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:6100380 (5.8 MiB)  TX bytes:519047 (506.8 KiB)</span><br><span class="line"></span><br><span class="line">ens33     Link encap:Ethernet  HWaddr 00:0C:29:58:0C:12</span><br><span class="line">          inet addr:192.168.163.101  Bcast:192.168.163.255  Mask:255.255.255.0</span><br><span class="line">          inet6 addr: fe80::25fa:c3a0:f3ce:d9c1/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:210416 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:1668973 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:1000</span><br><span class="line">          RX bytes:28287839 (26.9 MiB)  TX bytes:4058318378 (3.7 GiB)</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p>由此可知，当使用host模式网络时，容器实际上继承了宿主机的IP地址，并且在容器中可以看到宿主机的所有网卡。</p>
+<p>因为没有路由开销，因此主机模式会比bridge模式更快。但是由于容器直接被暴露在公共网络中，会有安全隐患。</p>
+<p><strong>容器网络container</strong></p>
+<p>在该模式，新创建的容器和已经存在的一个容器共享一个网络命名空间。两个容器除了网络的命名空间，其他的如文件系统、进程列表等仍然是隔离的。两个容器可以通过环回口进行设备通信。该模式也是Kubernetes使用的网络模式。<br><img src="C:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/container.jpg" alt="container"></p>
+<p>该模式通过<code>--network=container:另一个已存在的容器</code>实现。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"># docker run -it --name container_A alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:05</span><br><span class="line">          inet addr:172.17.0.5  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:6 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:508 (508.0 B)  TX bytes:0 (0.0 B)</span><br><span class="line"></span><br><span class="line"># docker run -it --name container_B --network=container:container_A alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:05</span><br><span class="line">          inet addr:172.17.0.5  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:8 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:648 (648.0 B)  TX bytes:0 (0.0 B)</span><br></pre></td></tr></table></figure></p>
+<p><strong>无网络模式none</strong></p>
+<p>该模式关闭了容器的网络功能，容器处于自己独立的网络命名空间中，且不进行任何配置。</p>
+<p>使用场景：1.容器并不需要网络（例如只需要写磁盘卷的批处理任务，或生成随机密钥）2.自定义网络</p>
+<p><strong>用户自定义模式user-defined</strong></p>
+<p>本模式使用户可自定义网络中的参数，以满足特定需求，例如DNS服务器。同一个自定义网络中，可以使用对方容器的容器名、服务名、网络别名来找到对方。这个时候帮助进行服务发现的是Docker 内置的DNS。所以，无论容器是否重启、更换IP，内置的DNS都能正确指定到对方的位置。</p>
+<blockquote>
+<p>docker内嵌DNS Server，但只有在用户自定义模式才能使用。</p>
+</blockquote>
+<p>docker提供三种网络驱动：bridge，overlay，macvlan。可通过<code>docker network create --driver=[driver] [network-name] [--subnet] [--gateway]</code>指定网络驱动创建网络，并指定网段和网关。</p>
+<p><strong>bridge驱动:</strong> 用于创建类似bridge网络模式的网络，加入该网络的容器必须在同一台宿主机，仅适合一台主机上的小型网络。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"># docker network create --driver=bridge mybridge --subnet=10.1.1.0/24 --gateway=10.1.1.1</span><br><span class="line"># docker inspect mybridge</span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;mybridge&quot;,</span><br><span class="line">        ......</span><br><span class="line">        &quot;Driver&quot;: &quot;bridge&quot;,</span><br><span class="line">        &quot;EnableIPv6&quot;: false,</span><br><span class="line">        &quot;IPAM&quot;: &#123;</span><br><span class="line">            &quot;Driver&quot;: &quot;default&quot;,</span><br><span class="line">            &quot;Options&quot;: &#123;&#125;,</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;10.1.1.0/24&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;10.1.1.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">......</span><br><span class="line"># docker run -it --network=mybridge alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:0A:01:01:02</span><br><span class="line">          inet addr:10.1.1.2  Bcast:10.1.1.255  Mask:255.255.255.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:16 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:1776 (1.7 KiB)  TX bytes:0 (0.0 B)</span><br></pre></td></tr></table></figure>
+<p>同主机容器间通信，分为：IP通信，DNS Server，Joined容器。</p>
+<p><strong>IP通信：</strong> 容器处于两个不同网络中，通过<code>docker network connect [对端容器所处网络名][本端容器]</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># docker run -it --name container_A alpine</span><br><span class="line"># docker network connect mybridge container_A</span><br><span class="line"># docker run -it --network=mybridge --name=container_B alpine</span><br><span class="line"># docker inspect container_B -f &apos;&#123;&#123;.NetworkSettings.Networks.mybridge.IPAddress&#125;&#125;&apos;</span><br><span class="line">10.1.1.4</span><br><span class="line"># docker inspect container_A -f &apos;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&apos;</span><br><span class="line">172.17.0.3</span><br><span class="line"># docker attach container_A</span><br><span class="line">/ # ping 10.1.1.4</span><br><span class="line">PING 10.1.1.4 (10.1.1.4): 56 data bytes</span><br><span class="line">64 bytes from 10.1.1.4: seq=0 ttl=64 time=0.294 ms</span><br><span class="line">64 bytes from 10.1.1.4: seq=1 ttl=64 time=1.130 ms</span><br><span class="line">64 bytes from 10.1.1.4: seq=2 ttl=64 time=0.682 ms</span><br></pre></td></tr></table></figure></p>
+<p>原理如图：</p>
+<p><img src="C:/hexo/blog/source/_posts/pics/Docker网络学习笔记-1/bridge3.png" alt="bridge3"></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/docker/" rel="tag"># docker</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/01/31/Chrony学习笔记-1/" rel="next" title="Chrony学习笔记-1">
+                <i class="fa fa-chevron-left"></i> Chrony学习笔记-1
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Inhaltsverzeichnis
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Übersicht
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">5</span>
+                    <span class="site-state-item-name">Artikel</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">Tags</span>
+                  
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker-容器网络"><span class="nav-number">1.</span> <span class="nav-text">Docker 容器网络</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Docker网络模式"><span class="nav-number">1.1.</span> <span class="nav-text">Docker网络模式</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+  <div class="powered-by">Erstellt mit  <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> v3.5.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/theme-next/hexo-theme-next">NexT.Muse</a> v6.2.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
