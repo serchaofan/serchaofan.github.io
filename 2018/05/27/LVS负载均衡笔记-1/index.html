@@ -102,23 +102,23 @@
 
 
 
-  <meta name="description" content="本篇笔记包含以下内容  LVS介绍与原理 KeepAlived原理 LVS+KeepAlived搭建">
+  <meta name="description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建">
 <meta name="keywords" content="server,LVS">
 <meta property="og:type" content="article">
 <meta property="og:title" content="LVS负载均衡学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/05/27/LVS负载均衡笔记-1/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="本篇笔记包含以下内容  LVS介绍与原理 KeepAlived原理 LVS+KeepAlived搭建">
+<meta property="og:description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/NAT-huanjing.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/NAT-baowen.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/TUN-huanjing.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/TUN-baowen.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/DR-baowen.png">
-<meta property="og:updated_time" content="2018-05-28T16:22:44.390Z">
+<meta property="og:updated_time" content="2018-05-31T05:36:40.275Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="LVS负载均衡学习笔记">
-<meta name="twitter:description" content="本篇笔记包含以下内容  LVS介绍与原理 KeepAlived原理 LVS+KeepAlived搭建">
+<meta name="twitter:description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建">
 <meta name="twitter:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/NAT-huanjing.png">
 
 
@@ -233,7 +233,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">24</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
   </li>
         
         
@@ -241,7 +241,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">17</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">27</span></a>
   </li>
         
         
@@ -359,7 +359,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-05-29 00:22:44" itemprop="dateModified" datetime="2018-05-29T00:22:44+08:00">2018-05-29</time>
+                <time title="修改时间：2018-05-31 13:36:40" itemprop="dateModified" datetime="2018-05-31T13:36:40+08:00">2018-05-31</time>
               
             
           </span>
@@ -394,18 +394,22 @@
       
         <p>本篇笔记包含以下内容</p>
 <ul>
-<li><a href="#LVS介绍与原理">LVS介绍与原理</a></li>
+<li><a href="#LVS原理">LVS原理</a><ul>
+<li><a href="#LVS集群的通用体系结构">LVS集群的通用体系结构</a></li>
+<li><a href="#三种IP负载均衡技术">三种IP负载均衡技术</a></li>
+<li><a href="#LVS两种调度方式与八种算法">LVS两种调度方式与八种算法</a></li>
+</ul>
+</li>
 <li><a href="#KeepAlived原理">KeepAlived原理</a></li>
 <li><a href="#LVS+KeepAlived搭建">LVS+KeepAlived搭建</a><a id="more"></a>
 </li>
 </ul>
-<p>LVS（Linux Virtual Server）Linux虚拟服务器是由章文嵩于1998年开发的负载均衡软件，提供传输层和应用层的负载均衡，传输层的负载均衡工具为IPVS，应用层的负载均衡工具为KTCPVS。<br>LVS的核心是通过前端的负载调度器（load balancer）将网络请求无缝调度到真实服务器上，使服务器集群的结构对客户透明。因为调度技术是在Linux内核中实现的，所以称为Linux虚拟服务器。</p>
-<p>前端负载均衡器称为Director Server（DR），后端的实际服务器称为Real Server(RS)，IP虚拟服务器软件称为IP Virtual Server（IPVS），在调度器的实现技术中，IP负载均衡技术的效率是最高的。</p>
-<p><strong>实验环境</strong></p>
+<h2 id="LVS原理"><a href="#LVS原理" class="headerlink" title="LVS原理"></a>LVS原理</h2><p>LVS（Linux Virtual Server）Linux虚拟服务器是由章文嵩于1998年开发的负载均衡软件，提供传输层和应用层的负载均衡，传输层的负载均衡工具为IPVS，应用层的负载均衡工具为KTCPVS。</p>
+<h3 id="LVS集群的通用体系结构"><a href="#LVS集群的通用体系结构" class="headerlink" title="LVS集群的通用体系结构"></a>LVS集群的通用体系结构</h3><p>LVS集群采用三层结构：</p>
 <ul>
-<li>PC：100.1.1.1</li>
-<li>DR内部IP（即DIP）：192.168.1.100<br>DR外部IP（即VIP）：200.1.1.1</li>
-<li>RS1：192.168.1.1<br>RS2：192.168.1.2<br>RS3：192.168.1.3</li>
+<li>负载调度器（load balancer）：整个集群的前端机，将网络请求无缝调度到真实服务器上，使服务器集群的结构对客户透明。因为所有的操作都是在Linux内核完成的，调度开销很小，所以具有很高的吞吐率。</li>
+<li>服务器池（server pool）：是一组真正执行客户请求的服务器。服务器池的结点数目是可变的，可以在服务器池中增加服务器来满足不断增长的请求负载。对大多数网络服务来说，请求间不存在很强的相关性，请求可以在不同的结点上并行执行。</li>
+<li>共享存储（shared storage）：为服务器池提供一个共享的存储区，通常是数据库、网络文件系统或者分布式文件系统，这样很容易使得服务器池拥有相同的内容，提供相同的服务。需要一个分布式锁管理器（Distributed Lock Manager）来保证应用程序在不同结点上并发访问的一致性。 </li>
 </ul>
 <p><strong>LVS的几种IP地址</strong></p>
 <ul>
@@ -414,9 +418,17 @@
 <li>RIP：RS的IP地址</li>
 <li>CIP：客户端IP地址</li>
 </ul>
-<p><strong>三种IP负载均衡技术</strong></p>
+<p><strong>为什么要用共享存储？</strong><br>共享存储是可选的，但若网络服务需要相同的内容，应该使用共享存储，否则无共享结构的代价会很大，每台服务器需要一样大的存储空间，任何更新需要涉及每一台服务器，系统的维护代价会非常高。分布式文件系统提供良好的<strong>伸缩性和可用性</strong>，分布式文件系统<strong>在每台服务器使用本地硬盘作Cache</strong>，可以使得访问分布式文件系统的速度接近于访问本地硬盘。 </p>
+<p><strong>如何实现高可用性？</strong><br>调度器上有资源监测进程时刻监视各个服务器结点的健康状况，当服务器对<strong>ICMP ping不可达</strong>时或者网络服务在<strong>指定的时间内没有响应</strong>时，资源监测进程会通知内核将该服务器<strong>从调度列表中删除</strong>。一旦监测到服务器恢复工作，通知调度器将其加入调度列表，管理员也可通过命令随时向调度列表添加或移除服务器。<br>调度器存在单点故障问题，因此需要对调度器进行主从备份，并用HeartBeat机制进行主从故障监测。当从调度器不能听得主调度器的心跳时，从调度器通过ARP欺骗 （Gratuitous ARP）来接管集群对外的VIP，同时接管主调度器的工作来提供负载调度服务。当主调度器恢复后，有两种<strong>恢复机制</strong>。第一种为<strong>主调度器自动变成从调度器（类似抢占）</strong>，另一种为<strong>从调度器释放VIP，主调度器收回VIP继续提供负载调度服务</strong>。<br>当主调度器失效时，<strong>主调度器上所有已建立连接的状态信息将丢失，已有连接会中断。</strong>客户需要重新连接从调度器，从调度器才会将新连接调度到各个服务器上。因此，调度器在内核中实现了一种高效同步机制，将主调度器的状态信息及时同步到从调度器。当从调度器接管时，绝大部分已建立的连接会持续下去。 </p>
+<p>前端负载均衡器称为Director Server（DR），后端的实际服务器称为Real Server(RS)，IP虚拟服务器软件称为IP Virtual Server（IPVS），在调度器的实现技术中，IP负载均衡技术的效率是最高的。</p>
+<p><strong>实验环境</strong></p>
 <ul>
-<li>NAT（VS/NAT）：调度器重写请求报文的目标地址，根据预设算法，将请求分派给实际服务器，实际服务器在响应报文通过调度器时，报文的源地址被重写，再返回给客户。<br><strong>优点：</strong>节约IP地址，能对内部进行伪装<br><strong>缺点：</strong>效率低，返回给请求方的流量需经过DR且请求和响应报文都要DR进行地址的重写，当客户端请求增多时，DR的处理能力会成为瓶颈<br>完整过程：</li>
+<li>PC：100.1.1.1</li>
+<li>DR内部IP（即DIP）：192.168.1.100<br>DR外部IP（即VIP）：200.1.1.1</li>
+<li>RS1：192.168.1.1<br>RS2：192.168.1.2<br>RS3：192.168.1.3</li>
+</ul>
+<h3 id="三种IP负载均衡技术"><a href="#三种IP负载均衡技术" class="headerlink" title="三种IP负载均衡技术"></a>三种IP负载均衡技术</h3><ul>
+<li>VS/NAT：调度器重写请求报文的目标地址，根据预设算法，将请求分派给实际服务器，实际服务器在响应报文通过调度器时，报文的源地址被重写，再返回给客户。<br><strong>优点：</strong>节约IP地址，能对内部进行伪装<br><strong>缺点：</strong>效率低，返回给请求方的流量需经过DR且请求和响应报文都要DR进行地址的重写，当客户端请求增多时，DR的处理能力会成为瓶颈<br>完整过程：</li>
 </ul>
 <ol>
 <li>PC向调度器发送请求报文，调度器收到后根据调度算法选择后端的实际服务器，将报文中目的IP与目的端口改写为实际服务器的IP地址与端口，并进行转发。</li>
@@ -427,7 +439,7 @@
 <img src="/2018/05/27/LVS负载均衡笔记-1/NAT-baowen.png" title="NAT-baowen">
 <p><strong>数据包流向：客户端–&gt;调度器–&gt;实际服务器–&gt;调度器–&gt;客户端</strong></p>
 <ul>
-<li>IP Tunneling（VS/TUN）：调度器将请求报文通过IP隧道转发到实际服务器，实际服务器将响应报文直接回复给客户，调度器仅需处理请求报文，将请求报文的地址重写，无需重写响应报文的地址，极大解放了调度器，集群系统的最大吞吐量能提高10倍。</li>
+<li>VS/TUN（IP Tunneling）：调度器将请求报文通过IP隧道转发到实际服务器，实际服务器将响应报文直接回复给客户，调度器仅需处理请求报文，将请求报文的地址重写，无需重写响应报文的地址，极大解放了调度器，集群系统的最大吞吐量能提高10倍。</li>
 </ul>
 <p><strong>IP隧道技术：</strong>又称为IP封装技术，可以将带有源和目标IP地址的数据报文使用新的源和目标IP进行<strong>第二次封装</strong>，这样这个报文就可以发送到一个指定的目标主机上</p>
 <p>由于多个RS都共享一个隧道IP（为VIP），所以需要通过ARP进行IP地址解析出MAC，而为了不让RS响应ARP请求导致出现错误，必须对RS进行抑制操作，这样只有DR进行ARP响应，也就让PC认为DR就是实际服务器。</p>
@@ -443,15 +455,60 @@
 <img src="/2018/05/27/LVS负载均衡笔记-1/TUN-baowen.png" title="TUN-baowen">
 <p><strong>数据包流向：客户端–&gt;调度器–&gt;实际服务器–&gt;客户端</strong></p>
 <ul>
-<li>VS/DR：与VS/TUN类似，但调度器改写的是数据包的目的MAC地址，通过链路层进行负载分担。此法没有IP隧道的开销，但要求调度器与实际服务器必须在同一网段。</li>
+<li>VS/DR（Direct Routing）：与VS/TUN类似，但调度器改写的是数据包的目的MAC地址，通过链路层进行负载分担。此法没有IP隧道的开销，但要求调度器与实际服务器<strong>必须在同一网段</strong>。</li>
 </ul>
 <p>完整过程：</p>
 <ol>
 <li>PC向调度器发送请求，调度器根据调度算法选择后端实际服务器，将数据帧的目的MAC改写为该实际服务器的MAC地址，并转发。</li>
 <li>实际服务器收到后处理完数据后直接将结果回复给PC</li>
 </ol>
-<p><strong>注：</strong>因为与VS/TUN类似，直接修改以太网帧，所以对于IP报文不会做修改，因此RS的端口号必须与DR一致。</p>
+<p><strong>注：</strong>因为与VS/TUN类似，直接修改以太网帧，所以对于IP报文不会做修改，因此RS的端口号必须与DR一致。且RS上必须配置VIP（通过配置环回口IP地址），由于流出接口为RIP所在网卡接口，因此源MAC地址为RIP所在接口的MAC地址</p>
 <img src="/2018/05/27/LVS负载均衡笔记-1/DR-baowen.png" title="DR-baowen">
+<p><strong>数据包流向：客户端–&gt;调度器–&gt;实际服务器–&gt;客户端</strong></p>
+<p><strong>三种模式的比较</strong><br>DR和TUN模式的性能高于NAT，因为不需要DR对响应报文的操作<br>DR性能高于TUN，因为不需要维护IP隧道<br>DR中调度器和实际服务器必须在同一个网段中，TUN可实现跨网段负载均衡。</p>
+<p><strong>为什么VS/TUN与VS/DR要在环回口L0上配置VIP，能不能在出口网卡上配置VIP？</strong><br>在环回口上配置VIP使得RS能通过路由收到请求数据包，并将结果返回给客户。不可以将VIP配置在出口网卡上，否则真实服务器会响应客户端的ARP请求，客户端上的ARP表就会记录真实服务器的MAC，造成混乱，LB就失效了。必须保证路由器只保存DR上的VIP对应的MAC，即只允许DR进行ARP响应。<br>在环回口配置VIP后，还需要设置<code>arp_ignore=1</code>和<code>arp_announce=2</code>来隐藏RS上的VIP。<strong>应该在配置VIP之前就设置arp参数，防止配置VIP后、设置arp抑制之前被外界主机发现。</strong></p>
+<p><strong>IPVS如何解决HTTPS连接问题？</strong><br>当客户访问HTTPS服务时，会先建立一个SSL连接，来交换对称公钥加密的证书并协商一个SSL Key，来加密以后的会话。<strong>在SSL Key的生命周期内，后续的所有HTTPS连接都使用这个SSL Key，所以同一客户的不同HTTPS连接也存在相关性</strong>。IPVS调度器提供了持久服务的功能，使得在设定的时间内，来自同一IP地址的不同连接会被发送到集群中同一个服务器结点，可以很好地解决客户连接的相关性问题。 </p>
+<p><strong>可伸缩的缓存服务</strong><br>调度器一般使用IP隧道方法（VS/TUN）来架构缓存集群，因为缓存服务器可能在不同地方，而调度器与缓存服务器池可能不在同一个物理网段。若请求对象不能在本地找到，缓存服务器会向源服务器发请求，将结果取回并返回给客户。<br>使用此方法，调度器只调度网页缓存服务器，而缓存服务器将响应数据直接返回给客户，调度器只需要调度一次请求，其余三次都由缓存服务器直接访问Web服务器完成。<br>缓存服务器间有专用的组播通道，通过ICP（Internet Cache Protocol）协议交互信息。当一台Cache服务器在本地硬盘中未命中当前请求时，它可以通过ICP查询其他Cache服务器是否有请求对象的副本，若存在，则从邻近的Cache服务器取该对象的副本，这样可以进一步提高Cache服务的命中率。 </p>
+<p><strong>可伸缩邮件服务</strong><br>服务器池有LDAP服务器和一组邮件服务器，调度器将SMTP、POP3、IMAP4和HTTP/HTTPS请求流负载较均衡地分发到各邮件服务器上。系统中可能的瓶颈是LDAP服务器，可对LDAP服务中B+树的参数进行优化。<br>若分布式文件系统没有多个存储结点间的负载均衡机制，则需要相应的邮件迁移机制来避免邮件访问的倾斜。 </p>
+<h3 id="LVS两种调度方式与八种算法"><a href="#LVS两种调度方式与八种算法" class="headerlink" title="LVS两种调度方式与八种算法"></a>LVS两种调度方式与八种算法</h3><p><strong>两种调度方式</strong></p>
+<ul>
+<li>静态调度：仅根据调度算法进行调度，不管实际服务器的系统负载</li>
+<li>动态反馈调度：会根据实际服务器的系统负载及性能，计算出可以调度的服务器对象</li>
+</ul>
+<p><strong>八种算法</strong></p>
+<ul>
+<li>静态调度<ul>
+<li><strong>轮询</strong>（Route Robin）：调度器将请求根据调度算法按顺序轮流分配到实际服务器。调度器均等地对待每一台服务器，不管服务器上实际的连接数和系统负载。</li>
+<li><strong>加权轮询</strong>（Weighted Route Robin）：根据实际服务器的不同处理能力调度访问请求。使处理能力强的服务器处理更多访问流量，调度器自动询问实际服务器负载情况，并动态调整权值。</li>
+<li><strong>目标地址散列</strong>（Destination Hashing）：将请求的目标地址作为散列键，从静态分配的散列表中找出对应的服务器。</li>
+<li><strong>源地址散列</strong>（Source Hashing）：将请求的源地址作为散列键，从静态分配的散列表中找出对应服务器。</li>
+</ul>
+</li>
+<li>动态反馈调度<ul>
+<li><strong>最少连接</strong>（Least Connections）：动态将网络请求调度到已建立的连接数最少的服务器上。</li>
+<li><strong>加权最少连接</strong>（Weighted Least Connections）：当集群中服务器性能差异较大的情况下使用。具有较高权值的服务器将承受较大比例的活动连接负载。调度器可以自动问询真实服务器的负载情况并动态调整权值。<strong>此算法为默认调度算法。</strong></li>
+<li><strong>基于局部性最少连接</strong>（Locality-Based Least Connections）：针对IP地址的负载均衡，用于缓存集群系统。根据请求的IP地址找出该目标IP地址最近使用的服务器，若该服务器不可用，则用最少连接原则选出一个可用的服务器。该算法维护的是从一个目标IP地址到<strong>一台</strong>服务器的映射。</li>
+<li><strong>带复制的基于局部性最少连接</strong>（Locality-Based Least Connections with Replication）：针对IP地址的负载均衡，根据请求的目标IP地址找出与之对应的服务器组，按最小连接原则选出一台服务器。若该服务器超载，就在集群中按最小连接原则选出一台服务器，添加到服务器组中。该算法维护的是从一个目标IP地址到<strong>一组</strong>服务器的映射。</li>
+</ul>
+</li>
+</ul>
+<h2 id="KeepAlived原理"><a href="#KeepAlived原理" class="headerlink" title="KeepAlived原理"></a>KeepAlived原理</h2><p>KeepAlived用于RS的健康状态检查与LB主从之间的故障转移（Failover）实现。 Keepalived实现了一组健康检查器，根据其健康状况动态自适应地维护和管理负载平衡的服务器池。使用VRRP实现高可用性，VRRP是路由器故障转移的基础实现方法。此外，keepalived实现了一组到VRRP有限状态机的挂钩，提供低级别的高速协议交互。每个Keepalived框架可以独立使用或一起使用，以提供弹性基础设施。</p>
+<p>Keepalived采用纯ANSI/ISO C编写，围绕一个中央I/O多路复用器提供实时网络设计（Realtime Networking Design）。设计重点是在所有元素之间提供均匀的模块化功能。</p>
+<p>为了确保鲁棒性和稳定性，守护进程keepalived分为3个不同的进程： </p>
+<ul>
+<li>一个精简的父进程负责分支子进程的监控</li>
+<li>两个子进程，一个负责VRRP框架，另一个负责健康检查</li>
+</ul>
+<p>每个子进程都有自己的调度I/O多路复用器，这样VRRP调度抖动得到了优化，因为VRRP调度比健康检查者更关键。这种拆分设计可最小化健康检查外部库的使用情况，并将其自身行为降至最低，使主机闲置，从而避免由其本身造成的故障。</p>
+<p>父进程监视框架称为<strong>Watchdog</strong>，每个子进程打开一个套接字，当守护进程引导时，父进程连接到套接字并向子进程周期（5s）发送hello包。若父进程无法向子进程套接字发送hello，则只要重启子进程即可。</p>
+<p>Watchdog设计的优点：<br>从父进程发送到子进程的hello数据包通过I/O多路复用器调度程序完成，这样可以检测到子进程调度框架中的死循环并能通过使用sysV信号来检测死亡的子进程。</p>
+<p>Keepalived使用四个Linux内核组件：</p>
+<ul>
+<li>LVS框架：使用getsockopt和setsockopt调用来获取和设置套接字上的选项。</li>
+<li>Netfilter框架：支持NAT和伪装（ Masquerading）的IPVS代码。</li>
+<li>Netlink接口：设置和删除网络接口上的VRRP虚拟IP。</li>
+<li>组播：通过组播地址224.0.0.18发送VRRP通告。</li>
+</ul>
 <blockquote>
 <p>参考文档<br>LVS中文官方文档 <a href="http://www.linuxvirtualserver.org/zh/index.html" target="_blank" rel="noopener">http://www.linuxvirtualserver.org/zh/index.html</a><br>骏马金龙LVS系列文章 <a href="http://www.cnblogs.com/f-ck-need-u/p/8451982.html#1-lvs-" target="_blank" rel="noopener">http://www.cnblogs.com/f-ck-need-u/p/8451982.html#1-lvs-</a><br>负载均衡的原理 <a href="https://mp.weixin.qq.com/s?__biz=MzIxMjE5MTE1Nw==&amp;mid=2653193749&amp;idx=1&amp;sn=9321bf2c628b8d60913336ff6592f823&amp;chksm=8c99f4cfbbee7dd9e580eac24a5d481993a09bc93720dddc70d602e38e923012e1d7b245a76e&amp;mpshare=1&amp;scene=23&amp;srcid=0528GJKDr5wutmhQnNTVwG1H#rd" target="_blank" rel="noopener">https://mp.weixin.qq.com/s?__biz=MzIxMjE5MTE1Nw==&amp;mid=2653193749&amp;idx=1&amp;sn=9321bf2c628b8d60913336ff6592f823&amp;chksm=8c99f4cfbbee7dd9e580eac24a5d481993a09bc93720dddc70d602e38e923012e1d7b245a76e&amp;mpshare=1&amp;scene=23&amp;srcid=0528GJKDr5wutmhQnNTVwG1H#rd</a></p>
 </blockquote>
@@ -555,8 +612,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -571,7 +637,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-count">27</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -634,7 +700,21 @@
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">31</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -692,6 +772,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#LVS原理"><span class="nav-number">1.</span> <span class="nav-text">LVS原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS集群的通用体系结构"><span class="nav-number">1.1.</span> <span class="nav-text">LVS集群的通用体系结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三种IP负载均衡技术"><span class="nav-number">1.2.</span> <span class="nav-text">三种IP负载均衡技术</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS两种调度方式与八种算法"><span class="nav-number">1.3.</span> <span class="nav-text">LVS两种调度方式与八种算法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#KeepAlived原理"><span class="nav-number">2.</span> <span class="nav-text">KeepAlived原理</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

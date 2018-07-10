@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="本篇笔记包含以下内容  FTP原理 VSFTP搭建 服务器端 常用客户端软件   TFTP原理 服务器端 客户端">
+<meta name="keywords" content="server,ftp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FTP笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/06/06/FTP笔记/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="本篇笔记包含以下内容  FTP原理 VSFTP搭建 服务器端 常用客户端软件   TFTP原理 服务器端 客户端">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2018/06/06/FTP笔记/post.png">
+<meta property="og:image" content="https://github.com/2018/06/06/FTP笔记/pasv.png">
+<meta property="og:updated_time" content="2018-07-09T01:05:57.069Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FTP笔记">
+<meta name="twitter:description" content="本篇笔记包含以下内容  FTP原理 VSFTP搭建 服务器端 常用客户端软件   TFTP原理 服务器端 客户端">
+<meta name="twitter:image" content="https://github.com/2018/06/06/FTP笔记/post.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/06/06/FTP笔记/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>FTP笔记 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">27</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/06/06/FTP笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">FTP笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-06-06 00:07:17" itemprop="dateCreated datePublished" datetime="2018-06-06T00:07:17+08:00">2018-06-06</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-07-09 09:05:57" itemprop="dateModified" datetime="2018-07-09T09:05:57+08:00">2018-07-09</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本篇笔记包含以下内容</p>
+<ul>
+<li><a href="#FTP原理">FTP原理</a></li>
+<li><a href="#FTP搭建">VSFTP搭建</a><ul>
+<li><a href="#服务器端">服务器端</a></li>
+<li><a href="#常用客户端软件">常用客户端软件</a></li>
+</ul>
+</li>
+<li><a href="#TFTP原理">TFTP原理</a><ul>
+<li><a href="#服务器端">服务器端</a></li>
+<li><a href="#客户端">客户端</a><a id="more"></a>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="FTP原理"><a href="#FTP原理" class="headerlink" title="FTP原理"></a>FTP原理</h2><p>File Transfer Protocol文件传输协议，基于TCP协议，采用C/S模式，控制连接端口21，数据连接端口20。</p>
+<ul>
+<li>控制连接：负责FTP客户端与服务器交互命令与信息的传输，在整个会话过程中始终打开。</li>
+<li>数据连接：负责客户端与服务器数据的传输，传输完毕就会关闭</li>
+</ul>
+<p><strong>文件传输模式：</strong></p>
+<ol>
+<li>ASCII：默认模式，发送方将文件转为ASCII码传输，适合文本文件传输</li>
+<li>二进制：也称图像文件传输模式，按比特流传输，适合程序文件传输</li>
+</ol>
+<p><strong>数据传输方式：</strong></p>
+<ul>
+<li>主动PORT</li>
+</ul>
+<ol>
+<li>首先客户端（随机端口）与服务器（21端口）TCP三次握手建立连接，建立控制连接通道</li>
+<li>客户端向服务器发送PORT命令，告知服务器使用主动模式。<br>其中PORT命令携带参数（客户端IP地址, P1, P2），P1与P2用于标识客户端数据连接的临时端口号，具体为256*P1+P2，IP地址也是四段，每段用逗号分隔</li>
+<li>服务器收到PORT命令后按照参数用20端口与客户端指定端口三次握手建立数据传输通道。</li>
+<li>数据传输完毕，发送方发送FIN报文，关闭数据连接</li>
+</ol>
+<blockquote>
+<p>注：若客户端在防火墙内部网络，主动方式会出现问题，因为客户端提供的端口是随机的，防火墙若未放行该端口，则无法建立FTP连接。此时需要使用<strong>被动方式</strong>建立连接</p>
+</blockquote>
+<img src="/2018/06/06/FTP笔记/post.png" title="post">
+<ul>
+<li>被动PASV</li>
+</ul>
+<ol>
+<li>首先客户端（随机端口）与服务器（21端口）TCP三次握手建立连接，建立控制连接通道</li>
+<li>客户端向服务器发送PASV命令，参数与PORT一致。但IP是服务器的，标识的是服务器端的临时端口号。</li>
+<li>客户端用随机端口与服务器的指定临时端口TCP三次握手建立数据连接通道。</li>
+<li>数据传输完毕，发送方发送FIN报文，关闭数据连接</li>
+</ol>
+<img src="/2018/06/06/FTP笔记/pasv.png" title="pasv">
+<h2 id="VSFTP搭建"><a href="#VSFTP搭建" class="headerlink" title="VSFTP搭建"></a>VSFTP搭建</h2><p>Very Secure FTP安全文件传输协议。</p>
+<h3 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h3><p>安装vsftpd服务<br><code>yum install vsftpd*</code><br><code>systemctl enable vsftpd</code><br><code>systemctl start vsftpd</code><br>配置文件<code>/etc/vsftpd/vsftpd.conf</code>常用参数<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">listen = YES            # IPv4监听</span><br><span class="line">listen_ipv6 = NO        # IPv6监听</span><br><span class="line"># ipv6监听若v4为yes则v6必须为no,同理v6为yes则v4为no</span><br><span class="line">listen_address =        # 监听的IP地址</span><br><span class="line">listen_port = 21        # 监听的端口</span><br><span class="line">port_enable = YES       # 开启端口</span><br><span class="line">connect_timeout = 60    # 主动连接若60秒tcp无法建立就不建立了</span><br><span class="line">accept_timeout = 60     # 被动连接若60秒tcp无法建立就不建立了</span><br><span class="line">ftp_data_port = 20      # 数据传输端口20</span><br><span class="line">download_enable = YES   # 是否允许下载</span><br><span class="line">userlist_enable = YES   # 是否启用“禁止登录用户名单”</span><br><span class="line">max_clients = 2000      # 最多允许2000用户同时登录（0为不限制）</span><br><span class="line">max_login_fails = 3     # 最多允许3次登录失败</span><br><span class="line">max_per_ip = 20         # 同一地址最多允许多少连接（0为不限制）</span><br><span class="line">data_connection_timeout = 300   # 数据连接超时时间（数据无响应），就断开</span><br><span class="line">idle_session_timeout = 300      # 用户登录上后无操作时间300s则断开</span><br><span class="line"></span><br><span class="line">chroot_list_enable = YES    # 是否启用锁定用户在自己的主目录中的功能。</span><br><span class="line"># 被锁定的用户登录FTP服务器后只能进入自己的主目录，不能进入其他目录，默认为NO。</span><br><span class="line"># 锁定的用户名单文件由chroot_list_file参数指定</span><br><span class="line">chroot_list_file = /etc/vsftpd/chroot_list  # 指定锁定用户文件的目录（默认为/etc/vsftpd/chroot_list）。文件中是一个用户一行记录</span><br><span class="line">write_enable = YES        # 是否允许修改，默认YES</span><br><span class="line"></span><br><span class="line">dirmessage_enable=YES     # 是否启用目录提示信息，默认YES。</span><br><span class="line"># 当用户进入某个目录时，会先检查该目录是否存在message_file参数指定的文件</span><br><span class="line"># 若有就显示文件中的内容，通常用于放置欢迎语或目录说明</span><br><span class="line">message_file =            # 设置文件路径，该文件用于存放目录的说明或欢迎语（当dirmessage_enable为YES时生效）</span><br><span class="line">xferlog_enable=YES        # 是否启用详细记录上传下载的日志功能，日志文件路径由xferlog_file指定</span><br><span class="line">xferlog_file =            # 设置文件路径，该文件用于存放目录的说明或欢迎语（当xferlog_enable为YES时生效）</span><br><span class="line">xferlog_std_format=YES    </span><br><span class="line">connect_from_port_20=YES</span><br><span class="line">pam_service_name=vsftpd   # PAM认证的服务名</span><br><span class="line"></span><br><span class="line">tcp_wrappers=YES</span><br><span class="line">ftpd_banner =             # 登录FTP服务器时的欢迎语，默认为空</span><br></pre></td></tr></table></figure></p>
+<h4 id="认证访问控制"><a href="#认证访问控制" class="headerlink" title="认证访问控制"></a>认证访问控制</h4><p>VSFTPD提供三种认证方式：</p>
+<ul>
+<li>匿名访问anoymous：无需认证即可登入</li>
+<li>本地用户local：使用ftp服务器中的用户登录</li>
+<li>虚拟用户：创建独立ftp账户。是最安全的</li>
+</ul>
+<p><strong>匿名访问</strong><br>无需提供真正用户名和密码就能登录FTP服务器。</p>
+<p>配置文件相关参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">anonymous_enable = YES    # 是否允许匿名用户登录，默认YES</span><br><span class="line">anon_umask = 022          # 匿名用户创建文件的umask值，默认077</span><br><span class="line">anon_root = /var/ftp/anon # 匿名用户的ftp根目录</span><br><span class="line">anon_upload_enable = NO  # 允许匿名用户上传文件（这项生效的条件为write_enable为YES且ftp匿名用户对该目录有写权限），默认NO</span><br><span class="line">anon_mkdir_writable_enable = NO   # 是否允许匿名用户创建目录（需要该目录的父目录的写权限），默认为NO</span><br><span class="line">anon_other_writable_enable = YES   # 是否开放匿名用户其他写入权限</span><br><span class="line">anon_max_rate = 0         # 匿名用户最大传输速率，0为不限制</span><br><span class="line">no_anon_password = NO     # 匿名用户登录是否需要密码（NO为需要，YES为不需要，默认为NO）</span><br><span class="line"># 若为需要，登录时输入任意字符串即可</span><br></pre></td></tr></table></figure></p>
+<p>在客户端上登录ftp服务器<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#只要在输用户名时输成anonymous，并任意输入字符串作为密码</span><br><span class="line">&gt; ftp localhost</span><br><span class="line">Trying ::1...</span><br><span class="line">Connected to localhost (::1).</span><br><span class="line">220 (vsFTPd 3.0.2)</span><br><span class="line">Name (localhost:root): anonymous</span><br><span class="line">331 Please specify the password.</span><br><span class="line">Password:</span><br><span class="line">230 Login successful.</span><br></pre></td></tr></table></figure></p>
+<p><strong>本地用户</strong><br>使用ftp服务器本地的用户进行登录，会更加安全</p>
+<p>配置文件相关参数：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">anonymous_enable = NO     # 关闭匿名访问模式，非必选</span><br><span class="line">local_enable = YES        # 允许本地用户登录ftp，默认YES，在实际工作环境中，应该将这项设为NO</span><br><span class="line">local_umask = 022         # 本地用户上传文件的umask，默认为077</span><br><span class="line">local_root = /var/ftp     # 本地用户的根目录</span><br><span class="line">local_max_rate = 0        # 本地用户最大传输速率，0为不限制</span><br><span class="line">userlist_enable=YES       # 当用户登录FTP服务器时，在输入完账户名后，服务器会根据userlist_file中指定的用户列表进行控制</span><br><span class="line"># 若在该文件中，则禁止该用户输入密码。默认NO</span><br><span class="line">userlist_file = /etc/vsftpd/user_list    # 用户验证文件的路径</span><br><span class="line">uesrlist_deny = YES       # 绝不允许该文件中的用户登录ftp，</span><br></pre></td></tr></table></figure></p>
+<h3 id="常用客户端软件"><a href="#常用客户端软件" class="headerlink" title="常用客户端软件"></a>常用客户端软件</h3><h2 id="TFTP原理"><a href="#TFTP原理" class="headerlink" title="TFTP原理"></a>TFTP原理</h2><p>Trivial File Transfer Protocol简单文件传输协议，基于UDP协议，端口号69<br><strong>特点：</strong></p>
+<ul>
+<li>仅提供简单文件传输功能（上传，下载）</li>
+<li>无存取授权与认证机制，无目录功能</li>
+<li>由客户端发起</li>
+</ul>
+<p><strong>下载过程：</strong></p>
+<ol>
+<li>客户端向服务器发送读请求  </li>
+<li>服务器根据请求回应数据报文（块编号从1开始）  </li>
+<li>客户端收到数据后回应确认报文。重复2.3步直至完成下载</li>
+</ol>
+<p><strong>上传过程：</strong></p>
+<ol>
+<li>客户端向服务器发送写请求  </li>
+<li>服务器回应确认报文（块编号为0）  </li>
+<li>客户端发送数据报文（块编号从1开始）  </li>
+<li>服务器收到后回应确认报文。重复3，4步直至上传完成</li>
+</ol>
+<blockquote>
+<p>文件传输时，将文件分成多个文件块，封装到数据报文中并打上文件块编号</p>
+</blockquote>
+<p><strong>传输文件模式：</strong></p>
+<ul>
+<li>netASCII：对应FTP的ASCII模式   </li>
+<li>octet：对应FTP二进制模式</li>
+</ul>
+<p><strong>协议报文：</strong></p>
+<ul>
+<li>RRQ读请求报文  </li>
+<li>WRQ写请求报文  </li>
+<li>数据报文  </li>
+<li>确认正确/错误报文</li>
+</ul>
+<p>报文的头两个字节是操作码字段，1为读请求，2为写请求，3为数据报文，4为确认正确，5为错误。<br>文件传输过程中读写出错就发送差错报文，数据传输就停止，差错报文不会被确认也不会重传。<br>TFTP每次传输的数据报文中文件块大小固定为512字节，若文件大小刚好是512字节的整数倍，则传完文件后还要再发一个空文件块的数据报文表明文件传输完成。</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/server/" rel="tag"># server</a>
+          
+            <a href="/tags/ftp/" rel="tag"># ftp</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/06/iptables笔记/" rel="next" title="iptables笔记">
+                <i class="fa fa-chevron-left"></i> iptables笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/06/18/常见VPN技术基础/" rel="prev" title="常见VPN技术基础">
+                常见VPN技术基础 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">27</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#FTP原理"><span class="nav-number">1.</span> <span class="nav-text">FTP原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#VSFTP搭建"><span class="nav-number">2.</span> <span class="nav-text">VSFTP搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务器端"><span class="nav-number">2.1.</span> <span class="nav-text">服务器端</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#认证访问控制"><span class="nav-number">2.1.1.</span> <span class="nav-text">认证访问控制</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#常用客户端软件"><span class="nav-number">2.2.</span> <span class="nav-text">常用客户端软件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TFTP原理"><span class="nav-number">3.</span> <span class="nav-text">TFTP原理</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -102,23 +102,23 @@
 
 
 
-  <meta name="description" content="Docker 容器网络主要是对docker文档(v18.03)的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 Overlay Macvlan []">
-<meta name="keywords" content="docker">
+  <meta name="description" content="Docker 容器网络主要是对docker文档(v18.03)的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 Overlay Macvlan   补充知识点 支持IPv6 配置iptables">
+<meta name="keywords" content="docker,网络">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker网络学习笔记-1">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/04/27/Docker网络学习笔记-1/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="Docker 容器网络主要是对docker文档(v18.03)的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 Overlay Macvlan []">
+<meta property="og:description" content="Docker 容器网络主要是对docker文档(v18.03)的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 Overlay Macvlan   补充知识点 支持IPv6 配置iptables">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/04/27/Docker网络学习笔记-1/bridge.png">
 <meta property="og:image" content="https://github.com/2018/04/27/Docker网络学习笔记-1/host.png">
 <meta property="og:image" content="https://github.com/2018/04/27/Docker网络学习笔记-1/container.jpg">
 <meta property="og:image" content="https://github.com/2018/04/27/Docker网络学习笔记-1/bridge3.png">
 <meta property="og:image" content="https://github.com/2018/04/27/Docker网络学习笔记-1/wwfwrq.png">
-<meta property="og:updated_time" content="2018-05-28T01:15:54.504Z">
+<meta property="og:updated_time" content="2018-07-06T05:45:27.325Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker网络学习笔记-1">
-<meta name="twitter:description" content="Docker 容器网络主要是对docker文档(v18.03)的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 Overlay Macvlan []">
+<meta name="twitter:description" content="Docker 容器网络主要是对docker文档(v18.03)的翻译以及自己的学习笔记 本篇涉及知识点：  Docker网络模式 跨主机网络 Overlay Macvlan   补充知识点 支持IPv6 配置iptables">
 <meta name="twitter:image" content="https://github.com/2018/04/27/Docker网络学习笔记-1/bridge.png">
 
 
@@ -233,7 +233,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">24</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
   </li>
         
         
@@ -241,7 +241,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">17</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">27</span></a>
   </li>
         
         
@@ -359,7 +359,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-05-28 09:15:54" itemprop="dateModified" datetime="2018-05-28T09:15:54+08:00">2018-05-28</time>
+                <time title="修改时间：2018-07-06 13:45:27" itemprop="dateModified" datetime="2018-07-06T13:45:27+08:00">2018-07-06</time>
               
             
           </span>
@@ -399,7 +399,11 @@
 <li><a href="#跨主机网络">跨主机网络</a><ul>
 <li><a href="#Overlay">Overlay</a></li>
 <li><a href="#Macvlan">Macvlan</a></li>
-<li>[]</li>
+</ul>
+</li>
+<li><a href="#补充知识点">补充知识点</a><ul>
+<li><a href="#支持IPv6">支持IPv6</a></li>
+<li><a href="#配置iptables">配置iptables</a></li>
 </ul>
 </li>
 </ul>
@@ -420,7 +424,10 @@
 <img src="/2018/04/27/Docker网络学习笔记-1/bridge.png" title="bridge">
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># ifconfig</span><br><span class="line">......</span><br><span class="line">veth7576df5: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::9023:faff:fe28:14b3  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether 92:23:fa:28:14:b3  txqueuelen 0  (Ethernet)</span><br><span class="line">		......</span><br><span class="line"></span><br><span class="line">vethab244c0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::d047:b2ff:fee4:89c8  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether d2:47:b2:e4:89:c8  txqueuelen 0  (Ethernet)</span><br><span class="line">		......</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
 <p>连接同一个bridge网络的容器间能够通过IP地址互相通信。<br>由于运行容器默认使用bridge网络，所以若要运行对外提供访问的服务，如web服务，就必须暴露端口，通过<code>-p</code>（指定容器暴露端口）或<code>-P</code>（发布容器所有端口）发布容器暴露的端口。</p>
-<p>Docker在bridge网络上不支持服务自动发现。如果需要通过容器名实现容器间的互相通信，就要设置连接属性<code>--link=容器名:别名</code>（官方并不推荐）。</p>
+<blockquote>
+<p>默认情况下，创建容器时不会将任何端口发布到外部。若通过<code>-p</code>或<code>--publish</code>发布端口，会创建一个防火墙规则，将容器端口映射到宿主机上的端口。</p>
+</blockquote>
+<p>Docker在bridge网络上不支持服务自动发现。如果需要通过容器名实现容器间的互相通信，就要设置连接属性<code>--link=容器名:别名</code>（官方并不推荐，已快被淘汰，官方推荐用<code>user-definded</code>网络实现互通）。<br>容器内所有的环境变量都可供连接到它的容器使用，可能会造成安全隐患。</p>
 <p><strong>主机模式host</strong><br>在此模式下，容器网络与宿主机网络间的隔离将被禁止，容器共享宿主机的网络命名空间，使容器直接暴露在公共网络中。因此，需要通过端口映射（Port Mapping）进行协调。</p>
 <img src="/2018/04/27/Docker网络学习笔记-1/host.png" title="host">
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># docker run -it --network=host alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">br-7673688a6ae1 Link encap:Ethernet  HWaddr 02:42:DC:D4:64:FA</span><br><span class="line">          inet addr:172.22.0.1  Bcast:172.22.255.255  Mask:255.255.0.0</span><br><span class="line">		  ......</span><br><span class="line"></span><br><span class="line">docker0   Link encap:Ethernet  HWaddr 02:42:81:58:18:0C</span><br><span class="line">          inet addr:172.17.0.1  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">		  ......</span><br><span class="line"></span><br><span class="line">ens33     Link encap:Ethernet  HWaddr 00:0C:29:58:0C:12</span><br><span class="line">          inet addr:192.168.163.101  Bcast:192.168.163.255  Mask:255.255.255.0</span><br><span class="line">		  ......</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
@@ -442,7 +449,8 @@
 </ul>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># docker network create --driver=bridge mybridge --subnet=10.1.1.0/24 --gateway=10.1.1.1</span><br><span class="line"># docker inspect mybridge</span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;mybridge&quot;,</span><br><span class="line">        ......</span><br><span class="line">        &quot;Driver&quot;: &quot;bridge&quot;,</span><br><span class="line">        &quot;EnableIPv6&quot;: false,</span><br><span class="line">        &quot;IPAM&quot;: &#123;</span><br><span class="line">            &quot;Driver&quot;: &quot;default&quot;,</span><br><span class="line">            &quot;Options&quot;: &#123;&#125;,</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;10.1.1.0/24&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;10.1.1.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">......</span><br><span class="line"># docker run -it --network=mybridge alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:0A:01:01:02</span><br><span class="line">          inet addr:10.1.1.2  Bcast:10.1.1.255  Mask:255.255.255.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">		  ......</span><br></pre></td></tr></table></figure>
 <p>同主机容器间通信，分为：IP通信，DNS Server，Joined容器。</p>
-<p><strong>IP通信：</strong> 容器处于两个不同网络中，通过<code>docker network connect [对端容器所处网络名][本端容器]</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># docker run -it --name container_A alpine</span><br><span class="line"># docker network connect mybridge container_A</span><br><span class="line"># docker run -it --network=mybridge --name=container_B alpine</span><br><span class="line"># docker inspect container_B -f &apos;&#123;&#123;.NetworkSettings.Networks.mybridge.IPAddress&#125;&#125;&apos;</span><br><span class="line">10.1.1.4</span><br><span class="line"></span><br><span class="line"># docker inspect container_A -f &apos;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&apos;</span><br><span class="line">172.17.0.3</span><br><span class="line"></span><br><span class="line"># docker attach container_A</span><br><span class="line">/ # ping 10.1.1.4</span><br><span class="line">PING 10.1.1.4 (10.1.1.4): 56 data bytes</span><br><span class="line">64 bytes from 10.1.1.4: seq=0 ttl=64 time=0.294 ms</span><br><span class="line">64 bytes from 10.1.1.4: seq=1 ttl=64 time=1.130 ms</span><br><span class="line">64 bytes from 10.1.1.4: seq=2 ttl=64 time=0.682 ms</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:03</span><br><span class="line">          inet addr:172.17.0.3  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          ......</span><br><span class="line">eth1      Link encap:Ethernet  HWaddr 02:42:0A:01:01:03</span><br><span class="line">          inet addr:10.1.1.3  Bcast:10.1.1.255  Mask:255.255.255.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          ......</span><br></pre></td></tr></table></figure></p>
+<p><strong>IP通信：</strong> 容器处于两个不同网络中，通过<code>docker network connect [对端容器所处网络名][本端容器]</code>连接容器。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">--alias 设置对端网络别名</span><br><span class="line">--ip 指定对端网络上该IP地址的容器</span><br><span class="line">--ip6 同上，为IPv6地址</span><br><span class="line">--link 指定连接的容器名</span><br><span class="line">--link-local-ip 为容器添加一个连接本地的地址</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"># docker run -it --name container_A alpine</span><br><span class="line"># docker network connect mybridge container_A</span><br><span class="line"># docker run -it --network=mybridge --name=container_B alpine</span><br><span class="line"># docker inspect container_B -f &apos;&#123;&#123;.NetworkSettings.Networks.mybridge.IPAddress&#125;&#125;&apos;</span><br><span class="line">10.1.1.4</span><br><span class="line"></span><br><span class="line"># docker inspect container_A -f &apos;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&apos;</span><br><span class="line">172.17.0.3</span><br><span class="line"></span><br><span class="line"># docker attach container_A</span><br><span class="line">/ # ping 10.1.1.4</span><br><span class="line">PING 10.1.1.4 (10.1.1.4): 56 data bytes</span><br><span class="line">64 bytes from 10.1.1.4: seq=0 ttl=64 time=0.294 ms</span><br><span class="line">64 bytes from 10.1.1.4: seq=1 ttl=64 time=1.130 ms</span><br><span class="line">64 bytes from 10.1.1.4: seq=2 ttl=64 time=0.682 ms</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:03</span><br><span class="line">          inet addr:172.17.0.3  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          ......</span><br><span class="line">eth1      Link encap:Ethernet  HWaddr 02:42:0A:01:01:03</span><br><span class="line">          inet addr:10.1.1.3  Bcast:10.1.1.255  Mask:255.255.255.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          ......</span><br></pre></td></tr></table></figure>
 <p>原理如图（图为docker文档的，ip地址有偏差），docker会在本容器上创建一个新的网卡，由指定的网络分配IP地址，实现与指定的网桥中容器的连接（如上面ifconfig中eth1）。</p>
 <img src="/2018/04/27/Docker网络学习笔记-1/bridge3.png" title="bridge3">
 <p><strong>DNS：</strong> 使用对方容器的容器名、服务名、网络别名来找到对方，无论容器是否重启、更换IP，内置的DNS都能正确指定到对方的位置。</p>
@@ -480,6 +488,27 @@
 <p><strong>绕过集群服务的路由网格（routing mesh）</strong><br>默认情况下，发布端口的群集服务使用路由网格来完成。当连接到任何swarm节点上的已发布端口（无论是否运行给定服务）时，都会透明地重定向到正在运行该服务的worker。实际上，Docker充当群集服务的负载平衡器。使用路由网格的服务以虚拟IP（VIP）模式运行。即使在每个节点上运行的服务（通过<code>--global</code>标志）也使用路由网格。使用路由网格时，不能保证哪个Docker节点服务客户端会请求。</p>
 <p>要绕过路由网格，可以通过设置选项<code>--endpoint-mode dnsrr</code>来使用<code>DNS Round Robin（DNSRR）</code>模式启动服务且必须在服务前运行自定义的负载均衡器。对Docker主机上服务名的DNS查询会返回运行该服务的节点的IP地址列表，可以通过配置负载均衡器使用此列表并且平衡各节点间的流量。</p>
 <p><strong>单独控制和数据</strong><br>默认情况下，尽管群集控制流量是加密的，但群集管理和应用程序之间的控制流量运行在同一个网络上，可以配置Docker使用单独的网络接口来处理两种不同类型的流量。初始化或加入群集时，分别指定<code>--advertise-addr</code>和<code>--datapath-addr</code>，加入集群的每个节点都要执行此操作。</p>
+<p><strong>实验（根据官方文档的实验）</strong><br>Manager（system2）:192.168.163.102<br>Worker-1（system3）：192.192.168.163.103<br>Worker-2（system4）：192.192.168.163.104</p>
+<p>在manager上初始化swarm，worker节点加入swarm。在manager上查看节点。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># docker node ls</span><br><span class="line">ID                            HOSTNAME              STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION</span><br><span class="line">ohfkwg8uu4zkjtyk1l1nbze4p *   system2.example.com   Ready               Active              Leader              18.03.1-ce</span><br><span class="line">6dbboj25t5tws0ohd1pdhsahl     system3.example.com   Ready               Active                                  18.03.1-ce</span><br><span class="line">aug4gnqnm0na4pwu835dku51x     system4.example.com   Ready               Active                                  18.03.1-ce</span><br></pre></td></tr></table></figure></p>
+<p>可通过<code>--filter role=worker|manager</code>过滤节点信息</p>
+<p>在manager上创建overlay网络。不需要在其他节点上创建overlay网络，当其中一个节点开始运行需要overlay网络的服务时，它将自动创建。<br><code>docker network create -d overlay nginx-net</code><br>在manager上创建一个nginx服务（只能在manager上创建服务）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># docker service create \</span><br><span class="line">--name my-nginx \</span><br><span class="line">-p 80:80 \</span><br><span class="line">--replicas=5 \          #设置创建的任务个数</span><br><span class="line">--network nginx-net \</span><br><span class="line">nginx</span><br><span class="line"></span><br><span class="line"># docker service ls</span><br><span class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</span><br><span class="line">nvxzb5kzihl6        my-nginx            replicated          5/5                 nginx:latest        *:80-&gt;80/tcp</span><br></pre></td></tr></table></figure></p>
+<p>在manager和worker上查看nginx-net网络情况，以及容器情况<code>docker inspect nginx-net</code></p>
+<p>新建overlay网络，将服务更新到新的网络上<br><code>docker network create -d overlay nginx-net-2</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># docker service update \</span><br><span class="line">--network-add nginx-net-2 \  # 将my-nginx添加进nginx-net-2网络中</span><br><span class="line">--network-rm nginx-net \  # 将my-nginx从nginx-net网络中删除</span><br><span class="line">my-nginx</span><br></pre></td></tr></table></figure></p>
+<blockquote>
+<p>注：overlay网络会因为需要自动创建，但不会自动删除（当服务不需要该网络后）。需要手动删除服务和网络。<br><code>docker service rm my-nginx</code><br><code>docker network rm nginx-net nginx-net-2</code></p>
+</blockquote>
+<h3 id="Macvlan"><a href="#Macvlan" class="headerlink" title="Macvlan"></a>Macvlan</h3><p>一些应用类似传统应用或监视网络流量的应用，希望直接连接到物理网络，可以使用macvlan网络驱动为每个容器的虚拟网络接口分配MAC地址，需要指定宿主机上的物理接口用于Macvlan，以及Macvlan的子网和网关。可以使用不同的物理网络接口来隔离Macvlan网络。<br>网络设备需要能够处理“混杂模式”，其中一个物理接口可以分配多个MAC地址。网络模式最好是<code>bridge</code>或<code>overlay</code>。可以在bridge模式或vlan的trunk模式中创建macvlan网络。</p>
+<p><strong>在bridge网络模式中创建macvlan网络</strong><br>在<code>docker network create</code>后添加<code>-d macvlan</code>，也可再指定流量通过的实际网卡<code>-o parent=ens33</code>。若要排除在macvlan中使用的IP地址，可添加选项<code>--aux-addresses=&quot;aux-addr=&quot;</code>，参数值为一组键值对。一张网卡仅能被一个macvlan网络设为<code>parent</code>。</p>
+<p><strong>在vlan trunk模式中创建macvlan网络</strong><br>通过在网卡名后加<code>.[数字]</code>创建网卡子接口，例如<code>-o parent=ens33.10</code>。</p>
+<p><strong>使用IPvlan</strong><br>可以使用三层IPvlan取代二层Macvlan。通过指定<code>-o ipvlan_mode=l2</code></p>
+<h2 id="补充知识点"><a href="#补充知识点" class="headerlink" title="补充知识点"></a>补充知识点</h2><p><strong>支持IPv6</strong><br>只有Linux主机的docker支持IPv6。<br>修改<code>/etc/docker/daemon.json</code>，添加<code>{&quot;ipv6&quot;: true}</code>开启IPv6。然后重新加载配置文件<code>systemctl daemon-reload</code>或<code>systemctl reload docker</code>。在创建网络的时候可以加上<code>--ipv6</code>选项，在创建容器时加上<code>--ip6</code>选项</p>
+<p><strong>配置iptables</strong><br>Docker通过iptables规则来提供网络隔离，不应修改Docker已设置的iptables规则。<br>所有Docker的iptables规则都被添加到<code>DOCKER</code>链中，不要手动操作此表。如果需要添加能在加载Docker规则之前加载的规则，应该将它们添加到<code>DOCKER-USER</code>链中，这些规则在Docker自动创建任何规则之前加载。</p>
+<p>默认情况下，所有外部源IP都被允许连接到Docker守护进程。若要只允许特定的IP或网络访问容器，可在<code>DOCKER</code>过滤器链的顶部插入否定规则。</p>
+<p>例：<code>iptables -I DOCKER-USER -i ens33 ! --source 192.168.163.0/24 -j DROP</code><br>为防止Docker修改iptables策略，在<code>/etc/docker/daemon.json</code>中设置<code>{&quot;iptables&quot;: false}</code>，官方不推荐这样设置，因为这样所有关于docker的iptables配置都要手动管理。</p>
+<p><strong>DNS选项</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">--dns 指定一个或多个DNS服务器</span><br><span class="line">--dns-search 设置dns搜索域</span><br><span class="line">--dns-opt 键值对，可参考/etc/resolv.conf</span><br><span class="line">--hostname 设置容器的主机名，默认就是容器名</span><br></pre></td></tr></table></figure></p>
+<p><strong>docker代理</strong><br>在Docker客户端上编辑启动容器的用户主目录<code>~/.docker/config.json</code>文件。添加字段，可用<code>httpsProxy</code>或<code>ftpProxy</code>指定代理服务器的类型，并指定代理服务器的地址和端口，可以同时配置多个代理服务器。</p>
+<p>通过将<code>noProxy</code>键设置为一个或多个逗号分隔的IP地址或主机，指定排除的代理服务器，支持<code>*</code>字符作为通配符。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line"> &quot;proxies&quot;:</span><br><span class="line"> &#123;</span><br><span class="line">   &quot;default&quot;:</span><br><span class="line">   &#123;</span><br><span class="line">     &quot;httpProxy&quot;: &quot;http://127.0.0.1:3001&quot;,</span><br><span class="line">     &quot;noProxy&quot;: &quot;*.test.example.com,.example.com&quot;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>在创建容器时可通过<code>--env</code>设置环境变量，通过环境变量指定代理服务器。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">--env HTTP_PROXY=&quot;&quot;</span><br><span class="line">--env HTTPS_PROXY=&quot;&quot;</span><br><span class="line">--env FTP_PROXY=&quot;&quot;</span><br><span class="line">--env NO_PROXY=&quot;&quot;</span><br></pre></td></tr></table></figure></p>
 <blockquote>
 <p>参考文档<br>Cloudman 《每天五分钟玩转docker容器技术》<br>docker官方文档-网络板块 <a href="https://docs.docker.com/network" target="_blank" rel="noopener">https://docs.docker.com/network</a><br>docker网络模式 <a href="http://dockone.io/article/1261" target="_blank" rel="noopener">http://dockone.io/article/1261</a></p>
 </blockquote>
@@ -508,6 +537,8 @@
         <div class="post-tags">
           
             <a href="/tags/docker/" rel="tag"># docker</a>
+          
+            <a href="/tags/网络/" rel="tag"># 网络</a>
           
         </div>
       
@@ -606,7 +637,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-count">27</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -669,7 +700,21 @@
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">31</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -737,7 +782,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker-容器网络"><span class="nav-number">1.</span> <span class="nav-text">Docker 容器网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker网络模式"><span class="nav-number">2.</span> <span class="nav-text">Docker网络模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨主机网络"><span class="nav-number">3.</span> <span class="nav-text">跨主机网络</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overlay"><span class="nav-number">3.1.</span> <span class="nav-text">Overlay</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker-容器网络"><span class="nav-number">1.</span> <span class="nav-text">Docker 容器网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker网络模式"><span class="nav-number">2.</span> <span class="nav-text">Docker网络模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#跨主机网络"><span class="nav-number">3.</span> <span class="nav-text">跨主机网络</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Overlay"><span class="nav-number">3.1.</span> <span class="nav-text">Overlay</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Macvlan"><span class="nav-number">3.2.</span> <span class="nav-text">Macvlan</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#补充知识点"><span class="nav-number">4.</span> <span class="nav-text">补充知识点</span></a></li></ol></div>
             
 
           </div>

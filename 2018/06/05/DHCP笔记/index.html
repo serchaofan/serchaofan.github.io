@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="本篇包含以下内容  DHCP原理 DHCP服务器配置 服务器端 客户端   DHCP中继">
+<meta name="keywords" content="server,dhcp">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DHCP笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/06/05/DHCP笔记/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="本篇包含以下内容  DHCP原理 DHCP服务器配置 服务器端 客户端   DHCP中继">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2018/06/05/DHCP笔记/dhcp-qingqiu.png">
+<meta property="og:updated_time" content="2018-06-06T14:36:04.726Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="DHCP笔记">
+<meta name="twitter:description" content="本篇包含以下内容  DHCP原理 DHCP服务器配置 服务器端 客户端   DHCP中继">
+<meta name="twitter:image" content="https://github.com/2018/06/05/DHCP笔记/dhcp-qingqiu.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/06/05/DHCP笔记/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>DHCP笔记 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">27</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/06/05/DHCP笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">DHCP笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-06-05 23:59:29" itemprop="dateCreated datePublished" datetime="2018-06-05T23:59:29+08:00">2018-06-05</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-06-06 22:36:04" itemprop="dateModified" datetime="2018-06-06T22:36:04+08:00">2018-06-06</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本篇包含以下内容</p>
+<ul>
+<li><a href="#DHCP原理">DHCP原理</a></li>
+<li><a href="#DHCP服务器配置">DHCP服务器配置</a><ul>
+<li><a href="#服务器端">服务器端</a></li>
+<li><a href="#客户端">客户端</a></li>
+</ul>
+</li>
+<li><a href="#DHCP中继">DHCP中继</a><a id="more"></a>
+</li>
+</ul>
+<h2 id="DHCP原理"><a href="#DHCP原理" class="headerlink" title="DHCP原理"></a>DHCP原理</h2><p>DHCP（Dynamic Host Configuration Protocol）用于为客户端动态分配IP地址、子网掩码并设置网关等信息。<br>前身为BOOTP协议，工作在应用层，基于UDP协议，端口号67（服务器端），68（客户端），还有一个546端口用于DHCPv6的客户端。</p>
+<p>DHCP与BOOTP最重要的区别：DHCP支持租期，BOOTP不支持，BOOTP分配的IP地址是永久的。</p>
+<p><strong>DHCP提供三种分配方式：</strong></p>
+<ul>
+<li>手动分配：静态绑定固定IP，这些IP固定给特定设备使用（打印机，DNS，web服务器等）</li>
+<li>自动分配：服务器给客户端分配租期无限长的IP地址，只有客户释放，其他客户才能使用该地址</li>
+<li>动态分配：服务器给客户端分配租期有限长的IP地址，一旦租期到期而未续约，地址就会释放。</li>
+</ul>
+<p>DHCP的基本原则：尽可能为客户端分配<strong>原来使用</strong>的地址。<br>DHCP的分配顺序：1.静态分配的  2.客户端曾经会用过的  3.最先找到的可用IP。</p>
+<p><strong>DHCP报文与请求过程</strong><br><img src="/2018/06/05/DHCP笔记/dhcp-qingqiu.png" title="dhcp-qingqiu"></p>
+<p>DHCP工作过程</p>
+<ul>
+<li>发现阶段：</li>
+<li>提供阶段：</li>
+<li>选择阶段：</li>
+<li>确认阶段：</li>
+<li>重新申请：</li>
+<li>更新租约：</li>
+</ul>
+<p>DHCP报文</p>
+<ul>
+<li>Discover：客户端第一次向服务器发送的请求报文，广播发送</li>
+<li>Offer：服务器对客户端Discover的回应，包含分配的IP、掩码、网关等信息，广播或单播发送</li>
+<li>Request：客户端发送给服务器的请求报文，包括服务器的选择与租期更新等，单播或广播发送（根据客户端状态）</li>
+<li>Release：客户端若想释放当前地址，则单播发送给服务器</li>
+<li>Ack/Nak：服务器对客户端的回应，请求报文正确时回复Ack，否则回复Nak</li>
+<li>Decline：客户端收到服务器的Ack后，对获取的IP进行确认，使用ARP，若发现该IP已被使用，则广播向服务器发送Decline报文，拒绝使用该IP。</li>
+<li>Inform：当客户端通过其他方式已获取了IP，若还需要向服务器索取其他配置信息时，会向服务器发送Inform，若服务器能根据要求分配则会回复Ack，否则不操作。</li>
+</ul>
+<p><strong>DHCP续约</strong></p>
+<ol>
+<li>更新状态：使用时间达到租约的50%，客户端进入更新状态，单播向服务器发送Request，服务器若同意续约则回复Ack，否则回复Nak</li>
+<li>重新绑定状态：使用时间达到租约的87.5%，客户端进入重新绑定状态。客户端广播Request请求，请求对有效租期进行更新。<br>进入该状态的原因：客户端未收到服务器对续约Request的回应。<br>若Request未收到回应，客户端会在一定时间内重发Request报文，若直到租期结束也未更新租期，则被迫释放IP地址。</li>
+</ol>
+<p><strong>DHCP中继</strong><br>DHCP只适用于客户端与服务器在同网段（原因：广播请求），但可以通过中继使客户端可向其他网段的DHCP服务器请求。<br>实现：中继路由器收到请求广播报文，便向服务器单播发送，同理服务器也单播回应中继，中继再广播回应客户端。</p>
+<h2 id="DHCP服务器配置"><a href="#DHCP服务器配置" class="headerlink" title="DHCP服务器配置"></a>DHCP服务器配置</h2><p>实验环境：<br>全部为CentOS-7</p>
+<ul>
+<li>服务器端：system2 192.168.163.102</li>
+<li>客户端：system3 192.168.163.103</li>
+</ul>
+<h3 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h3><ul>
+<li><p>安装DHCP服务<br><code>yum install dhcp dhcp-devel</code></p>
+<blockquote>
+<p><code>dhcp</code>为服务器端基础组件，<code>dhcp-devel</code>为服务器开发工具</p>
+</blockquote>
+<p>  开机自启<br>  <code>systemctl enable dhcpd</code><br>  <code>systemctl start dhcpd</code></p>
+</li>
+<li>修改配置文件/etc/dhcp/dhcpd.conf<br>注：该文件是空的，可以参考模板添加项，模板为<code>/usr/share/doc/dhcp-4.2.5/dhcpd.conf.example</code>，其中dhcp的版本号可能不一致，可用<code>find</code>命令查找</li>
+</ul>
+<p>以下为配置文件常见参数的解析，可通过<code>man 5 dhcpd.conf</code>查看完整配置参数解析<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"># 服务器名</span><br><span class="line">server-name “system2”; </span><br><span class="line"></span><br><span class="line"># DNS域名</span><br><span class="line">option domain-name &quot;example.org&quot;;</span><br><span class="line"># DNS服务器域名（最多指定三个）</span><br><span class="line">option domain-name-servers ns1.example.org, ns2.example.org;</span><br><span class="line"></span><br><span class="line"># 默认租期，单位秒。在默认租期内，可以进行续约操作</span><br><span class="line">default-lease-time 600;</span><br><span class="line"># 最大租期，单位秒。</span><br><span class="line">max-lease-time 7200;</span><br><span class="line"># 最大租期即客户端IP租约时间的最大值，当客户端超过默认租约时间，虽此时已无法续约，但DHCP会仍然允许用户在最大租约时间内使用该IP，之后就收回该IP</span><br><span class="line"></span><br><span class="line"># dhcp与dns动态信息更新模式（必选）</span><br><span class="line"># 三种选择：interim--dns互动更新  ad-hoc--特殊dns更新  none--不支持</span><br><span class="line"># 全局设置中一定要有这个，否则不能成功启动</span><br><span class="line">#ddns-update-style none;</span><br><span class="line"></span><br><span class="line"># 如果该DHCP服务器是本地网络的授权服务器，则需要取消注解</span><br><span class="line">#authoritative;</span><br><span class="line"></span><br><span class="line"># 忽略客户端更新</span><br><span class="line">ignore client-updates;</span><br><span class="line"></span><br><span class="line"># 设置网关</span><br><span class="line">option routers 192.168.163.254;</span><br><span class="line"></span><br><span class="line"># 日志类型</span><br><span class="line">log-facility local7;</span><br><span class="line"></span><br><span class="line"># 设置ntp服务器</span><br><span class="line">ntp-server [IP地址]</span><br><span class="line"></span><br><span class="line"># 子网设置</span><br><span class="line">subnet 10.5.5.0 netmask 255.255.255.224 &#123;</span><br><span class="line">  # 设置地址池</span><br><span class="line">  range 10.5.5.26 10.5.5.30;</span><br><span class="line">  option domain-name-servers ns1.internal.example.org;</span><br><span class="line">  option domain-name &quot;internal.example.org&quot;;</span><br><span class="line">  option routers 10.5.5.1;</span><br><span class="line">  # 广播地址</span><br><span class="line">  option broadcast-address 10.5.5.31;</span><br><span class="line">  default-lease-time 600;</span><br><span class="line">  max-lease-time 7200;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># shared-network用于跨网段分配IP地址，多用于中继，形成超级作用域</span><br><span class="line">shared-network 224-29 &#123;</span><br><span class="line">  # 配置子网1</span><br><span class="line">  subnet 10.17.224.0 netmask 255.255.255.0 &#123;</span><br><span class="line">    option routers rtr-224.example.org;</span><br><span class="line">  &#125;</span><br><span class="line">  # 配置子网2</span><br><span class="line">  subnet 10.0.29.0 netmask 255.255.255.0 &#123;</span><br><span class="line">    option routers rtr-29.example.org;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># host指定客户端客户端的IP地址绑定</span><br><span class="line"># hostname仅仅是标识，无意义</span><br><span class="line">host hostname &#123;</span><br><span class="line">  # 指定目标主机</span><br><span class="line">  hardware ethernet [MAC地址];</span><br><span class="line">  # 绑定IP地址</span><br><span class="line">  fixed-address [ip地址];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><strong>注：</strong>划分子网时，如果选择直接配置多作用域实现动态IP分配的任务，则必须要为DHCP服务器添加多块网卡，并配置多个IP地址，否则DHCP服务器只能分配与其现有网卡IP地址对应网段的作用域。</p>
+<p>DHCP租约文件<br><code>/var/lib/dhcpd/dhcpd.leases</code><br>租约数据库文件用于保存一系列的租约声明，其中包含客户端的主机名、MAC地址、分配到的IP地址，以及IP地址的有效期等相关信息。<br>这个数据库文件是可编辑的ASCII格式文本文件。每当发生租约变化的时候，都会在文件结尾添加新的租约记录。</p>
+<h3 id="客户端"><a href="#客户端" class="headerlink" title="客户端"></a>客户端</h3><p>需要安装先<code>dhclient</code>，然后修改<code>/etc/sysconfig-network-scripts/ifcfg-ens33</code>（根据实际网卡名称），修改<code>BOOTPROTO=dhcp</code>，重启网络。</p>
+<h2 id="DHCP中继"><a href="#DHCP中继" class="headerlink" title="DHCP中继"></a>DHCP中继</h2><p>DHCP中继代理（DHCP Relay Agent）用于转发其他网段的客户端DHCP请求。当客户端请求</p>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/server/" rel="tag"># server</a>
+          
+            <a href="/tags/dhcp/" rel="tag"># dhcp</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/31/HTTP协议笔记/" rel="next" title="HTTP协议基础笔记">
+                <i class="fa fa-chevron-left"></i> HTTP协议基础笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/06/06/iptables笔记/" rel="prev" title="iptables笔记">
+                iptables笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">27</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#DHCP原理"><span class="nav-number">1.</span> <span class="nav-text">DHCP原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DHCP服务器配置"><span class="nav-number">2.</span> <span class="nav-text">DHCP服务器配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#服务器端"><span class="nav-number">2.1.</span> <span class="nav-text">服务器端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端"><span class="nav-number">2.2.</span> <span class="nav-text">客户端</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DHCP中继"><span class="nav-number">3.</span> <span class="nav-text">DHCP中继</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

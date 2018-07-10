@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="主要是对docker文档(v18.03)的翻译以及自己的学习笔记本篇主要包含以下内容  Docker存储介绍 容器数据卷">
+<meta name="keywords" content="docker,存储">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker存储学习笔记-1">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/07/06/Docker存储学习笔记-1/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="主要是对docker文档(v18.03)的翻译以及自己的学习笔记本篇主要包含以下内容  Docker存储介绍 容器数据卷">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2018/07/06/Docker存储学习笔记-1/types-of-mounts.png">
+<meta property="og:updated_time" content="2018-07-09T01:04:48.723Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Docker存储学习笔记-1">
+<meta name="twitter:description" content="主要是对docker文档(v18.03)的翻译以及自己的学习笔记本篇主要包含以下内容  Docker存储介绍 容器数据卷">
+<meta name="twitter:image" content="https://github.com/2018/07/06/Docker存储学习笔记-1/types-of-mounts.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/07/06/Docker存储学习笔记-1/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Docker存储学习笔记-1 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">27</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/07/06/Docker存储学习笔记-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Docker存储学习笔记-1
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-07-06 13:33:01" itemprop="dateCreated datePublished" datetime="2018-07-06T13:33:01+08:00">2018-07-06</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-07-09 09:04:48" itemprop="dateModified" datetime="2018-07-09T09:04:48+08:00">2018-07-09</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>主要是对docker文档(v18.03)的翻译以及自己的学习笔记</strong><br>本篇主要包含以下内容</p>
+<ul>
+<li><a href="Docker存储介绍">Docker存储介绍</a></li>
+<li><a href="#容器数据卷">容器数据卷</a><a id="more"></a>
+</li>
+</ul>
+<h2 id="Docker存储介绍"><a href="#Docker存储介绍" class="headerlink" title="Docker存储介绍"></a>Docker存储介绍</h2><p>Docker为容器提供了两种存放数据的资源：</p>
+<ul>
+<li>storage driver：管理的镜像层和容器层<br>  特点：Copy-on-Write。新数据会存放在最上层容器层，修改现有数据会先从镜像层复制到容器层，修改后的数据直接保存在容器中，镜像层保持不变。若多层中有同名文件，用户只能看到最上层的文件。<br>  可通过docker info查看到。Docker优先使用默认的storage driver。</li>
+<li>data volume数据卷<br>  特点：是目录或文件，不是磁盘，volume数据可以被永久的保存，即使使用它的容器已经销毁。<br>  分为两种volume：bind mount 和docker managed volume</li>
+</ul>
+<p><strong>存储驱动：</strong>目前docker支持五种存储驱动</p>
+<ol>
+<li>AUFS  </li>
+<li>Btrfs  </li>
+<li>Device Mapper  </li>
+<li>Overlay  </li>
+<li>ZFS</li>
+</ol>
+<p><strong>原理：</strong></p>
+<ol>
+<li>Copy-On-Write写时复制<br> 所有驱动都是用到Cow写时复制（copy-on-write），只在需要写时才复制。可以让所有容器都共享一个image文件系统，所有数据都从image读取，容器需要写操作时，才将要写的文件从image复制到自己的文件系统，即所有写操作都是对image中副本的修改。有效提高了磁盘利用率。</li>
+<li>allocate-on-demand用时分配<br> 在要写入一个文件时才按需分配空间</li>
+</ol>
+<p><strong>驱动：</strong></p>
+<ol>
+<li>AUFS：一种Union FS联合文件系统，文件级存储。支持将不同目录挂载到同一个虚拟文件系统，下层文件系统只可读，最上层可写。若要修改，AUFS会创建一个该文件的副本，放在可写层，结果也保存在可写层。</li>
+<li>Overlay：一种UnionFS，文件级存储。只有两层：upper层和lower层</li>
+<li>Device Mapper：</li>
+</ol>
+<h2 id="容器数据卷"><a href="#容器数据卷" class="headerlink" title="容器数据卷"></a>容器数据卷</h2><p>默认情况下，在容器内创建的所有文件都存储在可写容器层中，即进行<code>tmpfs</code>挂载，仅存储在主机系统的内存中，永远不会写入主机系统的文件系统，因此一旦容器停止，容器内所有文件的改动都会丢失，所以需要通过数据卷将文件保存以至于在容易停止后仍不会丢失。<br>写入容器的可写层需要存储驱动程序来管理文件系统，存储驱动程序使用Linux内核提供联合文件系统。而数据卷是经过特殊设计的目录，可以绕过联合文件系统，为多个容器提供访问。数据卷的目的在于数据永久化，完全独立于容器的生存周期，容器删除时挂载的数据卷不会被删除。</p>
+<p><strong>特点：</strong></p>
+<ol>
+<li>在容器启动时初始化，若挂载点已有数据，则会被拷贝到新初始化的数据卷中</li>
+<li>可以在容器间共享重用</li>
+<li>可以直接对数据卷修改</li>
+<li>数据卷变化不会影响镜像更新</li>
+</ol>
+<p>可通过<code>docker volume create 数据卷名</code>创建数据卷。每创建一个volume，就会在<code>/var/lib/docker/volumes</code>中创建一个同名目录。</p>
+<p>Docker有两种挂载数据卷的方法：</p>
+<ol>
+<li>bind mount</li>
+<li>docker managed volume</li>
+</ol>
+<img src="/2018/07/06/Docker存储学习笔记-1/types-of-mounts.png">
+<h3 id="bind-mount"><a href="#bind-mount" class="headerlink" title="bind mount"></a>bind mount</h3><p><code>bind mount</code>可使容器中的文件存储在主机系统的任何位置。Docker主机或Docker容器上的非Docker进程可以随时修改它们。bind mount非常高效，但它们依赖于具有特定目录结构的主机文件系统。</p>
+<p>创建容器时设置参数<code>-v 或 --volume 数据卷在主机的目录:数据卷在容器中的目录</code>挂载数据卷（<strong>都需要绝对路径</strong>）</p>
+<p>例：<code>-v ~/dockerdata:/data</code><br>在创建容器时<code>-v ~/dockerdata:/data:ro</code>可以在目录后再添加访问权限，默认是可读可写。<br>也可选择单个文件，若添加单个文件，<strong>主机源文件必须存在，否则会当做一个新目录挂载到容器</strong></p>
+<p>可用<code>docker inspect 容器</code>查看是否挂载了数据卷<br>可用<code>docker volume prune</code>删除未使用的卷</p>
+<blockquote>
+<p><strong>注：</strong>bind mount允许访问敏感文件<br>使用bind mount的一个副作用：可以通过容器中运行的进程更改主机文件系统，包括创建，修改或删除重要的系统文件或目录。这是一种强大的功能，可能会产生安全隐患，包括影响主机系统上的非Docker进程。</p>
+</blockquote>
+<h3 id="Docker-Managed-Volume"><a href="#Docker-Managed-Volume" class="headerlink" title="Docker Managed Volume"></a>Docker Managed Volume</h3><p>此法不需要指定mount源。同样还是-v ，只要指定容器挂载点就行。此法不支持单个文件，只能是目录。且不权限控制，均为可读写。<br>因为容器配置文件里的可以指定docker inspect查看 发现Mounts字段，其中已指定了源<br>源为：/var/lib/docker/volumes/容器长ID/_data<br>可通过docker  volume  ls     查看managed  volume（看不到bind  mount）<br>也可通过docker  volume  inspect  查看指定容器的managed volume<br>以上两种方法数据源其实还是宿主机中的，并不是真正放在volume container中，可以在通过dockerfile的ADD将数据打包进镜像并指定VOLUME，将ADD指定的目录与VOLUME设为一致，此法称为data-packed  volume  container</p>
+<h3 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h3><p>容器挂载数据卷，其他容器通过挂载该容器实现数据共享，挂载数据卷的容器称为数据卷容器</p>
+<p>创建容器时<code>--volumes-from 数据卷容器</code>创建数据卷容器<br><strong>注：由于数据卷容器仅是提供数据，所以只要create，不用run</strong><br><code>docker rm -v 容器</code> 在删除容器时一并删除数据卷<br>但是，只要有容器还在使用该数据卷，数据卷就不会删除。宿主机上的数据卷若删除，就真的没了。</p>
+<h3 id="数据卷备份与还原"><a href="#数据卷备份与还原" class="headerlink" title="数据卷备份与还原"></a>数据卷备份与还原</h3>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/docker/" rel="tag"># docker</a>
+          
+            <a href="/tags/存储/" rel="tag"># 存储</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/06/18/常见VPN技术基础/" rel="next" title="常见VPN技术基础">
+                <i class="fa fa-chevron-left"></i> 常见VPN技术基础
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">27</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">31</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker存储介绍"><span class="nav-number">1.</span> <span class="nav-text">Docker存储介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#容器数据卷"><span class="nav-number">2.</span> <span class="nav-text">容器数据卷</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#bind-mount"><span class="nav-number">2.1.</span> <span class="nav-text">bind mount</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Docker-Managed-Volume"><span class="nav-number">2.2.</span> <span class="nav-text">Docker Managed Volume</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据卷容器"><span class="nav-number">2.3.</span> <span class="nav-text">数据卷容器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据卷备份与还原"><span class="nav-number">2.4.</span> <span class="nav-text">数据卷备份与还原</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

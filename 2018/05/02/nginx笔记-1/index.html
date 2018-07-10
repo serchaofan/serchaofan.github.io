@@ -102,18 +102,20 @@
 
 
 
-  <meta name="description" content="本篇包含以下知识点：  nginx介绍 nginx基本配置 nginx常用模块 nginx简单优化">
+  <meta name="description" content="本篇包含以下知识点：  nginx介绍 nginx安装 nginx配置文件解析 nginx常见调优">
 <meta name="keywords" content="server,Nginx">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Nginx笔记（1）">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/05/02/nginx笔记-1/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="本篇包含以下知识点：  nginx介绍 nginx基本配置 nginx常用模块 nginx简单优化">
+<meta property="og:description" content="本篇包含以下知识点：  nginx介绍 nginx安装 nginx配置文件解析 nginx常见调优">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-05-28T01:20:41.852Z">
+<meta property="og:image" content="https://github.com/2018/05/02/nginx笔记-1/nginx_jiagou.png">
+<meta property="og:updated_time" content="2018-06-23T15:56:01.191Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Nginx笔记（1）">
-<meta name="twitter:description" content="本篇包含以下知识点：  nginx介绍 nginx基本配置 nginx常用模块 nginx简单优化">
+<meta name="twitter:description" content="本篇包含以下知识点：  nginx介绍 nginx安装 nginx配置文件解析 nginx常见调优">
+<meta name="twitter:image" content="https://github.com/2018/05/02/nginx笔记-1/nginx_jiagou.png">
 
 
 
@@ -227,7 +229,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">24</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
   </li>
         
         
@@ -235,7 +237,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">17</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">27</span></a>
   </li>
         
         
@@ -353,7 +355,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-05-28 09:20:41" itemprop="dateModified" datetime="2018-05-28T09:20:41+08:00">2018-05-28</time>
+                <time title="修改时间：2018-06-23 23:56:01" itemprop="dateModified" datetime="2018-06-23T23:56:01+08:00">2018-06-23</time>
               
             
           </span>
@@ -389,12 +391,64 @@
         <p>本篇包含以下知识点：</p>
 <ul>
 <li><a href="#nginx介绍">nginx介绍</a></li>
-<li><a href="#nginx基本配置">nginx基本配置</a></li>
-<li><a href="#nginx常用模块">nginx常用模块</a></li>
-<li><a href="#nginx简单优化">nginx简单优化</a><a id="more"></a>
+<li><a href="#nginx安装">nginx安装</a></li>
+<li><a href="#nginx配置文件解析">nginx配置文件解析</a></li>
+<li><a href="#nginx常见调优">nginx常见调优</a><a id="more"></a>
 </li>
 </ul>
-<h2 id="nginx介绍"><a href="#nginx介绍" class="headerlink" title="nginx介绍"></a>nginx介绍</h2><h2 id="nginx基本配置"><a href="#nginx基本配置" class="headerlink" title="nginx基本配置"></a>nginx基本配置</h2><h2 id="nginx常用模块"><a href="#nginx常用模块" class="headerlink" title="nginx常用模块"></a>nginx常用模块</h2><h2 id="nginx简单优化"><a href="#nginx简单优化" class="headerlink" title="nginx简单优化"></a>nginx简单优化</h2>
+<h2 id="nginx介绍"><a href="#nginx介绍" class="headerlink" title="nginx介绍"></a>nginx介绍</h2><p>Nginx有以下功能：</p>
+<ul>
+<li>负载均衡</li>
+<li>作为静态web服务器</li>
+<li>http协议的反向代理服务器</li>
+<li>pop3\smtp\imap4等邮件协议的反向代理</li>
+<li>能缓存打开的文件（元数据） ，支持FastCGI、uWSGI协议</li>
+<li>模块化（非DSO机制），过滤器zip，SSI，SSL</li>
+</ul>
+<p>特性：</p>
+<ul>
+<li>模块化设计，较好扩展性</li>
+<li>高可靠性：master/worker支持多进程，也支持多线程</li>
+<li>支持热备份：不停机更新配置文件，更换日志，更新服务器程序版本</li>
+<li>低内存消耗：10000个 keep-alive连接模式下非活动连接仅消耗2.5M内存</li>
+</ul>
+<p>Nginx架构：<br>nginx会以daemon方式启动进程，后台进程包含一个master进程和多个worker进程。<br>master进程用于启动管理多个worker进程，若取消master进程，则nginx会以单进程运行<br>一个请求只能在一个worker进程中处理，一个worker进程只能处理一个请求。worker进程个数一般设置为cpu核数</p>
+<p>master：加载配置文件、管理worker进程、平滑升级<br>worker：http服务、http代理、fastcgi代理<br>事件驱动：epoll      消息通知：select、poll、rt signals<br>模块类型：核心模块、标准http模块、可选http模块、邮件模块、第三方模块</p>
+<img src="/2018/05/02/nginx笔记-1/nginx_jiagou.png" title="jiagou">
+<p>请求过程：<br>1.在master进程里面，先建立好需要listen的socket（listenfd）之后，然后再fork出多个worker进程<br>2.所有worker进程的listenfd会在新连接到来时变得可读，为保证只有一个进程处理该连接，所有worker进程在注册listenfd读事件前抢accept_mutex，抢到互斥锁的那个进程注册listenfd读事件，在读事件里调用accept接受该连接。<br>3.当一个worker进程在accept这个连接之后，就开始读取请求，解析请求，处理请求，产生数据后，再返回给客户端，最后才断开连接</p>
+<h2 id="nginx安装"><a href="#nginx安装" class="headerlink" title="nginx安装"></a>nginx安装</h2><p>在安装nginx前需要安装以下环境：</p>
+<ul>
+<li>gcc与gcc-c++等，可直接组安装Development Tools</li>
+<li>prce-devel(perl的正则表达库)</li>
+<li>zlib与zlib-devel(资料压缩的函数库)</li>
+<li>openssl与openssl-devel(安全套接字密码库)</li>
+</ul>
+<p>创建系统用户组<code>groupadd -r nginx</code><br>创建系统<code>useradd -r nginx -M -g nginx</code></p>
+<blockquote>
+<p><code>-r</code>为创建系统用户（组），<code>-M</code>为不创建该用户家目录</p>
+</blockquote>
+<p>创建目录<code>/var/tmp/nginx/client</code>，否则在后面运行时可能报错。</p>
+<p><strong>初始化文件模块配置</strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">./configure --prefix=/usr/local/nginx \ # 设置nginx安装目录</span><br><span class="line">			--sbin-path=/usr/sbin/nginx \  # 命令放在/sbin下</span><br><span class="line">	        --conf-path=/etc/nginx.conf \  # 配置文件位置</span><br><span class="line">	        --error-log-path=/var/log/nginx/error.log \  # 报错日志</span><br><span class="line">	        --pid-path=/var/run/nginx/nginx.pid \  # nginx进程号文件</span><br><span class="line">	        --lock-path=/var/lock/nginx.lock \  # nginx锁文件</span><br><span class="line">	        --user=nginx \  # 指定用户</span><br><span class="line">	        --group=nginx \  # 指定用户组</span><br><span class="line">	        --http-log-path=/var/log/nginx/access.log \  # 运行日志位置</span><br><span class="line">	        --http-client-body-temp-path=/var/tmp/nginx/client \  </span><br><span class="line">	        # 指定客户端post上传的$_FILES上传的文件地址，该目录需要自己创</span><br><span class="line">	        --with-http_ssl_module \   # 加载ssl模块</span><br><span class="line">	        --with-http_stub_status_module \  # 加载监控模块</span><br><span class="line">	        --with-http_gzip_static_module \  # 加载gzip压缩模块</span><br><span class="line">	        --with-debug  # 允许debug</span><br></pre></td></tr></table></figure></p>
+<p>之后<code>make &amp;&amp; make install</code></p>
+<h2 id="nginx配置文件解析"><a href="#nginx配置文件解析" class="headerlink" title="nginx配置文件解析"></a>nginx配置文件解析</h2><p>配置文件/etc/nginx.conf<br>配置文件组织结构：</p>
+<ul>
+<li>全局配置</li>
+<li>模块配置</li>
+</ul>
+<h3 id="全局配置"><a href="#全局配置" class="headerlink" title="全局配置"></a>全局配置</h3><ul>
+<li><p>正常运行配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">user Username [Groupname]  # 指定运行worker进程的用户</span><br><span class="line">pid PATH  # 指定nginx进程的pid文件</span><br><span class="line">worker_rlimit_nofile   # 指定一个worker进程所能打开的最大文件描述符数量</span><br><span class="line">worker_rlimit_sigpending  # 指定每个用户能发给worker进程的最大的信号数量</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>性能优化配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">worker_processes  # worker进程个数，通常为物理CPU核心数量-1</span><br><span class="line">可填auto，自动使用所有CPU。</span><br><span class="line">worker_cpu_affinity CPUMask # 指定使用的cpu，cpumask为cpu掩码。</span><br><span class="line"># cpumask：0001,0010,0100,1000</span><br><span class="line">work_priority NICE  # 指定nice值，即优先级</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>调试定位配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">daemon &#123;on|off&#125;  # 是否以守护进程方式启动</span><br><span class="line">master_process &#123;on|off &#125;  # 是否以master模型运行</span><br><span class="line">error_log PATH [level]  # 错误日志文件路径及日志等级。</span><br><span class="line"># 可设置为debug，但需要在编译时指定--with-debug才能用</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="模块配置"><a href="#模块配置" class="headerlink" title="模块配置"></a>模块配置</h3><h4 id="event块"><a href="#event块" class="headerlink" title="event块"></a>event块</h4><p><code>event { }</code>事件驱动，并发响应连接<br>包含以下配置：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">worker_connections  # 每个worker进程能响应的最大并发请求数量</span><br><span class="line">use &#123;epoll | select | poll &#125;  # 选择使用事件类型，最好让nginx自动选择</span><br><span class="line">accept_mutex &#123;on|off&#125;  # 是否开启负载均衡锁，启用时，表示让多个worker进程轮流响应请求。</span><br><span class="line">lock_file PATH   # 锁文件路径</span><br></pre></td></tr></table></figure></p>
+<h4 id="http块"><a href="#http块" class="headerlink" title="http块"></a>http块</h4><p><code>http { }</code>配置web响应<br>包含以下配置：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">include       mime.types;</span><br><span class="line">default_type  application/octet-stream;</span><br><span class="line">#log_format  main  &apos;$remote_addr - $remote_user [$time_local] &quot;$request&quot; &apos;</span><br><span class="line">    #                  &apos;$status $body_bytes_sent &quot;$http_referer&quot; &apos;</span><br><span class="line">    #                  &apos;&quot;$http_user_agent&quot; &quot;$http_x_forwarded_for&quot;&apos;;</span><br><span class="line">    #access_log  logs/access.log  main;</span><br><span class="line">    sendfile        on;</span><br><span class="line">    #tcp_nopush     on;</span><br><span class="line">    #keepalive_timeout  0;</span><br><span class="line">    keepalive_timeout  65;</span><br><span class="line">    #gzip  on;</span><br><span class="line">server &#123; &#125;  # 虚拟主机模块</span><br></pre></td></tr></table></figure></p>
+
       
     </div>
 
@@ -519,7 +573,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">17</span>
+                    <span class="site-state-item-count">27</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -582,7 +636,21 @@
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">31</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -650,7 +718,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx介绍"><span class="nav-number">1.</span> <span class="nav-text">nginx介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx基本配置"><span class="nav-number">2.</span> <span class="nav-text">nginx基本配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx常用模块"><span class="nav-number">3.</span> <span class="nav-text">nginx常用模块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx简单优化"><span class="nav-number">4.</span> <span class="nav-text">nginx简单优化</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx介绍"><span class="nav-number">1.</span> <span class="nav-text">nginx介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx安装"><span class="nav-number">2.</span> <span class="nav-text">nginx安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx配置文件解析"><span class="nav-number">3.</span> <span class="nav-text">nginx配置文件解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#全局配置"><span class="nav-number">3.1.</span> <span class="nav-text">全局配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#模块配置"><span class="nav-number">3.2.</span> <span class="nav-text">模块配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#event块"><span class="nav-number">3.2.1.</span> <span class="nav-text">event块</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#http块"><span class="nav-number">3.2.2.</span> <span class="nav-text">http块</span></a></li></ol></li></ol></li></ol></div>
             
 
           </div>
