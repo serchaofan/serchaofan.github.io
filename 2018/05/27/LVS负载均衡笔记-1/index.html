@@ -102,23 +102,24 @@
 
 
 
-  <meta name="description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建">
-<meta name="keywords" content="server,LVS">
+  <meta name="description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建 VS/NAT模式搭建 VS/DR模式搭建">
+<meta name="keywords" content="server,LVS,keepalived,负载均衡">
 <meta property="og:type" content="article">
 <meta property="og:title" content="LVS负载均衡学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/05/27/LVS负载均衡笔记-1/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建">
+<meta property="og:description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建 VS/NAT模式搭建 VS/DR模式搭建">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/NAT-huanjing.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/NAT-baowen.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/TUN-huanjing.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/TUN-baowen.png">
 <meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/DR-baowen.png">
-<meta property="og:updated_time" content="2018-07-10T14:48:00.866Z">
+<meta property="og:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/vs_nat.png">
+<meta property="og:updated_time" content="2018-07-20T13:18:32.816Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="LVS负载均衡学习笔记">
-<meta name="twitter:description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建">
+<meta name="twitter:description" content="本篇笔记包含以下内容  LVS原理 LVS集群的通用体系结构 三种IP负载均衡技术 LVS两种调度方式与八种算法   KeepAlived原理 LVS+KeepAlived搭建 VS/NAT模式搭建 VS/DR模式搭建">
 <meta name="twitter:image" content="https://github.com/2018/05/27/LVS负载均衡笔记-1/NAT-huanjing.png">
 
 
@@ -233,7 +234,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">31</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">33</span></a>
   </li>
         
         
@@ -359,7 +360,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-07-10 22:48:00" itemprop="dateModified" datetime="2018-07-10T22:48:00+08:00">2018-07-10</time>
+                <time title="修改时间：2018-07-20 21:18:32" itemprop="dateModified" datetime="2018-07-20T21:18:32+08:00">2018-07-20</time>
               
             
           </span>
@@ -401,7 +402,11 @@
 </ul>
 </li>
 <li><a href="#KeepAlived原理">KeepAlived原理</a></li>
-<li><a href="#LVS+KeepAlived搭建">LVS+KeepAlived搭建</a><a id="more"></a>
+<li><a href="#LVS+KeepAlived搭建">LVS+KeepAlived搭建</a><ul>
+<li><a href="#VS/NAT模式搭建">VS/NAT模式搭建</a></li>
+<li><a href="#VS/DR模式搭建">VS/DR模式搭建</a><a id="more"></a>
+</li>
+</ul>
 </li>
 </ul>
 <h2 id="LVS原理"><a href="#LVS原理" class="headerlink" title="LVS原理"></a>LVS原理</h2><p>LVS（Linux Virtual Server）Linux虚拟服务器是由章文嵩于1998年开发的负载均衡软件，提供传输层和应用层的负载均衡，传输层的负载均衡工具为IPVS，应用层的负载均衡工具为KTCPVS。</p>
@@ -421,7 +426,7 @@
 <p><strong>为什么要用共享存储？</strong><br>共享存储是可选的，但若网络服务需要相同的内容，应该使用共享存储，否则无共享结构的代价会很大，每台服务器需要一样大的存储空间，任何更新需要涉及每一台服务器，系统的维护代价会非常高。分布式文件系统提供良好的<strong>伸缩性和可用性</strong>，分布式文件系统<strong>在每台服务器使用本地硬盘作Cache</strong>，可以使得访问分布式文件系统的速度接近于访问本地硬盘。 </p>
 <p><strong>如何实现高可用性？</strong><br>调度器上有资源监测进程时刻监视各个服务器结点的健康状况，当服务器对<strong>ICMP ping不可达</strong>时或者网络服务在<strong>指定的时间内没有响应</strong>时，资源监测进程会通知内核将该服务器<strong>从调度列表中删除</strong>。一旦监测到服务器恢复工作，通知调度器将其加入调度列表，管理员也可通过命令随时向调度列表添加或移除服务器。<br>调度器存在单点故障问题，因此需要对调度器进行主从备份，并用HeartBeat机制进行主从故障监测。当从调度器不能听得主调度器的心跳时，从调度器通过ARP欺骗 （Gratuitous ARP）来接管集群对外的VIP，同时接管主调度器的工作来提供负载调度服务。当主调度器恢复后，有两种<strong>恢复机制</strong>。第一种为<strong>主调度器自动变成从调度器（类似抢占）</strong>，另一种为<strong>从调度器释放VIP，主调度器收回VIP继续提供负载调度服务</strong>。<br>当主调度器失效时，<strong>主调度器上所有已建立连接的状态信息将丢失，已有连接会中断。</strong>客户需要重新连接从调度器，从调度器才会将新连接调度到各个服务器上。因此，调度器在内核中实现了一种高效同步机制，将主调度器的状态信息及时同步到从调度器。当从调度器接管时，绝大部分已建立的连接会持续下去。 </p>
 <p>前端负载均衡器称为Director Server（DR），后端的实际服务器称为Real Server(RS)，IP虚拟服务器软件称为IP Virtual Server（IPVS），在调度器的实现技术中，IP负载均衡技术的效率是最高的。</p>
-<p><strong>实验环境</strong></p>
+<p>模拟环境</p>
 <ul>
 <li>PC：100.1.1.1</li>
 <li>DR内部IP（即DIP）：192.168.1.100<br>DR外部IP（即VIP）：200.1.1.1</li>
@@ -509,9 +514,11 @@
 <li>Netlink接口：设置和删除网络接口上的VRRP虚拟IP。</li>
 <li>组播：通过组播地址224.0.0.18发送VRRP通告。</li>
 </ul>
-<h2 id="LVS-KeepAlived搭建"><a href="#LVS-KeepAlived搭建" class="headerlink" title="LVS+KeepAlived搭建"></a>LVS+KeepAlived搭建</h2><p>实验环境：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LVS-Master：192.168.163.102</span><br><span class="line">LVS-Backup：192.168.163.103</span><br><span class="line">VIP：192.168.163.100</span><br></pre></td></tr></table></figure></p>
-<p>首先安装依赖工具包<code>libnl3-devel</code>、<code>popt-static</code>。然后安装ipvsadm<br>ipvsadm是ipvs的命令行管理工具，可以定义、删除、查看virtual service和Real Server的属性。<br><a href="http://www.linuxvirtualserver.org/software/index.html" target="_blank" rel="noopener">IPVS的下载地址</a><br>也可以通过yum安装<br>安装完成后启动并设置开机自启<br><code>systemctl enable ipvsadm</code><br><code>systemctl start ipvsadm</code></p>
+<h2 id="LVS-KeepAlived搭建"><a href="#LVS-KeepAlived搭建" class="headerlink" title="LVS+KeepAlived搭建"></a>LVS+KeepAlived搭建</h2><p>首先在DR上安装依赖工具包<code>libnl3-devel</code>、<code>popt-static</code>，然后安装<code>ipvsadm</code>。<br><code>ipvsadm</code>是ipvs的命令行管理工具，可以定义、删除、查看virtual service和Real Server的属性。<br><a href="http://www.linuxvirtualserver.org/software/index.html" target="_blank" rel="noopener">IPVS的下载地址</a><br>也可以通过yum安装，安装完成后启动并设置开机自启<br><code>systemctl enable ipvsadm</code><br><code>systemctl start ipvsadm</code></p>
 <p>ipvsadm命令<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm选项中，大写选项管理虚拟服务virtual service，小写选项管理关联了虚拟服务的真实服务器RealServer</span><br><span class="line">1. 管理virtual service</span><br><span class="line">    -A --add-service    # 添加virtual service</span><br><span class="line">        -t --tcp-service 服务器IP[:端口]    # TCP服务</span><br><span class="line">        -u --udp-service 服务器IP[:端口]    # UDP服务</span><br><span class="line">        -f --fwmark-service 防火墙标记      # 防火墙标记</span><br><span class="line">        -s --scheduler 算法                # 指定算法</span><br><span class="line">    -E   # 修改，参数与-A一致</span><br><span class="line">    -D   # 删除，参数与-A一致</span><br><span class="line"></span><br><span class="line">2. 管理RealServer</span><br><span class="line">    -a --add-server     # 添加real server</span><br></pre></td></tr></table></figure></p>
+<h3 id="VS-NAT模式搭建"><a href="#VS-NAT模式搭建" class="headerlink" title="VS/NAT模式搭建"></a>VS/NAT模式搭建</h3><p>实验环境：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">DR：system5--192.168.163.137</span><br><span class="line">RS1：system1--192.168.163.101</span><br><span class="line">RS2：system2--192.168.163.102</span><br><span class="line">DIP：192.168.163.200</span><br><span class="line">VIP：192.168.80.200</span><br><span class="line">Client：system6--192.168.80.100</span><br></pre></td></tr></table></figure></p>
+<img src="/2018/05/27/LVS负载均衡笔记-1/vs_nat.png">
+<p>Client请求过程：Client向DR发请求包，VIP接收，经过ip_forward转发到DIP，然后根据算法选择RS，将数据包发往RS。<br>RS响应过程：RS向DR发响应包，DR的DIP接收响应包，经过ip_forward转发到VIP，最后将包回复给Client。<br><strong>因为VIP与DIP不是一个网段，所以DR上要开启ip_forward</strong></p>
 <blockquote>
 <p>参考文档<br><a href="http://www.linuxvirtualserver.org/zh/index.html" target="_blank" rel="noopener">LVS中文官方文档</a><br><a href="http://www.cnblogs.com/f-ck-need-u/p/8451982.html#1-lvs-" target="_blank" rel="noopener">骏马金龙LVS系列文章</a><br><a href="https://mp.weixin.qq.com/s?__biz=MzIxMjE5MTE1Nw==&amp;mid=2653193749&amp;idx=1&amp;sn=9321bf2c628b8d60913336ff6592f823&amp;chksm=8c99f4cfbbee7dd9e580eac24a5d481993a09bc93720dddc70d602e38e923012e1d7b245a76e&amp;mpshare=1&amp;scene=23&amp;srcid=0528GJKDr5wutmhQnNTVwG1H#rd" target="_blank" rel="noopener">负载均衡的原理</a><br>高性能网站构建实战<br><a href="https://mp.weixin.qq.com/s?__biz=MzA4NzQzMzU4Mg==&amp;mid=2652921952&amp;idx=1&amp;sn=c9e4cee313f9052095d499d5be41c2dd&amp;chksm=8bed4861bc9ac1778610eace025dfa685e661f04b53b539666b597d649e3429be01048242010&amp;mpshare=1&amp;scene=23&amp;srcid=0710bpqIBIAZyCVTrxFmag58#rd" target="_blank" rel="noopener">Linux之虚拟服务器LVS搭建</a></p>
 </blockquote>
@@ -542,6 +549,10 @@
             <a href="/tags/server/" rel="tag"># server</a>
           
             <a href="/tags/LVS/" rel="tag"># LVS</a>
+          
+            <a href="/tags/keepalived/" rel="tag"># keepalived</a>
+          
+            <a href="/tags/负载均衡/" rel="tag"># 负载均衡</a>
           
         </div>
       
@@ -717,7 +728,11 @@
                     
                       
                     
-                    <span class="site-state-item-count">31</span>
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">33</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -785,7 +800,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#LVS原理"><span class="nav-number">1.</span> <span class="nav-text">LVS原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS集群的通用体系结构"><span class="nav-number">1.1.</span> <span class="nav-text">LVS集群的通用体系结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三种IP负载均衡技术"><span class="nav-number">1.2.</span> <span class="nav-text">三种IP负载均衡技术</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS两种调度方式与八种算法"><span class="nav-number">1.3.</span> <span class="nav-text">LVS两种调度方式与八种算法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#KeepAlived原理"><span class="nav-number">2.</span> <span class="nav-text">KeepAlived原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LVS-KeepAlived搭建"><span class="nav-number">3.</span> <span class="nav-text">LVS+KeepAlived搭建</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#LVS原理"><span class="nav-number">1.</span> <span class="nav-text">LVS原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS集群的通用体系结构"><span class="nav-number">1.1.</span> <span class="nav-text">LVS集群的通用体系结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三种IP负载均衡技术"><span class="nav-number">1.2.</span> <span class="nav-text">三种IP负载均衡技术</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LVS两种调度方式与八种算法"><span class="nav-number">1.3.</span> <span class="nav-text">LVS两种调度方式与八种算法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#KeepAlived原理"><span class="nav-number">2.</span> <span class="nav-text">KeepAlived原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LVS-KeepAlived搭建"><span class="nav-number">3.</span> <span class="nav-text">LVS+KeepAlived搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#VS-NAT模式搭建"><span class="nav-number">3.1.</span> <span class="nav-text">VS/NAT模式搭建</span></a></li></ol></li></ol></div>
             
 
           </div>
