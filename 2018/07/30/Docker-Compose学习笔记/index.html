@@ -102,18 +102,18 @@
 
 
 
-  <meta name="description" content="已经是一条咸鱼了吧">
-<meta name="keywords" content="docker,docker-compose,云计算">
+  <meta name="description" content="环境：docker：18.06.1，docker-compose：1.22.0 docker18.06对应的Compose文件格式版本为3.7 本篇包含以下内容：  docker-compose介绍 Compose文件格式 docker-compose示例">
+<meta name="keywords" content="docker,docker-compose,云计算,容器编排">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker Compose学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/07/30/Docker-Compose学习笔记/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="已经是一条咸鱼了吧">
+<meta property="og:description" content="环境：docker：18.06.1，docker-compose：1.22.0 docker18.06对应的Compose文件格式版本为3.7 本篇包含以下内容：  docker-compose介绍 Compose文件格式 docker-compose示例">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-07-31T05:09:56.406Z">
+<meta property="og:updated_time" content="2018-09-18T09:27:19.673Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker Compose学习笔记">
-<meta name="twitter:description" content="已经是一条咸鱼了吧">
+<meta name="twitter:description" content="环境：docker：18.06.1，docker-compose：1.22.0 docker18.06对应的Compose文件格式版本为3.7 本篇包含以下内容：  docker-compose介绍 Compose文件格式 docker-compose示例">
 
 
 
@@ -227,7 +227,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">36</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">89</span></a>
   </li>
         
         
@@ -235,7 +235,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">30</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">59</span></a>
   </li>
         
         
@@ -248,11 +248,42 @@
 
       
       
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
     </ul>
   
 
   
 
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
   
 </nav>
 
@@ -353,7 +384,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-07-31 13:09:56" itemprop="dateModified" datetime="2018-07-31T13:09:56+08:00">2018-07-31</time>
+                <time title="修改时间：2018-09-18 17:27:19" itemprop="dateModified" datetime="2018-09-18T17:27:19+08:00">2018-09-18</time>
               
             
           </span>
@@ -386,7 +417,147 @@
       
 
       
-        
+        <p>环境：docker：18.06.1，docker-compose：1.22.0</p>
+<p>docker18.06对应的Compose文件格式版本为3.7</p>
+<p>本篇包含以下内容：</p>
+<ul>
+<li><a href="#docker-compose介绍">docker-compose介绍</a></li>
+<li><a href="#Compose文件格式">Compose文件格式</a></li>
+<li><a href="#docker-compose示例">docker-compose示例</a></li>
+</ul>
+<a id="more"></a>
+<h1 id="docker-compose介绍"><a href="#docker-compose介绍" class="headerlink" title="docker-compose介绍"></a>docker-compose介绍</h1><p><code>Docker Compose</code>是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。在配置文件中，所有的容器通过services来定义，然后使用docker-compose脚本来启动，停止和重启应用，和应用中的服务以及所有依赖服务的容器。</p>
+<p><strong>Compose的特性</strong></p>
+<ul>
+<li>通过项目名称将单个主机隔离成多个环境，能将应用环境复制多份，还能防止使用相同名称的服务的应用间的干扰</li>
+<li>能够保护卷中的数据，如果Compose发现存在之前运行过的容器，它会把旧容器中的数据卷拷贝到新的容器中</li>
+<li>只会重新创建改变过的容器，Compose会缓存用于创建容器的配置信息，当你重启服务时，如果服务没有被更改，Compose就会重用已经存在的容器，加快了修改应用的速度</li>
+</ul>
+<p><strong>编排：</strong>Orchestration，根据被部署的对象间的耦合关系以及被部署对象对环境的依赖，制定部署流程中各个动作的执行顺序，部署过程中所需要的依赖文件和被部署文件的存储位置和获取方式，以及如何验证部署成功。这些信息都会在编排工具中以制定格式定义并保存。</p>
+<p><strong>部署：</strong>Deployment，按照编排所指定的内容和流程，在目标机器上执行编排指定环境初始化，存放指定的依赖和文件，运行指定的部署动作，按照编排中规则确认是否部署成功。</p>
+<blockquote>
+<p>以上编排和部署定义摘选自《docker容器与容器云》</p>
+</blockquote>
+<p><strong>docker-compose安装</strong></p>
+<p>使用pip快速安装<code>pip install docker-compose</code></p>
+<p>docker-compose参数选项：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">docker-compose [-f &lt;arg&gt;...] [options] [COMMAND] [ARGS...]</span><br><span class="line">  -f, --file FILE             指定compose文件，默认为docker-compose.yml</span><br><span class="line">  -p, --project-name NAME     指定项目名，默认为所在目录名</span><br><span class="line">  --verbose                   显示详细过程信息</span><br><span class="line">  --log-level LEVEL           设置日志级别(DEBUG, INFO, WARNING, ERROR, CRITICAL)</span><br><span class="line">  --no-ansi                   不打印ANSI控制字符</span><br><span class="line">  -H, --host HOST             指定要连接的主机</span><br><span class="line"></span><br><span class="line">  --tls                       使用tls，就是指--tlsverify</span><br><span class="line">  --tlscacert CA_PATH         指定只承认该CA颁发的证书</span><br><span class="line">  --tlscert CLIENT_CERT_PATH  TLS证书路径</span><br><span class="line">  --tlskey TLS_KEY_PATH       TLS密钥路径</span><br><span class="line">  --tlsverify                 使用TLS</span><br><span class="line">  --skip-hostname-check       不根据客户端证书中指定的名称检查守护程序的主机名</span><br><span class="line">  --project-directory PATH    指定工作目录，默认为compose文件所在目录</span><br><span class="line">  --compatibility             Compose将尝试将v3文件中的部署密钥转换为其非Swarm等效项</span><br></pre></td></tr></table></figure>
+<p><strong>docker-compose命令：</strong></p>
+<ul>
+<li><p><strong><code>build</code></strong>：构建或重构服务（services）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">build [options] [--build-arg key=val...] [SERVICE...]</span><br><span class="line">    --compress              使用gzip压缩构建上下文</span><br><span class="line">    --force-rm              始终移除中间容器</span><br><span class="line">    --no-cache              构建镜像时不使用缓存</span><br><span class="line">    --pull                  总是尝试拉取最新镜像</span><br><span class="line">    -m, --memory MEM        设置构建镜像的内存上限</span><br><span class="line">    --build-arg key=val     设置服务的构建时变量</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>bundle</code></strong>：从Compose文件生成Docker包</p>
+<p>镜像必须存储摘要，这需要与Docker Registry进行交互。如果没有为所有镜像存储摘要，可以使用<code>docker-compose pull</code>或<code>docker-compose push</code>来获取。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bundle [options]</span><br><span class="line">    --push-images              在打包时自动推送已使用build指定的服务的镜像</span><br><span class="line">    -o, --output PATH          包文件路径，默认为&quot;项目名.dab&quot;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>config</code></strong>：校验并查看compose文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">config [options]</span><br><span class="line">    --resolve-image-digests  将镜像标签写入摘要</span><br><span class="line">    -q, --quiet              静默模式，只校验配置，不打印信息</span><br><span class="line">    --services               列出所有服务</span><br><span class="line">    --volumes                列出所有数据卷</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>down</code></strong>：停止并删除容器、网络、镜像、数据卷</p>
+<p>默认能删除的内容：</p>
+<ul>
+<li>Compose文件中定义的服务的容器<ul>
+<li>Compose文件的<code>networks</code>中定义的网络</li>
+<li>默认网络（如果使用）</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">down [options]</span><br><span class="line">    --rmi type              删除镜像，必须指定类型：</span><br><span class="line">                              &apos;all&apos;: 删除任何服务使用的所有镜像</span><br><span class="line">                              &apos;local&apos;: 只删除没有通过image指定自定义标签的镜像</span><br><span class="line">    -v, --volumes           删除在Compose文件的&quot;volumes&quot;中声明的命名卷和附加到容器的匿名卷。</span><br><span class="line">    --remove-orphans        为服务删除没有在compose文件中声明的容器</span><br><span class="line">    -t, --timeout TIMEOUT   指定几秒后关闭（默认10s）</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>events</code></strong>：从容器接收实时事件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">events [options] [SERVICE...]</span><br><span class="line">    --json      使用json格式输出事件</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>exec</code></strong>：在运行的容器中执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">exec [options] [-e KEY=VAL...] SERVICE COMMAND [ARGS...]</span><br><span class="line">    -d, --detach      后台运行命令</span><br><span class="line">    --privileged      给进程额外的权限</span><br><span class="line">    -u, --user USER   指定运行命令的用户</span><br><span class="line">    -T                禁止分配伪终端，exec默认分配一个伪终端</span><br><span class="line">    --index=index     设置容器的索引（如果一个服务有多个容器），默认为1</span><br><span class="line">    -e, --env KEY=VAL 设置环境变量</span><br><span class="line">    -w, --workdir DIR 设置工作目录</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>images</code></strong>：列出镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">images [options] [SERVICE...]</span><br><span class="line">    -q, --quiet  静默模式，只显示镜像号</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>kill</code></strong>：杀死容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kill [options] [SERVICE...]</span><br><span class="line">    -s SIGNAL         发送给容器的SIGNAL，默认为SIGKILL</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>logs</code></strong>：显示容器的输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">logs [options] [SERVICE...]</span><br><span class="line">    --no-color          单色输出</span><br><span class="line">    -f, --follow        按照日志输出</span><br><span class="line">    -t, --timestamps    显示时间戳</span><br><span class="line">    --tail=&quot;all&quot;        显示日志的末尾行数</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>pause</code></strong>：暂停服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pause [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>ps</code></strong>：列出容器，执行此命令时必须<code>cd</code>到项目的根目录下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ps [options] [SERVICE...]</span><br><span class="line">    -q, --quiet          静默，只显示容器号</span><br><span class="line">    --services           显示服务</span><br><span class="line">    --filter KEY=VAL     根据属性过滤服务</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>port</code></strong>：显示用于绑定的公共端口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">port [options] SERVICE PRIVATE_PORT</span><br><span class="line">    --protocol=proto  选择协议，tcp或udp，默认tcp</span><br><span class="line">    --index=index     设置容器的索引，默认为1</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>pull</code></strong>：拉取服务镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">pull [options] [SERVICE...]</span><br><span class="line">    --ignore-pull-failures  忽略拉取失败的镜像</span><br><span class="line">    --parallel              并行拉取多个镜像，默认开启，官方不推荐</span><br><span class="line">    --no-parallel           禁止并行拉取多个镜像</span><br><span class="line">    -q, --quiet             静默模式，不显示拉取信息</span><br><span class="line">    --include-deps          同时拉取依赖的服务</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>push</code></strong>：推送服务镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">push [options] [SERVICE...]</span><br><span class="line">    --ignore-push-failures  忽略推送失败的镜像</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>restart</code></strong>：重启服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">restart [options] [SERVICE...]</span><br><span class="line">  -t, --timeout TIMEOUT      指定几秒后重启（默认10s）</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>rm</code></strong>：删除停止的容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rm [options] [SERVICE...]</span><br><span class="line">    -f, --force   不询问确认删除</span><br><span class="line">    -s, --stop    在删除前自动停止容器</span><br><span class="line">    -v            删除任何关联的匿名数据卷，默认不会删除</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>run</code></strong>：运行一次性命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">run [options] [-v VOLUME...] [-p PORT...] [-e KEY=VAL...] [-l KEY=VALUE...] SERVICE [COMMAND] [ARGS...]</span><br><span class="line">    -d, --detach          后台运行</span><br><span class="line">    --name NAME           设置容器名</span><br><span class="line">    --entrypoint CMD      覆盖容器的ENTRYPOINT</span><br><span class="line">    -e KEY=VAL            设置环境变量</span><br><span class="line">    -l, --label KEY=VAL   添加或覆盖标签</span><br><span class="line">    -u, --user=&quot;&quot;         以指定用户执行，可设置用户名或uid</span><br><span class="line">    --no-deps             不启动相连的服务，默认依赖的服务也会启动</span><br><span class="line">    --rm                  在运行后删除容器，不与-d兼容</span><br><span class="line">    -p, --publish=[]      发布公共端口</span><br><span class="line">    --service-ports       通过已启用并映射到主机的端口执行命令</span><br><span class="line">    --use-aliases         在容器连接的网络中使用服务的网络别名</span><br><span class="line">    -v, --volume=[]       Bind mount挂载一个数据卷</span><br><span class="line">    -T                    禁止分配伪终端（tty），默认run会分配一个</span><br><span class="line">    -w, --workdir=&quot;&quot;      容器中的工作目录</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>start</code></strong>：启动已存在的容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">start [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>stop</code></strong>：停止运行中的容器，并不会删除它们</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">stop [options] [SERVICE...]</span><br><span class="line">  -t, --timeout TIMEOUT      指定几秒后关闭（默认10s）</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>top</code></strong>：显示服务的进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">top [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>unpause</code></strong>：恢复暂停的服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unpause [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>up</code></strong>：创建并启动容器</p>
+<p>默认会启动相连的服务。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">up [options] [--scale SERVICE=NUM...] [SERVICE...]</span><br><span class="line">    -d, --detach               后台运行。与--abort-on-container-exit不兼容</span><br><span class="line">    --no-color                 单色输出</span><br><span class="line">    --quiet-pull               静默拉取</span><br><span class="line">    --no-deps                  不启动连接的服务</span><br><span class="line">    --force-recreate           强制重建服务（即使配置和镜像都没变）</span><br><span class="line">    --always-recreate-deps     重建依赖的服务，与--no-recreate不兼容</span><br><span class="line">    --no-recreate              若容器存在就不会重建，与--force-recreate和-V不兼容</span><br><span class="line">    --no-build                 即使镜像丢失也不重建镜像</span><br><span class="line">    --no-start                 在构建服务后不启动该服务</span><br><span class="line">    --build                    在启动容器前先构建镜像</span><br><span class="line">    --abort-on-container-exit  如果任何容器停止，就停止所有容器，与-d不兼容</span><br><span class="line">    -t, --timeout TIMEOUT      设置容器几秒后关闭（默认10s）</span><br><span class="line">    -V, --renew-anon-volumes   重建匿名卷而不是从以前的容器中恢复数据。</span><br><span class="line">    --remove-orphans           删除服务的compose文件中未定义的容器</span><br><span class="line">    --exit-code-from SERVICE   返回指定服务的退出码 Implies --abort-on-container-exit.</span><br><span class="line">    --scale SERVICE=NUM        将SERVICE扩展到NUM个实例。会覆盖Compose文件中的&quot;scale&quot;设置（如果存在）</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="Compose文件格式"><a href="#Compose文件格式" class="headerlink" title="Compose文件格式"></a>Compose文件格式</h1><p>Compose文件采用<a href="">YAML语法</a>，文件名以<code>.yml</code>或<code>.yaml</code>结尾，默认应存放在项目的根目录中，文件名应为<code>docker-compose.yml</code>。在Compose文件中无需再指定Dockerfile中已定义的项。</p>
+<p>文件格式为3.7，所以compose文件最开始要写上<code>version: &quot;3&quot;</code></p>
+<p>然后定义服务<code>services</code>，在<code>services:</code>下添加服务，开始对服务的配置。</p>
+<p><code>build</code>：用于指定在构建时应用的配置选项。</p>
+<p><code>context</code>：用于指定构建上下文。</p>
+<p><code>dockerfile</code>：用于指定Dockerfile文件</p>
+<p><code>args</code>：用于给Dockerfile文件中<code>ARG</code>定义的参数传参</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">version: &quot;3&quot;</span><br><span class="line">services: </span><br><span class="line">  webapp:</span><br><span class="line">    build: ./dir     可以这样直接指定上下文路径</span><br><span class="line">    </span><br><span class="line">  webapp:</span><br><span class="line">    build:           也可以作为具有在上下文中指定的路径的对象</span><br><span class="line">      context: ./dir 然后通过context指定上下文路径</span><br><span class="line">      当提供的值是相对路径时，context被解释为相对于Compose文件的位置。此目录也是发送到Docker daemon的构建上下文</span><br><span class="line">    build: </span><br><span class="line">      context: .</span><br><span class="line">      dockerfile: webapp.dockerfile   还可以指定Dockerfile文件</span><br><span class="line">      args:          可以为Dockerfile文件传参</span><br><span class="line">        args1: 123</span><br><span class="line">        args2: 345</span><br><span class="line">      也可以这样表示：</span><br><span class="line">      args: </span><br><span class="line">      - args1=123</span><br><span class="line">      - args2=345</span><br><span class="line">    image: webapp:tag  可以指定构建镜像，会生成一个名为webapp，并打上tag标签的镜像</span><br><span class="line">    在群集模式下使用Compose文件（版本3）部署堆栈时，将忽略image选项。 docker stack命令仅接受预先构建的图像。</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：YAML布尔值（true，false，yes，no，on，off）必须用引号括起来，以便解析器将它们解释为字符串。</p>
+</blockquote>
+<p><code>cache_from</code>：指定Docker引擎用于实现缓存的镜像列表</p>
+<p><code>labels</code>：使用标签将元数据添加到生成的镜像中，可使用数组或字典</p>
+<p><code>shm_size</code>：为构建的容器设置<code>/dev/shm</code>分区的大小，指定字节数或字节值字符串，如<code>2mb</code>或<code>2000000</code></p>
+<p><code>target</code>：根据Dockerfile中的定义构建指定的阶段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">build:</span><br><span class="line">  context: .</span><br><span class="line">  target: prod</span><br></pre></td></tr></table></figure>
+<p><code>cap_add</code>和<code>cap_drop</code>：添加或删除容器功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cap_add:</span><br><span class="line">  - ALL</span><br><span class="line"></span><br><span class="line">cap_drop:</span><br><span class="line">  - NET_ADMIN</span><br><span class="line">  - SYS_ADMIN</span><br></pre></td></tr></table></figure>
+<p><code>command</code>：覆盖容器启动后默认执行的命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">command: bundle exec thin -p 3000</span><br><span class="line">或使用列表表示：</span><br><span class="line">command: [&quot;bundle&quot;, &quot;exec&quot;, &quot;thin&quot;, &quot;-p&quot;, &quot;3000&quot;]</span><br></pre></td></tr></table></figure>
+<p><code>container_name</code>：自定义该容器名称。由于Docker容器名称必须是唯一的，因此如果指定了自定义名称，则无法将服务扩展到多个容器</p>
+<p><code>volumes</code>：卷挂载路径设置。格式：<code>宿主机源路径:容器目的路径[:访问权限]</code>，默认访问权限为读写。可使用相对路径，相对于compose文件所在目录。</p>
+<p><code>links</code>：链接到另一个服务中的容器，格式：<code>服务名[:别名]</code></p>
+<p><code>external-links</code>：链接到docker-compose.yml外部的容器，甚至并非 Compose 管理的容器。</p>
+<p><code>expose</code>：暴露端口，但不映射到宿主机，只被连接的服务访问。最好使用字符串表示数字，因为YAML会解析<code>xx:yy</code>这种数字格式为 60 进制，容器端口小于 60 可能出错。</p>
+<p><code>ports</code>：暴露端口信息，格式：<code>[宿主机IP:][端口:]容器端口</code>，可用<code>-</code>表示一个端口范围</p>
+<h1 id="docker-compose示例"><a href="#docker-compose示例" class="headerlink" title="docker-compose示例"></a>docker-compose示例</h1><p>首先是docker-compose官方文档中的示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><ul>
+<li><a href="https://blog.csdn.net/vchy_zhao/article/details/70238413" target="_blank" rel="noopener">Docker三剑客之Compose-一</a></li>
+<li><a href="https://blog.csdn.net/vchy_zhao/article/details/70238432" target="_blank" rel="noopener">Docker三剑客之Compose-二</a></li>
+<li><a href="https://blog.csdn.net/vchy_zhao/article/details/70238461" target="_blank" rel="noopener">Docker三剑客之Compose-三</a></li>
+<li><a href="https://blog.csdn.net/pushiqiang/article/details/78682323" target="_blank" rel="noopener">docker-compose教程（安装，使用, 快速入门）</a></li>
+<li><a href="https://docs.docker.com/compose/" target="_blank" rel="noopener">docker-compose官方文档</a></li>
+<li><a href="https://www.cnblogs.com/ee900222/p/docker_5.html" target="_blank" rel="noopener">Docker系列之（五）：使用Docker Compose编排容器</a></li>
+</ul>
+
       
     </div>
 
@@ -416,6 +587,8 @@
           
             <a href="/tags/云计算/" rel="tag"># 云计算</a>
           
+            <a href="/tags/容器编排/" rel="tag"># 容器编排</a>
+          
         </div>
       
 
@@ -427,7 +600,7 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/07/13/Kubernetes学习笔记-1/" rel="next" title="Kubernetes学习笔记-1">
+              <a href="/2018/07/13/Kubernetes学习笔记/" rel="next" title="Kubernetes学习笔记-1">
                 <i class="fa fa-chevron-left"></i> Kubernetes学习笔记-1
               </a>
             
@@ -488,8 +661,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -504,7 +686,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">30</span>
+                    <span class="site-state-item-count">59</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -591,7 +773,113 @@
                     
                       
                     
-                    <span class="site-state-item-count">36</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">88</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -649,6 +937,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-compose介绍"><span class="nav-number">1.</span> <span class="nav-text">docker-compose介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Compose文件格式"><span class="nav-number">2.</span> <span class="nav-text">Compose文件格式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-compose示例"><span class="nav-number">3.</span> <span class="nav-text">docker-compose示例</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文章"><span class="nav-number">3.0.1.</span> <span class="nav-text">参考文章</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -819,6 +1123,326 @@
 
 
   
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
 
 
 

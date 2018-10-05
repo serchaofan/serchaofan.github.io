@@ -110,12 +110,14 @@
 <meta property="og:site_name" content="tdLaogu的小站">
 <meta property="og:description" content="基于华三网络学习笔记（理论） 本篇包含以下内容  OSPF特性与基本术语 OSPF报文 OSPF邻居建立维护与状态机 OSPF特殊区域">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2018/07/31/OSPF学习笔记/3.png">
+<meta property="og:image" content="https://github.com/2018/07/31/OSPF学习笔记/2.png">
 <meta property="og:image" content="https://github.com/2018/07/31/OSPF学习笔记/1.png">
-<meta property="og:updated_time" content="2018-07-31T07:45:40.813Z">
+<meta property="og:updated_time" content="2018-09-04T10:51:09.919Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="OSPF学习笔记">
 <meta name="twitter:description" content="基于华三网络学习笔记（理论） 本篇包含以下内容  OSPF特性与基本术语 OSPF报文 OSPF邻居建立维护与状态机 OSPF特殊区域">
-<meta name="twitter:image" content="https://github.com/2018/07/31/OSPF学习笔记/1.png">
+<meta name="twitter:image" content="https://github.com/2018/07/31/OSPF学习笔记/3.png">
 
 
 
@@ -229,7 +231,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">36</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">89</span></a>
   </li>
         
         
@@ -237,7 +239,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">30</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">59</span></a>
   </li>
         
         
@@ -250,11 +252,42 @@
 
       
       
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
     </ul>
   
 
   
 
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
   
 </nav>
 
@@ -338,12 +371,24 @@
                 
               
 
-              <time title="创建时间：2018-07-31 12:36:00 / 修改时间：15:45:40" itemprop="dateCreated datePublished" datetime="2018-07-31T12:36:00+08:00">2018-07-31</time>
+              <time title="创建时间：2018-07-31 12:36:00" itemprop="dateCreated datePublished" datetime="2018-07-31T12:36:00+08:00">2018-07-31</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-09-04 18:51:09" itemprop="dateModified" datetime="2018-09-04T18:51:09+08:00">2018-09-04</time>
               
             
           </span>
@@ -390,7 +435,7 @@
 <li>属于IGP，优先级AS内部10，外部150</li>
 <li>采用链路状态算法SPF防环</li>
 <li>封装在IP报文中，协议号89</li>
-<li>度量值为开销cost=带宽参考值/接口带宽</li>
+<li>度量值为开销cost=带宽参考值/接口带宽，参考值通常为100M，若求得的数小于1，则cost就取1</li>
 <li>报文更新方式为触发更新+周期更新（30min。LSA老化时间60min）</li>
 <li>增量更新（通过LSA），组播更新报文</li>
 <li>组播地址224.0.0.5（主要，所有OSPF路由器都能收到）或224.0.0.6（DR、BDR可收到）</li>
@@ -414,6 +459,12 @@
 <li>类型相同，选路由开销小的</li>
 <li>以上都相同，形成等价路由</li>
 </ol>
+<p>两类外部路由：<br><img src="/2018/07/31/OSPF学习笔记/3.png"></p>
+<ul>
+<li>第一类外部路由：偏向于AS内部的选路，并不关心AS外的开销。用于控制入AS的路由选路。<br>如图中RTA，若选择第一类外部路由，则关心AS内部的开销，会选择开销较小的RTB路线。</li>
+<li>第二类外部路由：偏向与AS外部的选路，并不关心AS内的开销。用于控制出AS的路由选路。<br>如图中RTA，若选择第二类外部路由，则关心AS外部的开销，会选择开销较小的RTC路线。</li>
+</ul>
+<p>若同一网段的路由信息同时通过第一类外部路由和第二类外部路由学习到，在其他条件相同的情况下，会优选第一类外部路由。</p>
 <p>骨干区域：area 0，负责转发非骨干区域之间的路由。<br>区域间路由规则：</p>
 <ol>
 <li>非骨干区域必须与骨干区域相连</li>
@@ -433,7 +484,8 @@
 <li>区域内路由器Internal：所有接口都属于同一个区域</li>
 <li>区域边界路由器Area Border：连接骨干与非骨干区域（物理上或逻辑上）</li>
 <li>骨干路由器Backbone：至少有一个接口属于骨干区域，即所有区域内和区域边界路由器都是骨干路由器</li>
-<li>自治系统边界路由器Autonomous System Border：与其他AS路由器交换路由信息，不一定在AS的边界，只要该路由器引入外部路由，就是ASBR。</li>
+<li>自治系统边界路由器Autonomous System Border：与其他AS路由器交换路由信息，不一定在AS的边界，只要该路由器引入外部路由，就是ASBR。<img src="/2018/07/31/OSPF学习笔记/2.png">
+</li>
 </ol>
 <p>Router ID用来在AS中唯一标识一个路由器，RouterID的选取优先级如下：<br>局部 &gt; 全局 &gt; 自动选举<br>局部：创建OSPF进程时同时指定router-id<br>全局：系统视图下指定router id<br>自动选举：环回口中最大的，若无环回口，则选取接口中IP地址最大的</p>
 <p>网络类型：</p>
@@ -446,7 +498,7 @@
 <h2 id="OSPF报文"><a href="#OSPF报文" class="headerlink" title="OSPF报文"></a>OSPF报文</h2><p>OSPF五种报文：</p>
 <ol>
 <li><code>Hello</code>报文：发现维护邻居关系，包含定时器、DR、BDR和已知邻居</li>
-<li><code>DD</code>报文：数据库描述报文，描述本地LSDB中LSA摘要，用于路由器间LSDB同步</li>
+<li><code>DD</code>报文：数据库描述报文，<strong>描述本地LSDB中LSA摘要，进行主从关系协商</strong>，用于路由器间LSDB同步</li>
 <li><code>LSR(Request)</code>报文：链路请求报文，向对方请求所需LSA（通过比对DD报文知道自己缺哪些LSA）</li>
 <li><code>LSU(Update)</code>报文：链路状态更新报文，向对方发送所要求的LSA</li>
 <li><code>LSAck</code>报文：链路状态确认报文，对收到的LSA进行确认</li>
@@ -529,7 +581,8 @@
 <ol>
 <li><code>Stub</code>：不允许注入四、五类LSA。不能存在ASBR。虚连接不可穿过。若有多个ABR可能产生次优路由</li>
 <li><code>Totally Stub</code>：不允许注入三、四、五类LSA。虚连接不可穿过。ABR会产生一条0.0.0.0/0的三类LSA</li>
-<li><code>NSSA</code>：不允许四、五类LSA，允许七类LSA。虚连接不可穿过。该区域存在一个ASBR，该区域不希望接收其他ASBR的外部路由。七类LSA由ASBR产生，在NSSA中传播，当到达ABR时，会转换为五类LSA传到别的区域。<br><strong>Totally STub和NSSA都是Stub的变形或改进</strong></li>
+<li><code>NSSA</code>：不允许四、五类LSA，允许七类LSA。虚连接不可穿过。该区域存在一个ASBR，该区域不希望接收其他ASBR的外部路由。七类默认路由LSA由ASBR产生，在NSSA中传播，当到达ABR时，会转换为五类LSA传到别的区域。<br><strong>Totally STub和NSSA都是Stub的变形或改进</strong></li>
+<li><code>Totally NSSA</code>：不允许注入三、四、五类LSA，而是用七类默认路由取代。虚连接不可穿过。</li>
 </ol>
 
       
@@ -579,6 +632,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/07/31/组播学习笔记/" rel="prev" title="组播学习笔记">
+                组播学习笔记 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -652,7 +709,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">30</span>
+                    <span class="site-state-item-count">59</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -739,7 +796,113 @@
                     
                       
                     
-                    <span class="site-state-item-count">36</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">88</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -983,6 +1146,326 @@
 
 
   
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
 
 
 

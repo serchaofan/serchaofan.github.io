@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/mylogo-apple.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/mylogo-32x32.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/mylogo-16x16.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="基于华三网络学习笔记 本篇主要包含以下内容：  OSI地址 IS-IS概述 IS-IS实现">
+<meta name="keywords" content="网络,IS-IS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IS-IS学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/08/05/IS-IS学习笔记/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="基于华三网络学习笔记 本篇主要包含以下内容：  OSI地址 IS-IS概述 IS-IS实现">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2018/08/05/IS-IS学习笔记/1.png">
+<meta property="og:image" content="https://github.com/2018/08/05/IS-IS学习笔记/2.png">
+<meta property="og:updated_time" content="2018-09-04T10:51:10.291Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="IS-IS学习笔记">
+<meta name="twitter:description" content="基于华三网络学习笔记 本篇主要包含以下内容：  OSI地址 IS-IS概述 IS-IS实现">
+<meta name="twitter:image" content="https://github.com/2018/08/05/IS-IS学习笔记/1.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/08/05/IS-IS学习笔记/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>IS-IS学习笔记 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">89</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">59</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/08/05/IS-IS学习笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">IS-IS学习笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-08-05 15:18:10" itemprop="dateCreated datePublished" datetime="2018-08-05T15:18:10+08:00">2018-08-05</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-09-04 18:51:10" itemprop="dateModified" datetime="2018-09-04T18:51:10+08:00">2018-09-04</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>基于华三网络学习笔记</strong></p>
+<p>本篇主要包含以下内容：</p>
+<ul>
+<li><a href="OSI地址">OSI地址</a></li>
+<li><a href="IS-IS概述">IS-IS概述</a></li>
+<li><a href="#IS-IS实现">IS-IS实现</a></li>
+</ul>
+<a id="more"></a>
+<h2 id="OSI地址"><a href="#OSI地址" class="headerlink" title="OSI地址"></a>OSI地址</h2><p>在OSI协议体系中，OSI地址标识了一台支持OSI协议的设备。IS-IS的报文封装在数据链路层，采用OSI报文格式，包含OSI地址。IS-IS协议将ISO网络层地址称NSAP。IS-IS用OSI地址标识不同IS，并构建网络拓扑数据库，计算到达各节点的最短路径树。</p>
+<p>OSI地址使用的是NASP（Network Service Access Point网络服务接入点）地址格式，是IP地址和上层协议号的组合，用于标识设备和设备启用的服务。</p>
+<p>NASP由IDP（Initial Domian Part初始域部分）和DSP（Domain Specific Part域指定部分），IDP表示IP地址的主网络号，DSP表示IP地址的子网号和主机地址。IDP和DSP长度是可变的，但NASP的总长最多为20字节，最少8字节。</p>
+<p>在IS-IS中，NASP地址被分为3部分：可变长区域地址，System ID，NSEL。</p>
+<img src="/2018/08/05/IS-IS学习笔记/1.png">
+<p>System ID用于在区域中唯一表示主机或服务器，一般会由Router ID转换得出。</p>
+<blockquote>
+<p> 转换方法：Router ID的每部分都扩展为3位数字，不足则在前补零，将扩展后的地址重新划分为3部分，每部分4个数字，得到System ID</p>
+</blockquote>
+<p>NSEL类似于协议标识符，当协议为IP时，NSEL均为00。</p>
+<p>路由器只需配置一个区域地址，但最多可以配置3个，同一区域中所有节点的区域地址都相同。</p>
+<p>NET（Network Entity Title网络实体名称）指示的是IS本身的网络层信息，不包括传输层信息，可看做NSEL为0的特殊的NASP。一台路由器只需配置一个NET，最多3个，若配置多个NET，则必须保证System ID相同。NET除了可以通过Router ID转换变得，也可通过MAC地址转换变得，但MAC地址由于具有全局性，一个区域内的路由器的MAC没有规律，管理不方便，所以一般还是用Router ID映射。</p>
+<h2 id="IS-IS概述"><a href="#IS-IS概述" class="headerlink" title="IS-IS概述"></a>IS-IS概述</h2><p>IS-IS（Intermediate System-to-Intermediate System，中间系统到中间系统）是ISO为CLNP（Connection Less Network Protocol，无连接网络协议）设计的一种动态路由协议。IS-IS能够同时应用在TCP/IP和OSI环境中，形成了集成化IS-IS。采用TLV架构，易于扩展。</p>
+<p>IS-IS属于内部网关路由协议，用于自治系统内部。IS-IS是一种链路状态协议，与TCP/IP网络中的OSPF协议非常相似，使用最短路径优先算法SPF进行路由计算。</p>
+<h3 id="IS-IS常见术语："><a href="#IS-IS常见术语：" class="headerlink" title="IS-IS常见术语："></a>IS-IS常见术语：</h3><p>区域（Area）：路由域的细分单元，IS-IS允许将整个路由域分为多个区域</p>
+<p>路由域（Routing  Domain）：较大的区域，可包含多个区域</p>
+<p>中间系统Intermediate System（IS）：即路由器</p>
+<p>终端系统End  System（ES）：即主机</p>
+<p>ES-IS：主机和路由器之间运行的协议</p>
+<p>IS-IS：路由器与路由器之间运行的协议，就是用来提供路由域内或一个区域内的路由</p>
+<p>IS-IS路由器有三种角色：</p>
+<ol>
+<li>Level-1：负责区域内的路由，只与属于<strong>同一区域的Level-1和Level-1-2路由器形成邻居关系</strong>，维护一个Level-1的链路状态数据库，该链路状态数据库包含<strong>本区域的路由信息</strong>，到区域外的报文转发给最近的Level-1-2路由器。</li>
+<li>Level-2：负责区域间的路由，可以与<strong>同一区域或者其它区域的Level-2和Level-1-2路由器形成邻居关系</strong>，维护一个Level-2的链路状态数据库，该链路状态数据库包含<strong>区域间的路由信息</strong>。所有<strong>Level-2</strong>路由器和<strong>Level-1-2</strong>路由器组成路由域的<strong>骨干网</strong>，负责在不同区域间通信，路由域中的Level-2路由器必须是物理连续的，以保证骨干网的连续性。</li>
+<li>Level-1-2：同时属于Level-1和Level-2的路由器，可以与<strong>同一区域的Level-1和Level-1-2路由器形成Level-1邻居关系</strong>，也可以与<strong>同一区域或者其他区域的Level-2和Level-1-2路由器形成Level-2的邻居关系</strong>。Level-1路由器必须通过Level-1-2路由器才能连接至其他区域。Level-1-2路由器维护两个链路状态数据库，Level-1的链路状态数据库用于区域内路由，Level-2的链路状态数据库用于区域间路由。</li>
+</ol>
+<p>每台路由器只能属于一个区域，区域边界在链路上。</p>
+<h3 id="IS-IS协议报文"><a href="#IS-IS协议报文" class="headerlink" title="IS-IS协议报文"></a>IS-IS协议报文</h3><p>IS-IS使用协议数据单元PDU进行通讯。PDU有以下类型：</p>
+<ul>
+<li>IS-IS Hello PDU：简称IIH，负责路由间的邻居关系建立和维护</li>
+<li>链路状态PDU：简称LSP，描述路由器中的所有链路状态信息</li>
+<li>时序报文SNP：用于确认邻居间最新接收的LSP，类似于确认报文。包括两种报文：CSNP和PSNP</li>
+<li>全时序报文CSNP：包含网络中每个LSP的摘要信息。当路由器收到一个CSNP时，它会将该CSNP与其链路状态数据库LSDB进行比较，如果该路由器丢失了一个在CSNP中存在的LSP时， 它会发送一个组播PSNP，向网络中其它路由器索要其需要的LSP。</li>
+<li>部分时序报文PSNP：在点对点链路中用于确认接收的LSP和请求最新或者丢失的LSP；在广播链路中仅用于请求最新或者丢失的LSP。</li>
+</ul>
+<p>IS-IS报文直接封装在链路层数据中。报头包含通用报头Common Header和专用报头Specific Header。</p>
+<h3 id="IS-IS网络类型"><a href="#IS-IS网络类型" class="headerlink" title="IS-IS网络类型"></a>IS-IS网络类型</h3><p>点对点：主要用于PPP、HDLC</p>
+<p>广播：主要用于以太网</p>
+<h2 id="IS-IS实现"><a href="#IS-IS实现" class="headerlink" title="IS-IS实现"></a>IS-IS实现</h2><h3 id="邻接关系"><a href="#邻接关系" class="headerlink" title="邻接关系"></a>邻接关系</h3><ol>
+<li><p>邻居关系建立</p>
+<p>若在点对点网络，只要IS能接收到对端的P2P IIH报文，则邻居能建立，状态变为UP</p>
+<p>若在广播网络，邻居建立需要三次握手。</p>
+</li>
+<li><p>邻接关系建立</p>
+<p>若在点对点网络：</p>
+<p>若在同一区域Area，L1间只建立L1邻接关系，L1和L1/2只建立L1邻接关系，L1/2间建立L1和L2邻接关系。</p>
+<p>若在不同区域，L1间不建立邻接关系（邻居关系都不是），L2间建立L2邻接关系，L1/2间建立L2邻接关系。</p>
+<p>若在广播网络：会选举DIS（Desginated IS，指定IS），类似DR，相同角色的IS间会选举一个，例如L1的路由器间选出一个，与L2间选出的并不冲突。</p>
+</li>
+</ol>
+<p><strong>DIS的作用：</strong></p>
+<p><strong>一旦一个设备选举为DIS以后，DIS发送HELLO数据包的时间间隔是普通路由器的1/3，这样可以保证DIS失效的时候可以被快速检测到</strong>。</p>
+<p><strong>DIS的选举是抢占的, 不能不参加选举，IS-IS中不存在备份DIS,当一个DIS不能工作的时候，直接选举另外一个</strong>。</p>
+<ul>
+<li>在广播子网中创建并向所有的路由器通告伪节点LSP(Link State Protocol Data unit 链路状态数据单元).</li>
+<li>在LAN中通过每10s周期性发送CSNP（完全数据库描述）来泛洪LSP(Link State Protocol Data unit 链路状态数据单元).</li>
+</ul>
+<p><strong>DIS的选举过程：</strong></p>
+<ol>
+<li>比较接口优先级，高的优</li>
+<li>具有最大的(SNPA子网接入点)的路由器将当选DIS。广播网络中SNPA是指MAC地址</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>点到点</th>
+<th>广播</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hello报文</td>
+<td>P2P IIH</td>
+<td>Level-1/2 LAN IIH</td>
+</tr>
+<tr>
+<td>Hello报文形式</td>
+<td>单播</td>
+<td>组播</td>
+</tr>
+<tr>
+<td>Hello定时器</td>
+<td>10s</td>
+<td>10s，DIS为3.3s</td>
+</tr>
+<tr>
+<td>邻接关系数量</td>
+<td>1</td>
+<td>多个</td>
+</tr>
+</tbody>
+</table>
+<h3 id="LSDB同步"><a href="#LSDB同步" class="headerlink" title="LSDB同步"></a>LSDB同步</h3><p>同步相关报文：</p>
+<ol>
+<li><p>LSP报文：用于描述链路状态信息</p>
+<p>Level-1 LSP仅在区域内传播，Level-2 LSP在骨干网传播</p>
+</li>
+<li><p>SNP报文：用于描述LSDB中LSP摘要，并对邻居之间最新接收的LSP进行确认</p>
+</li>
+<li><p>CSNP报文：包含所有LSP的摘要信息，在广播网络中周期发送，在点对点网络中只在第一次发送</p>
+</li>
+<li><p>PSNP报文：列举最近收到的一个或多个LSP序号，用于LSP确认</p>
+</li>
+</ol>
+<p><strong>在广播网络中：</strong></p>
+<img src="/2018/08/05/IS-IS学习笔记/2.png">
+<ol>
+<li>所有同类路由器向DIS发送自己的所有LSP</li>
+<li>DIS周期发送LSP摘要信息</li>
+<li>IS向DIS发送PSNP响应</li>
+<li>DIS回复LSP_K</li>
+</ol>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote>
+<p><a href="https://baike.baidu.com/item/is-is/930474" target="_blank" rel="noopener">百度百科IS-IS</a></p>
+</blockquote>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/网络/" rel="tag"># 网络</a>
+          
+            <a href="/tags/IS-IS/" rel="tag"># IS-IS</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/01/磁盘管理与文件系统学习笔记/" rel="next" title="文件系统学习笔记">
+                <i class="fa fa-chevron-left"></i> 文件系统学习笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/08/16/Cuda环境搭建/" rel="prev" title="Cuda环境搭建">
+                Cuda环境搭建 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">59</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">88</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#OSI地址"><span class="nav-number">1.</span> <span class="nav-text">OSI地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IS-IS概述"><span class="nav-number">2.</span> <span class="nav-text">IS-IS概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IS-IS常见术语："><span class="nav-number">2.1.</span> <span class="nav-text">IS-IS常见术语：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IS-IS协议报文"><span class="nav-number">2.2.</span> <span class="nav-text">IS-IS协议报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IS-IS网络类型"><span class="nav-number">2.3.</span> <span class="nav-text">IS-IS网络类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IS-IS实现"><span class="nav-number">3.</span> <span class="nav-text">IS-IS实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#邻接关系"><span class="nav-number">3.1.</span> <span class="nav-text">邻接关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#LSDB同步"><span class="nav-number">3.2.</span> <span class="nav-text">LSDB同步</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

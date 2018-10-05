@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/mylogo-apple.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/mylogo-32x32.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/mylogo-16x16.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="top与htop uptime,free和vmstat mpstat与iostat ps和pstree">
+<meta name="keywords" content="运维,监控,性能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux性能监控常用命令">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/08/01/Linux性能监控常用命令/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="top与htop uptime,free和vmstat mpstat与iostat ps和pstree">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-09-30T04:33:19.796Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux性能监控常用命令">
+<meta name="twitter:description" content="top与htop uptime,free和vmstat mpstat与iostat ps和pstree">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/08/01/Linux性能监控常用命令/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Linux性能监控常用命令 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">89</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">59</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/08/01/Linux性能监控常用命令/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux性能监控常用命令
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-08-01 20:57:03" itemprop="dateCreated datePublished" datetime="2018-08-01T20:57:03+08:00">2018-08-01</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-09-30 12:33:19" itemprop="dateModified" datetime="2018-09-30T12:33:19+08:00">2018-09-30</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <ul>
+<li><a href="">top与htop</a></li>
+<li><a href="">uptime,free和vmstat</a></li>
+<li><a href="">mpstat与iostat</a></li>
+<li><a href="">ps和pstree</a></li>
+<li></li>
+</ul>
+<a id="more"></a>
+<h1 id="top与htop"><a href="#top与htop" class="headerlink" title="top与htop"></a>top与htop</h1><h2 id="top"><a href="#top" class="headerlink" title="top"></a>top</h2><p>查看动态进程状态，默认每5秒刷新一次。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">top</span><br><span class="line">-d：指定top刷新的时间间隔，默认是5 秒</span><br><span class="line">-b：批处理模式，每次刷新分批显示</span><br><span class="line">-n：指定top刷新几次就退出，可以配合-b使用</span><br><span class="line">-p：指定监控的pid，指定方式为-pN1 -pN2 ...或-pN1, N2 [,...]</span><br><span class="line">-u：指定要监控的用户的进程，可指定UID或用户名</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">top - 02:20:36 up  6:48,  1 user,  load average: 0.00, 0.00, 0.00</span><br><span class="line">Tasks: 145 total,   2 running, 143 sleeping,   0 stopped,   0 zombie</span><br><span class="line">%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">KiB Mem :  2029396 total,  1600964 free,   161512 used,   266920 buff/cache</span><br><span class="line">KiB Swap:  2097148 total,  2097148 free,        0 used.  1670652 avail Mem </span><br><span class="line"># Tasks为进程数</span><br><span class="line"># us：用户占用cpu百分比</span><br><span class="line">  sy：系统占用cpu百分比</span><br><span class="line">  ni：进程空间内改变过优先级的进程占cpu百分比</span><br><span class="line">  id：空闲cpu百分比</span><br><span class="line">  wa：I/O等待时间比率</span><br><span class="line">  hi：不可中断睡眠时间比率</span><br><span class="line">  si：可中断睡眠时间比率</span><br><span class="line">  st：被偷走时间比率，一般为虚拟机占用</span><br><span class="line"></span><br><span class="line">   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND    </span><br><span class="line"># PR：优先级</span><br><span class="line"># NI：nice值，负数为高优先级，正数为低优先级</span><br><span class="line"># VIRT：虚拟内存总量    </span><br><span class="line"># RES：进程实际使用内存    </span><br><span class="line"># SHR：共享内存  </span><br><span class="line"># S：进程状态。有五种状态：D-不可中断的睡眠态  R-运行态  S-睡眠态  T-停止  Z-僵尸态</span><br><span class="line"># TIME+：进程使用CPU的时间总计（单位1/100秒）</span><br></pre></td></tr></table></figure>
+<p>进入top视图后的操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">1：查看每个逻辑CPU的状况</span><br><span class="line">P：按cpu使用率排序（默认） </span><br><span class="line">M：按内存使用率排序 </span><br><span class="line">N：按PID排序 </span><br><span class="line">T：根据TIME+进行排序</span><br><span class="line">H：切换为线程</span><br><span class="line">l：切换负载信息</span><br><span class="line">m：切换显示内存信息（只是将数字改为类似进度条）</span><br><span class="line">t：切换显示进程和CPU状态信息（只是将数字改为类似进度条）</span><br><span class="line">k：指定要杀死的进程号</span><br><span class="line">A：切换显示模式。有四个窗口，在左上角显示，按a（后一个）或w（前一个）进行窗口切换</span><br><span class="line">    Def：默认字段组  Job：任务字段组  Mem：内存字段组  Usr：用户字段组</span><br><span class="line">d或s：修改刷新间隔</span><br><span class="line">f：选择要添加显示的字段，标上*为已选的</span><br><span class="line">R：反向排序</span><br><span class="line">c：显示进程的完整命令路径名</span><br><span class="line">V：树视图，命令会按进程的父子关系显示</span><br><span class="line">u：显示指定用户的进程</span><br><span class="line">n或#：设置最多显示的进程量</span><br><span class="line">r：设置指定进程的nice优先级</span><br></pre></td></tr></table></figure>
+<h2 id="htop"><a href="#htop" class="headerlink" title="htop"></a>htop</h2><p>默认没有安装，需要<code>dnf install htop</code></p>
+<p>可通过鼠标点击操作，<code>h</code>查看帮助</p>
+<h1 id="uptime-free和vmstat"><a href="#uptime-free和vmstat" class="headerlink" title="uptime,free和vmstat"></a>uptime,free和vmstat</h1><h2 id="uptime"><a href="#uptime" class="headerlink" title="uptime"></a>uptime</h2><p>获取主机运行时间，查询系统负载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">09:05:53 up 12 days,13:33,2 users,load average: 0.01,0.02,0.05</span><br><span class="line">09:05:53--当前时间</span><br><span class="line">up 12 days, 13:33--系统启动时长</span><br><span class="line">2 users--当前登录系统的用户数</span><br><span class="line">load average: 0.01,0.02,0.05--系统在最近的1,5,15分钟的平均负载</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>负载率(load)，即特定时间长度内，cpu运行队列中的平均进程数(包括线程)，一般平均每分钟每核的进程数小于3都认为正常，大于5时负载已经非常高。Linux运行队列包括正在运行的、在等待的、处于可中断睡眠态（IO等待）的进程。若为多核CPU，还需要除以核数。</p>
+<p>平均负载最佳值为1，意味着每个进程都能立刻访问CPU，并且没有丢失CPU周期</p>
+</blockquote>
+<h2 id="free"><a href="#free" class="headerlink" title="free"></a>free</h2><p>查看内存与swap分区使用状况，实际是从<code>/proc/meminfo</code>中读取数据的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">free</span><br><span class="line"> -b         单位b</span><br><span class="line"> -k         单位kb（默认）</span><br><span class="line"> -m         单位mb</span><br><span class="line"> -g         单位gb</span><br><span class="line"> -h         自动选择单位</span><br><span class="line"> -l         显示高内存、低内存详细统计数据</span><br><span class="line"> -t         显示内存与swap的总和</span><br><span class="line"> -s N       设置刷新周期（单位秒），ctrl+C退出</span><br><span class="line"> -c N       设置刷新次数</span><br><span class="line"> -w         分开显示buffers和cache</span><br><span class="line"></span><br><span class="line">total  used  free  shared  buff/cache  available</span><br><span class="line"># cache为缓存：把读取的数据放在内存中，再次读的话就直接从内存中读了，加快读取</span><br><span class="line"># buffer为缓冲：写入数据时，把分散的写入操作保存到内存中，然后集中写入硬盘，减少磁盘碎片与硬盘反复寻道，加快写入</span><br></pre></td></tr></table></figure>
+<h2 id="vmstat"><a href="#vmstat" class="headerlink" title="vmstat"></a>vmstat</h2><p>报告进程、内存、分页、块IO、中断、CPU活动信息，能够显示平均数据和实时样本。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">vmstat [options] [delay [count]]</span><br><span class="line"> -a      显示内存信息</span><br><span class="line"> -f      显示自从系统启动以来产生的子进程数量</span><br><span class="line"> -m      显示slab信息</span><br><span class="line"> -n      与-a类似</span><br><span class="line"> -s      事件计数器和内存状态</span><br><span class="line"> -d      磁盘状态</span><br><span class="line"> -D      磁盘状态概述</span><br><span class="line"> -p 分区  磁盘分区统计信息</span><br><span class="line"> -S 单位  输出与-n一致，但可指定单位</span><br><span class="line"> -t      显示时间戳，输出比-n增加了一项CST时间戳</span><br><span class="line"> 刷新间隔 [次数]  设置持续刷新间隔及刷新次数</span><br></pre></td></tr></table></figure>
+<ul>
+<li>虚拟内存模式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">vmstat      </span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line">Proc：</span><br><span class="line">  r：可运行进程的数量（正在运行+等待运行）</span><br><span class="line">  b：不可中断睡眠进程的数量</span><br><span class="line">memory：</span><br><span class="line">  swpd：虚拟内存使用量</span><br><span class="line">  free：空闲内存</span><br><span class="line">  buff：缓冲区内存</span><br><span class="line">  cache：用作缓存的内存</span><br><span class="line">swap：</span><br><span class="line">  si：swap in,从磁盘换入的内存数量/s</span><br><span class="line">  so：swap out,交换到磁盘的内存数量/s</span><br><span class="line">io：</span><br><span class="line">  bi：block in,从块设备收到的块数/s</span><br><span class="line">  bo：block out,发送到块设备的块数/s</span><br><span class="line">system：</span><br><span class="line">  in：interrupt,每秒中断数量</span><br><span class="line">  cs：context switch,每秒上下文切换数量</span><br><span class="line">cpu：</span><br><span class="line">  us：非内核代码运行时间</span><br><span class="line">  sy：内核代码运行时间</span><br><span class="line">  id：idle,空闲花费时间，包含IOwait时间</span><br><span class="line">  wa：wait,IO等待花费时间</span><br><span class="line">  st：steal,虚拟软件花费时间</span><br></pre></td></tr></table></figure>
+<ul>
+<li>磁盘模式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">vmstat -d</span><br><span class="line">disk- ------------reads------------ ------------writes----------- -----IO------</span><br><span class="line">       total merged sectors      ms  total merged sectors      ms    cur    sec</span><br><span class="line">disk：磁盘名</span><br><span class="line">reads：</span><br><span class="line">  total：成功读取的总量</span><br><span class="line">  merged：合并后分组的读</span><br><span class="line">  sectors：成功读取的扇区</span><br><span class="line">  ms：读取花费时间（单位毫秒）</span><br><span class="line">writes：</span><br><span class="line">  total：成功写入的总量</span><br><span class="line">  merged：合并后分组的写</span><br><span class="line">  sectors：成功写入的扇区</span><br><span class="line">  ms：写入花费时间（单位毫秒）</span><br><span class="line">IO：</span><br><span class="line">  cur：正在进行的IO</span><br><span class="line">  sec：IO花费时间（单位秒）</span><br></pre></td></tr></table></figure>
+<h1 id="mpstat与iostat"><a href="#mpstat与iostat" class="headerlink" title="mpstat与iostat"></a>mpstat与iostat</h1><p><code>mpstat</code>与<code>iostat</code>都在<code>sysstat</code>包中，若没有这两个命令，则需要安装<code>dnf install sysstat</code></p>
+<h2 id="mpstat"><a href="#mpstat" class="headerlink" title="mpstat"></a>mpstat</h2><p>用于报告在多处理器服务器上每个可用CPU的统计数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">mpstat [ 选项 ] [ &lt;时间间隔&gt; [ &lt;次数&gt; ] ]</span><br><span class="line">  -A     相当于-u -I ALL -P ALL</span><br><span class="line">  -I &#123;SUM|CPU|SCPU|ALL&#125;  报告中断统计数据</span><br><span class="line">    SUM  报告每个处理器中断的总数量，显示CPU编号和intr/s一个或多个CPU每秒接收每个独特中断的个数</span><br><span class="line">    CPU  显示intr/s，但排列难以阅读</span><br><span class="line">    SCPU 显示intr/s，排版容易阅读</span><br><span class="line">    ALL  显示所有中断统计信息</span><br><span class="line">  -P &#123;cpu编号|ON|ALL&#125; </span><br><span class="line">    cpu  指明统计的cpu编号（0开始）</span><br><span class="line">    ON   每个在线CPU的统计数据</span><br><span class="line">    ALL  所有CPU的统计数据</span><br><span class="line">  -u  统计CPU使用率，输出与-P一致</span><br><span class="line">  时间间隔interval [次数times]   指定报告时间间隔及次数，最后会生成平均值</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">mpstat -u</span><br><span class="line">CPU  %usr  %nice  %sys  %iowait  %irq  %soft  %steal  %guest  %gnice  %idle</span><br><span class="line">CPU：CPU编号</span><br><span class="line">%usr：用户级别（应用）执行时CPU使用率</span><br><span class="line">%nice：用户级别使用nice优先级执行时CPU使用率</span><br><span class="line">%sys：系统级别（内核）执行时CPU使用率（不包括硬件软件中断服务的时间）</span><br><span class="line">%iowait：系统未完成磁盘I/O请求期间，CPU空闲时间百分比</span><br><span class="line">%irq：CPU硬件中断时间百分比</span><br><span class="line">%soft：CPU软件中断时间百分比</span><br><span class="line">%steal：虚拟化软件为其他虚拟CPU服务时，虚拟CPU非主动等待时间百分比</span><br><span class="line">%guest：CPU运行虚拟处理器花费时间百分比</span><br><span class="line">%idle：CPU空闲时间百分比</span><br></pre></td></tr></table></figure>
+<h2 id="iostat"><a href="#iostat" class="headerlink" title="iostat"></a>iostat</h2><h1 id="ps和pstree"><a href="#ps和pstree" class="headerlink" title="ps和pstree"></a>ps和pstree</h1><h2 id="ps"><a href="#ps" class="headerlink" title="ps"></a>ps</h2><p>ps命令有两种风格：BSD和Unix。BSD格式的参数前不加<code>-</code>，Unix格式会在参数前加<code>-</code></p>
+<ul>
+<li>查看所有进程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">ps ax    # a表示此tty下的所有程序（不区分用户），x表示所有程序（不区分tty终端机），若增加u参数，可以用户为主的格式来显示程序状况</span><br><span class="line">ps -ef   # -e显示所有程序，只显示PID、TTY、TIME、CMD，-f增加显示UID、PPID、C、STIME</span><br><span class="line"></span><br><span class="line">ps aux</span><br><span class="line">USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND</span><br><span class="line">USER：进程发起用户 </span><br><span class="line">PID：进程号 </span><br><span class="line">%CPU，%MEM：CPU，内存占用率</span><br><span class="line">VSZ：虚拟内存（单位kb） </span><br><span class="line">RSS：常驻内存（实际物理内存）（单位kb） </span><br><span class="line">TTY：该进程在哪个终端运行</span><br><span class="line">STAT：进程状态</span><br><span class="line">	S：可中断睡眠</span><br><span class="line">	&lt;：高优先级</span><br><span class="line">	s：子进程</span><br><span class="line">	+：位于后台</span><br><span class="line">	R：运行（Running）</span><br><span class="line">	T：停止状态（Terminate）</span><br><span class="line">	Z：僵尸进程（Zombie）</span><br><span class="line">START————进程开启时间</span><br><span class="line">TIME：进程已启动时间</span><br><span class="line">COMMAND：产生进程的命令名</span><br><span class="line"></span><br><span class="line">ps -ef中不同的几个</span><br><span class="line">PPID：父进程ID</span><br><span class="line">C：CPU占用率</span><br><span class="line">STIME：进程启动时间</span><br></pre></td></tr></table></figure>
+<ul>
+<li>显示用户进程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -f -u [用户名1,用户名2...]   #-u指定用户，可指定多个，不能加-e，不然等于没指定</span><br><span class="line">例：ps -f -u apache</span><br></pre></td></tr></table></figure>
+<ul>
+<li>显示指定进程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ps -f -C [进程]    # -C指定进程名，进程名必须是精确的，不能用通配符。同样不能指定-e</span><br><span class="line">例：ps -f -C httpd</span><br><span class="line">ps -f -p [进程号]  # -p指定进程号</span><br></pre></td></tr></table></figure>
+<ul>
+<li>通过cpu或内存占用对进程排序</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ps -ef --sort=[+|-]pcpu,[+|-]pmem</span><br><span class="line">--sort用于指定多个字段，pcpu为按CPU排序，pmem为按内存排序，+为升序，-为降序</span><br><span class="line">例：ps -ef --sort=-pcpu | head -6 显示CPU占用排名前五的进程</span><br></pre></td></tr></table></figure>
+<ul>
+<li>以树显示进程层级关系</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -f --forest</span><br><span class="line">例：ps -f --forest -C httpd</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查看指定父进程下的所有子进程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ps --ppid [PPID]</span><br></pre></td></tr></table></figure>
+<ul>
+<li>显示进程的线程</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -f -L -C [进程]或-p [进程号]   #显示指定进程的线程</span><br><span class="line">例：ps -f -L -C httpd</span><br></pre></td></tr></table></figure>
+<ul>
+<li>指定要显示的列</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -o pid,uname,pcpu,pmem,comm,etime</span><br><span class="line">其中：uname为用户名，etime为进程已运行时间</span><br></pre></td></tr></table></figure>
+<ul>
+<li>通过<code>watch</code>命令将ps变为实时查看器</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">watch</span><br><span class="line">  -n 指定指令执行间隔</span><br><span class="line">  -d 高亮显示指令输出信息不同之处</span><br><span class="line">例：watch -n 1 &apos;ps -e -o pid,uname,cmd,pmem,pcpu --sort=-pcpu,-pmem | head -11&apos;</span><br></pre></td></tr></table></figure>
+<h2 id="pstree"><a href="#pstree" class="headerlink" title="pstree"></a>pstree</h2><p>查看进程树，常用选项</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">-p          显示进程PID</span><br><span class="line">-g          显示进程组ID，即PGID</span><br><span class="line">-u          显示进程所属用户</span><br><span class="line">-a          显示进程的命令及参数</span><br><span class="line">-H PID      高亮显示指定进程及它的所有父进程</span><br><span class="line">-T          只显示进程，不显示线程</span><br><span class="line">-t          显示完整的线程名</span><br><span class="line">-s          显示进程的父进程</span><br><span class="line">-n          按PID排序输出</span><br><span class="line">-Z          显示selinux上下文（需要开启selinux）</span><br></pre></td></tr></table></figure>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><ul>
+<li><a href="https://www.binarytides.com/linux-ps-command/" target="_blank" rel="noopener">10 basic examples of Linux ps command</a></li>
+<li><a href="https://linux.cn/article-2358-1.html" target="_blank" rel="noopener">ps命令的10个例子</a></li>
+<li>Linux性能优化大师</li>
+</ul>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/运维/" rel="tag"># 运维</a>
+          
+            <a href="/tags/监控/" rel="tag"># 监控</a>
+          
+            <a href="/tags/性能/" rel="tag"># 性能</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/08/01/LVM逻辑卷与RAID磁盘阵列学习笔记/" rel="next" title="LVM逻辑卷与RAID磁盘阵列学习笔记">
+                <i class="fa fa-chevron-left"></i> LVM逻辑卷与RAID磁盘阵列学习笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/08/01/Rsync文件同步服务器学习笔记/" rel="prev" title="Rsync文件同步服务器学习笔记">
+                Rsync文件同步服务器学习笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">59</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">88</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#top与htop"><span class="nav-number">1.</span> <span class="nav-text">top与htop</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#top"><span class="nav-number">1.1.</span> <span class="nav-text">top</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#htop"><span class="nav-number">1.2.</span> <span class="nav-text">htop</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#uptime-free和vmstat"><span class="nav-number">2.</span> <span class="nav-text">uptime,free和vmstat</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#uptime"><span class="nav-number">2.1.</span> <span class="nav-text">uptime</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#free"><span class="nav-number">2.2.</span> <span class="nav-text">free</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#vmstat"><span class="nav-number">2.3.</span> <span class="nav-text">vmstat</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#mpstat与iostat"><span class="nav-number">3.</span> <span class="nav-text">mpstat与iostat</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#mpstat"><span class="nav-number">3.1.</span> <span class="nav-text">mpstat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#iostat"><span class="nav-number">3.2.</span> <span class="nav-text">iostat</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ps和pstree"><span class="nav-number">4.</span> <span class="nav-text">ps和pstree</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ps"><span class="nav-number">4.1.</span> <span class="nav-text">ps</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pstree"><span class="nav-number">4.2.</span> <span class="nav-text">pstree</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文章"><span class="nav-number">4.2.1.</span> <span class="nav-text">参考文章</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

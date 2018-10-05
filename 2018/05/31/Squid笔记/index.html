@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/mylogo-apple.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/mylogo-32x32.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/mylogo-16x16.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Squid介绍 代理服务器概念 Squid安装 Squid常规配置 Squid访问控制 Squid多级代理配置 Squid实验 cachemgr.cgi管理Squid Squid日志 Squid调优">
+<meta name="keywords" content="server,squid,缓存,代理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Squid笔记-1">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/05/31/Squid笔记/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="Squid介绍 代理服务器概念 Squid安装 Squid常规配置 Squid访问控制 Squid多级代理配置 Squid实验 cachemgr.cgi管理Squid Squid日志 Squid调优">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2018/05/31/Squid笔记/1.png">
+<meta property="og:image" content="https://github.com/2018/05/31/Squid笔记/4.png">
+<meta property="og:image" content="https://github.com/2018/05/31/Squid笔记/2.png">
+<meta property="og:image" content="https://github.com/2018/05/31/Squid笔记/4.png">
+<meta property="og:image" content="https://github.com/2018/05/31/Squid笔记/5.png">
+<meta property="og:updated_time" content="2018-09-29T11:55:17.420Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Squid笔记-1">
+<meta name="twitter:description" content="Squid介绍 代理服务器概念 Squid安装 Squid常规配置 Squid访问控制 Squid多级代理配置 Squid实验 cachemgr.cgi管理Squid Squid日志 Squid调优">
+<meta name="twitter:image" content="https://github.com/2018/05/31/Squid笔记/1.png">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/05/31/Squid笔记/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Squid笔记-1 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">89</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">59</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/05/31/Squid笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Squid笔记-1
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2018-05-31 12:00:16" itemprop="dateCreated datePublished" datetime="2018-05-31T12:00:16+08:00">2018-05-31</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-09-29 19:55:17" itemprop="dateModified" datetime="2018-09-29T19:55:17+08:00">2018-09-29</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <ul>
+<li><a href="#Squid介绍">Squid介绍</a></li>
+<li><a href="">代理服务器概念</a></li>
+<li><a href="">Squid安装</a></li>
+<li><a href="">Squid常规配置</a></li>
+<li><a href="">Squid访问控制</a></li>
+<li><a href="">Squid多级代理配置</a></li>
+<li><a href="">Squid实验</a></li>
+<li><a href="">cachemgr.cgi管理Squid</a></li>
+<li><a href="">Squid日志</a></li>
+<li><a href="">Squid调优</a></li>
+</ul>
+<a id="more"></a>
+<h1 id="Squid介绍"><a href="#Squid介绍" class="headerlink" title="Squid介绍"></a>Squid介绍</h1><p>Squid是一个支持HTTP、HTTPS、FTP等服务的Web缓存软件，可通过缓存页面实现降低带宽占用并优化页面相应时间。</p>
+<p><strong>Squid特点与功能：</strong></p>
+<ul>
+<li>不仅能缓存Web页面资源，还能对DNS查询结果进行缓存</li>
+<li>强大的访问控制功能</li>
+<li>保护内网，并加速内网对外网的连接</li>
+<li>记录内网用户访问外网行为</li>
+<li>提供用户认证</li>
+<li>减少出口流量</li>
+<li>工作在TCP/IP的应用层，TCP端口3128</li>
+</ul>
+<p>Squid支持的网络协议：HTTP、FTP、Gopher（信息查找协议）、WAIS（广域信息查询系统）、SSL</p>
+<p>Squid支持的内部缓存和管理协议：HTTP、ICP（互联网缓存协议，用于从缓存中查找指定对象）、Cache Digests（用于生成缓存中对象的索引）、SNMP（用于为外部工具提供缓存信息）、HTCP（用于发现HTTP缓存区，存储管理HTTP数据）</p>
+<p>Squid请求过程：</p>
+<ul>
+<li>客户端访问Squid服务器，由代理服务器代表客户端向web服务器（后端Real Server）请求资源</li>
+<li>Web服务器将相应数据返回给代理服务器</li>
+<li>代理服务器将数据返回给客户端，并保留一份在本地</li>
+<li>其他客户端向该代理服务器请求相同的资源</li>
+<li>代理服务器直接将本地的该资源缓存返回给客户端</li>
+</ul>
+<img src="/2018/05/31/Squid笔记/1.png">
+<p>squid的硬件环境：内存与磁盘是缓存性能的重要体现。所有对象都会尽可能缓存到内存中，更大的磁盘空间实现更多的缓存目标和更高的命中率，最好使用SAS，尽量不用SATA。磁盘与内存间也有关联，最好每G的磁盘空间有32M的内存对应。</p>
+<h1 id="代理服务器概念"><a href="#代理服务器概念" class="headerlink" title="代理服务器概念"></a>代理服务器概念</h1><p>代理服务器一般构建于内网和Internet间，负责转发内网对Internet的访问，并进行访问控制与记录，可实现安全保护、缓存数据、内容过滤、访问控制等功能。</p>
+<p>Web代理维护着庞大的缓存数据，因此对内存和硬盘的要求很高，更大的内存和硬盘意味着更多的缓存和更高的缓存命中率。</p>
+<p><strong>Web缓存类型：</strong></p>
+<ul>
+<li>客户端缓存：一般就存放在浏览器中。有两个缺点：1.缓存容量小，不能存储大的Web对象，因此命中率较低。2.缓存在本地，不能共享，因此存在大量重复数据。</li>
+<li>代理服务器缓存：位于网络中间位置。容量大，缓存能与内网所有客户端共享。但若性能达不到要求，反而会造成网络瓶颈。代理缓存应具有健壮性、可扩展性、稳定性、负载均衡的特点</li>
+<li>服务器缓存：是为了减轻web服务器的负载，并不是为了提高资源命中率。服务器缓存减少了web服务器的流量、并保护了web服务器的安全，因为web服务器仅向服务器缓存提供数据，并不直接面向客户机。并且提高了网站的可靠性，因为各个服务器缓存间可实现共享。</li>
+</ul>
+<p><strong>三种典型代理方式：</strong></p>
+<ul>
+<li><p>传统代理：在浏览器中设置，指出代理服务器的IP地址和网络端口。便于用户对访问管理控制，配置简单。</p>
+</li>
+<li><p>透明代理（正向代理）：为内网提供外网的访问，即普通的代理服务器。但增加了网络设备的负担，并需要做好更详细的配置，会有一定的延时。若程序的一系列请求是相关的并涉及多个目标对象，有可能会出问题。</p>
+</li>
+<li>反向代理：能代理外部网络访问内网服务器。主要为本地网站做缓存，加快web服务器的响应速度。相当于服务器缓存。反向代理结合智能DNS即可实现基本的CDN</li>
+</ul>
+<h1 id="Squid安装"><a href="#Squid安装" class="headerlink" title="Squid安装"></a>Squid安装</h1><p>Squid版本：3.5</p>
+<p>可直接通过<code>yum install squid</code>安装。然后<code>systemctl start squid</code>启动。</p>
+<p>安装时会自动创建用户squid，并且是系统用户，家目录为/var/spool/squid，且禁止登录。</p>
+<p><strong>注：一定要做到squid服务器的时间同步，否则无法进行缓存</strong></p>
+<p>Squid的相关配置文件：</p>
+<ul>
+<li><code>/etc/httpd/conf.d/squid.conf</code>：用于在Apache中添加运行<code>cachemgr.cgi</code>的配置</li>
+<li><code>/etc/logrotate.d/squid</code>：Squid的日志轮替配置</li>
+<li><code>/etc/squid/squid.conf</code>：Squid主配置文件</li>
+<li><code>/etc/squid/cachemgr.conf</code>：设置可通过<code>cachemgr.cgi</code>管理的主机</li>
+<li><code>/etc/squid/mime.conf</code>：定义MIME类型的文件</li>
+</ul>
+<p>Squid其他相关文件：</p>
+<ul>
+<li><code>/var/log/squid/</code>：存放squid日志的目录</li>
+<li><code>/var/spool/squid/</code>：存放squid缓存的目录</li>
+<li><code>/usr/share/squid/errors/</code>：存放给客户端的报错信息HTML，目录中包含各个语言的子目录</li>
+<li><code>/usr/lib64/squid/cachemgr.cgi</code>：squid cache manager，用于管理主机的动态网页</li>
+</ul>
+<p>squid提供两个命令：</p>
+<ul>
+<li><code>squid</code>：用于管理squid守护进程</li>
+<li><code>squidclinet</code>：用于管理squid客户端</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">squid [options]</span><br><span class="line">    -a port   指定HTTP端口，默认3128</span><br><span class="line">    -d level  将指定调试等级的信息发送到标准错误输出</span><br><span class="line">    -f file   指定配置文件启动</span><br><span class="line">    -k        向squid服务器发送指令	</span><br><span class="line">        reconfigure 重载配置文件</span><br><span class="line">        rotate      轮替日志文件</span><br><span class="line">        shutdown    安全关闭</span><br><span class="line">        restart     重启服务</span><br><span class="line">        interrupt   中断服务</span><br><span class="line">        kill        杀死服务</span><br><span class="line">        debug       开启debug</span><br><span class="line">        check       检查运行状态</span><br><span class="line">        parse       检查配置文件</span><br><span class="line">    -s       启用syslog</span><br><span class="line">    -u port  指定ICP端口，默认3130，若要关闭，就指定0</span><br><span class="line">    -z        创建缓存目录，即初始化缓存</span><br><span class="line">    -C        不捕获fatal信号</span><br><span class="line">    -D        不进行DNS参数测试</span><br><span class="line">    -F        不响应任何请求直到存储重建</span><br><span class="line">    -N        不使用daemon模式</span><br><span class="line">    -S        在重建期间仔细检查swap分区</span><br><span class="line">    -X        强制进入完全调试模式</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">squidclient [Basic Options] [HTTP Options]</span><br><span class="line">    -s | --quiet    静默模式，不打印输出</span><br><span class="line">    -v | --verbose  显示详细信息，最多-vv</span><br><span class="line">      -v：显示向外发的请求信息</span><br><span class="line">      -vv：显示动作跟踪信息</span><br><span class="line">    -h | --host host     指定将信息发给的主机，默认为localhost</span><br><span class="line">    -l | --local host    指定绑定的本地IP地址，默认为空</span><br><span class="line">    -p | --port port     指定服务端口，默认3128</span><br><span class="line">    -T timeout           指定读写操作的超时时间</span><br><span class="line">    --ping [options]     允许ping模式</span><br><span class="line">    -g count        指定ping包的个数，默认一直ping</span><br><span class="line">    -I interval     指定ping包发送间隔，默认1s</span><br><span class="line"></span><br><span class="line">HTTP Options:</span><br><span class="line">    -a           不包含“accept:header”</span><br><span class="line">    -j hosthdr   Host header content</span><br><span class="line">    -k           保持长连接，默认只接收一个请求就关闭连接</span><br><span class="line">    -m method    指定请求方法，默认GET</span><br><span class="line">    -n           代理协商认证（kerberos）</span><br><span class="line">    -N           www协商认证（kerberos）</span><br><span class="line">    -P file      将指定文件作为请求载荷</span><br><span class="line">    -r           强制缓存重新加载URL</span><br><span class="line">    -t count     跟踪计数缓存跳数</span><br><span class="line">    -u user      代理认证用户名</span><br><span class="line">    -U user      www认证用户名</span><br><span class="line">    -w password  代理认证密码</span><br><span class="line">    -W password  www认证密码</span><br></pre></td></tr></table></figure>
+<h1 id="Squid常规配置"><a href="#Squid常规配置" class="headerlink" title="Squid常规配置"></a>Squid常规配置</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">http_port    3128  [模式] [options]             #Squid监听的端口</span><br><span class="line"># 若要添加多个端口，用空格隔开</span><br><span class="line">    常用模式：</span><br><span class="line">      accel：加速或反向代理模式</span><br><span class="line">      intercept：支持IP层NAT拦截传输到该Squid端口的流量</span><br><span class="line">      从squid3开始就没有transparent透明模式了</span><br><span class="line"></span><br><span class="line">icp_port     3130              #ICP端口</span><br><span class="line"># ICP是专门运行在代理服务器间交换缓存数据的协议。ICP使用UDP端口3130</span><br><span class="line"></span><br><span class="line">cache_effective_user  squid    #运行squid进程的用户</span><br><span class="line">#squid进程是root启动的，但启动后会由指定的普通用户继续运行</span><br><span class="line">cache_effective_group  squid    #运行squid进程的用户组</span><br><span class="line"></span><br><span class="line">pid_filename /var/run/squid.pid #squid的PID文件位置</span><br><span class="line"># 此文件由root在启动squid时创建</span><br><span class="line"></span><br><span class="line">logformat squid %ts.%03tu %6tr %&gt;a %Ss/%03&gt;Hs %&lt;st %rm %ru %un %Sh/%&lt;A %mt  #指定日志记录格式</span><br><span class="line">access_log /var/log/squid/access.log squid  #日志路径，类型为squid</span><br><span class="line"></span><br><span class="line">cache_mem   8 MB       #cache内存</span><br><span class="line">#设定squid能用多少额外的内存来缓存对象的限制值</span><br><span class="line"></span><br><span class="line">cache_dir  ufs /var/spool/squid 100 16 256  #指定缓存类型为ufs，保存在/var/spool/squid，是默认值</span><br><span class="line">#大小限制为100MB，第1层子目录为16个，第2层子目录为256个</span><br><span class="line"></span><br><span class="line">cache_store_log /var/log/squid/store.log   #数据缓存的日志，是默认值</span><br><span class="line"></span><br><span class="line">maximum_object_size_in_memory 8 KB   #squid保存在内存中的对象最大为8KB</span><br><span class="line">#内存中的对象访问速度最快，但内存有限，需要根据内存大小设置</span><br><span class="line"></span><br><span class="line">maximum_object_size      4096 KB  #最大的缓存对象的字节数4096KB</span><br><span class="line">#只有小于该值的对象才会被缓存，若硬盘足够大，可适度提高</span><br><span class="line"></span><br><span class="line">cache_swap_low  90     #设置Squid缓存空间的使用策略。</span><br><span class="line">cache_swap_high 95     #当缓存中数据占到整个缓存大小的95%时</span><br><span class="line">                       #就会按算法删除缓存中的数据</span><br><span class="line">                       #直到缓存数据占到整个缓存大小的90%</span><br><span class="line">                       #可以最大限度利用缓存空间，但也不会出现空间溢出</span><br><span class="line"></span><br><span class="line">coredump_dir /var/spool/squid  #放置squid进程运行时coredump文件的目录</span><br><span class="line">cache_mgr   root       #Squid管理员用户的Email</span><br><span class="line">visible_hostname  proxy.example.com   #设置对外可见的主机名，会在错误信息中显示</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a href="http://www.squid-cache.org/Doc/config/logformat/" target="_blank" rel="noopener">logformat日志格式设置</a></p>
+</blockquote>
+<p>Squid会设置在缓存目录下建立多个目录，每个目录又建立多个子目录，在最里层的目录存放缓存文件，缓存文件是通过对客户端请求的URL进行哈希运算生成的。Squid会在内存建立一张哈希表，记录硬盘中缓存文件配置的情形。</p>
+<p>使用<code>squid -k parse</code>检查配置文件语法，确认没有报错后<code>squid -z</code>初始化缓存目录，会显示<code>Making directories in /var/spool/squid/00</code>等信息，发现，第一层的目录数量是16，第二层目录的数量是256，目录名都是由十六进制标号，与配置文件<code>cache_dir</code>配置的一致。若无法创建，可能是该目录的权限问题。</p>
+<p>再使用<code>squid -N -d1</code>测试，没有报错，则说明启动完成。</p>
+<p>通过浏览器测试，设置代理服务器</p>
+<img src="/2018/05/31/Squid笔记/4.png">
+<h1 id="Squid访问控制"><a href="#Squid访问控制" class="headerlink" title="Squid访问控制"></a>Squid访问控制</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">acl name type value1 value2...    #设置ACL名字和对象的值</span><br><span class="line">http_access &lt;allow|deny&gt; [!]ACL对象1 ...  #将客户端请求与http_access的对象匹配，指定allow或deny。!为取反。</span><br><span class="line">#若一个请求与所有http_access都不匹配，则执行与最后一条http_access指定的动作相反的动作</span><br></pre></td></tr></table></figure>
+<p>常见的ACL类型：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>src</td>
+<td>源IP地址，可以单个IP地址，可以是地址范围</td>
+</tr>
+<tr>
+<td>dst</td>
+<td>目的IP地址，同上</td>
+</tr>
+<tr>
+<td>myip</td>
+<td>本地网络接口IP地址</td>
+</tr>
+<tr>
+<td>srcdomain</td>
+<td>客户所属的域，Squid会根据客户IP地址进行反向DNS查询</td>
+</tr>
+<tr>
+<td>dstdomain</td>
+<td>服务器所属的域，与客户请求的URL匹配</td>
+</tr>
+<tr>
+<td>time</td>
+<td>时间段</td>
+</tr>
+<tr>
+<td>port</td>
+<td>指向其他计算机的网络端口，即是目标服务器上的端口</td>
+</tr>
+<tr>
+<td>myport</td>
+<td>指向squid服务器的端口，是squid服务器上的端口</td>
+</tr>
+<tr>
+<td>proto</td>
+<td>客户端请求所使用的协议，如http、https、ftp、gopher</td>
+</tr>
+<tr>
+<td>method</td>
+<td>HTTP请求方法</td>
+</tr>
+<tr>
+<td>proxy_auth</td>
+<td>squid认证的用户名</td>
+</tr>
+<tr>
+<td>url_regex</td>
+<td>关于URL的正则表达式（域名）</td>
+</tr>
+<tr>
+<td>urlpath_regex</td>
+<td>关于URL资源的正则表达式（资源路径，不带有域名）</td>
+</tr>
+<tr>
+<td>ident</td>
+<td>指定用户</td>
+</tr>
+</tbody>
+</table>
+<p>acl对象的值间的关系为”或“，只要满足一个就匹配了该acl规则。而http_access与其他规则的设置使用”与“逻辑。squid默认配置拒绝每个请求，因此在使用代理前，必须先添加访问控制规则。</p>
+<p>若value为文件名，对象的值实际上是文件的内容。</p>
+<p>常见案例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">Squid3已默认定义acl名：all、localhost、manager、to_localhost</span><br><span class="line">    acl all src 0.0.0.0/0</span><br><span class="line">    acl localhost src 127.0.0.1/32</span><br><span class="line">    acl manager proto cache_object   #cache_object是squid自定义的协议，用于访问squid的缓存管理接口</span><br><span class="line">    acl to_localhost dst 127.0.0.1/8</span><br><span class="line">因此以上四个acl名字不能再使用，且可以直接调用，无需再定义</span><br><span class="line"></span><br><span class="line">acl worktime time MTWHF 08:00-17:00   </span><br><span class="line">#时间从周一到周五，早上8点到下午5点</span><br><span class="line">  S-Sun M-Mon T-Tue W-Wed H-Thu F-Fri A-Sat</span><br><span class="line"></span><br><span class="line">acl mynet src 10.1.1.1/24</span><br><span class="line">#源10.1.1.1/24的子网命名为mynet</span><br><span class="line"></span><br><span class="line">acl aim dstdomain .baidu.com .google.com</span><br><span class="line">#匹配指定目的域名</span><br><span class="line"></span><br><span class="line">acl giffile url_regex -i \.gif$</span><br><span class="line">#匹配以.gif结尾的URL</span><br><span class="line"></span><br><span class="line">acl other srcdomain &quot;/etc/squid/other&quot;</span><br><span class="line">#匹配文件中指定的源域名</span><br><span class="line"></span><br><span class="line">acl safe_port port 80</span><br><span class="line">#匹配指定的目标服务器端口</span><br><span class="line"></span><br><span class="line">acl Users ident tom</span><br><span class="line">http_access allow tom</span><br><span class="line">#只允许tom访问</span><br><span class="line"></span><br><span class="line">acl mynet src 10.1.1.1-10.1.1.10</span><br><span class="line">http_access allow mynet</span><br><span class="line">http_access deny all</span><br><span class="line">#仅允许mynet子网访问</span><br><span class="line"></span><br><span class="line">acl user1 src 10.1.1.1</span><br><span class="line">acl user2 src 10.1.1.2</span><br><span class="line">acl user1_time time MTWHT 08:00-12:00</span><br><span class="line">acl user2_time time MTWHT 08:00-13:00</span><br><span class="line">http_access allow user1 user1_time</span><br><span class="line">http_access allow user2 user2_time</span><br><span class="line">#给两个用户分别指定上外网的时间</span><br><span class="line"></span><br><span class="line">acl ftpmp3 url_regex -i &quot;^ftp://.*\.mp3$&quot;</span><br><span class="line">http_access deny ftpmp3</span><br><span class="line">#禁止从任何ftp上下载mp3文件</span><br><span class="line"></span><br><span class="line">acl cgi urlpath_regex -i &quot;^/cgi-bin&quot;</span><br><span class="line">http_access deny cgi</span><br><span class="line">#禁止访问cgi网页</span><br><span class="line"></span><br><span class="line">acl limit maxconn 16</span><br><span class="line">http_access deny limit</span><br><span class="line">#限制同一IP客户端的最大连接数</span><br></pre></td></tr></table></figure>
+<p>squid默认acl配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">#所有内网</span><br><span class="line">acl localnet src 10.0.0.0/8	</span><br><span class="line">acl localnet src 172.16.0.0/12	</span><br><span class="line">acl localnet src 192.168.0.0/16	</span><br><span class="line">acl localnet src fc00::/7       </span><br><span class="line">acl localnet src fe80::/10      </span><br><span class="line"></span><br><span class="line">acl SSL_ports port 443      #SSL443端口</span><br><span class="line">acl Safe_ports port 80		# 放行http</span><br><span class="line">acl Safe_ports port 21		# 放行ftp</span><br><span class="line">acl Safe_ports port 443		# 放行https</span><br><span class="line">.....                       #放行的其他服务</span><br><span class="line"></span><br><span class="line">acl CONNECT method CONNECT  #connect方法，是HTTP中用于代理的方法</span><br><span class="line"></span><br><span class="line">http_access deny !Safe_ports        ##只允许本机转发客户机对非Safe_ports的请求</span><br><span class="line">http_access deny CONNECT !SSL_ports #拒绝所有非SSL_ports的CONNECT请求，只允许本机用connect连接非SSL_ports</span><br><span class="line">http_access allow localhost manager #允许localhost使用cache_object协议</span><br><span class="line">http_access deny manager      #拒绝所有其他网络使用cache_object</span><br><span class="line">http_access allow localnet    #允许内网访问</span><br><span class="line">http_access allow localhost   #允许本地访问</span><br><span class="line">http_access deny all         #剩下的都不允许</span><br><span class="line">http_port 3128               </span><br><span class="line">coredump_dir /var/spool/squid    </span><br><span class="line">refresh_pattern ^ftp:		1440	20%	10080</span><br><span class="line">refresh_pattern ^gopher:	1440	0%	1440</span><br><span class="line">refresh_pattern -i (/cgi-bin/|\?) 0	0%	0</span><br><span class="line">refresh_pattern .		0	20%	4320</span><br></pre></td></tr></table></figure>
+<h1 id="Squid多级代理配置"><a href="#Squid多级代理配置" class="headerlink" title="Squid多级代理配置"></a>Squid多级代理配置</h1><p>在大型网络中一台Squid服务器的性能不能应对巨大的访问量，需要构建多级代理服务器，类似与计算机集群，使用ICP交换缓存，形成一个逻辑上的大型Squid服务器。</p>
+<p>代理服务器间的结构可分为：同级结构、层次结构、网状结构。最常见是层次结构。</p>
+<p>需要配置参数<code>cache_peer hostname type http_port icp_port options</code></p>
+<ul>
+<li><code>hostname</code>为另一台Squid服务器的域名或IP地址</li>
+<li><code>type</code>为ICP请求的类型：<code>parent</code>或<code>sibling</code></li>
+<li><code>http_port</code>为对端的Squid监听请求端口</li>
+<li><code>icp_port</code>为对端ICP的端口</li>
+</ul>
+<p>ICP的两种请求类型type：</p>
+<ul>
+<li><code>parent</code>：会把客户端的请求发送给对方，对方的缓存中若有请求的数据，则返回，若没有，则对方向web服务器读取数据，再返回。（类似DNS的递归查询）一般对象处于上一级时使用此类型，因为上一级会更加接近于web服务器。</li>
+<li><code>sibling</code>：不会把客户端请求发给对方，仅仅询问有没有缓存。如果没有，则对方仅仅告诉回复没有，并不会向web服务器请求数据。一般对象处于同等级别时用此类型。de</li>
+</ul>
+<p>常见的options参数：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>proxy-only</td>
+<td>从对方得到的数据不做缓存，默认会做</td>
+</tr>
+<tr>
+<td>weight=n</td>
+<td>指定对方的权重，有多个cache_peer时会按权重选择，默认根据网络响应时间自动选择</td>
+</tr>
+<tr>
+<td>no-query</td>
+<td>不向对方发送ICP请求，只发送HTTP代理请求，一般用于对方不支持ICP或不可用的情况</td>
+</tr>
+<tr>
+<td>default</td>
+<td>与no-query一起用，当对方都不支持ICP时，就用该peer</td>
+</tr>
+<tr>
+<td>no-digest</td>
+<td>不使用内存摘要表查询，直接ICP通信</td>
+</tr>
+<tr>
+<td>login=user:password</td>
+<td>若对方需要认证，就提供用户名和密码</td>
+</tr>
+</tbody>
+</table>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cache_peer system3.example.com parent 3128 3130 proxy-only default</span><br><span class="line">cache_peer system4.example.com sibling 3128 3130 proxy-only</span><br></pre></td></tr></table></figure>
+<p>若要通过规则选择不同的上级代理服务器，达到负载均衡，还需要配置：</p>
+<p><code>cache_peer_domain cache-host domain ...</code></p>
+<p><code>cache_peer_access cache-host allow|deny [!]ACL对象...</code></p>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cache_peer system1.example.com parent 3128 3130</span><br><span class="line">cache_peer system2.example.com sibling 3128 3130 proxy-only</span><br><span class="line">cache_peer_domain system1.example.com example</span><br><span class="line">cache_peer_domain system2.example.com !example</span><br><span class="line">#system1为example域的代理服务器，system2为非example域的代理服务器</span><br></pre></td></tr></table></figure>
+<h1 id="Squid实验"><a href="#Squid实验" class="headerlink" title="Squid实验"></a>Squid实验</h1><h2 id="透明二级代理"><a href="#透明二级代理" class="headerlink" title="透明二级代理"></a>透明二级代理</h2><p>环境：</p>
+<ul>
+<li>client1：192.168.1.128</li>
+<li>server1：192.168.1.129</li>
+<li>server2：192.168.1.130,192.168.205.140</li>
+<li>web1：192.168.205.139</li>
+</ul>
+<img src="/2018/05/31/Squid笔记/2.png">
+<p>server1 上的配置<code>squid.conf</code>添加或修改以下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">http_port    3128   accel     #配置为透明代理</span><br><span class="line">icp_port     3130</span><br><span class="line">cache_effective_user  squid</span><br><span class="line">pid_filename /var/run/squid.pid</span><br><span class="line">logformat squid %ts.%03tu %6tr %&gt;a %Ss/%03&gt;Hs %&lt;st %rm %ru %un %Sh/%&lt;A %mt</span><br><span class="line">access_log   /var/log/squid/access.log squid</span><br><span class="line">cache_dir  ufs /var/spool/squid 100 16 256</span><br><span class="line">cache_store_log /var/log/squid/store.log</span><br><span class="line">hosts_file   /etc/hosts           #用于解析IP地址</span><br><span class="line">visible_hostname  system1.example.com  #错误信息中显示的主机名</span><br><span class="line">cache_effective_user  squid    #若不设置user和group，会默认使用nobody</span><br><span class="line">cache_effective_group  squid</span><br><span class="line"></span><br><span class="line">acl PURGE   method PURGE          #purge是squid自定义的方法，用于删除squid缓存中的对象（能让管理员强制删除）</span><br><span class="line">                                  #squid是默认拒绝Purge请求的</span><br><span class="line"></span><br><span class="line">http_access allow localhost manager  #只允许本机使用cache_object协议</span><br><span class="line">http_access allow localhost PURGE    #只允许本机使用purge方法</span><br><span class="line">http_access deny manager PURGE</span><br><span class="line"></span><br><span class="line">icp_access allow all         #允许所有客户机访问ICP端口</span><br><span class="line">http_reply_access allow all  #允许对所有客户机进行请求的回复</span><br></pre></td></tr></table></figure>
+<p>并且需要进行端口转发，即重定向，因为代理服务器需要将客户端发往80端口的数据包改为发往自己的3128端口，实现代理。因此需要开启防火墙firewalld或iptables服务。</p>
+<p>若是使用firewalld，则先要确定是否开启了伪装IP功能（Masquerade）</p>
+<p><code>firewall-cmd --query-masquerade</code>，若为no，则需要开启<code>firewall-cmd --add-masquerade --permanent</code>。</p>
+<p>设置端口转发：<code>firewall-cmd --add-forward-port=port=80:proto=tcp:toport=3128 --permanent</code></p>
+<p>若为iptables，则添加两条规则：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">iptables -t nat -A PREROUTING -i ens33 -p tcp --dport 80 -j --REDIRECT --to-ports=3128</span><br><span class="line">iptables -t nat -A POSTROUTING -o ens36 -s 192.168.205.0/24 MASQUERADE</span><br><span class="line"># ens33为内网卡，ens36为外网卡</span><br></pre></td></tr></table></figure>
+<p>然后打开转发，无论是firewalld还是iptables，都要打开。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;net.ipv4.ip_forward=1&quot; &gt;&gt; /etc/sysctl.conf </span><br><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
+<p>最后放行80和443端口，放行http和https服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port=80/tcp --add-port=443/tcp</span><br><span class="line">firewall-cmd --permanent --add-service=http --add-service=https</span><br></pre></td></tr></table></figure>
+<h2 id="反向二级代理"><a href="#反向二级代理" class="headerlink" title="反向二级代理"></a>反向二级代理</h2><h1 id="cachemgr-cgi管理Squid"><a href="#cachemgr-cgi管理Squid" class="headerlink" title="cachemgr.cgi管理Squid"></a>cachemgr.cgi管理Squid</h1><p>通过web界面管理Squid，需要<code>cachemgr.cgi</code>动态网页文件，存放在<code>/usr/lib64/squid/</code>中。可以将该cgi文件复制到<code>/var/www/cgi-bin</code>中，也可不动，但要注意文件的权限问题，一定要改为<code>apache</code>。然后在httpd的主配置文件中添加，Location配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ScriptAlias &quot;/squidcgi&quot; &quot;/var/www/cgi-bin/cachemgr.cgi&quot;</span><br><span class="line">&lt;Location &quot;/squidcgi&quot;&gt;</span><br><span class="line">    Order deny,allow     #逗号后不能有空格</span><br><span class="line">    Allow from all</span><br><span class="line">&lt;/Location&gt;</span><br></pre></td></tr></table></figure>
+<p>然后浏览器通过<code>主机IP/squidcgi</code>访问。</p>
+<img src="/2018/05/31/Squid笔记/4.png">
+<p>默认不需要填用户名密码即可登录。若要设置登录用户名密码，只需要在主配置文件中添加<code>cachemgr_password</code>参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cachemgr 密码  行为action</span><br><span class="line">要禁用一个操作，就把密码设为disable，后面跟上要禁止的操作</span><br><span class="line">要允许不输入密码的操作，就把密码设为none，后面跟上允许的操作</span><br><span class="line">action为all表示为所有操作设置相同密码</span><br></pre></td></tr></table></figure>
+<h1 id="Squid日志"><a href="#Squid日志" class="headerlink" title="Squid日志"></a>Squid日志</h1><p>Squid日志不仅记录服务器进程的运行，还记录用户的访问情况、缓存存储状况、缓存访问状况等。</p>
+<p>Squid三个日志：access.log，cache.log，store.log</p>
+<p>和日志文件相关的配置：</p>
+<ul>
+<li><code>cache_log /var/log/squid/cache.log</code>：指定缓存信息日志的路径。包含了缓存的起始配置信息，分类的错误信息，性能警告。</li>
+<li><code>cache_store_log /var/log/squid/store.log</code>：指定对象存储记录日志的路径。包含被写入缓存空间的对象、被从缓存空间清除的对象等。可设为<code>none</code>禁止</li>
+<li><code>cache_swap_log /var/spool/squid/cache_swap.log</code>：指定每个交换日志的路径。包含存储在交换空间的对象元数据。这类日志最好不要删除，否则可能会导致Squid故障。</li>
+<li><code>debug_options ALL,1</code>：控制日志记录内容的多少，第一个参数决定对哪些行为做记录，ALL表示对所有行为做记录，第二个参数表示详细程度，1表示详细程度最低。</li>
+<li><code>log_fqdn</code>：控制access.log日志中客户机地址的记录方式。on表示会记录客户机的域名，off则记录IP地址。开启会增加系统负担</li>
+</ul>
+<ul>
+<li><code>logformat squid %ts.%03tu %6tr %&gt;a %Ss/%03Hs %&lt;st %rm %ru %un %Sh/%&lt;A %mt</code>是在配置文件中日志格式的参数配置。<ul>
+<li><code>%ts.03tu</code>：记录请求完成时间。<code>%ts</code>为相对于Unix纪元（1970-1-1）的秒数，<code>%03tu</code>表示3个宽度的毫秒数，<code>.</code>为写入日志的固定符号。</li>
+<li><code>%6tr</code>：响应时间，表明了Squid处理请求的时间（接收到HTTP请求到响应报文发出），单位毫秒。ICP响应时间一般为0，非常快速。</li>
+<li><code>%&gt;a</code>：记录客户端地址，若开启了<code>log_fqdn</code>，则会记录客户端主机名。还可通过<code>client_netmask</code>隐藏客户端IP的一部分</li>
+<li><code>%Ss/%03Hs</code>：记录请求结果和状态码，<code>%Ss</code>是Squid特有的请求结果码，<code>%03Hs</code>是HTTP状态码</li>
+<li><code>%&lt;st</code>：记录传输的字节数。是整个数据包的大小，会比实际载荷信息大。</li>
+<li><code>%rm</code>：记录请求的方法。HTTP的常见请求和ICP的ICP_QUERY请求</li>
+<li><code>%ru</code>：记录客户端请求的URI。默认不会记录URL中第一个<code>?</code>后所有信息</li>
+<li><code>%un</code>：记录客户端用户身份。Squid使用RFC1413或HTTP的验证头部确认用户身份</li>
+<li><code>%Sh/%&lt;A</code>：记录peer主机（其他代理服务器）信息</li>
+<li><code>%mt</code>：记录MIME类型。从响应的<code>Content-type</code>域获取信息，若没有就使用一个<code>-</code>代替。</li>
+</ul>
+</li>
+<li><code>logfile_rotate</code>：轮询保存的文件数，超过限制就会从头开始覆盖</li>
+</ul>
+<h2 id="日志轮询"><a href="#日志轮询" class="headerlink" title="日志轮询"></a>日志轮询</h2><p>Squid并没有自动轮询的机制，只能使用<code>squid -k rotate</code>命令，并编写脚本通过cron周期执行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash </span><br><span class="line">cd /var/log/squid/</span><br><span class="line">[ -f access.log ] &amp;&amp; mv access.log access_$(date +%F).log</span><br><span class="line">squid -k rotate</span><br></pre></td></tr></table></figure>
+<h2 id="Sarg工具分析日志"><a href="#Sarg工具分析日志" class="headerlink" title="Sarg工具分析日志"></a>Sarg工具分析日志</h2><p>Sarg是一个Squid的日志分析工具，输出为html文件。<a href="https://nchc.dl.sourceforge.net/project/sarg/sarg/sarg-2.3.11/sarg-2.3.11.tar.gz" target="_blank" rel="noopener">Sarg下载-tar.gz包</a></p>
+<p>依赖gd库，pcre库。在sarg安装完成后，进入安装目录的<code>bin</code>目录，执行<code>sarg</code>命令，sarg会自动寻找Squid的日志文件，并分析。<code>SARG: Records in file: 595935, reading: 100.00%</code>，然后会生成一个目录，是自动存放在<code>/var/www/html/squid-reports</code>下，目录名为<code>起始日期-结束日期</code>，该目录下有<code>index.html</code></p>
+<p>通过浏览器访问该index文件，数据量相当庞大，并提供图表和日期时间的数据记录</p>
+<img src="/2018/05/31/Squid笔记/5.png">
+<p>sarg命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">sarg [options]</span><br><span class="line">     --convert      将access.log文件转换为易读的日期格式</span><br><span class="line">     -d DATE        指定报告的日志范围dd/mm/yyyy-dd/mm/yyyy</span><br><span class="line">     -e MAIL        将报告发送给指定email</span><br><span class="line">     -f FILE        指定配置文件，默认为安装目录的etc/sarg.conf</span><br><span class="line">     --keeplogs     保留以前生成的每个报告</span><br><span class="line">     -l FILE        指定日志文件</span><br><span class="line">     -n             使用rDNS将IP地址解析成域名</span><br><span class="line">     -o DIR         报告存放目录</span><br><span class="line">     -p             使用IP地址而不是userid</span><br><span class="line">     --split        按-d指定的日期切割日志文件</span><br><span class="line">     -t TIME        指定时间范围[HH:MM 或 HH:MM-HH:MM]</span><br><span class="line">     -u USER        只报告指定用户的行为</span><br><span class="line">     -x             开始分析，且会先输出完整的配置信息</span><br><span class="line">     -z             显示完整的输出信息</span><br></pre></td></tr></table></figure>
+<p>Sarg配置，存放在安装目录的<code>etc/sarg.conf</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">access_log /usr/local/squid/var/logs/access.log  #squid日志路径</span><br><span class="line">output_dir /var/www/html/squid-reports    #报告输出目录</span><br><span class="line">date_format u      #日期格式，u为美国格式mm/dd/yy，e为欧洲格式dd/mm/yy</span><br><span class="line">overwrite_report no   #是否对已存在的日期的报告覆盖</span><br></pre></td></tr></table></figure>
+<h1 id="Squid调优"><a href="#Squid调优" class="headerlink" title="Squid调优"></a>Squid调优</h1><h2 id="调整文件描述符"><a href="#调整文件描述符" class="headerlink" title="调整文件描述符"></a>调整文件描述符</h2><p>Squid在高负载下，需要大量内核资源，又因为Squid是做缓存服务器，所以极度消耗文件描述符，而unix对文件描述符是有限制的（1024），这样会造成极大的性能影响，当squid用完所有文件描述符后，就不能接收新的请求了，并且squid发现文件描述符短缺后，就会发布警告。</p>
+<p>因此，需要先查看文件描述符是否满足使用，大多数情况1024已经足够使用，当出现高负载情况时，则需要更多，因此最好将系统限制的文件描述符数量设为每个进程限制的两倍。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ulimit -a  查看当前的资源限制信息</span><br><span class="line">找到open files，就是同时能打开的文件数量，即文件描述符，默认为1024</span><br><span class="line">优化性能，将此值设为2048</span><br><span class="line">ulimit -Hn 2048 </span><br><span class="line"># -H 设定资源的硬性限制，也就是管理员所设下的限制</span><br><span class="line"># -n 设置同时最多能打开的文件数</span><br></pre></td></tr></table></figure>
+<p>注：<strong>ulimit仅仅作为临时设置，可以作用于通过使用其命令登录的 shell 会话，在会话终止时便结束限制，并不影响于其他 shell 会话。</strong></p>
+<p><strong>若要永久设置，可写入<code>/etc/profile</code>：<code>echo &quot;ulimit -Hn 2048&quot;&gt;&gt;/etc/profile</code> </strong></p>
+<p><strong>或写入<code>/etc/security/limits.conf</code>：<code>echo &quot;*  -  nofile  2048&quot;&gt;&gt;/etc/security/limits.conf</code></strong></p>
+<h2 id="调整临时端口范围"><a href="#调整临时端口范围" class="headerlink" title="调整临时端口范围"></a>调整临时端口范围</h2><p>临时端口是TCP/IP栈分配出连接的本地端口，当squid发起一条连接到另一台服务器，内核给本地socket分配一个端口号。CentOS默认的临时端口范围是32768到60999</p>
+<p>当squid高负载时，若临时端口号短缺，会造成很大的性能影响，因为一些TCP连接在关闭时会进入<code>TIME_WAIT</code>状态，此状态下临时端口不能重用。</p>
+<p>可通过<code>sysctl -a | grep net.ipv4.ip_local_port_range</code>查看</p>
+<p>设置范围4000到65000，<code>sysctl -w net.ipv4.ip_local_port_range=&quot;4000 65000&quot;</code></p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
+<li>Linux服务器架设指南（第二版）</li>
+<li>Linux系统管理与网络管理（第二版）</li>
+<li>Linux运维之道（第二版）</li>
+<li>高性能网站构建实战</li>
+<li></li>
+</ul>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/server/" rel="tag"># server</a>
+          
+            <a href="/tags/squid/" rel="tag"># squid</a>
+          
+            <a href="/tags/缓存/" rel="tag"># 缓存</a>
+          
+            <a href="/tags/代理/" rel="tag"># 代理</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/31/Nagios监控搭建/" rel="next" title="Nagios监控搭建-1">
+                <i class="fa fa-chevron-left"></i> Nagios监控搭建-1
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/31/Varnish笔记/" rel="prev" title="Varnish笔记-1">
+                Varnish笔记-1 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">59</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">88</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid介绍"><span class="nav-number">1.</span> <span class="nav-text">Squid介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#代理服务器概念"><span class="nav-number">2.</span> <span class="nav-text">代理服务器概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid安装"><span class="nav-number">3.</span> <span class="nav-text">Squid安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid常规配置"><span class="nav-number">4.</span> <span class="nav-text">Squid常规配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid访问控制"><span class="nav-number">5.</span> <span class="nav-text">Squid访问控制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid多级代理配置"><span class="nav-number">6.</span> <span class="nav-text">Squid多级代理配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid实验"><span class="nav-number">7.</span> <span class="nav-text">Squid实验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#透明二级代理"><span class="nav-number">7.1.</span> <span class="nav-text">透明二级代理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#反向二级代理"><span class="nav-number">7.2.</span> <span class="nav-text">反向二级代理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#cachemgr-cgi管理Squid"><span class="nav-number">8.</span> <span class="nav-text">cachemgr.cgi管理Squid</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid日志"><span class="nav-number">9.</span> <span class="nav-text">Squid日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志轮询"><span class="nav-number">9.1.</span> <span class="nav-text">日志轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Sarg工具分析日志"><span class="nav-number">9.2.</span> <span class="nav-text">Sarg工具分析日志</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Squid调优"><span class="nav-number">10.</span> <span class="nav-text">Squid调优</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#调整文件描述符"><span class="nav-number">10.1.</span> <span class="nav-text">调整文件描述符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调整临时端口范围"><span class="nav-number">10.2.</span> <span class="nav-text">调整临时端口范围</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">11.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
