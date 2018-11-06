@@ -112,7 +112,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/05/17/Redis学习笔记/redis-logo.png">
 <meta property="og:image" content="https://github.com/2018/05/17/Redis学习笔记/shaobing.png">
-<meta property="og:updated_time" content="2018-09-04T10:51:09.000Z">
+<meta property="og:updated_time" content="2018-11-03T04:22:09.245Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis基础学习笔记">
 <meta name="twitter:description" content="本篇笔记主要包含以下内容  Redis介绍 Redis安装 Redis数据类型 排序">
@@ -230,7 +230,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">90</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">95</span></a>
   </li>
         
         
@@ -238,7 +238,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">62</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">64</span></a>
   </li>
         
         
@@ -387,7 +387,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-09-04 18:51:09" itemprop="dateModified" datetime="2018-09-04T18:51:09+08:00">2018-09-04</time>
+                <time title="修改时间：2018-11-03 12:22:09" itemprop="dateModified" datetime="2018-11-03T12:22:09+08:00">2018-11-03</time>
               
             
           </span>
@@ -438,8 +438,9 @@
 </li>
 <li><a href="#集群">集群</a></li>
 <li><a href="#管理">管理</a></li>
-<li><a href="#Redis配置文件参数">Redis配置文件参数</a></li>
+<li><a href="#Redis配置文件常用参数">Redis配置文件常用参数</a></li>
 <li><a href="#在Docker上搭建Redis">在Docker上搭建Redis</a></li>
+<li><a href="#FAQ">FAQ</a></li>
 <li><a href="#Redis报错问题">Redis报错问题</a></li>
 </ul>
 <h2 id="Redis介绍"><a href="#Redis介绍" class="headerlink" title="Redis介绍"></a>Redis介绍</h2><p>Redis（Remote Dictionary Server）是由C语言写成的高性能key-value非关系型数据库。<br>为了保证效率，Redis的数据都缓存在内存中，并周期性地将更新的数据写入磁盘，或将修改写入记录文件，在此基础上实现了主从同步。</p>
@@ -451,6 +452,14 @@
 <li>建立软连接，redis的命令都存放在<code>/usr/local/redis/src/</code>目录下<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ln -s /usr/local/redis/src/redis-server /bin/redis-server</span><br><span class="line">ln -s /usr/local/redis/src/redis-cli /bin/redis-cli</span><br><span class="line">ln -s /usr/local/redis/src/redis-benchmark /bin/redis-benchmark</span><br><span class="line">ln -s /usr/local/redis/redis.conf /etc/redis.conf</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
+<p>如果可用内存十分小，最好要设置内核参数<code>vm.overcommit_memory</code>为1。</p>
+<p><code>overcommit_memory</code>指定了内核针对内存分配的策略：</p>
+<ul>
+<li><code>0</code>：内核将检查是否有足够可用内存供应用进程使用。若不足，会报错</li>
+<li><code>1</code>：内核允许分配所有物理内存，不管当前内存状态。</li>
+<li><code>2</code>：内核允许分配<strong>超过</strong>所有物理内存和swap之和的内存大小。</li>
+</ul>
+<p><code>echo &quot;vm.overcommit_memory=1&quot; &gt;&gt; /etc/sysctl.conf</code>并且<code>sysctl -p</code></p>
 <p><strong>redis命令</strong></p>
 <ul>
 <li><p><code>redis-server</code>用于开启redis服务器端</p>
@@ -461,6 +470,9 @@
 </li>
 </ul>
 <p><strong>注：</strong>若要让redis默认在后台启动，可修改配置文件中<code>daemonize 参数</code>，若为no，则是前台启动，若为yes，则是后台启动</p>
+<ul>
+<li><code>redis-check-aof</code>与<code>redis-check-rdb</code>：用于检测持久化状态或进行修复</li>
+</ul>
 <p><strong>redis-cli基本操作</strong><br><code>exists [key]</code> 查看键是否存在，存在返回1，否则返回0<br><code>del [key]</code> 删除键<br><code>type [key]</code> 返回键的数据类型<br><code>keys [pattern]</code> 返回符合指定匹配规则的键，支持glob风格通配符格式。<br><code>rename [old-key] [new-key]</code> 重命名键<br><code>dbsize</code> 返回当前数据库的键数量<br><code>expire [key] [time]</code> 指定键的生存时间（单位秒），返回1说明设置成功。未设置默认键的生存时间是无穷，会一直占用空间。<br><code>ttl [key]</code> 返回键的剩余生存时间，-1表示永久，-2表示不存在（已删除）<br><code>select [db-num]</code> 选择数据库编号</p>
 <blockquote>
 <p>0为默认，从1开始会在端口后显示，最大为15，即最多有16个数据库。若超出范围，虽会显示该编号，但是仅会对15号数据库操作。</p>
@@ -490,23 +502,52 @@
 </tbody>
 </table>
 <h2 id="Redis数据类型"><a href="#Redis数据类型" class="headerlink" title="Redis数据类型"></a>Redis数据类型</h2><ul>
-<li>字符串String：可包含任意数据，包括图片和序列化对象，单个值上限512MB</li>
-<li>列表List：双向链表，通过push和pop从链表头部或尾部添加删除元素，因此即可用作栈也可用作队列，且都是双向的</li>
-<li>哈希Hash：也称散列，字符串类型的键值对的映射表，适合存储对象，每个Hash可存储2^32-1个键值对</li>
-<li>集合Set：字符串类型的无序集合，通过Hash表实现，所有操作的复杂度都为O(1)，最多可包含2^32-1个键值对</li>
-<li>有序集合Sorted Set：也称ZSet，每个元素都会关联一个double类型的分数，称为权。redis正是通过权来为集合中的成员进行从小到大的排序。有序集合的成员是唯一的,但权却可以重复。</li>
+<li><p><strong>字符串String</strong>：可包含任意数据，包括图片和序列化对象，单个值上限512MB</p>
+</li>
+<li><p><strong>列表List</strong>：<strong>双向链表</strong>，通过push和pop从链表头部或尾部添加删除元素，因此即可用作栈也可用作队列，且都是双向的</p>
+</li>
+<li><p><strong>哈希Hash</strong>：也称散列，字符串类型的键值对的映射表，<strong>适合存储对象</strong>，每个Hash可存储2^32-1个键值对。</p>
+<p>新建的hash对象以zipmap来存储，zipmap本身不是hash table，但相比正常的hash，可以节省hash自身需要的元数据存储开销。</p>
+<p>zipmap的增删改的复杂度都是O(n)，但是一般对象的field都不多，所以速度也较快。若field或value的大小超出一定限制，则redis会自动将zipmap替换为正常的hash实现。</p>
+<p>可通过配置文件的<code>hash-max-ziplist-entries</code>和<code>hash-max-ziplist-value</code>设置限制大小，单位字节。默认entries设为512，value设为64</p>
+</li>
+<li><p><strong>集合Set</strong>：字符串类型的无序集合，通过Hash表实现，所有操作的复杂度都为O(1)，最多可包含2^32-1个键值对</p>
+</li>
+<li><p><strong>有序集合Sorted Set</strong>：也称ZSet，每个元素都会关联一个double类型的分数，称为权。redis正是通过权来为集合中的成员进行从小到大的排序。有序集合的成员是唯一的,但权却可以重复。</p>
+</li>
 </ul>
 <p><strong>redis-cli操作</strong></p>
 <ul>
-<li><p><strong>字符串</strong><br><code>set [key] [value]</code> 设置键值<br><code>mset [key1] [value1] [key2] [value2] ...</code> 同时设置多个键值<br><code>get [key]</code> 获取键值<br><code>mget [key1] [key2] ...</code>同时获取多个键的值<br><code>getrange [key] [start] [end]</code> 返回键中字符串值的子字符串<br><code>setrange [key] [start] [end]</code> 设置字符串值的子串值<br><code>getset [key] [value]</code> 设置键的值并返回旧值<br><code>strlen [key]</code> 返回该键的字符串值的长度<br><code>incr [key]</code> 设置键值自增，返回新值<br><code>decr [key]</code> 设置键值自减，返回新值<br><code>incrby [key] [value]</code> 设置键值自增指定value，返回新值<br><code>descby [key] [value]</code> 设置键值自减指定value，返回新值<br><code>append [key] [value]</code> 指定键追加值value，返回新值长度<br><code>substr [key] [start] [end]</code> 取字符串（字符编号从0开始）</p>
+<li><p><strong>字符串</strong><br><code>set [key] [value]</code> 设置键值</p>
+<p><code>setnx [key] [value]</code>：设置键值，若key已存在，则不会修改该值，并返回0</p>
+<p><code>setex [key] [expire time][value]</code>：设置键值以及有效时间</p>
+<p><code>mset [key1] [value1] [key2] [value2] ...</code> 同时设置多个键值</p>
+<p><code>msetnx</code>：设置多个键值，但若key存在，则不会修改值</p>
+<p><code>get [key]</code> 获取键值<br><code>mget [key1] [key2] ...</code>同时获取多个键的值<br><code>getrange [key] [start] [end]</code> 返回键中字符串值的子字符串<br><code>setrange [key] [start] [end]</code> 设置字符串值的子串值<br><code>getset [key] [value]</code> 设置键的值并返回旧值<br><code>strlen [key]</code> 返回该键的字符串值的长度<br><code>incr [key]</code> 设置键值自增，返回新值<br><code>decr [key]</code> 设置键值自减，返回新值<br><code>incrby [key] [value]</code> 设置键值自增指定value，返回新值<br><code>descby [key] [value]</code> 设置键值自减指定value，返回新值<br><code>append [key] [value]</code> 指定键追加值value，返回新值长度<br><code>substr [key] [start] [end]</code> 取字符串（字符编号从0开始）</p>
 </li>
-<li><p><strong>列表</strong><br><code>lpush [key] [member1] [member2]...</code> 在list头部添加元素<br><code>rpush [key] [member1] [member2]...</code> 在list尾部添加元素<br><code>lpop [key]</code> 在list头部删除元素，返回删除元素<br><code>rpop [key]</code> 在list尾部删除元素，返回删除元素<br><code>llen [key]</code> 返回list的长度<br><code>lindex [key] [index]</code> 获取列表中对应索引的元素<br><code>lrange [key] [start] [end]</code> 返回list指定区间的元素（编号从0开始）<br><code>ltrim [key] [start] [end]</code> 截取list，只保留截取区间的元素</p>
+<li><p><strong>列表</strong><br><code>lpush [list] [member1] [member2]...</code> 在list头部添加元素<br><code>rpush [list] [member1] [member2]...</code> 在list尾部添加元素<br><code>lpop [list]</code> 在list头部删除元素，返回删除元素<br><code>rpop [list]</code> 在list尾部删除元素，返回删除元素</p>
+<p><code>linsert [list] before|after [指定值][value]</code>：在指定list的特定位置前或后添加字符串value</p>
+<p><code>lset [list][index][value]</code>：设置指定下标的值</p>
+<p><code>lrem [list][num][value]</code>：删除list中num个和value值一致的值。若num&gt;0，则从头开始删，若num&lt;0，则从尾开始删，若num为0，删除全部</p>
+<p><code>llen [list]</code> 返回list的长度<br><code>lindex [list] [index]</code> 获取列表中对应索引的元素<br><code>lrange [list] [start] [end]</code> 返回list指定区间的元素（编号从0开始）<br><code>ltrim [list] [start] [end]</code> 截取list，只保留截取区间的元素</p>
 </li>
-<li><p><strong>集合</strong><br><code>sadd [key] [member1] [member2]...</code> 添加集合元素<br><code>srem [key] [member1] [member2]...</code> 删除集合元素<br><code>scard [key]</code> 返回集合元素个数<br><code>smove [key1] [key2] [member]</code> 将指定元素从key1移到key2<br><code>sismember [key] [member]</code> 判断该元素是否属于指定集合<br><code>smembers [key]</code> 返回集合中所有元素<br><code>sinter [key1] [key2]</code> 返回集合的交集<br><code>sinterstore [key3] [key1] [key2]</code> 将集合的交集存储到key3集合中<br><code>sunion [key1] [key2]</code> 返回集合的并集<br><code>sunionstore [key3] [key1] [key2]</code> 将集合的并集存储到key3集合中<br><code>sdiff [key1] [key2]</code> 返回集合的差集<br><code>sdiffstore [key3] [key1] [key2]</code> 将集合的差集存储到key3集合中</p>
+<li><p><strong>集合</strong><br><code>sadd [set] [member1] [member2]...</code> 添加集合元素<br><code>srem [set] [member1] [member2]...</code> 删除集合元素</p>
+<p><code>spop [set] [value]</code>：删除指定value</p>
+<p><code>scard [set]</code> 返回集合元素个数<br><code>smove [set1] [set2] [value]</code> 将指定元素从set1移到set2<br><code>sismember [set] [value]</code> 判断该元素是否属于指定集合<br><code>smembers [set]</code> 返回集合中所有元素</p>
+<p><code>srandmember [set]</code>：随机返回set中的一个值</p>
+<p><code>sinter [set1] [set2]</code> 返回集合的交集<br><code>sinterstore [set3] [set1] [set2]</code> 将集合的交集存储到set3集合中<br><code>sunion [set1] [set2]</code> 返回集合的并集<br><code>sunionstore [set3] [set1] [set2]</code> 将集合的并集存储到key3集合中<br><code>sdiff [set1] [set2]</code> 返回集合的差集<br><code>sdiffstore [key3] [key1] [key2]</code> 将集合的差集存储到key3集合中</p>
 </li>
-<li><p><strong>有序集合</strong><br><code>zadd [key] [score1] [member1]...</code> 向有序集合添加成员并设置权值<br><code>zrem [key] [member]</code> 删除集合元素<br><code>zincrby [key] [incr] [member]</code> 设置元素的增加值<br><code>zrank [key] [member]</code> 返回指定元素的下标（从小到大）<br><code>zrevrank [key] [member]</code> 返回指定元素的下标（从大到小）<br><code>zrange [key] [start] [end]</code> 返回集合的指定区间元素<br><code>zrerange [key] [start] [end]</code> 返回集合的指定区间元素（逆序）<br><code>zcard [key]</code> 返回集合元素个数<br><code>zscore [key] [member]</code> 返回元素的权值<br><code>zremrangebyrank [key] [start] [end]</code> 删除集合中给定排名区间的元素</p>
+<li><p><strong>有序集合</strong><br><code>zadd [key] [score1] [member1]...</code> 向有序集合添加成员并设置权值<br><code>zrem [key] [member]</code> 删除集合元素<br><code>zincrby [key] [incr] [member]</code> 设置元素的增加值<br><code>zrank [key] [member]</code> 返回指定元素的下标（从小到大）<br><code>zrevrank [key] [member]</code> 返回指定元素的下标（从大到小）<br><code>zrange [key] [start] [end]</code> 返回集合的指定区间元素<br><code>zrevrange [key] [start] [end]</code> 返回集合的指定区间元素（逆序）</p>
+<p><code>zrangebyscore [key][start][end]</code>：返回score在指定范围间的元素。可在最后添加参数<code>withscores</code>返回该元素的score</p>
+<p><code>zcount [key][start][end]</code>：返回score在指定范围内的元素个数</p>
+<p><code>zcard [key]</code> 返回集合元素个数<br><code>zscore [key] [member]</code> 返回元素的权值<br><code>zremrangebyrank [key] [start] [end]</code> 删除集合中给定排名区间的元素</p>
+<p><code>zremrangebyscore [key][start][end]</code>：删除集合中score在指定范围内的元素</p>
 </li>
-<li><p><strong>哈希</strong><br><code>hset [table] [column] [value]</code> 设置字段column的值<br><code>hget [table] [column]</code> 获取字段的值<br><code>hmset [table] [column1] [value1]...</code> 设置多个字段的值<br><code>hmget [table] [column1] [column2]...</code> 获取多个字段的值<br><code>hincrby [table] [column] [incr]</code> 字段增加指定值<br><code>hexists [table] [column]</code> 字段是否存在<br><code>hdel [table] [column]...</code> 删除表中字段<br><code>hdel [table]</code> 删除表<br><code>hkeys [table]</code> 返回表的所有字段<br><code>hvals [table]</code> 返回表的所有值<br><code>hgetall [table]</code> 返回表的所有字段与值</p>
+<li><p><strong>哈希</strong><br><code>hset [table] [column] [value]</code> 设置字段column的值</p>
+<p><code>hsetnx [table][column][value]</code>：设置字段值，若字段存在则不会修改值，并返回0</p>
+<p><code>hget [table] [column]</code> 获取字段的值<br><code>hmset [table] [column1] [value1]...</code> 设置多个字段的值<br><code>hmget [table] [column1] [column2]...</code> 获取多个字段的值<br><code>hincrby [table] [column] [incr]</code> 字段增加指定值<br><code>hexists [table] [column]</code> 字段是否存在</p>
+<p><code>hlen [table]</code>：返回指定hash的字段数</p>
+<p><code>hdel [table] [column]...</code> 删除表中字段<br><code>hdel [table]</code> 删除表<br><code>hkeys [table]</code> 返回表的所有字段<br><code>hvals [table]</code> 返回表的所有值<br><code>hgetall [table]</code> 返回表的所有字段与值</p>
 </li>
 </ul>
 <h2 id="排序"><a href="#排序" class="headerlink" title="排序"></a>排序</h2><p>Redis支持对list、set、sorted set的排序。<br><code>sort [key] [BY partten][LIMIT offset count][GET pattern][ASC|DESC][ALPHA][STORE dstkey]</code></p>
@@ -872,17 +913,74 @@
 </li>
 </ul>
 <p><code>monitor</code>命令十分影响redis的性能，会降低近一半的负载能力，因此只适合进行排错和调试。</p>
-<h2 id="Redis配置文件参数"><a href="#Redis配置文件参数" class="headerlink" title="Redis配置文件参数"></a>Redis配置文件参数</h2><p>按照配置文件中的出现顺序</p>
 <ul>
-<li>bind <ipaddr> 指定Redis只接收该地址的请求。默认接收所有IP地址的请求，这样会造成安全隐患，最好填写需要调用redis的服务器的IP地址，或者直接写<code>127.0.0.1</code>仅允许本地用户调用。</ipaddr></li>
+<li><code>config get &lt;指定配置&gt;</code>：获取服务器配置信息（就是配置文件中的参数）。</li>
 </ul>
-<h2 id="在Docker上搭建Redis"><a href="#在Docker上搭建Redis" class="headerlink" title="在Docker上搭建Redis"></a>在Docker上搭建Redis</h2><h2 id="Redis报错问题"><a href="#Redis报错问题" class="headerlink" title="Redis报错问题"></a>Redis报错问题</h2><ul>
+<h2 id="Redis配置文件常用参数"><a href="#Redis配置文件常用参数" class="headerlink" title="Redis配置文件常用参数"></a>Redis配置文件常用参数</h2><p>按照配置文件中的出现顺序</p>
+<ul>
+<li><p><code>bind &lt;IPaddr&gt;</code>： 指定Redis只接收该地址的请求。默认接收所有IP地址的请求，这样会造成安全隐患，最好填写需要调用redis的服务器的IP地址，或者直接写<code>127.0.0.1</code>仅允许本地用户调用。</p>
+</li>
+<li><p><code>daemonize yes|no</code>：是否在后台运行。默认在前台运行</p>
+</li>
+<li><p><code>pidfile</code>：PID文件路径。若运行多个Redis，则需要在各自的配置文件中指定不同的PID文件路径和端口</p>
+</li>
+<li><p><code>port</code>：Redis监听的端口，默认为6379</p>
+</li>
+<li><p><code>timeout</code>：客户端连接超时时间，单位秒。若客户端在超时前没发出任何指令，则会关闭连接。</p>
+</li>
+<li><p><code>logfile</code>：日志文件路径</p>
+</li>
+<li><p><code>loglevel</code>：日志等级，分为四个：debug、verbose、notice、warning，默认为notice</p>
+</li>
+<li><p><code>databases</code>：数据库个数，默认设为16个</p>
+</li>
+<li><p><code>save &lt;seconds&gt; &lt;changes&gt;</code>：redis进行备份的频率。在多少秒内进行几次更新操作，就会触发备份，将数据同步到RDB文件。详见持久化</p>
+</li>
+<li><p><code>rdbcompression yes|no</code>：是否开启rdb备份时压缩，默认开启</p>
+</li>
+<li><p><code>dbfilename</code>：rdb备份的文件名，默认为<code>dump.rdb</code></p>
+</li>
+<li><p><code>dir</code>：rdb备份文件存放路径。路径和文件名要分开配置，因为Redis备份时会先将当前数据库的状态写入一个临时文件，等备份完成后再把该文件替换为指定文件。</p>
+</li>
+<li><p><code>slaveof &lt;masterip&gt; &lt;masteport&gt;</code>：在从数据库上设置，指定主数据库</p>
+</li>
+<li><p><code>masterauth &lt;master-password&gt;</code> ：当主数据库连接需要密码验证时，在此指定密码</p>
+</li>
+<li><p><code>requirepass</code>：设置客户端连接后进行任何其他操作前需要的密码。</p>
+<blockquote>
+<p>因为Redis速度快，所以外部用户可以每秒进行150000次密码尝试，若密码简单，很容易被破解。</p>
+</blockquote>
+</li>
+<li><p><code>maxmemory &lt;bytes&gt;</code>：设置Redis最大能使用的内存，单位字节。当分配的内存完全被占用后，若再接收到set命令，则Redis会先删除设置了expire的键，无论是否到期。若所有expire的键都被删除了，则redis不再进行set操作，只允许get操作。此参数适合把redis当做类似Memcached缓存来使用</p>
+</li>
+<li><code>maxclients</code>：限制同时连接的客户数。当连接数超过该值，则不再接收，并返回error。</li>
+<li><code>appendonly yes|no</code> ：默认情况下，redis会在后台异步把数据库镜像备份到此磁盘，但这样备份非常耗时，且不能很频繁，若断电会造成大量数据丢失。若开启appendonly，则redis会将接收到的每一次写操作追加到<code>appendonly.aof</code>中，当redis重启时，会从该文件恢复到之前的状态。但这样容易造成该文件过大。可通过指令<code>BGREWRITEAOF</code>对该文件整理。</li>
+<li><code>appendfsync always|everysec|no</code>：详见持久化</li>
+<li><code>vm-enabled</code>：是否开启虚拟内存支持。当内存不够时，会把value存放到交换区（swap）中。性能基本不受影响。同时要将<code>vm-max-memory</code>设置足够大以存放所有key</li>
+<li><code>vm-max-memory</code>：开启虚拟内存后redis可用的最大内存大小，默认为0。在生产环境中，最好不要设为0，根据实际情况调整。</li>
+</ul>
+<h2 id="在Docker上搭建Redis"><a href="#在Docker上搭建Redis" class="headerlink" title="在Docker上搭建Redis"></a>在Docker上搭建Redis</h2><h1 id="FAQ"><a href="#FAQ" class="headerlink" title="FAQ"></a>FAQ</h1><ol>
+<li><p><strong>Redis内存用完怎么办？</strong></p>
+<p>redis的性能会下降，并可能出错。可通过info查看redis内存使用情况，并写脚本进行监控。可通过配置文件<code>maxmemory</code>调整redis可用内存大小。若redis的内存使用达到上限，即给出错误写入的命令，仅能接受只读命令。</p>
+</li>
+<li><p><strong>使redis内存使用率降低的方法？</strong></p>
+<p>最好使用redis的哈希、列表、排序集、整数集</p>
+</li>
+<li><p><strong>如果没有数据集较大的内存，怎么进行高层次的操作？</strong></p>
+<p>使用客户端哈希，并部署redis集群，自动分发，以及redis子集的热备</p>
+</li>
+<li><p><strong>单线程Redis如何利用多个CPU？</strong></p>
+<p>只需在同一台机器上启动多个redis实例，当做不同服务器即可。</p>
+</li>
+</ol>
+<h2 id="Redis报错问题"><a href="#Redis报错问题" class="headerlink" title="Redis报错问题"></a>Redis报错问题</h2><ul>
 <li>Redis被配置为保存数据库快照，但它目前不能持久化到硬盘。用来修改集合数据的命令不能用<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">报错：(error) MISCONF Redis is configured to save RDB snapshots, but it is currently not able to persist on disk. Commands that may modify the data set are disabled, because this instance is configured to report errors during writes if RDB snapshotting fails (stop-writes-on-bgsave-error option). Please check the Redis logs for details about the RDB error.</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
 <p>原因：强制关闭Redis快照导致不能持久化<br>解决：将配置文件<code>stop-writes-on-bgsave-error</code>设置为no</p>
 <h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><blockquote>
 <p>Redis入门指南（第二版）<br><a href="https://segmentfault.com/a/1190000010131816" target="_blank" rel="noopener">Linux_基于Docker搭建Redis集群</a><br><a href="https://segmentfault.com/a/1190000014618411" target="_blank" rel="noopener">Docker Redis的官方镜像简单使用</a><br><a href="https://segmentfault.com/a/1190000009857207" target="_blank" rel="noopener">【Redis】基于 Redis3.2.4 集群搭建说明</a></p>
+<p>高性能网站构建实战</p>
 </blockquote>
 
       
@@ -1009,7 +1107,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">62</span>
+                    <span class="site-state-item-count">64</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -1204,7 +1302,17 @@
                     
                       
                     
-                    <span class="site-state-item-count">90</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">95</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -1272,7 +1380,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis介绍"><span class="nav-number">1.</span> <span class="nav-text">Redis介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis安装"><span class="nav-number">2.</span> <span class="nav-text">Redis安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis数据类型"><span class="nav-number">3.</span> <span class="nav-text">Redis数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#排序"><span class="nav-number">4.</span> <span class="nav-text">排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#发布与订阅"><span class="nav-number">5.</span> <span class="nav-text">发布与订阅</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">6.</span> <span class="nav-text">事务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#过期时间"><span class="nav-number">7.</span> <span class="nav-text">过期时间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#持久化"><span class="nav-number">8.</span> <span class="nav-text">持久化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis优化技术"><span class="nav-number">9.</span> <span class="nav-text">Redis优化技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#管道"><span class="nav-number">9.1.</span> <span class="nav-text">管道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内部编码优化"><span class="nav-number">9.2.</span> <span class="nav-text">内部编码优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#集群"><span class="nav-number">10.</span> <span class="nav-text">集群</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#复制（主从）"><span class="nav-number">10.1.</span> <span class="nav-text">复制（主从）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#无硬盘复制"><span class="nav-number">10.2.</span> <span class="nav-text">无硬盘复制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增量复制"><span class="nav-number">10.3.</span> <span class="nav-text">增量复制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#哨兵"><span class="nav-number">10.4.</span> <span class="nav-text">哨兵</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群-1"><span class="nav-number">10.5.</span> <span class="nav-text">集群</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#管理"><span class="nav-number">11.</span> <span class="nav-text">管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安全"><span class="nav-number">11.1.</span> <span class="nav-text">安全</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信协议"><span class="nav-number">11.2.</span> <span class="nav-text">通信协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些管理命令"><span class="nav-number">11.3.</span> <span class="nav-text">一些管理命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis配置文件参数"><span class="nav-number">12.</span> <span class="nav-text">Redis配置文件参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在Docker上搭建Redis"><span class="nav-number">13.</span> <span class="nav-text">在Docker上搭建Redis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis报错问题"><span class="nav-number">14.</span> <span class="nav-text">Redis报错问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">15.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis介绍"><span class="nav-number">1.</span> <span class="nav-text">Redis介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis安装"><span class="nav-number">2.</span> <span class="nav-text">Redis安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis数据类型"><span class="nav-number">3.</span> <span class="nav-text">Redis数据类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#排序"><span class="nav-number">4.</span> <span class="nav-text">排序</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#发布与订阅"><span class="nav-number">5.</span> <span class="nav-text">发布与订阅</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务"><span class="nav-number">6.</span> <span class="nav-text">事务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#过期时间"><span class="nav-number">7.</span> <span class="nav-text">过期时间</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#持久化"><span class="nav-number">8.</span> <span class="nav-text">持久化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis优化技术"><span class="nav-number">9.</span> <span class="nav-text">Redis优化技术</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#管道"><span class="nav-number">9.1.</span> <span class="nav-text">管道</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内部编码优化"><span class="nav-number">9.2.</span> <span class="nav-text">内部编码优化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#集群"><span class="nav-number">10.</span> <span class="nav-text">集群</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#复制（主从）"><span class="nav-number">10.1.</span> <span class="nav-text">复制（主从）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#无硬盘复制"><span class="nav-number">10.2.</span> <span class="nav-text">无硬盘复制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#增量复制"><span class="nav-number">10.3.</span> <span class="nav-text">增量复制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#哨兵"><span class="nav-number">10.4.</span> <span class="nav-text">哨兵</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群-1"><span class="nav-number">10.5.</span> <span class="nav-text">集群</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#管理"><span class="nav-number">11.</span> <span class="nav-text">管理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安全"><span class="nav-number">11.1.</span> <span class="nav-text">安全</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信协议"><span class="nav-number">11.2.</span> <span class="nav-text">通信协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些管理命令"><span class="nav-number">11.3.</span> <span class="nav-text">一些管理命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis配置文件常用参数"><span class="nav-number">12.</span> <span class="nav-text">Redis配置文件常用参数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在Docker上搭建Redis"><span class="nav-number">13.</span> <span class="nav-text">在Docker上搭建Redis</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#FAQ"><span class="nav-number"></span> <span class="nav-text">FAQ</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Redis报错问题"><span class="nav-number">1.</span> <span class="nav-text">Redis报错问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考资料"><span class="nav-number">2.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
             
 
           </div>
