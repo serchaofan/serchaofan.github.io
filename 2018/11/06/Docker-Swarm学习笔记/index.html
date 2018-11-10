@@ -102,19 +102,20 @@
 
 
 
-  <meta name="description" content="Docker Swarm概述">
-<meta name="keywords" content="docker,云计算,容器编排,docker swarm,集群">
+  <meta name="description" content="Docker Swarm概述 swarm操作">
+<meta name="keywords" content="docker,docker swarm,云计算,集群,容器编排">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker-Swarm学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/11/06/Docker-Swarm学习笔记/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="Docker Swarm概述">
+<meta property="og:description" content="Docker Swarm概述 swarm操作">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/0.png">
-<meta property="og:updated_time" content="2018-11-06T14:19:31.321Z">
+<meta property="og:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/1.png">
+<meta property="og:updated_time" content="2018-11-09T08:38:23.586Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker-Swarm学习笔记">
-<meta name="twitter:description" content="Docker Swarm概述">
+<meta name="twitter:description" content="Docker Swarm概述 swarm操作">
 <meta name="twitter:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/0.png">
 
 
@@ -369,12 +370,24 @@
                 
               
 
-              <time title="创建时间：2018-11-06 12:34:01 / 修改时间：22:19:31" itemprop="dateCreated datePublished" datetime="2018-11-06T12:34:01+08:00">2018-11-06</time>
+              <time title="创建时间：2018-11-06 12:34:01" itemprop="dateCreated datePublished" datetime="2018-11-06T12:34:01+08:00">2018-11-06</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-11-09 16:38:23" itemprop="dateModified" datetime="2018-11-09T16:38:23+08:00">2018-11-09</time>
               
             
           </span>
@@ -409,7 +422,7 @@
       
         <ul>
 <li><a href="#Docker Swarm概述">Docker Swarm概述</a></li>
-<li><a href=""></a></li>
+<li><a href="#swarm操作">swarm操作</a></li>
 </ul>
 <a id="more"></a>
 <h1 id="Docker-Swarm概述"><a href="#Docker-Swarm概述" class="headerlink" title="Docker Swarm概述"></a>Docker Swarm概述</h1><p>Docker Swarm用于跨主机部署管理docker集群。从1.12版本开始就集成在docker engine中，并称为swarm mode。swarm已内置kv存储功能，不再需要外置的etcd，内置Overlay网络，服务发现，负载均衡。</p>
@@ -433,6 +446,22 @@
 <p>swarm 中如果有多个 manager node，它们会自动协商并选举出一个 leader 执行编排任务。</p>
 </li>
 <li><p><strong>worker node</strong> 接收并执行管理节点分配的任务，并会定期向 manager node 报告自己的状态和它正在执行的任务的状态</p>
+</li>
+<li><p><strong>service</strong>与<strong>task</strong>：定义了 worker node 上要执行的任务。swarm 的主要编排任务就是保证 service 处于期望的状态下。</p>
+<p>任务Task是swarm中的最小原子调度单位。Services是一组task的集合，service定义了这些task的属性。</p>
+</li>
+</ul>
+<p>swarm的工作流程：</p>
+<ol>
+<li>Client发送请求给Swarm </li>
+<li>Swarm处理并发送给相应docker node  </li>
+<li>docker node执行操作并返回结果</li>
+</ol>
+<p>services有两种模式：</p>
+<ul>
+<li><p>replicated services：按照一定规则在各个worker node上运行指定个数的tasks，和k8s的replicate、marathon中的instance概念一样。</p>
+</li>
+<li><p>global services：每个woker node上运行一个此task</p>
 </li>
 </ul>
 <img src="/2018/11/06/Docker-Swarm学习笔记/0.png">
@@ -461,13 +490,16 @@
 <li>Ingress+Link：</li>
 <li>自定义网络：</li>
 </ul>
+<h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><p>swarm manager使用<strong>入口负载均衡（Ingress load balance）</strong>来发布向集群外部提供的服务。swarm manager可以<strong>自动为已发布的端口（published port）分配服务</strong>，也可以为服务配置发布端口（Published Port）。可以指定任何未使用的端口，如果未指定端口，则swarm manager会为服务分配30000-32767范围内的端口。</p>
+<p>外部组件（例如云负载平衡器）可以访问集群中任何节点的发布端口上的服务，无论该节点当前是否正在运行该服务的任务。集群中的所有节点都将入口连接到正在运行的任务实例。</p>
+<p>Swarm模式有一个内部DNS组件，可以自动为swarm中的每个服务分配一个DNS条目。swarm manager使用内部负载均衡（Internal load balance）来根据服务的DNS名称在集群内的服务之间分发请求。</p>
 <h1 id="swarm操作"><a href="#swarm操作" class="headerlink" title="swarm操作"></a>swarm操作</h1><p>实验环境：</p>
 <ul>
 <li>Manager：本机192.168.43.106</li>
 <li>Worker：atom-1  172.16.246.138</li>
 <li>Worker：atom-2  172.16.246.139</li>
 </ul>
-<p>初始化一个swarm，<code>docker swarm init --advertise-addr IP地址</code>，指定发布的地址。</p>
+<h2 id="创建与查看服务"><a href="#创建与查看服务" class="headerlink" title="创建与查看服务"></a>创建与查看服务</h2><p>初始化一个swarm，<code>docker swarm init --advertise-addr IP地址</code>，指定发布的地址。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker swarm init --advertise-addr 192.168.43.106</span><br><span class="line">Swarm initialized: current node (w4wogxb10dhxtcvh3ljx5ltqh) is now a manager.</span><br><span class="line">To add a worker to this swarm, run the following command:</span><br><span class="line">    docker swarm join --token XXXXXX 192.168.43.106:2377</span><br></pre></td></tr></table></figure>
 <p>在atom-1、atom-2上执行提示的<code>docker swarm join</code>命令。然后在Manager上执行<code>docker node ls</code>查看节点，集群已创建成功。</p>
 <blockquote>
@@ -486,8 +518,50 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service ps busybox</span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR                              PORTS</span><br><span class="line">r9eogiyc0xkl        busybox.1           busybox:latest      gutianyi-PC         Running             Running 20 minutes ago                                          </span><br><span class="line">5z2rfa8xiuvq         \_ busybox.1       busybox:latest      gutianyi-PC         Shutdown            Failed 20 minutes ago        &quot;task: non-zero exit (1)&quot;          </span><br><span class="line">txz74rterci8         \_ busybox.1       busybox:latest      gutianyi-PC         Shutdown            Failed 21 minutes ago        &quot;task: non-zero exit (1)&quot;</span><br></pre></td></tr></table></figure>
 <p>还可以通过<code>-f</code>指定满足条件的条目</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service ps busybox -f &quot;desired-state=running&quot;  #只查看正在运行的任务</span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE               ERROR               PORTS</span><br><span class="line">r9eogiyc0xkl        busybox.1           busybox:latest      gutianyi-PC         Running             Running 22 minutes ago                          </span><br><span class="line">axvqvs5wuvw4        busybox.2           busybox:latest      gutianyi-PC         Running             Running about an hour ago</span><br></pre></td></tr></table></figure>
-<p>可通过<code>docker service scale SERVICE=REPLICAS</code>进行扩容或缩容</p>
+<h2 id="扩缩容"><a href="#扩缩容" class="headerlink" title="扩缩容"></a>扩缩容</h2><p>可通过<code>docker service scale SERVICE=REPLICAS</code>进行扩容或缩容</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service scale busybox=3        # 将busybox的replicas扩容到3台</span><br><span class="line">busybox scaled to 3</span><br><span class="line">overall progress: 3 out of 3 tasks </span><br><span class="line">1/3: running   [==================================================&gt;] </span><br><span class="line">2/3: running   [==================================================&gt;] </span><br><span class="line">3/3: running   [==================================================&gt;] </span><br><span class="line">verify: Service converged </span><br><span class="line"></span><br><span class="line">&gt; docker service ls</span><br><span class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</span><br><span class="line">p519w5pjai5y        busybox             replicated          3/3                 busybox:latest</span><br></pre></td></tr></table></figure>
+<h2 id="更新与回滚"><a href="#更新与回滚" class="headerlink" title="更新与回滚"></a>更新与回滚</h2><p>创建web服务，设置定时更新策略</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">docker service create \</span><br><span class="line">  --name web \</span><br><span class="line">  --replicas 3 \   </span><br><span class="line">  --update-delay 2s \         # 任务升级间的间隔</span><br><span class="line">  --update-parallelism 2 \    # 同时更新的最大任务数</span><br><span class="line">  nginx:1.12                  # 使用nginx:1.12镜像</span><br><span class="line"></span><br><span class="line">docker service ps web </span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE            ERROR                              PORTS</span><br><span class="line">p1w8ee6fhrt8        web.1               nginx:1.12          gutianyi-PC         Running             Running 13 minutes ago                                     </span><br><span class="line">gv5jm09qsvq7        web.2               nginx:1.12          atom-2              Running             Running 13 hours ago                                        </span><br><span class="line">600wh1qru5f5        web.3               nginx:1.12          atom-1              Running             Running 13 hours ago</span><br></pre></td></tr></table></figure>
+<p>然后执行<code>docker service update</code>命令升级镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker service update --image nginx:1.13 web</span><br><span class="line"></span><br><span class="line"># 查看任务，确认镜像已全部升级到nginx:1.13</span><br><span class="line">docker service ps web -f &quot;desired-state=running&quot;</span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS</span><br><span class="line">e8t755h66a32        web.1               nginx:1.13          atom-3              Running             Running 13 hours ago                             </span><br><span class="line">lkf51u3brkun        web.2               nginx:1.13          gutianyi-PC         Running             Running about a minute ago                       </span><br><span class="line">u240xfs3q023        web.3               nginx:1.13          atom-1              Running             Running 13 hours ago</span><br></pre></td></tr></table></figure>
+<p>手动回滚镜像版本到nginx:1.12</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">docker service update --rollback web</span><br><span class="line"></span><br><span class="line"># 已回滚完成，版本又变为nginx:1.12</span><br><span class="line">docker service ps web -f &quot;desired-state=running&quot;</span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE          ERROR               PORTS</span><br><span class="line">yuj9ry8uipy4        web.1               nginx:1.12          atom-2              Running             Running 13 hours ago                       </span><br><span class="line">szfnmk3o7wgv        web.2               nginx:1.12          atom-3              Running             Running 13 hours ago                       </span><br><span class="line">jjsutat7tc65        web.3               nginx:1.12          atom-1              Running             Running 13 hours ago</span><br></pre></td></tr></table></figure>
+<p><code>docker service update</code>与<strong>更新回滚</strong>相关的参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">--rollback                   # 回滚到上一个版本</span><br><span class="line">--rollback-delay duration    # 回滚时间间隔，单位(ns|us|ms|s|m|h)</span><br><span class="line">--rollback-failure-action string     # 回滚失败执行的动作(&quot;pause&quot;|&quot;continue&quot;)</span><br><span class="line">--rollback-max-failure-ratio float   # 能够容忍的回滚错误率</span><br><span class="line">--rollback-monitor duration     # 每次任务回滚后等待的时间，以监视是否回滚失败 (ns|us|ms|s|m|h)</span><br><span class="line">--rollback-order string         # 回滚指令(&quot;start-first&quot;|&quot;stop-first&quot;)</span><br><span class="line">--rollback-parallelism uint     # 同时回滚的最大任务数，若为0则同时回滚所有任务</span><br><span class="line"></span><br><span class="line">--update-delay duration         #更新时间间隔(ns|us|ms|s|m|h)</span><br><span class="line">--update-failure-action string  #更新失败执行的动作(&quot;pause&quot;|&quot;continue&quot;|&quot;rollback&quot;)</span><br><span class="line">--update-max-failure-ratio float  # 能够容忍的更新失败率</span><br><span class="line">--update-monitor duration         # 每次更新后等待的时间，以监视是否更新失败(ns|us|ms|s|m|h)</span><br><span class="line">--update-order string             # 更新指令(&quot;start-first&quot;|&quot;stop-first&quot;)</span><br><span class="line">--update-parallelism uint         # 同时更新的最大任务数，若为0则同时更新所有任务</span><br></pre></td></tr></table></figure>
+<h2 id="DRAIN可用性"><a href="#DRAIN可用性" class="headerlink" title="DRAIN可用性"></a>DRAIN可用性</h2><p>有时，例如计划的维护时间，需要将节点设置为<code>DRAIN</code>可用性。<code>DRAIN</code>可用性会<strong>阻止节点从swarm manager接收新任务</strong>。这也就意味着manager会停止在该节点上运行的任务，并在具有<code>ACTIVE</code>可用性的节点上启动副本任务。</p>
+<blockquote>
+<p>将节点设置为<code>DRAIN</code>不会从该节点中删除独立容器，例如使用docker run，docker-compose up或Docker Engine API创建的容器。节点的状态（包括<code>DRAIN</code>）仅影响节点调度swarm服务工作负载的能力。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"># 最初每个worker上都有一个任务</span><br><span class="line">&gt; docker service ps web -f &quot;desired-state=running&quot;</span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS</span><br><span class="line">tffbqbf4v2ah        web.1               nginx:1.12          atom-1              Running             Running 17 hours ago                             </span><br><span class="line">n0bk8a7nva7m        web.2               nginx:1.12          atom-2              Running             Running 17 hours ago                             </span><br><span class="line">ugw21hq29jt3        web.3               nginx:1.12          atom-3              Running             Running 17 hours ago                             </span><br><span class="line">exvdophp0rc6        web.4               nginx:1.12          gutianyi-PC         Running             Running about a minute ago             </span><br><span class="line"></span><br><span class="line"># 将atom-1的可用性设为drain</span><br><span class="line">&gt; docker node update --availability drain atom-1</span><br><span class="line"></span><br><span class="line"># 查看atom-1，可看到可用性已变为drain</span><br><span class="line">&gt; docker node inspect atom-1 --pretty </span><br><span class="line">ID:			845ol5bc51p68esmt14w1r7k8</span><br><span class="line">Hostname:              	atom-1</span><br><span class="line">Joined at:             	2018-11-06 12:33:43.750433367 +0000 utc</span><br><span class="line">Status:</span><br><span class="line"> State:			Ready</span><br><span class="line"> Availability:         	Drain</span><br><span class="line"> Address:		192.168.43.106</span><br><span class="line">......</span><br><span class="line"></span><br><span class="line"># 查看服务，atom-1已不再接受任务，并且任务由另一个节点接替（此处为manager节点）</span><br><span class="line">&gt; docker service ps web -f &quot;desired-state=running&quot;</span><br><span class="line">ID                  NAME                IMAGE               NODE                DESIRED STATE       CURRENT STATE                ERROR               PORTS</span><br><span class="line">kid3lp31jvz0        web.1               nginx:1.12          gutianyi-PC         Running             Running about a minute ago                       </span><br><span class="line">n0bk8a7nva7m        web.2               nginx:1.12          atom-2              Running             Running 17 hours ago                             </span><br><span class="line">ugw21hq29jt3        web.3               nginx:1.12          atom-3              Running             Running 17 hours ago                             </span><br><span class="line">exvdophp0rc6        web.4               nginx:1.12          gutianyi-PC         Running             Running 5 minutes ago                        </span><br><span class="line"></span><br><span class="line"># 可再通过将可用性设回active使该节点重新开始接受任务</span><br></pre></td></tr></table></figure>
+<h2 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h2><ul>
+<li>volume</li>
+<li>bind</li>
+</ul>
+<p>创建服务使用volume数据卷</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --name web-1 --mount src=test,dst=/data nginx:1.12</span><br><span class="line">&gt; docker inspect web-1 -f &quot;&#123;&#123;json .Spec.TaskTemplate.ContainerSpec.Mounts&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;Type&quot;:&quot;volume&quot;,&quot;Source&quot;:&quot;test&quot;,&quot;Target&quot;:&quot;/data&quot;&#125;]</span><br><span class="line"># src必须是volume的名字，不能是绝对路径</span><br><span class="line"># 还可指定type，默认不指定就是volume</span><br><span class="line"></span><br><span class="line">通过docker volume ls也可查看到test的volume</span><br><span class="line">&gt; docker exec -it web-1.1.uowomv72xjti9l5373erxskra /bin/bash</span><br><span class="line"># 在容器内部的data目录中创建一个文件</span><br><span class="line"># touch 1.txt</span><br><span class="line">在volume的目录中就能看到该文件</span><br><span class="line">&gt; ls /var/lib/docker/volumes/test/_data</span><br><span class="line">1.txt</span><br></pre></td></tr></table></figure>
+<p>创建服务使用bind挂载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --mount type=bind,src=/home/gutianyi/test,dst=/data --name web1 nginx:1.12 </span><br><span class="line"># 使用bind的话，src必须是绝对路径</span><br><span class="line"></span><br><span class="line">&gt; docker inspect web1 -f &quot;&#123;&#123;json .Spec.TaskTemplate.ContainerSpec.Mounts&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;Type&quot;:&quot;bind&quot;,&quot;Source&quot;:&quot;/home/gutianyi/test&quot;,&quot;Target&quot;:&quot;/data&quot;&#125;]</span><br><span class="line"></span><br><span class="line"># 若要挂载只读权限，可以在--mount中添加readonly</span><br><span class="line">&gt; docker service create --mount type=bind,src=/home/gutianyi/test,dst=/data,readonly --name web1 nginx:1.12</span><br></pre></td></tr></table></figure>
+<h2 id="路由网格（routing-mesh）"><a href="#路由网格（routing-mesh）" class="headerlink" title="路由网格（routing mesh）"></a>路由网格（routing mesh）</h2><p>Docker  Engine的swarm模式可以轻松发布服务端口，使其可用于群组外的资源。所有节点都参与入口路由网格（ingress routing mesh）。路由网格允许群集中的每个节点接受已发布端口上的连接，以便在群集中运行的任何服务，即使节点上没有任何任务正在运行。路由网格将所有请求路由到可用节点上的已发布端口的活动容器。</p>
+<p>要在群集中使用入口网络，需要在启用swarm模式之前在集群节点之间打开以下端口：</p>
+<ul>
+<li>端口<strong><code>7946 TCP / UDP</code>用于容器网络发现</strong>。</li>
+<li>端口<strong><code>4789 UDP</code>用于容器入口网络</strong>。</li>
+</ul>
+<p>并且还必须打开集群节点与需要访问端口的任何外部资源（如外部负载平衡器）之间的已发布端口。</p>
+<p>使用<code>--publish</code>在创建服务时发布端口。 <code>target</code>用于指定容器内的端口，<code>published</code>用于指定要在路由网格上绑定的端口。如果不使用已发布的端口，则会为每个服务任务绑定一个随机端口（30000-32767）。默认发布的是TCP端口，若要设置协议可在<code>--publish</code>中添加<code>protocol=tcp|udp</code>指定</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --name web \</span><br><span class="line">  --replicas 5 \</span><br><span class="line">  --update-delay 5s \</span><br><span class="line">  --update-parallelism 2 \</span><br><span class="line">  --publish published=8080,target=80 \</span><br><span class="line">  nginx:1.12</span><br><span class="line">  </span><br><span class="line">&gt; docker service inspect web -f &quot;&#123;&#123;json .Endpoint.Ports&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;Protocol&quot;:&quot;tcp&quot;,&quot;TargetPort&quot;:80,&quot;PublishedPort&quot;:8080,&quot;PublishMode&quot;:&quot;ingress&quot;&#125;]</span><br></pre></td></tr></table></figure>
+<p>该服务的每个容器都能作为一个负载均衡器，如下图（docker文档的图）</p>
+<img src="/2018/11/06/Docker-Swarm学习笔记/1.png">
+<p><code>docker service update --published-add published=XX,target=XX SERVICE</code>能够添加发布的端口（不是替换）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --name web-1 --publish published=8081,target=80 nginx:1.12 </span><br><span class="line"></span><br><span class="line">&gt; docker service update --publish-add published=8082,target=80 web-1</span><br><span class="line"></span><br><span class="line">&gt; docker service inspect web-1 -f &quot;&#123;&#123;json .Endpoint.Ports&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;Protocol&quot;:&quot;tcp&quot;,&quot;TargetPort&quot;:80,&quot;PublishedPort&quot;:8081,&quot;PublishMode&quot;:&quot;ingress&quot;&#125;,&#123;&quot;Protocol&quot;:&quot;tcp&quot;,&quot;TargetPort&quot;:80,&quot;PublishedPort&quot;:8082,&quot;PublishMode&quot;:&quot;ingress&quot;&#125;]</span><br></pre></td></tr></table></figure>
+<p>可以绕过路由网格，在访问给定节点上的绑定端口时，始终访问在该节点上运行的服务实例，这称为<strong>主机模式（host）</strong>。在<code>--publish</code>后加上<code>mode=host</code></p>
+<h2 id="服务发现与负载均衡"><a href="#服务发现与负载均衡" class="headerlink" title="服务发现与负载均衡"></a>服务发现与负载均衡</h2><p>swarm模式内置DNS组件，可自动为集群中每个服务分配DNS记录，swarm manager使用内部负载均衡，根据服务的DNS名在集群内的服务间分发请求。swarm manager使用ingress load balancing暴露服务。ingress network是特殊的overlay网络，便于服务的节点直接负载均衡，当任何swarm节点在已发布的端口上接受请求时，会将请求转发到IPVS模块，IPVS追踪该服务的所有容器IP地址，选择其中一个并将请求路由给它。</p>
+<p>需要创建overlay网络<code>docker network create -d overlay --subnet 192.1.1.0/24 --myoverlay</code></p>
+<p><strong>注：</strong>若没有指定<code>--subnet</code>，一定要注意查看创建的网络的子网，有可能会创建子网为<code>10.0.0.0/16</code>的网络，这会与docker的默认子网冲突，导致后续的DNS解析出错，因此最好指定子网。</p>
+<p>创建一个Nginx web集群</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --replicas 3 --network myoverlay --name web nginx:1.12</span><br><span class="line"></span><br><span class="line">&gt; docker inspect web -f &quot;&#123;&#123;json .Endpoint.VirtualIPs&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;NetworkID&quot;:&quot;ne9ejireolrulkw9072gstiaq&quot;,&quot;Addr&quot;:&quot;192.1.1.22/24&quot;&#125;]</span><br></pre></td></tr></table></figure>
+<p>创建一个busybox服务，使用与web集群相同的网络</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --network myoverlay --name busy busybox</span><br><span class="line">&gt; docker inspect busy -f &quot;&#123;&#123;json .Endpoint.VirtualIPs&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;NetworkID&quot;:&quot;ne9ejireolrulkw9072gstiaq&quot;,&quot;Addr&quot;:&quot;192.1.1.26/24&quot;&#125;]</span><br><span class="line"></span><br><span class="line"># 进入busy服务的容器</span><br><span class="line">&gt; docker exec -it busy.1.a8mzyt0vlb7ic68aehmlzrmik sh</span><br><span class="line"># 使用nslookup解析服务</span><br><span class="line"># nslookup web</span><br><span class="line">Server:		127.0.0.11</span><br><span class="line">Address:	127.0.0.11:53</span><br><span class="line"></span><br><span class="line">Non-authoritative answer:</span><br><span class="line">Name:	web</span><br><span class="line">Address: 192.1.1.22</span><br><span class="line"># 得到负载均衡器的IP</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -514,13 +588,13 @@
           
             <a href="/tags/docker/" rel="tag"># docker</a>
           
-            <a href="/tags/云计算/" rel="tag"># 云计算</a>
-          
-            <a href="/tags/容器编排/" rel="tag"># 容器编排</a>
-          
             <a href="/tags/docker-swarm/" rel="tag"># docker swarm</a>
           
+            <a href="/tags/云计算/" rel="tag"># 云计算</a>
+          
             <a href="/tags/集群/" rel="tag"># 集群</a>
+          
+            <a href="/tags/容器编排/" rel="tag"># 容器编排</a>
           
         </div>
       
@@ -888,7 +962,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-Swarm概述"><span class="nav-number">1.</span> <span class="nav-text">Docker Swarm概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#swarm操作"><span class="nav-number">2.</span> <span class="nav-text">swarm操作</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-Swarm概述"><span class="nav-number">1.</span> <span class="nav-text">Docker Swarm概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#负载均衡"><span class="nav-number">1.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#swarm操作"><span class="nav-number">2.</span> <span class="nav-text">swarm操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#创建与查看服务"><span class="nav-number">2.1.</span> <span class="nav-text">创建与查看服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#扩缩容"><span class="nav-number">2.2.</span> <span class="nav-text">扩缩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更新与回滚"><span class="nav-number">2.3.</span> <span class="nav-text">更新与回滚</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DRAIN可用性"><span class="nav-number">2.4.</span> <span class="nav-text">DRAIN可用性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据持久化"><span class="nav-number">2.5.</span> <span class="nav-text">数据持久化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#路由网格（routing-mesh）"><span class="nav-number">2.6.</span> <span class="nav-text">路由网格（routing mesh）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务发现与负载均衡"><span class="nav-number">2.7.</span> <span class="nav-text">服务发现与负载均衡</span></a></li></ol></li></ol></div>
             
 
           </div>
