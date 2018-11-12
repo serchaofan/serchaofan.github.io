@@ -102,17 +102,21 @@
 
 
 
-  <meta name="description" content="已经是一条咸鱼了吧">
+  <meta name="description" content="虚拟化概述 KVM概述 KVM操作">
+<meta name="keywords" content="KVM,虚拟化">
 <meta property="og:type" content="article">
 <meta property="og:title" content="KVM学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/10/03/KVM学习笔记/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="已经是一条咸鱼了吧">
+<meta property="og:description" content="虚拟化概述 KVM概述 KVM操作">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-10-03T00:33:46.000Z">
+<meta property="og:image" content="https://github.com/2018/10/03/KVM学习笔记/0.png">
+<meta property="og:image" content="https://github.com/2018/10/03/KVM学习笔记/1.png">
+<meta property="og:updated_time" content="2018-11-12T15:48:46.728Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="KVM学习笔记">
-<meta name="twitter:description" content="已经是一条咸鱼了吧">
+<meta name="twitter:description" content="虚拟化概述 KVM概述 KVM操作">
+<meta name="twitter:image" content="https://github.com/2018/10/03/KVM学习笔记/0.png">
 
 
 
@@ -226,7 +230,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">95</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">100</span></a>
   </li>
         
         
@@ -370,6 +374,22 @@
             
 
             
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2018-11-12 23:48:46" itemprop="dateModified" datetime="2018-11-12T23:48:46+08:00">2018-11-12</time>
+              
+            
           </span>
 
           
@@ -400,7 +420,65 @@
       
 
       
-        
+        <ul>
+<li><a href="#虚拟化概述">虚拟化概述</a></li>
+<li><a href="#KVM概述">KVM概述</a></li>
+<li><a href="#KVM操作">KVM操作</a></li>
+</ul>
+<a id="more"></a>
+<h1 id="虚拟化概述"><a href="#虚拟化概述" class="headerlink" title="虚拟化概述"></a>虚拟化概述</h1><h1 id="KVM概述"><a href="#KVM概述" class="headerlink" title="KVM概述"></a>KVM概述</h1><p>KVM（Kernel-based Virtual Machine）基于内核的虚拟机，是一个Linux内核模块，使得Linux变成一个Hypervisor（一个虚拟化的管理程序）。</p>
+<h2 id="KVM环境"><a href="#KVM环境" class="headerlink" title="KVM环境"></a>KVM环境</h2><p>首先要查看本机是否支持KVM，KVM基于x86虚拟化扩展技术（<code>Intel VT</code>或<code>AMD-V</code>）。</p>
+<p>可通过<code>cat /proc/cpuinfo | egrep &quot;vmx|svm&quot;</code>查看，若有返回，则说明支持。其中<code>vmx</code>是对应Intel的处理器，<code>svm</code>是对应AMD的处理器，根据本机情况查找关键字。</p>
+<p>或者可通过<code>lsmod | grep kvm</code>查看，若有该模块也可说明支持。</p>
+<p>若用VMware虚拟机，需要在虚拟机的settings中开启虚拟化选项</p>
+<img src="/2018/10/03/KVM学习笔记/0.png">
+<p>确保已关闭selinux。</p>
+<p>安装kvm相关包（并非都要装）</p>
+<ul>
+<li><code>qemu-kvm</code> 主要的KVM程序包</li>
+<li><code>virt-manager</code> GUI虚拟机管理工具（需要桌面环境）</li>
+<li><code>virt-top</code> 虚拟机统计命令</li>
+<li><code>virt-viewer</code> GUI连接程序，连接到已配置好的虚拟机</li>
+<li><code>libvirt</code> C语言工具包，提供libvirt服务</li>
+<li><code>libvirt-client</code> 为虚拟客户机提供的C语言工具包</li>
+<li><code>virt-install</code> 基于libvirt服务的虚拟机创建命令</li>
+<li><code>bridge-utils</code> 创建和管理桥接设备的工具</li>
+</ul>
+<blockquote>
+<p>libvirt是KVM的管理工具，包含守护进程程序libvirtd，API库和命令行工具virsh</p>
+</blockquote>
+<p><code>dnf install qemu-kvm libvirt virt-install bridge-utils</code>，这是命令行操作kvm需要的软件。开启KVM服务<code>systemctl start libvirtd</code>，并设置开机启动。</p>
+<p>在启动以后，会自动创建一张虚拟网卡</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">virbr0: flags=4099&lt;UP,BROADCAST,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 192.168.122.1  netmask 255.255.255.0  broadcast 192.168.122.255</span><br><span class="line">        ether 52:54:00:b0:61:8a  txqueuelen 1000  (Ethernet)</span><br></pre></td></tr></table></figure>
+<p>并且还会启动dnsmasq服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">nobody     6320      1  0 18:39 ?        00:00:00 /sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/libexec/libvirt_leaseshelper</span><br><span class="line">root       6323   6320  0 18:39 ?        00:00:00 /sbin/dnsmasq --conf-file=/var/lib/libvirt/dnsmasq/default.conf --leasefile-ro --dhcp-script=/usr/libexec/libvirt_leaseshelper</span><br></pre></td></tr></table></figure>
+<p>网卡的配置存放在<code>/etc/libvirt/qemu/networks/default.xml</code>中。</p>
+<h1 id="KVM操作"><a href="#KVM操作" class="headerlink" title="KVM操作"></a>KVM操作</h1><p>创建一个硬盘<code>qemu-img create -f raw /opt/kvm.raw 10G</code>，这里创建的硬盘虽然还没使用，但会直接占用硬盘空间，需要有一定的大小，因为要装系统。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># ll -h /opt/kvm.raw </span><br><span class="line">-rw-r--r-- 1 root root 1.0G 11月 12 18:49 /opt/kvm.raw</span><br></pre></td></tr></table></figure>
+<p>可通过<code>qemu-img info /opt/kvm.raw</code>查看该硬盘的信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">image: /opt/kvm.raw</span><br><span class="line">file format: raw</span><br><span class="line">virtual size: 1.0G (1073741824 bytes)</span><br><span class="line">disk size: 0`</span><br></pre></td></tr></table></figure>
+<p>若硬盘空间不够，就添加虚拟硬盘。注意，需要在虚拟机里有安装的镜像，所以要在虚拟机设置中把镜像设置连接。</p>
+<img src="/2018/10/03/KVM学习笔记/1.png">
+<p>然后创建镜像，把<code>/dev/cdrom</code>复制到一个容量足够的目录中。<code>dd if=/dev/cdrom of=/disk/sdb1/fedora25.iso</code></p>
+<p>创建一个虚拟机</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">virt-install --virt-type kvm \</span><br><span class="line">             --name kvm-fedora \</span><br><span class="line">             --ram 512 \</span><br><span class="line">             --cdrom=/disk/sdb1/fedora27.iso \</span><br><span class="line">             --network network=default \</span><br><span class="line">             --noautoconsole \</span><br><span class="line">             --os-type=linux \</span><br><span class="line">             --os-variant=fedora25 \</span><br><span class="line">             --graphics vnc,listen=0.0.0.0 \</span><br><span class="line">             --disk path=/opt/kvm.raw</span><br><span class="line">           </span><br><span class="line">提示开始安装，使用ss -anpt查看端口变化</span><br><span class="line">State      Recv-Q Send-Q        Local Address:Port                       Peer Address:Port              </span><br><span class="line">LISTEN     0      1                         *:5900                                  *:*          </span><br><span class="line">开始监听5900端口</span><br></pre></td></tr></table></figure>
+<p>此时查看创建的KVM虚拟机，如果没有，可能是没有启动，可通过加上<code>--all</code>显示所有虚拟机</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># virsh list</span><br><span class="line"> Id    名称                         状态</span><br><span class="line">----------------------------------------------------</span><br><span class="line"> 1     kvm-fedora                     running</span><br></pre></td></tr></table></figure>
+<p>也可查看本机信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># virsh nodeinfo </span><br><span class="line">CPU 型号：        x86_64</span><br><span class="line">CPU：               4</span><br><span class="line">CPU 频率：        2399 MHz</span><br><span class="line">.....</span><br><span class="line">内存大小：      4027656 KiB</span><br></pre></td></tr></table></figure>
+<p>并且，会在<code>/etc/libvirt/qemu/</code>下创建了一个<code>kvm-fedora.xml</code>配置文件。</p>
+<p>若没有启动，可通过<code>virsh start kvm-fedora</code>启动虚拟机。</p>
+<p><code>virsh destroy</code>停止指定虚拟机，还能通过<code>virsh list --all</code>查看到</p>
+<p><code>virsh undefine</code>删除标记，即彻底删除该虚拟机</p>
+<blockquote>
+<p>参考资料</p>
+<p><a href="https://www.cnblogs.com/polly-ling/articles/7154334.html" target="_blank" rel="noopener">KVM –介绍</a></p>
+<p><a href="https://www.cnblogs.com/chenjiahe/category/845519.html" target="_blank" rel="noopener">KVM虚拟化</a></p>
+<p><a href="https://github.com/jaywcjlove/handbook/blob/master/CentOS/CentOS7%E5%AE%89%E8%A3%85KVM%E8%99%9A%E6%8B%9F%E6%9C%BA%E8%AF%A6%E8%A7%A3.md">CentOS7安装KVM虚拟机详解</a></p>
+<p><a href="https://www.cnblogs.com/sammyliu/category/696699.html" target="_blank" rel="noopener">KVM</a></p>
+<p><a href="https://www.cnblogs.com/CloudMan6/tag/KVM/" target="_blank" rel="noopener">Cloudman-KVM</a></p>
+</blockquote>
+
       
     </div>
 
@@ -421,6 +499,14 @@
     
 
     <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/KVM/" rel="tag"># KVM</a>
+          
+            <a href="/tags/虚拟化/" rel="tag"># 虚拟化</a>
+          
+        </div>
       
 
       
@@ -492,13 +578,22 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
               <p class="site-author-name" itemprop="name">tdLaogu</p>
-              <p class="site-description motion-element" itemprop="description">已经是一条咸鱼了吧</p>
+              <p class="site-description motion-element" itemprop="description">焦虑往往是因为个人能力不够，唯有自我强大，才能求得平静</p>
           </div>
 
           
@@ -713,7 +808,17 @@
                     
                       
                     
-                    <span class="site-state-item-count">95</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">100</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -771,6 +876,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#虚拟化概述"><span class="nav-number">1.</span> <span class="nav-text">虚拟化概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#KVM概述"><span class="nav-number">2.</span> <span class="nav-text">KVM概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#KVM环境"><span class="nav-number">2.1.</span> <span class="nav-text">KVM环境</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#KVM操作"><span class="nav-number">3.</span> <span class="nav-text">KVM操作</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
