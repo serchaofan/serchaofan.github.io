@@ -102,18 +102,20 @@
 
 
 
-  <meta name="description" content="Heartbeat概念">
-<meta name="keywords" content="server,heartbeat,高可用">
+  <meta name="description" content="Heartbeat概念 Heartbeat配置">
+<meta name="keywords" content="server,集群,heartbeat,高可用">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Heartbeat笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/09/30/Heartbeat笔记/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="Heartbeat概念">
+<meta property="og:description" content="Heartbeat概念 Heartbeat配置">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-10-05T09:01:37.000Z">
+<meta property="og:image" content="https://github.com/2018/09/30/Heartbeat笔记/1.png">
+<meta property="og:updated_time" content="2018-11-15T08:54:08.700Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Heartbeat笔记">
-<meta name="twitter:description" content="Heartbeat概念">
+<meta name="twitter:description" content="Heartbeat概念 Heartbeat配置">
+<meta name="twitter:image" content="https://github.com/2018/09/30/Heartbeat笔记/1.png">
 
 
 
@@ -227,7 +229,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">100</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">101</span></a>
   </li>
         
         
@@ -384,7 +386,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-10-05 17:01:37" itemprop="dateModified" datetime="2018-10-05T17:01:37+08:00">2018-10-05</time>
+                <time title="修改时间：2018-11-15 16:54:08" itemprop="dateModified" datetime="2018-11-15T16:54:08+08:00">2018-11-15</time>
               
             
           </span>
@@ -419,6 +421,7 @@
       
         <ul>
 <li><a href="#Heartbeat概念">Heartbeat概念</a></li>
+<li><a href="#Heartbeat配置">Heartbeat配置</a></li>
 </ul>
 <a id="more"></a>
 <h1 id="Heartbeat概念"><a href="#Heartbeat概念" class="headerlink" title="Heartbeat概念"></a>Heartbeat概念</h1><p>Heartbeat 项目是 Linux-HA 工程的一个组成部分，它实现了一个高可用集群系统。可以将资源（IP及程序服务等资源）从一台故障计算机快速转移到另一台运转正常的机器继续提供服务。</p>
@@ -435,6 +438,13 @@
 <li>串口线缆。线缆专门进行心跳通信，稳定，且不用配IP地址。缺点：服务器距离不能远。</li>
 <li>两台服务器网卡通过以太网线直连。推荐使用</li>
 <li>两台服务器网卡通过以太网设备连接。不稳定</li>
+</ul>
+<p>heartbeat应用场景：</p>
+<ul>
+<li>主要用于双机场景，如：web服务器、数据库、文件服务器、负载均衡器、代理服务器</li>
+<li>而如果负载均衡采用了LVS，则最好不要使用heartbeat，而是使用keepalived，因为heartbeat没有对下面节点RS的健康状态检查。</li>
+<li>heartbeat适合更多机器的连接，keepalived在多机（超过两台）上可能会出问题</li>
+<li>需要数据同步的业务最好使用heartbeat，如：mysql双主多从、NFS/MFS等。也可配合drbd服务同步。如果使用inotify+rsync解决了同步问题，也可以用keepalived。</li>
 </ul>
 <h2 id="脑裂"><a href="#脑裂" class="headerlink" title="脑裂"></a>脑裂</h2><p>两台正常运行的高可用服务器在心跳超时内无法监听到对方心跳报文，于是各自启动了故障转移，获取了资源的所有权，两台服务器都拥有同一个VIP地址，数据会出现不一致或丢失，这种情况称为脑裂（split brain）。</p>
 <p><strong>发生脑裂的原因：</strong></p>
@@ -478,6 +488,67 @@
 <li><code>ip addr add [IP地址/掩码] broadcast [该网段广播地址] dev eth1</code></li>
 </ul>
 <p>注：<code>ip addr</code>能看到网卡别名和VIP，而<code>ifconfig</code>无法看到。</p>
+<h1 id="Heartbeat配置"><a href="#Heartbeat配置" class="headerlink" title="Heartbeat配置"></a>Heartbeat配置</h1><p>在红帽系的库（包括epel）中已经没有heartbeat了，在ubuntu的库中还有，所以用ubuntu做实验。ubuntu版本18.04，heartbeat版本3.0.6。</p>
+<p>heartbeat的默认配置文件目录为<code>/etc/ha.d</code>，主要的配置文件存放在<code>/usr/share/doc/heartbeat</code>中。</p>
+<ul>
+<li><p><code>ha.cf.gz</code>，是被gz压缩的，解压后得到<code>ha.cf</code>。是heartbeat的参数配置文件</p>
+</li>
+<li><p><code>authkeys</code>，是heartbeat认证文件</p>
+</li>
+<li><p><code>haresources.gz</code>，也是gz压缩，解压得到<code>haresources</code>，是heartbeat资源配置文件</p>
+</li>
+</ul>
+<p>将这三个文件复制到<code>/etc/ha.d</code>中</p>
+<p>heartbeat的资源目录为<code>/etc/ha.d/resources.d/</code>，可以将开发的程序直接放在该目录中，然后在<code>haresources</code>中调用。</p>
+<p>实验环境：</p>
+<p>两台ubuntu作为负载均衡器，要有双网卡，一个提供服务，一个做心跳线</p>
+<ul>
+<li><p>负载均衡器1（master）：172.16.246.155（网卡ens33）</p>
+<p>heartbeat网卡：192.168.60.100（网卡ens37）</p>
+</li>
+<li><p>负载均衡器2（backup）：172.16.246.156（网卡ens33）</p>
+<p>heartbeat网卡：192.168.60.101（网卡ens37）</p>
+</li>
+</ul>
+<img src="/2018/09/30/Heartbeat笔记/1.png">
+<p>设置好<code>/etc/hosts</code>，使能通过主机名访问，主机名要和<code>uname -n</code>的结果一致。</p>
+<h2 id="配置文件参数"><a href="#配置文件参数" class="headerlink" title="配置文件参数"></a>配置文件参数</h2><p>列举的是常用参数，并没有修改为实验用的值</p>
+<h3 id="ha-cf"><a href="#ha-cf" class="headerlink" title="ha.cf"></a>ha.cf</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">debugfile    /var/log/ha-debug    # 调试日志位置</span><br><span class="line">logfile      /var/log/ha-log      # 日志位置</span><br><span class="line">logfacility     local0            # 日志设备</span><br><span class="line">keepalive       2     # 心跳间隔  </span><br><span class="line">deadtime        30    # 认为主节点宕机的超时时间</span><br><span class="line">warntime        10    # 心跳延迟时间，备份节点无法接收主节点的心跳时就会往日志写入一个警告日志</span><br><span class="line">initdead        120   # heartbeat在首次运行后，需等待120秒才能启动主服务器的资源。取值至少为deadtime的两倍</span><br><span class="line">udpport         694   # UDP端口，默认为694</span><br><span class="line">mcast eth0 225.0.0.1 694 1 0    # 多播端口</span><br><span class="line">auto_failback on      # 是否开启自动故障恢复。因故障而切换的资源是否要在主节点恢复后再切回主节点</span><br><span class="line">bcast  eth0           # 广播端口</span><br><span class="line">node  XXX             # 节点名，先定义的是主节点，后定义的都是备用节点</span><br></pre></td></tr></table></figure>
+<h3 id="authkeys"><a href="#authkeys" class="headerlink" title="authkeys"></a>authkeys</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 可用的加密算法：crc、sha1、md5。crc不需要密码。官方推荐sha1和md5。crc没有安全性</span><br><span class="line">auth 1</span><br><span class="line">1 crc</span><br><span class="line">2 sha1 HI!</span><br><span class="line">3 md5 Hello!</span><br></pre></td></tr></table></figure>
+<p><strong>注：<code>authkeys</code>文件的权限必须是<code>600</code>，否则无法启动heartbeat</strong></p>
+<h3 id="haresources"><a href="#haresources" class="headerlink" title="haresources"></a>haresources</h3><p>只要添加heartbeat的两台主机即可，指定VIP，无须手动创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ubuntu-s1 IPaddr::172.16.246.200/24/ens33</span><br><span class="line">ubuntu-s2 IPaddr::172.16.246.201/24/ens33</span><br><span class="line"># 其中的IPaddr是/etc/ha.d/resources.d/中的IPaddr脚本</span><br></pre></td></tr></table></figure>
+<h3 id="实际配置"><a href="#实际配置" class="headerlink" title="实际配置"></a>实际配置</h3><p><code>ha.cf</code>配置，两台都要配</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">debugfile /var/log/ha-debug</span><br><span class="line">logfile /var/log/heartbeat.log</span><br><span class="line">logfacility     local2</span><br><span class="line">keepalive 2</span><br><span class="line">deadtime 30</span><br><span class="line">warntime 10</span><br><span class="line">initdead 120</span><br><span class="line">mcast ens33 225.0.0.1 694 1 0</span><br><span class="line">bcast   ens37  </span><br><span class="line">auto_failback on</span><br><span class="line">node    ubuntu-s1</span><br><span class="line">node    ubuntu-s2</span><br></pre></td></tr></table></figure>
+<p><code>authkeys</code>配置，先用命令<code>sha1sum -t</code>输入密码生成密钥。然后复制到文件中，只保留sha1。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auth 1</span><br><span class="line">1 sha1 3c767c41afb12ada140190ed82db3fd930e2efa3</span><br></pre></td></tr></table></figure>
+<p>修改<code>haresources</code>，配置的是VIP，不需要手动创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ubuntu-s1 IPaddr::172.16.246.200/24/ens33</span><br><span class="line">ubuntu-s2 IPaddr::172.16.246.201/24/ens33</span><br></pre></td></tr></table></figure>
+<p>这三个文件都要做到两端一致（除了日志的设定可以不一致）。然后启动heartbeat，<code>systemctl start hearthbeat</code></p>
+<p>等待<code>initdead</code>的时间后，查看网卡，可以发现VIP的网卡已自动创建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ens33:1: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.16.246.200  netmask 255.255.255.0  broadcast 172.16.246.255</span><br><span class="line">        ether 00:0c:29:93:da:9b  txqueuelen 1000  (Ethernet)</span><br></pre></td></tr></table></figure>
+<p>模拟一台宕机，关闭<code>ubuntu-s1</code>的heartbeat，查看ubuntu-s2。发现成功迁移。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ens33:1: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.16.246.201  netmask 255.255.255.0  broadcast 172.16.246.255</span><br><span class="line">        ether 00:0c:29:e5:d5:55  txqueuelen 1000  (Ethernet)</span><br><span class="line"></span><br><span class="line">ens33:2: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.16.246.200  netmask 255.255.255.0  broadcast 172.16.246.255</span><br><span class="line">        ether 00:0c:29:e5:d5:55  txqueuelen 1000  (Ethernet)</span><br></pre></td></tr></table></figure>
+<p>重启ubuntu-s1的heartbeat，再查看ubuntu-s2的网卡，已经迁移回去，因为开启了<code>auto_failback</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ens33:1: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.16.246.201  netmask 255.255.255.0  broadcast 172.16.246.255</span><br><span class="line">        ether 00:0c:29:e5:d5:55  txqueuelen 1000  (Ethernet)</span><br></pre></td></tr></table></figure>
+<h3 id="将apache交给heartbeat管理"><a href="#将apache交给heartbeat管理" class="headerlink" title="将apache交给heartbeat管理"></a>将apache交给heartbeat管理</h3><p>将命令<code>apachectl</code>复制到<code>/etc/ha.d/resource.d/</code>中，然后修改<code>haresources</code>文件，在一个主机的最后加上<code>apachectl</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ubuntu-s1 IPaddr::172.16.246.200/24/ens33 apachectl</span><br></pre></td></tr></table></figure>
+<p>注意：</p>
+<ul>
+<li>脚本要放在<code>/etc/ha.d/resource.d/</code>中</li>
+<li>脚本的执行要有start和stop两个参数</li>
+<li>脚本要有可执行权限</li>
+<li><code>haresources</code>文件中的脚本名一定是<code>resource.d</code>中的指定脚本</li>
+</ul>
+<p>关闭apache和heartbeat，然后只启动heartbeat，但是apache也被启动了。可看到日志中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ResourceManager(default)[8373]:    info: Running /etc/ha.d/resource.d/apachectl  start</span><br></pre></td></tr></table></figure>
+<p>heartbeat两种方法实现高可用：</p>
+<ul>
+<li>仅控制VIP资源转移，而不负责资源的启动与关闭。一般用于web服务</li>
+<li>既控制VIP资源转移，又负责资源的启动与关闭。一般用于数据库、存储服务，为了控制数据一致性，防止两台都在写。</li>
+</ul>
+<h3 id="故障排查"><a href="#故障排查" class="headerlink" title="故障排查"></a>故障排查</h3><p>若主节点出现故障，可以使用命令<code>hb_standby</code>将业务推到备节点，再对主节点配置进行检查。该脚本存放在<code>/usr/share/heartbeat/</code>中。</p>
+<p>将故障排除后，还可执行脚本<code>/usr/share/heartbeat/hb_takeover</code>再次接管业务。</p>
 <h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
 <li><a href="https://blog.csdn.net/zyd_15221378768/article/details/78982353" target="_blank" rel="noopener">Heartbeat介绍</a></li>
 <li><a href="https://www.cnblogs.com/zhangsubai/p/5393447.html" target="_blank" rel="noopener">Heartbeat高可用解决方案</a></li>
@@ -509,6 +580,8 @@
           
             <a href="/tags/server/" rel="tag"># server</a>
           
+            <a href="/tags/集群/" rel="tag"># 集群</a>
+          
             <a href="/tags/heartbeat/" rel="tag"># heartbeat</a>
           
             <a href="/tags/高可用/" rel="tag"># 高可用</a>
@@ -534,8 +607,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/09/30/drbd数据同步笔记/" rel="prev" title="drbd数据同步笔记">
-                drbd数据同步笔记 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/09/30/drbd数据同步笔记/" rel="prev" title="DRBD数据同步笔记">
+                DRBD数据同步笔记 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -825,7 +898,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">100</span>
+                      
+                    
+                    <span class="site-state-item-count">101</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -893,7 +968,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Heartbeat概念"><span class="nav-number">1.</span> <span class="nav-text">Heartbeat概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#脑裂"><span class="nav-number">1.1.</span> <span class="nav-text">脑裂</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#heartbeat消息类型"><span class="nav-number">1.2.</span> <span class="nav-text">heartbeat消息类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#heartbeat-IP地址接管及故障转移"><span class="nav-number">1.3.</span> <span class="nav-text">heartbeat IP地址接管及故障转移</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">2.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Heartbeat概念"><span class="nav-number">1.</span> <span class="nav-text">Heartbeat概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#脑裂"><span class="nav-number">1.1.</span> <span class="nav-text">脑裂</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#heartbeat消息类型"><span class="nav-number">1.2.</span> <span class="nav-text">heartbeat消息类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#heartbeat-IP地址接管及故障转移"><span class="nav-number">1.3.</span> <span class="nav-text">heartbeat IP地址接管及故障转移</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Heartbeat配置"><span class="nav-number">2.</span> <span class="nav-text">Heartbeat配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#配置文件参数"><span class="nav-number">2.1.</span> <span class="nav-text">配置文件参数</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ha-cf"><span class="nav-number">2.1.1.</span> <span class="nav-text">ha.cf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#authkeys"><span class="nav-number">2.1.2.</span> <span class="nav-text">authkeys</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#haresources"><span class="nav-number">2.1.3.</span> <span class="nav-text">haresources</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实际配置"><span class="nav-number">2.1.4.</span> <span class="nav-text">实际配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#将apache交给heartbeat管理"><span class="nav-number">2.1.5.</span> <span class="nav-text">将apache交给heartbeat管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#故障排查"><span class="nav-number">2.1.6.</span> <span class="nav-text">故障排查</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
