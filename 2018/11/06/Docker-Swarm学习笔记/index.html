@@ -102,20 +102,21 @@
 
 
 
-  <meta name="description" content="Docker Swarm概述 swarm操作">
+  <meta name="description" content="Docker Swarm概述 swarm操作 实战一-LNMP搭建">
 <meta name="keywords" content="docker,云计算,容器编排,docker swarm,集群">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker-Swarm学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/11/06/Docker-Swarm学习笔记/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="Docker Swarm概述 swarm操作">
+<meta property="og:description" content="Docker Swarm概述 swarm操作 实战一-LNMP搭建">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/0.png">
 <meta property="og:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/1.png">
-<meta property="og:updated_time" content="2018-11-09T08:38:23.586Z">
+<meta property="og:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/2.png">
+<meta property="og:updated_time" content="2018-11-23T02:44:44.320Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker-Swarm学习笔记">
-<meta name="twitter:description" content="Docker Swarm概述 swarm操作">
+<meta name="twitter:description" content="Docker Swarm概述 swarm操作 实战一-LNMP搭建">
 <meta name="twitter:image" content="https://github.com/2018/11/06/Docker-Swarm学习笔记/0.png">
 
 
@@ -230,7 +231,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">102</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">105</span></a>
   </li>
         
         
@@ -238,7 +239,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">65</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">68</span></a>
   </li>
         
         
@@ -387,7 +388,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-11-09 16:38:23" itemprop="dateModified" datetime="2018-11-09T16:38:23+08:00">2018-11-09</time>
+                <time title="修改时间：2018-11-23 10:44:44" itemprop="dateModified" datetime="2018-11-23T10:44:44+08:00">2018-11-23</time>
               
             
           </span>
@@ -423,6 +424,7 @@
         <ul>
 <li><a href="#Docker Swarm概述">Docker Swarm概述</a></li>
 <li><a href="#swarm操作">swarm操作</a></li>
+<li><a href="#实战一-LNMP搭建">实战一-LNMP搭建</a></li>
 </ul>
 <a id="more"></a>
 <h1 id="Docker-Swarm概述"><a href="#Docker-Swarm概述" class="headerlink" title="Docker Swarm概述"></a>Docker Swarm概述</h1><p>Docker Swarm用于跨主机部署管理docker集群。从1.12版本开始就集成在docker engine中，并称为swarm mode。swarm已内置kv存储功能，不再需要外置的etcd，内置Overlay网络，服务发现，负载均衡。</p>
@@ -556,12 +558,48 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --name web-1 --publish published=8081,target=80 nginx:1.12 </span><br><span class="line"></span><br><span class="line">&gt; docker service update --publish-add published=8082,target=80 web-1</span><br><span class="line"></span><br><span class="line">&gt; docker service inspect web-1 -f &quot;&#123;&#123;json .Endpoint.Ports&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;Protocol&quot;:&quot;tcp&quot;,&quot;TargetPort&quot;:80,&quot;PublishedPort&quot;:8081,&quot;PublishMode&quot;:&quot;ingress&quot;&#125;,&#123;&quot;Protocol&quot;:&quot;tcp&quot;,&quot;TargetPort&quot;:80,&quot;PublishedPort&quot;:8082,&quot;PublishMode&quot;:&quot;ingress&quot;&#125;]</span><br></pre></td></tr></table></figure>
 <p>可以绕过路由网格，在访问给定节点上的绑定端口时，始终访问在该节点上运行的服务实例，这称为<strong>主机模式（host）</strong>。在<code>--publish</code>后加上<code>mode=host</code></p>
 <h2 id="服务发现与负载均衡"><a href="#服务发现与负载均衡" class="headerlink" title="服务发现与负载均衡"></a>服务发现与负载均衡</h2><p>swarm模式内置DNS组件，可自动为集群中每个服务分配DNS记录，swarm manager使用内部负载均衡，根据服务的DNS名在集群内的服务间分发请求。swarm manager使用ingress load balancing暴露服务。ingress network是特殊的overlay网络，便于服务的节点直接负载均衡，当任何swarm节点在已发布的端口上接受请求时，会将请求转发到IPVS模块，IPVS追踪该服务的所有容器IP地址，选择其中一个并将请求路由给它。</p>
+<div align="center">官网的图，只看原理</div>
+
+<img src="/2018/11/06/Docker-Swarm学习笔记/2.png">
 <p>需要创建overlay网络<code>docker network create -d overlay --subnet 192.1.1.0/24 --myoverlay</code></p>
 <p><strong>注：</strong>若没有指定<code>--subnet</code>，一定要注意查看创建的网络的子网，有可能会创建子网为<code>10.0.0.0/16</code>的网络，这会与docker的默认子网冲突，导致后续的DNS解析出错，因此最好指定子网。</p>
 <p>创建一个Nginx web集群</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --replicas 3 --network myoverlay --name web nginx:1.12</span><br><span class="line"></span><br><span class="line">&gt; docker inspect web -f &quot;&#123;&#123;json .Endpoint.VirtualIPs&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;NetworkID&quot;:&quot;ne9ejireolrulkw9072gstiaq&quot;,&quot;Addr&quot;:&quot;192.1.1.22/24&quot;&#125;]</span><br></pre></td></tr></table></figure>
 <p>创建一个busybox服务，使用与web集群相同的网络</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker service create --network myoverlay --name busy busybox</span><br><span class="line">&gt; docker inspect busy -f &quot;&#123;&#123;json .Endpoint.VirtualIPs&#125;&#125;&quot;</span><br><span class="line">[&#123;&quot;NetworkID&quot;:&quot;ne9ejireolrulkw9072gstiaq&quot;,&quot;Addr&quot;:&quot;192.1.1.26/24&quot;&#125;]</span><br><span class="line"></span><br><span class="line"># 进入busy服务的容器</span><br><span class="line">&gt; docker exec -it busy.1.a8mzyt0vlb7ic68aehmlzrmik sh</span><br><span class="line"># 使用nslookup解析服务</span><br><span class="line"># nslookup web</span><br><span class="line">Server:		127.0.0.11</span><br><span class="line">Address:	127.0.0.11:53</span><br><span class="line"></span><br><span class="line">Non-authoritative answer:</span><br><span class="line">Name:	web</span><br><span class="line">Address: 192.1.1.22</span><br><span class="line"># 得到负载均衡器的IP</span><br></pre></td></tr></table></figure>
+<h3 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h3><p>为了使swarm具有容错功能（高可用），一般使集群中的节点个数为奇数个数。当leader故障时自动选举新的leader。</p>
+<p><strong>注：若添加多个Manager，则需要保持一半以上的Manager正常工作。</strong></p>
+<p>可在manager上提升一个节点，使其成为备用manager节点。</p>
+<p><code>docker node promote</code>指定要提升的节点。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker node promote ubuntu-s1</span><br><span class="line">Node ubuntu-s1 promoted to a manager in the swarm.</span><br><span class="line">&gt; docker node ls</span><br><span class="line">ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION</span><br><span class="line">lgq8c78rd2ajx9mf05x8qgrdp *   gutianyi-PC         Ready               Active              Leader              18.06.1-ce</span><br><span class="line">jd81rx6tdzf9uak63b4iefqi2     ubuntu-s1           Ready               Active              Reachable           18.06.1-ce</span><br></pre></td></tr></table></figure>
+<p>节点的manager状态变为<strong><code>Reachable</code></strong>。</p>
+<p>或者也可以使节点在加入swarm时就成为Manager节点，在当前的Manager上执行<code>docker swarm join-token manager</code>，再复制到节点上执行。</p>
+<h2 id="配置文件存储"><a href="#配置文件存储" class="headerlink" title="配置文件存储"></a>配置文件存储</h2><p>使用命令<code>docker config</code>管理配置文件。<strong>需要该节点是集群的Manager。</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker config COMMAND</span><br><span class="line">  create      创建配置文件</span><br><span class="line">  inspect     查看配置文件信息</span><br><span class="line">  ls          列出所有配置文件</span><br><span class="line">  rm          删除配置文件</span><br></pre></td></tr></table></figure>
+<p>在Manager上创建一个配置文件<code>web1.conf</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80;</span><br><span class="line">    server_name  localhost;</span><br><span class="line"></span><br><span class="line">    #charset koi8-r;</span><br><span class="line">    #access_log  /var/log/nginx/host.access.log  main;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">        root   /usr/share/nginx/html;</span><br><span class="line">        index  index.html index.htm;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建docker配置<code>docker config create web1.conf web1.conf</code></p>
+<p>创建服务，应用该配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker service create --name web \</span><br><span class="line">  --replicas 3 \</span><br><span class="line">  --config source=web1.conf,target=/etc/nginx/conf.d/web1.conf \</span><br><span class="line">  -p 8080:80 \</span><br><span class="line">  nginx</span><br></pre></td></tr></table></figure>
+<h1 id="实战一-LNMP搭建"><a href="#实战一-LNMP搭建" class="headerlink" title="实战一-LNMP搭建"></a>实战一-LNMP搭建</h1><ol>
+<li><p>创建overlay网络<code>lnmp</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create -d overlay --subnet 192.168.1.0/24 lnmp</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>下载discuz包，解压后进入。创建Dockerfile。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">.</span><br><span class="line">├── Dockerfile</span><br><span class="line">├── readme</span><br><span class="line">├── README.md</span><br><span class="line">├── upload</span><br><span class="line">└── utility</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FROM php</span><br><span class="line">COPY upload /usr/src/discuz</span><br><span class="line">WORKDIR /usr/src/discuz</span><br><span class="line">CMD [&apos;php&apos;, &apos;./index.php&apos;]</span><br></pre></td></tr></table></figure>
+<p>构建镜像<code>docker build -t discuz-php .</code></p>
+</li>
+<li><p>创建一个php服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker service create \</span><br><span class="line">  --name discuz-php \</span><br><span class="line">  --replicas 3 \</span><br><span class="line">  --network lnmp \</span><br><span class="line">  --mount type=volume,source=www,destination=/usr/local/nginx/html \</span><br><span class="line">  discuz-php</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建mysql服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">docker service create \</span><br><span class="line">  --name discuz-mysql \</span><br><span class="line">  --network lnmp \</span><br><span class="line">  --mount type=volume,source=dbdata,destination=/var/lib/mysql \</span><br><span class="line">  -e MYSQL_ROOT_PASSWORD=123456 \</span><br><span class="line">  -e MYSQL_USER=discuz \</span><br><span class="line">  -e MYSQL_PASSWORD=123456 \</span><br><span class="line">  -e MYSQL_DATABASE=discuz \</span><br><span class="line">  mysql</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建nginx服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">docker service create --name nginx \</span><br><span class="line">    --replicas 3 \</span><br><span class="line">    --network lnmp \</span><br><span class="line">    -p 8080:80 \</span><br><span class="line">    --mount type=volume,source=www,destination=/usr/local/nginx/html \</span><br><span class="line">    nginx</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
 
       
     </div>
@@ -693,7 +731,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">65</span>
+                    <span class="site-state-item-count">68</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -912,7 +950,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">102</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">105</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -980,7 +1024,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-Swarm概述"><span class="nav-number">1.</span> <span class="nav-text">Docker Swarm概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#负载均衡"><span class="nav-number">1.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#swarm操作"><span class="nav-number">2.</span> <span class="nav-text">swarm操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#创建与查看服务"><span class="nav-number">2.1.</span> <span class="nav-text">创建与查看服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#扩缩容"><span class="nav-number">2.2.</span> <span class="nav-text">扩缩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更新与回滚"><span class="nav-number">2.3.</span> <span class="nav-text">更新与回滚</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DRAIN可用性"><span class="nav-number">2.4.</span> <span class="nav-text">DRAIN可用性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据持久化"><span class="nav-number">2.5.</span> <span class="nav-text">数据持久化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#路由网格（routing-mesh）"><span class="nav-number">2.6.</span> <span class="nav-text">路由网格（routing mesh）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务发现与负载均衡"><span class="nav-number">2.7.</span> <span class="nav-text">服务发现与负载均衡</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker-Swarm概述"><span class="nav-number">1.</span> <span class="nav-text">Docker Swarm概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#负载均衡"><span class="nav-number">1.1.</span> <span class="nav-text">负载均衡</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#swarm操作"><span class="nav-number">2.</span> <span class="nav-text">swarm操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#创建与查看服务"><span class="nav-number">2.1.</span> <span class="nav-text">创建与查看服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#扩缩容"><span class="nav-number">2.2.</span> <span class="nav-text">扩缩容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#更新与回滚"><span class="nav-number">2.3.</span> <span class="nav-text">更新与回滚</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#DRAIN可用性"><span class="nav-number">2.4.</span> <span class="nav-text">DRAIN可用性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#数据持久化"><span class="nav-number">2.5.</span> <span class="nav-text">数据持久化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#路由网格（routing-mesh）"><span class="nav-number">2.6.</span> <span class="nav-text">路由网格（routing mesh）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#服务发现与负载均衡"><span class="nav-number">2.7.</span> <span class="nav-text">服务发现与负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#高可用"><span class="nav-number">2.7.1.</span> <span class="nav-text">高可用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#配置文件存储"><span class="nav-number">2.8.</span> <span class="nav-text">配置文件存储</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#实战一-LNMP搭建"><span class="nav-number">3.</span> <span class="nav-text">实战一-LNMP搭建</span></a></li></ol></div>
             
 
           </div>
