@@ -110,7 +110,7 @@
 <meta property="og:site_name" content="tdLaogu的小站">
 <meta property="og:description" content="翻译自The Linux-HA User’s Guide 只翻译了有用部分，未翻译获取帮助部分。不确定的地方会保留原文，且并非完全参照原文，会有改动。">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-11-28T00:41:46.540Z">
+<meta property="og:updated_time" content="2018-12-02T15:36:48.619Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="The Linux-HA User&#39;s Guide翻译">
 <meta name="twitter:description" content="翻译自The Linux-HA User’s Guide 只翻译了有用部分，未翻译获取帮助部分。不确定的地方会保留原文，且并非完全参照原文，会有改动。">
@@ -384,7 +384,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-11-28 08:41:46" itemprop="dateModified" datetime="2018-11-28T08:41:46+08:00">2018-11-28</time>
+                <time title="修改时间：2018-12-02 23:36:48" itemprop="dateModified" datetime="2018-12-02T23:36:48+08:00">2018-12-02</time>
               
             
           </span>
@@ -460,16 +460,16 @@
 </li>
 </ul>
 </li>
-<li><a href="#III.管理任务">III.管理任务</a><ul>
-<li><a href="#5.创建初始Heartbeat配置">5.创建初始Heartbeat配置</a><ul>
-<li><a href="#5.1.ha.cf文件">5.1.ha.cf文件</a></li>
-<li><a href="#5.2.authkeys文件">5.2.authkeys文件</a></li>
-<li><a href="#5.2.authkeys文件">5.3.将群集配置传播到群集节点</a></li>
-<li><a href="#5.4.启动Heartbeat服务">5.4.启动Heartbeat服务</a></li>
-<li><a href="#5.5.Heartbeat的更多搭配">5.5.Heartbeat的更多搭配</a></li>
+<li><a href="#管理任务">管理任务</a><ul>
+<li><a href="#创建初始Heartbeat配置">创建初始Heartbeat配置</a><ul>
+<li><a href="#ha.cf文件">ha.cf文件</a></li>
+<li><a href="#authkeys文件">authkeys文件</a></li>
+<li><a href="#authkeys文件">将群集配置传播到群集节点</a></li>
+<li><a href="#启动Heartbeat服务">启动Heartbeat服务</a></li>
+<li><a href="#Heartbeat的更多搭配">Heartbeat的更多搭配</a></li>
 </ul>
 </li>
-<li><a href="#6.升级Heartbeat版本">6.升级Heartbeat版本</a><ul>
+<li><a href="#升级Heartbeat版本">升级Heartbeat版本</a><ul>
 <li><a href="#6.1.不使用CRM从Heartbeat2.1版本升级">6.1.不使用CRM从Heartbeat2.1版本升级</a><ul>
 <li><a href="#6.1.1.停止Heartbeat服务">6.1.1.停止Heartbeat服务</a></li>
 <li><a href="#6.1.2.升级软件">6.1.2.升级软件</a></li>
@@ -588,7 +588,105 @@
 <p><strong>Debian包</strong></p>
 <p>Cluster Glue的Debian包保存在<code>alioth.debian.org</code>上的Mercurial存储库中。因此，不是从上游Mercurial存储库克隆或下载，而是使用在alioth上托管的存储库。</p>
 <p>从alioth存储库中解压缩源码包后，只需从源码目录（source tree）的顶部（根目录）调用<code>dpkg-buildpackage</code>  - 就像使用任何其他Debian软件包一样。</p>
-
+<h3 id="源码构建安装Heartbeat"><a href="#源码构建安装Heartbeat" class="headerlink" title="源码构建安装Heartbeat"></a>源码构建安装Heartbeat</h3><h4 id="Heartbeat构建的先决条件"><a href="#Heartbeat构建的先决条件" class="headerlink" title="Heartbeat构建的先决条件"></a>Heartbeat构建的先决条件</h4><p>构建Heartbeat需要存在以下的工具和库：</p>
+<ul>
+<li>C编译器（通常是gcc）和相关的C开发库</li>
+<li>flex扫描器生成器和bison解析编译器</li>
+<li>net-snmp开发库，用于启用SNMP相关功能</li>
+<li>OpenIPMI开发库，用于启用IPMI相关功能</li>
+<li>Python</li>
+<li>cluster-glue开发头</li>
+</ul>
+<h4 id="下载Heartbeat源码"><a href="#下载Heartbeat源码" class="headerlink" title="下载Heartbeat源码"></a>下载Heartbeat源码</h4><p><strong>下载发行tar包</strong></p>
+<p>下载一个Heartbeat的发行版本的压缩tar包就相当于从Mercurial源代码存储库中获取标记的快照。发布标签遵循STABLE-x.y.z格式，其中x.y.z是您要下载的Heartbeat的发布版本。</p>
+<p>例如，如果项下载3.0.4的发布版本，可以执行以下语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># wget http://hg.linux-ha.org/dev/archive/STABLE-3.0.4.tar.bz2</span><br><span class="line"># tar -vxjf STABLE-3.0.4.tar.bz2</span><br></pre></td></tr></table></figure>
+<p><strong>下载最新Mercurial快照</strong></p>
+<p>最新开发代码能在Mercurial库中获取。</p>
+<p>从tip自动获取tar包，可执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># wget http://hg.linux-ha.org/dev/archive/tip.tar.bz2</span><br><span class="line"># tar -vxjf tip.tar.bz2</span><br></pre></td></tr></table></figure>
+<p><strong>检查Mercurial源</strong></p>
+<p>如果您在本地安装了Mercurial实体程序，则可以使用以下方法。通过克隆检查源码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ hg clone http://hg.linux-ha.org/dev heartbeat-dev</span><br><span class="line">requesting all changes</span><br><span class="line">adding changesets</span><br><span class="line">adding manifests</span><br><span class="line">adding file changes</span><br><span class="line">added 12491 changesets with 34830 changes to 2632 files</span><br><span class="line">updating working directory</span><br><span class="line">356 files updated, 0 files merged, 0 files removed, 0 files unresolved</span><br></pre></td></tr></table></figure>
+<h4 id="构建Heartbeat"><a href="#构建Heartbeat" class="headerlink" title="构建Heartbeat"></a>构建Heartbeat</h4><p>构建Heartbeat是一个广泛使用GNU Autotools的自动化过程。在同一台机器上构建和安装时，通常只需要以下命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ ./bootstrap</span><br><span class="line">$ ./configure</span><br><span class="line">$ make</span><br><span class="line">$ sudo make install</span><br></pre></td></tr></table></figure>
+<p>支持大量的配置选项,你可能调整其中的一些优化系统的Heartbeat。检索配置选项的列表,您可以调用配置<code>--help</code>选项。因此,一个定制的构建可能包含以下步骤:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ ./bootstrap</span><br><span class="line">$ ./configure --help</span><br><span class="line">$ ./configure &lt;configuration-options&gt;</span><br><span class="line">$ make</span><br><span class="line">$ sudo make install</span><br></pre></td></tr></table></figure>
+<p>一些典型的配置选项,您可能希望设置<code>--prefix</code>,<code>--sysconfdir</code>和<code>--localstatedir</code>,如本例所示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ ./bootstrap</span><br><span class="line">$ ./configure --help</span><br><span class="line">$ ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var</span><br><span class="line">$ make</span><br><span class="line">$ sudo make install</span><br></pre></td></tr></table></figure>
+<h4 id="构建包-1"><a href="#构建包-1" class="headerlink" title="构建包"></a>构建包</h4><p><strong>RPM包</strong></p>
+<p>SuSE和红帽发行版都在CLuster Glue的源码包中提供了RPM规范文件：</p>
+<ul>
+<li><code>heartbeat-suse.spec</code>应该用于OpenSUSE和SLES安装</li>
+<li><code>heartbeat-fedora.spec</code>适用于Fedora，RHEL和CentOS</li>
+</ul>
+<p><strong>Debian包</strong></p>
+<p>Heartbeat的Debian包保存在<code>alioth.debian.org</code>上的Mercurial存储库中。因此，不是从上游Mercurial存储库克隆或下载，而是使用在alioth上托管的存储库。</p>
+<p>从alioth存储库中解压缩源码包后，只需从源码目录（source tree）的顶部（根目录）调用<code>dpkg-buildpackage</code>  - 就像使用任何其他Debian软件包一样。</p>
+<h2 id="安装预建包"><a href="#安装预建包" class="headerlink" title="安装预建包"></a>安装预建包</h2><p>Cluster Glue和Heartbeat可在许多平台上作为预构建的二进制包提供，包括：</p>
+<ul>
+<li>Debian（完全包含在squeeze和向上，后端包可用于lenny）</li>
+<li>Ubuntu（自lucid）</li>
+<li>Fedora（自版本12）</li>
+<li>OpenSUSE（自版本11）</li>
+</ul>
+<p>本节介绍在这些平台上安装二进制包所需的步骤。</p>
+<h3 id="Debian与Ubuntu"><a href="#Debian与Ubuntu" class="headerlink" title="Debian与Ubuntu"></a>Debian与Ubuntu</h3><p>在Debian和Ubuntu上安装cluster-glue和heartbeat包是一个简单的过程。 假设您为APT配置了正确的软件包源，请使用以下命令安装这两个软件包：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aptitude install heartbeat cluster-glue</span><br></pre></td></tr></table></figure>
+<p>由于您很可能还希望安装Pacemaker（超出本手册的范围），因此也可以通过发出以下命令来执行此操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">aptitude install cluster-agents pacemaker</span><br></pre></td></tr></table></figure>
+<h3 id="Fedora，RHEL与CentOS"><a href="#Fedora，RHEL与CentOS" class="headerlink" title="Fedora，RHEL与CentOS"></a>Fedora，RHEL与CentOS</h3><p>在Red Hat平台上，您可以使用YUM包管理器安装cluster-glue和heartbeat包。 假设您在<code>/etc/yum.repos.d/</code>中配置了正确的软件包源，请使用以下命令安装这两个软件包：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install heartbeat cluster-glue</span><br></pre></td></tr></table></figure>
+<p>由于您很可能还希望安装Pacemaker（超出本手册的范围），因此也可以通过发出以下命令来执行此操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install resource-agents pacemaker</span><br></pre></td></tr></table></figure>
+<h3 id="OpenSUSE与SLES"><a href="#OpenSUSE与SLES" class="headerlink" title="OpenSUSE与SLES"></a>OpenSUSE与SLES</h3><p>在SUSE平台上，使用Zypper软件包管理器安装cluster-glue和heartbeat软件包。 假设您已配置正确的软件包存储库，请使用以下命令安装这两个软件包：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zypper install heartbeat cluster-glue</span><br></pre></td></tr></table></figure>
+<p>由于您很可能还希望安装Pacemaker（超出本手册的范围），因此也可以通过发出以下命令来执行此操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">zypper install resource-agents pacemaker</span><br></pre></td></tr></table></figure>
+<h1 id="管理任务"><a href="#管理任务" class="headerlink" title="管理任务"></a>管理任务</h1><h2 id="创建初始Heartbeat配置"><a href="#创建初始Heartbeat配置" class="headerlink" title="创建初始Heartbeat配置"></a>创建初始Heartbeat配置</h2><p>对于任何Heartbeat群集，必须提供以下配置文件：</p>
+<ul>
+<li><code>/etc/ha.d/ha.cf</code>：全局群集配置文件</li>
+<li><code>/etc/ha.d/authkeys</code> ：包含用于相互节点身份验证的密钥的文件</li>
+</ul>
+<h3 id="ha-cf文件"><a href="#ha-cf文件" class="headerlink" title="ha.cf文件"></a>ha.cf文件</h3><p>以下示例是一个小而简单的<code>ha.cf</code>文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">autojoin none</span><br><span class="line">mcast bond0 239.0.0.43 694 1 0</span><br><span class="line">bcast eth2</span><br><span class="line">warntime 5</span><br><span class="line">deadtime 15</span><br><span class="line">initdead 60</span><br><span class="line">keepalive 2</span><br><span class="line">node alice</span><br><span class="line">node bob</span><br><span class="line">pacemaker respawn</span><br></pre></td></tr></table></figure>
+<p>将<code>autojoin</code>设置为<code>none</code>将禁用集群节点自动发现，并要求使用节点选项显式列出群集节点。 这加速了具有固定少量节点的集群的启动。</p>
+<p>此示例假定<code>bond0</code>是集群与共享网络的接口，并且<code>eth2</code>是专用于两个节点之间的DRBD复制的接口。 因此，<code>bond0</code>可以用于多播心跳，而在<code>eth2</code>广播上是可行的，因为<code>eth2</code>不是共享网络。</p>
+<p>下一个选项配置节点故障检测。它们设置的时间是Heartbeat发出警告表示不再可用的对等节点可能已死（warntime），Heartbeat认为节点已确认死亡（deadtime）的时间，以及等待其他节点在集群启动时加入的最长时间（initdead）。<code>keepalive</code>设置发送Heartbeat keep-alive数据包的时间间隔。所有这些选项单位都是秒。</p>
+<p>节点选项标识集群成员。此处列出的选项值必须与<code>uname -n</code>给出的集群节点的确切主机名匹配。</p>
+<p><code>pacemaker respawn</code>启用Pacemaker集群管理器，并确保在发生故障时自动重启Pacemaker。</p>
+<blockquote>
+<p>在Heartbeat 3.0.4版之前，pacemaker关键字被命名为crm。 较新版本仍将旧名称保留为兼容性别名，但pacemaker是首选写法。</p>
+</blockquote>
+<h3 id="authkeys文件"><a href="#authkeys文件" class="headerlink" title="authkeys文件"></a>authkeys文件</h3><p><code>/etc/ha.d/authkeys</code>包含用于相互集群节点身份验证的预共享机密。 它应该只能由root读取并遵循以下格式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auth &lt;num&gt;</span><br><span class="line">&lt;num&gt; &lt;algorithm&gt; &lt;secret&gt;</span><br></pre></td></tr></table></figure>
+<p><code>num</code>是一个简单的键索引，从1开始。通常，您的authkeys文件中只有一个键。</p>
+<p><code>algorithm</code>是使用的签名算法。 你可以使用md5或sha1; 不推荐使用crc（简单的循环冗余校验，不安全）。</p>
+<p><code>secret</code>是实际的身份验证密钥。</p>
+<p>您可以通过以下shell，使用生成的密钥创建一个authkeys文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">( echo -ne &quot;auth 1\n1 sha1 &quot;; \</span><br><span class="line">  dd if=/dev/urandom bs=512 count=1 | openssl md5 ) \</span><br><span class="line">  &gt; /etc/ha.d/authkeys</span><br><span class="line">chmod 0600 /etc/ha.d/authkeys</span><br></pre></td></tr></table></figure>
+<h3 id="将群集配置传播到群集节点"><a href="#将群集配置传播到群集节点" class="headerlink" title="将群集配置传播到群集节点"></a>将群集配置传播到群集节点</h3><p>为了传播<code>ha.cf</code>和<code>authkeys</code>配置文件的内容，您可以使用<code>ha_propagate</code>命令，您可以使用该命令调用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/lib/heartbeat/ha_propagate</span><br></pre></td></tr></table></figure>
+<p>或</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/lib64/heartbeat/ha_propagate</span><br></pre></td></tr></table></figure>
+<p>此程序将使用<code>scp</code>将配置文件复制到<code>/etc/ha.d/ha.cf</code>中列出的任何节点。 之后它还将使用<code>ssh</code>连接到节点并发出<code>chkconfig heartbeat on</code>，以便在系统启动时启用Heartbeat服务。</p>
+<h3 id="启动Heartbeat服务"><a href="#启动Heartbeat服务" class="headerlink" title="启动Heartbeat服务"></a>启动Heartbeat服务</h3><p>Heartbeat服务的启动方式与计算机上的任何其他系统服务一样。 您可能正在使用以下命令之一，具体取决于您的系统平台：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/etc/init.d/heartbeat start</span><br><span class="line"></span><br><span class="line">service heartbeat start</span><br><span class="line"></span><br><span class="line">rcheartbeat start</span><br></pre></td></tr></table></figure>
+<p>通过ha.cf中的pacemaker输入，Heartbeat现在将启动Pacemaker守护程序（由于历史原因而命名为crmd）以及其余服务。 几秒钟后，您应该能够检测进程表中的Heartbeat进程：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"># ps -AHfww | grep heartbeat</span><br><span class="line">root      2772  1639  0 14:27 pts/0    00:00:00         grep heartbeat</span><br><span class="line">root      4175     1  0 Nov08 ?        00:37:57   heartbeat: master control process</span><br><span class="line">root      4224  4175  0 Nov08 ?        00:01:13     heartbeat: FIFO reader</span><br><span class="line">root      4227  4175  0 Nov08 ?        00:01:28     heartbeat: write: bcast eth2</span><br><span class="line">root      4228  4175  0 Nov08 ?        00:01:29     heartbeat: read: bcast eth2</span><br><span class="line">root      4229  4175  0 Nov08 ?        00:01:35     heartbeat: write: mcast bond0</span><br><span class="line">root      4230  4175  0 Nov08 ?        00:01:32     heartbeat: read: mcast bond0</span><br><span class="line">102       4233  4175  0 Nov08 ?        00:03:37     /usr/lib/heartbeat/ccm</span><br><span class="line">102       4234  4175  0 Nov08 ?        00:15:02     /usr/lib/heartbeat/cib</span><br><span class="line">root      4235  4175  0 Nov08 ?        00:17:14     /usr/lib/heartbeat/lrmd -r</span><br><span class="line">root      4236  4175  0 Nov08 ?        00:02:48     /usr/lib/heartbeat/stonithd</span><br><span class="line">102       4237  4175  0 Nov08 ?        00:00:54     /usr/lib/heartbeat/attrd</span><br><span class="line">102       4238  4175  0 Nov08 ?        00:08:32     /usr/lib/heartbeat/crmd</span><br><span class="line">102       5724  4238  0 Nov08 ?        00:04:47       /usr/lib/heartbeat/pengine</span><br></pre></td></tr></table></figure>
+<p>最后，您还应该能够通过Pacemaker的<code>crm_mon</code>命令确认群集正在运行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># crm_mon -1</span><br><span class="line">============</span><br><span class="line">Last updated: Mon Dec 13 14:29:36 2010</span><br><span class="line">Stack: Heartbeat</span><br><span class="line">Current DC: alice (083146b9-6e26-4ac8-a705-317095d0ba57) - partition with quorum</span><br><span class="line">Version: 1.0.9-74392a28b7f31d7ddc86689598bd23114f58978b</span><br><span class="line">2 Nodes configured, unknown expected votes</span><br><span class="line">24 Resources configured.</span><br><span class="line">============</span><br><span class="line"></span><br><span class="line">Online: [ alice bob ]</span><br></pre></td></tr></table></figure>
+<h3 id="Heartbeat的更多搭配"><a href="#Heartbeat的更多搭配" class="headerlink" title="Heartbeat的更多搭配"></a>Heartbeat的更多搭配</h3><p>现在您已经有了可用的Heartbeat配置，您将需要继续配置Pacemaker并添加群集资源。</p>
+<p>以下文件供您阅读：</p>
+<ul>
+<li><p><a href="http://clusterlabs.org/pacemaker/doc/en-US/Pacemaker/1.1/html/Clusters_from_Scratch/" target="_blank" rel="noopener">Clusters From Scratch</a>是配置Pacemaker集群的绝佳指南。 该文档主要涵盖了Corosync上的Pacemaker，但从其“使用Pacemaker工具”一章开始，同样适用于Heartbeat集群。</p>
+</li>
+<li><p><a href="http://www.drbd.org/users-guide/" target="_blank" rel="noopener">DRBD用户指南</a>有一章专门介绍DRBD与Pacemaker集群的集成。</p>
+</li>
+<li><p>LINBIT网站提供了几个涵盖各种应用的Heartbeat / Pacemaker集群的技术指南。</p>
+</li>
+</ul>
+<h2 id="升级Heartbeat版本"><a href="#升级Heartbeat版本" class="headerlink" title="升级Heartbeat版本"></a>升级Heartbeat版本</h2>
       
     </div>
 
@@ -1004,7 +1102,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Heartbeat介绍"><span class="nav-number">2.</span> <span class="nav-text">Heartbeat介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Heartbeat作为集群信息层"><span class="nav-number">2.1.</span> <span class="nav-text">Heartbeat作为集群信息层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#组件"><span class="nav-number">2.2.</span> <span class="nav-text">组件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#通信模块"><span class="nav-number">2.2.1.</span> <span class="nav-text">通信模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群共识成员资格"><span class="nav-number">2.2.2.</span> <span class="nav-text">集群共识成员资格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群管道库"><span class="nav-number">2.2.3.</span> <span class="nav-text">集群管道库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPC库"><span class="nav-number">2.2.4.</span> <span class="nav-text">IPC库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#非阻塞日志守护进程"><span class="nav-number">2.2.5.</span> <span class="nav-text">非阻塞日志守护进程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安装Heartbeat"><span class="nav-number">3.</span> <span class="nav-text">安装Heartbeat</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#源码构建安装"><span class="nav-number">3.1.</span> <span class="nav-text">源码构建安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#源码构建安装Cluster-Glue"><span class="nav-number">3.1.1.</span> <span class="nav-text">源码构建安装Cluster Glue</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Cluster-Glue构建的先决条件"><span class="nav-number">3.1.1.1.</span> <span class="nav-text">Cluster Glue构建的先决条件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#下载Cluster-Glue源码"><span class="nav-number">3.1.1.2.</span> <span class="nav-text">下载Cluster Glue源码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建Cluster-Glue"><span class="nav-number">3.1.1.3.</span> <span class="nav-text">构建Cluster Glue</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建包"><span class="nav-number">3.1.1.4.</span> <span class="nav-text">构建包</span></a></li></ol></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Heartbeat介绍"><span class="nav-number">2.</span> <span class="nav-text">Heartbeat介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Heartbeat作为集群信息层"><span class="nav-number">2.1.</span> <span class="nav-text">Heartbeat作为集群信息层</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#组件"><span class="nav-number">2.2.</span> <span class="nav-text">组件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#通信模块"><span class="nav-number">2.2.1.</span> <span class="nav-text">通信模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群共识成员资格"><span class="nav-number">2.2.2.</span> <span class="nav-text">集群共识成员资格</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#集群管道库"><span class="nav-number">2.2.3.</span> <span class="nav-text">集群管道库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IPC库"><span class="nav-number">2.2.4.</span> <span class="nav-text">IPC库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#非阻塞日志守护进程"><span class="nav-number">2.2.5.</span> <span class="nav-text">非阻塞日志守护进程</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安装Heartbeat"><span class="nav-number">3.</span> <span class="nav-text">安装Heartbeat</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#源码构建安装"><span class="nav-number">3.1.</span> <span class="nav-text">源码构建安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#源码构建安装Cluster-Glue"><span class="nav-number">3.1.1.</span> <span class="nav-text">源码构建安装Cluster Glue</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Cluster-Glue构建的先决条件"><span class="nav-number">3.1.1.1.</span> <span class="nav-text">Cluster Glue构建的先决条件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#下载Cluster-Glue源码"><span class="nav-number">3.1.1.2.</span> <span class="nav-text">下载Cluster Glue源码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建Cluster-Glue"><span class="nav-number">3.1.1.3.</span> <span class="nav-text">构建Cluster Glue</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建包"><span class="nav-number">3.1.1.4.</span> <span class="nav-text">构建包</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码构建安装Heartbeat"><span class="nav-number">3.1.2.</span> <span class="nav-text">源码构建安装Heartbeat</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Heartbeat构建的先决条件"><span class="nav-number">3.1.2.1.</span> <span class="nav-text">Heartbeat构建的先决条件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#下载Heartbeat源码"><span class="nav-number">3.1.2.2.</span> <span class="nav-text">下载Heartbeat源码</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建Heartbeat"><span class="nav-number">3.1.2.3.</span> <span class="nav-text">构建Heartbeat</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#构建包-1"><span class="nav-number">3.1.2.4.</span> <span class="nav-text">构建包</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#安装预建包"><span class="nav-number">3.2.</span> <span class="nav-text">安装预建包</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Debian与Ubuntu"><span class="nav-number">3.2.1.</span> <span class="nav-text">Debian与Ubuntu</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Fedora，RHEL与CentOS"><span class="nav-number">3.2.2.</span> <span class="nav-text">Fedora，RHEL与CentOS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OpenSUSE与SLES"><span class="nav-number">3.2.3.</span> <span class="nav-text">OpenSUSE与SLES</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#管理任务"><span class="nav-number">4.</span> <span class="nav-text">管理任务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#创建初始Heartbeat配置"><span class="nav-number">4.1.</span> <span class="nav-text">创建初始Heartbeat配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ha-cf文件"><span class="nav-number">4.1.1.</span> <span class="nav-text">ha.cf文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#authkeys文件"><span class="nav-number">4.1.2.</span> <span class="nav-text">authkeys文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#将群集配置传播到群集节点"><span class="nav-number">4.1.3.</span> <span class="nav-text">将群集配置传播到群集节点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#启动Heartbeat服务"><span class="nav-number">4.1.4.</span> <span class="nav-text">启动Heartbeat服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Heartbeat的更多搭配"><span class="nav-number">4.1.5.</span> <span class="nav-text">Heartbeat的更多搭配</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#升级Heartbeat版本"><span class="nav-number">4.2.</span> <span class="nav-text">升级Heartbeat版本</span></a></li></ol></li></ol></div>
             
 
           </div>

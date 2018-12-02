@@ -110,7 +110,7 @@
 <meta property="og:site_name" content="tdLaogu的小站">
 <meta property="og:description" content="集群概念 集群搭建实验集合">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-11-27T01:22:17.524Z">
+<meta property="og:updated_time" content="2018-12-01T09:00:21.406Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="集群概念及应用笔记">
 <meta name="twitter:description" content="集群概念 集群搭建实验集合">
@@ -384,7 +384,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-11-27 09:22:17" itemprop="dateModified" datetime="2018-11-27T09:22:17+08:00">2018-11-27</time>
+                <time title="修改时间：2018-12-01 17:00:21" itemprop="dateModified" datetime="2018-12-01T17:00:21+08:00">2018-12-01</time>
               
             
           </span>
@@ -441,6 +441,36 @@
 <p>资源约束：Constraint</p>
 <p>​    排列约束</p>
 <p>​    位置约束（location）</p>
+<p>Session共享：</p>
+<ul>
+<li><p>基于Cookie的Session共享：</p>
+<p>将全站用户的Session信息加密并序列化后以Cookie的方式统一存放在根域名下，当浏览器访问该根域名下的所有二级域名时，会将域名相对应的所有Cookie内容传递给子服务器，实现用户的Cookie化Session在多个服务器间共享。</p>
+<p>优点：无需额外服务器资源。</p>
+<p>缺点：受HTTP协议头长度限制，仅存储小部分用户信息。</p>
+</li>
+<li><p>基于数据库的Session共享：</p>
+<p>实用性强，但比较复杂，Session的逻辑淘汰也需要自己实现，并且Session的并发读写能力取决于数据库的性能。</p>
+</li>
+<li><p>Session复制：</p>
+<p>将用户的Session复制到每个要访问的服务器，Tomcat和Weblogic都带有这种机制，但随机器增加，网络负担会成指数上升。</p>
+</li>
+<li><p>基于Memcached或Redis的Session共享：</p>
+<p>Memcached和Redis适合用于存放Session，Memcached和Redis中的Hash表具有Expires数据淘汰机制，符合Session的要求。并且这两款数据存储系统的性能都很强，能够应对高并发场景。</p>
+</li>
+</ul>
+<p>会话保持：</p>
+<p>会话保持不是Session共享。网站中有时一次操作需要与服务器进行多次交互，并且这几次的交互都是紧密联系的，这要求相关操作都要在一台服务器上完成，不能被负载到其他服务器上。</p>
+<p>会话保持就是指在负载均衡器上的机制，可识别客户和服务器间交互的关联性，在做负载均衡的同时，还能保持一系列相关的访问都分配到同一台服务器上。</p>
+<p>负载均衡器的会话保存机制：</p>
+<ul>
+<li><p>基于源IP的持续性保持：主要用于四层负载均衡，如Nginx的ip_hash、HAProxy的source算法。</p>
+</li>
+<li><p>基于Cookie的持续性保持：主要用于七层负载均衡，同一会话的被分配到同一台服务器上。</p>
+<p>根据应答报文中是否带有<code>Set_Cookie</code>字段，可分为Cookie插入保持和Cookie截取保持。</p>
+</li>
+<li><p>基于HTTP报文头的持续性保持：主要用于七层负载均衡，负载均衡器首次收到客户端的请求时，会建立该客户端的表项，记录为该客户端分配服务器的情况。在会话表项生存期内，后续具有相同HTTP报文头的连接都发往同一服务器。</p>
+</li>
+</ul>
 
       
     </div>
