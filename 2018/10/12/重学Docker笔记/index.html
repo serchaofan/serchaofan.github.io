@@ -111,7 +111,12 @@
 <meta property="og:description" content="重新学习Docker整理，docker版本18.06  Docker安装注意事项 Docker基础命令集 Docker核心原理 Docker镜像管理 Dockerfile Docker监控与安全">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/0.png">
-<meta property="og:updated_time" content="2018-11-07T12:58:24.530Z">
+<meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/1.png">
+<meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/2.png">
+<meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/3.png">
+<meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/4.png">
+<meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/5.png">
+<meta property="og:updated_time" content="2019-01-13T10:28:53.735Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="重学Docker笔记">
 <meta name="twitter:description" content="重新学习Docker整理，docker版本18.06  Docker安装注意事项 Docker基础命令集 Docker核心原理 Docker镜像管理 Dockerfile Docker监控与安全">
@@ -229,7 +234,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">113</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">112</span></a>
   </li>
         
         
@@ -386,7 +391,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-11-07 20:58:24" itemprop="dateModified" datetime="2018-11-07T20:58:24+08:00">2018-11-07</time>
+                <time title="修改时间：2019-01-13 18:28:53" itemprop="dateModified" datetime="2019-01-13T18:28:53+08:00">2019-01-13</time>
               
             
           </span>
@@ -536,6 +541,7 @@
 </tr>
 </tbody>
 </table>
+<p><a href="https://github.com/serchaofan/laogu-learnnamespace">详细实现原理笔记</a></p>
 <h2 id="cgroups"><a href="#cgroups" class="headerlink" title="cgroups"></a>cgroups</h2><p>cgroups全称<strong>control groups</strong>，是Linux内核的一种机制，可根据需求把一系列系统任务及子任务整合到<strong>按资源划分等级的不同组</strong>内，从而为系统资源管理提供一个统一的框架。即cgroups可以限制、记录任务组所使用的物理资源。</p>
 <p>本质上，cgroups是内核附加在程序上的一系列钩子hook，通过程序运行时对资源的调度，触发相应的hook函数，以达到资源追踪和限制的目的。</p>
 <p>cgroups特点：</p>
@@ -552,9 +558,64 @@
 <li>资源统计：统计系统的资源使用量，适合于计费</li>
 <li>任务控制：可对任务执行挂起、恢复等操作</li>
 </ul>
+<p>cgroups术语：</p>
+<ul>
+<li>task：任务，表示系统的一个进程或线程</li>
+<li>cgroup：控制组，cgroups中资源控制都是以cgroup为单位，表示按某种资源控制标准划分而成的任务组，包含一个或多个子系统。任务可在cgroup间迁移</li>
+<li>subsystem：子系统，是一个资源调度控制器</li>
+<li>hierarchy：层级，由一系列cgroup以一个树状结构排列，每个层级通过绑定对应的子系统进行资源控制，并且子节点能继承父节点挂载的子系统。</li>
+</ul>
+<h3 id="层级规则"><a href="#层级规则" class="headerlink" title="层级规则"></a>层级规则</h3><ul>
+<li><p>规则1：同一个层级可附加一个或多个子系统。事例如图，CPU和Memory子系统附加到一个层级上</p>
+<img src="/2018/10/12/重学Docker笔记/1.png">
+</li>
+<li><p>规则2：一个子系统可附加到多个层级上（仅当目标层级只有唯一一个子系统时），一个已经附加在某个层级上的子系统不能附加到其他含有别的子系统的层级上。</p>
+<img src="/2018/10/12/重学Docker笔记/2.png">
+</li>
+<li><p>规则3：每新建一个层级时，该系统上所有任务默认加入这个新建层级的初始化cgroup，称为root cgroup。一个任务不能存在于同一个层级的不同cgroup，但可以存在于不同层级的多个cgroup中。若将一个任务添加到同一层级的另一个cgroup，则会自动将其从第一个cgroup中移除。</p>
+<img src="/2018/10/12/重学Docker笔记/3.png">
+</li>
+<li><p>规则4：任务在fork/clone自身时创建的子任务默认与原任务在同一个cgroup，但完成后，父子任务间在cgroup方面互不影响。</p>
+<img src="/2018/10/12/重学Docker笔记/4.png">
+</li>
+</ul>
+<h3 id="子系统"><a href="#子系统" class="headerlink" title="子系统"></a>子系统</h3><p>子系统是cgroups的资源控制系统，每种子系统独立控制一种资源。Docker有以下子系统：</p>
+<ul>
+<li>blkio：限制块设备输入输出</li>
+<li>cpu：控制对CPU的使用</li>
+<li>cpuacct：对CPU资源使用情况的报告</li>
+<li>cpuset：分配独立的CPU和内存</li>
+<li>devices：开启/关闭任务对设备的访问</li>
+<li>freezer：挂起/恢复任务</li>
+<li>memory：限定任务的内存使用量，并生成内存资源使用报告</li>
+<li>perf_event：可进行统一的性能测试</li>
+<li>net_cls：控制网络流量，识别数据包</li>
+</ul>
+<p>Linux中cgroup表现为一个文件系统，需要mount才能使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># mount -t cgroup</span><br><span class="line">cgroup on /sys/fs/cgroup/systemd type cgroup (rw,nosuid,nodev,noexec,relatime,xattr,release_agent=/usr/lib/systemd/systemd-cgroups-agent,name=systemd)</span><br><span class="line">cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,memory)</span><br><span class="line">cgroup on /sys/fs/cgroup/net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,net_prio,net_cls)</span><br><span class="line">cgroup on /sys/fs/cgroup/perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,perf_event)</span><br><span class="line">cgroup on /sys/fs/cgroup/pids type cgroup (rw,nosuid,nodev,noexec,relatime,pids)</span><br><span class="line">cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,cpuset)</span><br><span class="line">cgroup on /sys/fs/cgroup/devices type cgroup (rw,nosuid,nodev,noexec,relatime,devices)</span><br><span class="line">cgroup on /sys/fs/cgroup/freezer type cgroup (rw,nosuid,nodev,noexec,relatime,freezer)</span><br><span class="line">cgroup on /sys/fs/cgroup/hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,hugetlb)</span><br><span class="line">cgroup on /sys/fs/cgroup/blkio type cgroup (rw,nosuid,nodev,noexec,relatime,blkio)</span><br><span class="line">cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,cpuacct,cpu)</span><br></pre></td></tr></table></figure>
+<p>子系统文件都存放在<code>/sys/fs/cgroup</code>目录中。Docker daemon会在每个子系统的控制组目录中创建一个docker控制组，并在其中为每个容器创建一个以容器ID（长ID）为名称的容器控制组，该容器中所有任务的TID（进程或线程的ID）都会写入该控制组的tasks文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># tree /sys/fs/cgroup/cpu/docker/</span><br><span class="line">/sys/fs/cgroup/cpu/docker/</span><br><span class="line">├── c146b9740725896dca61d96788acecd80c3bb7f80aedd22359cd78adbfda4fdc</span><br><span class="line">│   ├── cgroup.clone_children</span><br><span class="line">│   ├── cgroup.procs</span><br><span class="line">│   ├── cpuacct.stat</span><br><span class="line">|   |......</span><br><span class="line">│   └── tasks</span><br><span class="line">├── cgroup.clone_children</span><br><span class="line">├── cgroup.procs</span><br><span class="line">├── cpuacct.stat</span><br><span class="line">......</span><br><span class="line">└── tasks</span><br></pre></td></tr></table></figure>
+<h3 id="cgroups实现原理"><a href="#cgroups实现原理" class="headerlink" title="cgroups实现原理"></a>cgroups实现原理</h3><h4 id="cgroups如何判断资源超限并做出措施"><a href="#cgroups如何判断资源超限并做出措施" class="headerlink" title="cgroups如何判断资源超限并做出措施"></a>cgroups如何判断资源超限并做出措施</h4><p>对于不同系统资源，cgroups提供了统一的接口对资源进行控制和统计。会有描述子系统资源状态的结构体记录所属cgroup，当进程申请更多资源时，会触发cgroup用量检测，若超出限额，则拒绝，否则就给予相应资源并记录在统计信息中，不仅要考虑资源的分配和回收，还要考虑不同类型的资源等。</p>
+<p>在超出限额后，会根据信号（如果设置的话）（如内存的OOM信号）决定进程是否挂起或继续执行。</p>
+<h4 id="cgroup与任务之间的关联关系"><a href="#cgroup与任务之间的关联关系" class="headerlink" title="cgroup与任务之间的关联关系"></a>cgroup与任务之间的关联关系</h4><p>cgroup与任务间是多对多关系，并不直接关联，而是通过一个中间结构将双向的关联信息记录。每个任务结构体能通过指针查询对应group的情况，也能查询各个子系统的情况，结构体把子系统状态指针包含进来，并由内核通过container_of宏定义获取对应结构体，关联到任务，实现资源限制。</p>
+<h4 id="使用注意"><a href="#使用注意" class="headerlink" title="使用注意"></a>使用注意</h4><p>Docker需要挂载cgroup文件系统新建一个层级结构，挂载时指定要绑定的系统。除cgroup文件系统外，内核没有为cgroups的访问和操作添加任何系统调用。</p>
+<p>无法将一个新的子系统绑定到一个已激活的层级，或从一个层级解除某个子系统的绑定。</p>
+<p>只有递归卸载层级中的所有cgroup，该层级才会被真正删除，否则即使上层的层级删除了，后代的cgroup中的配置也会依然生效。</p>
+<p>在容器目录下，会有以下固定文件，描述cgroup相应信息。</p>
+<ul>
+<li>tasks：在该cgroup中任务的进程或线程ID（无序），意味着把这个任务加入这个cgroup。</li>
+<li>cgroup.procs：记录所有在cgroup的TGID（线程组ID，是线程组中第一个进程的ID），意味着将与其相关的线程都加到这个cgroup中。</li>
+<li>notify_on_release：是否在cgroup中最后一个任务退出时通知运行release agent，默认为0，不运行。若为1则表示运行</li>
+</ul>
+<h2 id="Docker架构"><a href="#Docker架构" class="headerlink" title="Docker架构"></a>Docker架构</h2><p>采用C/S架构，用户通过Docker client与Docker daemon建立通信。</p>
+<img src="/2018/10/12/重学Docker笔记/5.png">
+<ul>
+<li>docker daemon是docker的核心后台进程，响应client的请求，然后调度给容器操作。</li>
+<li>docker client向daemon发送请求，可以是命令<code>docker</code>，也可以是使用了docker API的应用。</li>
+</ul>
 <h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
-<li>Docker开发指南</li>
-<li>Docker容器与容器云</li>
+<li>《Docker开发指南》</li>
+<li>《Docker容器与容器云》</li>
 <li><a href="https://docs.docker.com/" target="_blank" rel="noopener">Docker官方文档 版本18.03</a></li>
 </ul>
 
@@ -921,8 +982,6 @@
                     
                       
                     
-                      
-                    
                     <span class="site-state-item-count">112</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
@@ -991,7 +1050,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker安装注意事项"><span class="nav-number">1.</span> <span class="nav-text">Docker安装注意事项</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker基础命令集"><span class="nav-number">2.</span> <span class="nav-text">Docker基础命令集</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker核心原理"><span class="nav-number">3.</span> <span class="nav-text">Docker核心原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#namespace"><span class="nav-number">3.1.</span> <span class="nav-text">namespace</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cgroups"><span class="nav-number">3.2.</span> <span class="nav-text">cgroups</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker安装注意事项"><span class="nav-number">1.</span> <span class="nav-text">Docker安装注意事项</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker基础命令集"><span class="nav-number">2.</span> <span class="nav-text">Docker基础命令集</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker核心原理"><span class="nav-number">3.</span> <span class="nav-text">Docker核心原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#namespace"><span class="nav-number">3.1.</span> <span class="nav-text">namespace</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cgroups"><span class="nav-number">3.2.</span> <span class="nav-text">cgroups</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#层级规则"><span class="nav-number">3.2.1.</span> <span class="nav-text">层级规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#子系统"><span class="nav-number">3.2.2.</span> <span class="nav-text">子系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cgroups实现原理"><span class="nav-number">3.2.3.</span> <span class="nav-text">cgroups实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroups如何判断资源超限并做出措施"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">cgroups如何判断资源超限并做出措施</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroup与任务之间的关联关系"><span class="nav-number">3.2.3.2.</span> <span class="nav-text">cgroup与任务之间的关联关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用注意"><span class="nav-number">3.2.3.3.</span> <span class="nav-text">使用注意</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker架构"><span class="nav-number">3.3.</span> <span class="nav-text">Docker架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
             
 
           </div>
@@ -1018,7 +1077,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
   <span class="with-love" id="animate">
     <i class="fa fa-user"></i>
   </span>

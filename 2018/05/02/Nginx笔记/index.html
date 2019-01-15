@@ -115,9 +115,10 @@
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/2.png">
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/5.png">
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/6.png">
+<meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/7.png">
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/3.png">
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/4.png">
-<meta property="og:updated_time" content="2018-12-24T09:43:32.205Z">
+<meta property="og:updated_time" content="2019-01-09T01:04:10.673Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Nginx笔记-1">
 <meta name="twitter:description" content="本篇包含以下知识点：  Nginx介绍 Nginx安装 Nginx配置文件解析 访问控制、身份认证与SSL Nginx日志 Nginx缓存">
@@ -235,7 +236,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">113</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">112</span></a>
   </li>
         
         
@@ -392,7 +393,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-12-24 17:43:32" itemprop="dateModified" datetime="2018-12-24T17:43:32+08:00">2018-12-24</time>
+                <time title="修改时间：2019-01-09 09:04:10" itemprop="dateModified" datetime="2019-01-09T09:04:10+08:00">2019-01-09</time>
               
             
           </span>
@@ -581,6 +582,7 @@
 <p>可通过Apache的工具<code>htpasswd</code>创建用户认证文件</p>
 <p><code>htpasswd -c -m -b /etc/nginx/secret mike 123456</code></p>
 <p>使用SSL将网站配置为HTTPS</p>
+<p>注：如果是编译安装，需要在构建时添加<code>--with_http_ssl_module</code>支持SSL。</p>
 <p>首先进入目录<code>/etc/pki/CA/private</code>下创建服务器RSA私钥，叫<code>server.key</code>。</p>
 <p><code>openssl genrsa -out server.key 2048</code></p>
 <p>生成服务器的CSR证书请求文件。CSR证书请求文件是服务器的公钥，用于提交给CA机构进行签名。</p>
@@ -640,7 +642,7 @@
 <p>浏览器保存了受信任的CA机构的公钥，在请求HTTPS网站时，会利用CA公钥验证服务器证书，并检查域名是否吻合、证书是否过期等。</p>
 </blockquote>
 <p>在Nginx配置文件中设置https配置。Nginx配置文件中已默认存在SSL配置，只是注释了，取消注释，并修改crt文件路径即可。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">    server &#123;</span><br><span class="line">        listen       443 ssl;</span><br><span class="line">        server_name  system3.example.com;</span><br><span class="line">				ssl          on;         # 这条配置文件可能没有，要加上</span><br><span class="line">        ssl_certificate      /etc/pki/CA/private/server.crt; # SSL认证证书路径</span><br><span class="line">        ssl_certificate_key  /etc/pki/CA/private/server.key; # SSL认证密钥路径</span><br><span class="line"></span><br><span class="line">        ssl_session_cache    shared:SSL:1m;  # 用于存储SSL会话的高速缓存的类型和大小</span><br><span class="line">        ssl_session_timeout  5m; # 客户端可以重复使用存储在缓存中的会话参数的时间</span><br><span class="line">        ssl_ciphers  HIGH:!aNULL:!MD5;   # openssl允许的加密类型</span><br><span class="line">        ssl_prefer_server_ciphers  on;</span><br><span class="line">        location / &#123;</span><br><span class="line">            root   html;</span><br><span class="line">            index  index.html index.htm;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">    server &#123;</span><br><span class="line">        listen       443 ssl;</span><br><span class="line">        server_name  system3.example.com;</span><br><span class="line">				ssl          on;         # 这条配置文件可能没有，要加上</span><br><span class="line">        ssl_certificate      /etc/pki/CA/private/server.crt; # SSL认证证书路径</span><br><span class="line">        ssl_certificate_key  /etc/pki/CA/private/server.key; # SSL认证密钥路径</span><br><span class="line"></span><br><span class="line">        ssl_session_cache    shared:SSL:1m;  # 用于存储SSL会话的高速缓存的类型和大小</span><br><span class="line">        ssl_session_timeout  5m; # 客户端可以重复使用存储在缓存中的会话参数的时间</span><br><span class="line">        ssl_ciphers  HIGH:!aNULL:!MD5;   # openssl允许的加密类型</span><br><span class="line">        ssl_prefer_server_ciphers  on;</span><br><span class="line">        location / &#123;</span><br><span class="line">            root   html;</span><br><span class="line">            index  index.html index.htm;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    location / &#123;</span><br><span class="line">      proxy_set_header X-FORWARDED-PROTO  https;  #将http协议头换为https</span><br><span class="line">      proxy_pass http://upstream;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在<code>/etc/hosts</code>中确定配置了system3的条目。在浏览器上输入<code>https://system3.example.com</code>会说明此连接不安全。是因为当前的证书是服务器自己作为CA签名的，所以浏览器无法信任。点添加例外，可查看该证书，与配置的一致。</p>
 <img src="/2018/05/02/Nginx笔记/1.png">
 <img src="/2018/05/02/Nginx笔记/2.png">
@@ -771,7 +773,7 @@
 </thead>
 <tbody>
 <tr>
-<td>轮询</td>
+<td>轮询round-robin</td>
 <td>默认配置方式，每个请求按照时间顺序逐一分配到不同后端服务器</td>
 </tr>
 <tr>
@@ -853,6 +855,14 @@
 <p>测试：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&gt; curl sys1.example.com</span><br><span class="line">WEB2</span><br><span class="line">&gt; curl sys1.example.com</span><br><span class="line">WEB2</span><br><span class="line">&gt; curl sys1.example.com</span><br><span class="line">WEB2</span><br><span class="line">&gt; curl sys1.example.com</span><br><span class="line">WEB2</span><br></pre></td></tr></table></figure>
 <p>每个IP地址绑定一个web服务器，可能会导致某些web服务器负载很大，有的很少，反而无法保证负载均衡。</p>
+<p>upstream块补充指令：</p>
+<ul>
+<li><p><code>keepalive</code>：指定每个worker进程缓存到上游服务器的连接数。需要先将<code>proxy_http_version</code>设为1.1，<code>proxy_set_header</code>设为<code>Connection &quot;&quot;</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">upstream apache &#123;</span><br><span class="line">  server  127.0.0.1:8080;</span><br><span class="line">  keepalive  32;</span><br><span class="line">&#125;</span><br><span class="line">location / &#123;</span><br><span class="line">  proxy_http_version  1.1;</span><br><span class="line">  proxy_set_header  Connection &quot;&quot;;</span><br><span class="line">  proxy_pass  http://apache;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>least_conn</code>：直接激活最少连接算法，将请求发送至活跃连接数最少的服务器。</p>
+</li>
+</ul>
 <h1 id="Nginx反向代理"><a href="#Nginx反向代理" class="headerlink" title="Nginx反向代理"></a>Nginx反向代理</h1><p>在模块<code>ngx_http_proxy_module</code>中与Nginx反向代理有关的指令：<code>proxy_pass</code>，用于设置后端服务器的地址，仅用于<code>location</code>块。可以设置代理服务器的协议和地址以及映射位置的可选URI。</p>
 <p>实验环境：</p>
 <ul>
@@ -876,21 +886,45 @@
 <p>如果启用了缓存，则标题字段为“If-Modified-Since”，“If-Unmodified-Since”，“If-None-Match”，“If-Match”，“Range”和“If-Range”来自原始请求不会传递给代理服务器。</p>
 </li>
 <li><p><strong><code>proxy_connect_timeout</code></strong>：配置Nginx与后端代理服务器尝试连接的超时时间，默认60s，且通常不会大于75秒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_connect_timeout  30;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_read_timeout</code></strong>：配置Nginx向后端服务器组发出read请求后，等待响应的超时时间。仅在<strong>两个连续的读操作之间</strong>设置超时，而不是整个响应。如果代理服务器在此时间内未传输任何内容，则关闭连接。默认为60秒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_read_timeout  15;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_send_timeout</code></strong>：配置Nginx向后端服务器组发出write请求后，等待响应的超时时间。仅在<strong>两个连续的写操作之间</strong>设置超时，而不是整个请求。如果代理服务器在此时间内未收到任何内容，则关闭连接。默认为60秒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_send_timeout  15;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_redirect</code></strong>：用于修改后端服务器返回的响应头中的Location和Refresh</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_redirect  off;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_buffer_size</code></strong>：用于读取从代理服务器接收的响应的第一部分的缓冲区的大小，这部分通常包含一个小的响应头。默认情况下，缓冲区大小等于一个内存页面，默认为4K或8K。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_buffer_size  4k;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_buffers</code></strong>：用于从代理服务器读取响应的缓冲区的数量(number)和大小(size)，用于单个连接。默认情况下，缓冲区大小等于一个内存页面。默认为4K或8K。语法：<code>proxy_buffers number size;</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_buffers  32  4k;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_temp_file_write_size</code></strong>：当启用从代理服务器到临时文件的响应缓冲时，限制一次写入临时文件的数据大小。默认情况下，size由<code>proxy_buffer_size</code>和<code>proxy_buffers</code>指令设置的两个缓冲区限制。默认为8k或16k。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_temp_file_write_size  64k;</span><br></pre></td></tr></table></figure>
 </li>
 </ul>
-<h1 id="Nginx邮件服务"><a href="#Nginx邮件服务" class="headerlink" title="Nginx邮件服务"></a>Nginx邮件服务</h1><h1 id="重写与重定向"><a href="#重写与重定向" class="headerlink" title="重写与重定向"></a>重写与重定向</h1><p>Nginx提供模块<code>ngx_http_rewrite_module</code>实现URL重写与重定向。<code>rewrite</code>指令能用于<code>server</code>、<code>location</code>、<code>if</code>块中。Nginx的rewrite需要pcre的支持。</p>
+<p>可以讲这些代理指令单独存放为一个配置文件，然后在主配置文件的代理块中<code>include</code>应用。</p>
+<h2 id="非HTTP型上游服务器"><a href="#非HTTP型上游服务器" class="headerlink" title="非HTTP型上游服务器"></a>非HTTP型上游服务器</h2><h3 id="Memcached服务器"><a href="#Memcached服务器" class="headerlink" title="Memcached服务器"></a>Memcached服务器</h3><p>Nginx提供memcached模块并默认开启，用于与memcached守护进程通信，此时Nginx并不是充当反向代理，而是使Nginx使用memcached协议会话，因此key的查询能够在请求传递到应用服务器之前完成。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">upstream memcaches &#123;</span><br><span class="line">  server  xxxx:11211;</span><br><span class="line">  server  xxxx:11211;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">  location / &#123;</span><br><span class="line">    set  $memcached_key  &quot;$uri?args&quot;;</span><br><span class="line">    memcached_pass  memcaches;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>memcached_pass</code>将使用<code>$memcached_key</code>变量实现key查找。</p>
+<h3 id="FastCGI服务器"><a href="#FastCGI服务器" class="headerlink" title="FastCGI服务器"></a>FastCGI服务器</h3><p>fastcgi模块也是默认开启。开启后Nginx可使用FastCGI协议与多个上游服务器会话。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">upstream fastcgis &#123;</span><br><span class="line">  server xxxx:9000;</span><br><span class="line">  server xxxx:9000;</span><br><span class="line">&#125;</span><br><span class="line">location / &#123;</span><br><span class="line">  fastcgi_pass  fastcgis;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>SCGI与uWSGI服务器与FastCGI类似，分别使用<code>scgi_pass</code>与<code>uwsgi_pass</code>指定上游服务器。</p>
+<h1 id="Nginx邮件服务"><a href="#Nginx邮件服务" class="headerlink" title="Nginx邮件服务"></a>Nginx邮件服务</h1><p>Nginx提供邮件代理服务，能代理POP3、IMAP、SMTP。</p>
+<p>每一个进入的请求都会基于相应的协议处理，对于每一个协议，Nginx都需要一个用户名密码认证服务，如果认证成功，则连接被代理到邮件服务器。</p>
+<img src="/2018/05/02/Nginx笔记/7.png">
+<p>Nginx邮件服务，若是编译安装，则需要在构建时指定<code>--with-mail</code>。</p>
+<p>如果代理pop3服务，在配置文件中添加以下配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mail &#123;</span><br><span class="line">  auth_http  localhost:9000/auth;  # 查询认证服务</span><br><span class="line">  server &#123;</span><br><span class="line">    listen 110;        # pop3的TCP端口110，监听POP3服务</span><br><span class="line">    protocol pop3;</span><br><span class="line">    proxy on;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果是代理imap服务，则同理，而可以不用指定<code>protocol imap;</code>，因为imap是默认值。而端口号改为143。</p>
+<p>如果代理smtp服务，则修改<code>protocol</code>后，再修改端口号为25。</p>
+<p>Nginx还为三种服务提供了可选指令，能做到根据服务器的情况灵活代理。</p>
+<p>最好在<code>mail</code>块中，指定<code>server_name</code>，为邮件代理提供统一入口。</p>
+<h1 id="重写与重定向"><a href="#重写与重定向" class="headerlink" title="重写与重定向"></a>重写与重定向</h1><p>Nginx提供模块<code>ngx_http_rewrite_module</code>实现URL重写与重定向。<code>rewrite</code>指令能用于<code>server</code>、<code>location</code>、<code>if</code>块中。Nginx的rewrite需要pcre的支持。</p>
 <p><code>rewrite regex replacement [flag];</code></p>
 <p>其中regex为正则表达式，replacement为符合正则的替换算法。flag为进一步处理的标识。以下为flag的可选值：</p>
 <table>
@@ -1008,6 +1042,7 @@
 <li>Nginx高性能Web服务器实战教程</li>
 <li>高性能网站构建实战</li>
 <li>跟老男孩学Linux运维 Web集群实战</li>
+<li>精通Nginx（第二版）</li>
 </ul>
 
       
@@ -1383,8 +1418,6 @@
                     
                       
                     
-                      
-                    
                     <span class="site-state-item-count">112</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
@@ -1453,7 +1486,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx介绍"><span class="nav-number">1.</span> <span class="nav-text">Nginx介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx安装"><span class="nav-number">2.</span> <span class="nav-text">Nginx安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx配置文件解析"><span class="nav-number">3.</span> <span class="nav-text">Nginx配置文件解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#全局配置"><span class="nav-number">3.1.</span> <span class="nav-text">全局配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#main块"><span class="nav-number">3.1.1.</span> <span class="nav-text">main块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模块配置"><span class="nav-number">3.2.</span> <span class="nav-text">模块配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#events块"><span class="nav-number">3.2.1.</span> <span class="nav-text">events块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http块"><span class="nav-number">3.2.2.</span> <span class="nav-text">http块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#server块"><span class="nav-number">3.2.3.</span> <span class="nav-text">server块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#location块"><span class="nav-number">3.2.4.</span> <span class="nav-text">location块</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#访问控制、身份认证与SSL"><span class="nav-number">4.</span> <span class="nav-text">访问控制、身份认证与SSL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx日志"><span class="nav-number">5.</span> <span class="nav-text">Nginx日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志切割"><span class="nav-number">5.1.</span> <span class="nav-text">日志切割</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx缓存"><span class="nav-number">6.</span> <span class="nav-text">Nginx缓存</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx负载均衡"><span class="nav-number">7.</span> <span class="nav-text">Nginx负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#轮询"><span class="nav-number">7.1.</span> <span class="nav-text">轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#权重"><span class="nav-number">7.2.</span> <span class="nav-text">权重</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ip-hash"><span class="nav-number">7.3.</span> <span class="nav-text">ip_hash</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx反向代理"><span class="nav-number">8.</span> <span class="nav-text">Nginx反向代理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx邮件服务"><span class="nav-number">9.</span> <span class="nav-text">Nginx邮件服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重写与重定向"><span class="nav-number">10.</span> <span class="nav-text">重写与重定向</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#重写"><span class="nav-number">10.1.</span> <span class="nav-text">重写</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LNMP分布式集群方案"><span class="nav-number">11.</span> <span class="nav-text">LNMP分布式集群方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#搭建Nginx-PHP环境"><span class="nav-number">11.1.</span> <span class="nav-text">搭建Nginx+PHP环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginx-Apache动静分离"><span class="nav-number">11.2.</span> <span class="nav-text">Nginx+Apache动静分离</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">12.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx介绍"><span class="nav-number">1.</span> <span class="nav-text">Nginx介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx安装"><span class="nav-number">2.</span> <span class="nav-text">Nginx安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx配置文件解析"><span class="nav-number">3.</span> <span class="nav-text">Nginx配置文件解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#全局配置"><span class="nav-number">3.1.</span> <span class="nav-text">全局配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#main块"><span class="nav-number">3.1.1.</span> <span class="nav-text">main块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模块配置"><span class="nav-number">3.2.</span> <span class="nav-text">模块配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#events块"><span class="nav-number">3.2.1.</span> <span class="nav-text">events块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http块"><span class="nav-number">3.2.2.</span> <span class="nav-text">http块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#server块"><span class="nav-number">3.2.3.</span> <span class="nav-text">server块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#location块"><span class="nav-number">3.2.4.</span> <span class="nav-text">location块</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#访问控制、身份认证与SSL"><span class="nav-number">4.</span> <span class="nav-text">访问控制、身份认证与SSL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx日志"><span class="nav-number">5.</span> <span class="nav-text">Nginx日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志切割"><span class="nav-number">5.1.</span> <span class="nav-text">日志切割</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx缓存"><span class="nav-number">6.</span> <span class="nav-text">Nginx缓存</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx负载均衡"><span class="nav-number">7.</span> <span class="nav-text">Nginx负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#轮询"><span class="nav-number">7.1.</span> <span class="nav-text">轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#权重"><span class="nav-number">7.2.</span> <span class="nav-text">权重</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ip-hash"><span class="nav-number">7.3.</span> <span class="nav-text">ip_hash</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx反向代理"><span class="nav-number">8.</span> <span class="nav-text">Nginx反向代理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#非HTTP型上游服务器"><span class="nav-number">8.1.</span> <span class="nav-text">非HTTP型上游服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Memcached服务器"><span class="nav-number">8.1.1.</span> <span class="nav-text">Memcached服务器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FastCGI服务器"><span class="nav-number">8.1.2.</span> <span class="nav-text">FastCGI服务器</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx邮件服务"><span class="nav-number">9.</span> <span class="nav-text">Nginx邮件服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重写与重定向"><span class="nav-number">10.</span> <span class="nav-text">重写与重定向</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#重写"><span class="nav-number">10.1.</span> <span class="nav-text">重写</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LNMP分布式集群方案"><span class="nav-number">11.</span> <span class="nav-text">LNMP分布式集群方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#搭建Nginx-PHP环境"><span class="nav-number">11.1.</span> <span class="nav-text">搭建Nginx+PHP环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginx-Apache动静分离"><span class="nav-number">11.2.</span> <span class="nav-text">Nginx+Apache动静分离</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">12.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
@@ -1480,7 +1513,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
   <span class="with-love" id="animate">
     <i class="fa fa-user"></i>
   </span>
