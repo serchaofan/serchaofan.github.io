@@ -102,17 +102,22 @@
 
 
 
-  <meta name="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+  <meta name="description" content="邮件服务概述 常见邮件服务或协议 Sendmail服务 Postfix服务器搭建">
+<meta name="keywords" content="Postfix,邮件服务,sendmail">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Postfix邮件服务器学习笔记">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/08/01/Postfix邮件服务器学习笔记/index.html">
 <meta property="og:site_name" content="tdLaogu的小站">
-<meta property="og:description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+<meta property="og:description" content="邮件服务概述 常见邮件服务或协议 Sendmail服务 Postfix服务器搭建">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2018-09-04T10:51:10.000Z">
+<meta property="og:image" content="https://github.com/2018/08/01/Postfix邮件服务器学习笔记/3.png">
+<meta property="og:image" content="https://github.com/2018/08/01/Postfix邮件服务器学习笔记/1.png">
+<meta property="og:image" content="https://github.com/2018/08/01/Postfix邮件服务器学习笔记/2.png">
+<meta property="og:updated_time" content="2019-01-23T15:49:40.897Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Postfix邮件服务器学习笔记">
-<meta name="twitter:description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+<meta name="twitter:description" content="邮件服务概述 常见邮件服务或协议 Sendmail服务 Postfix服务器搭建">
+<meta name="twitter:image" content="https://github.com/2018/08/01/Postfix邮件服务器学习笔记/3.png">
 
 
 
@@ -226,7 +231,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">114</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">117</span></a>
   </li>
         
         
@@ -234,7 +239,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">75</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">76</span></a>
   </li>
         
         
@@ -329,7 +334,7 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="tdLaogu">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="image" content="/images/head.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -383,7 +388,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2018-09-04 18:51:10" itemprop="dateModified" datetime="2018-09-04T18:51:10+08:00">2018-09-04</time>
+                <time title="修改时间：2019-01-23 23:49:40" itemprop="dateModified" datetime="2019-01-23T23:49:40+08:00">2019-01-23</time>
               
             
           </span>
@@ -416,7 +421,117 @@
       
 
       
-        
+        <ul>
+<li><a href="#">邮件服务概述</a></li>
+<li><a href="#">常见邮件服务或协议</a></li>
+<li><a href="#">Sendmail服务</a></li>
+<li><a href="#">Postfix服务器搭建</a></li>
+<li></li>
+</ul>
+<a id="more"></a>
+<h1 id="邮件服务概述"><a href="#邮件服务概述" class="headerlink" title="邮件服务概述"></a>邮件服务概述</h1><h2 id="Mail与DNS的相关性"><a href="#Mail与DNS的相关性" class="headerlink" title="Mail与DNS的相关性"></a>Mail与DNS的相关性</h2><p>mail server需要有一个合法的域名存在于DNS服务器上（不是一定要自己架设DNS服务器），可以找ISP或DNS服务商等注册。</p>
+<p>只要有主机名称对应到IP ，即是有A ( Address )这个DNS的标志后，那么就可以架设mail server了。</p>
+<p>MX（Mail Exchanger）这个DNS设定中的标志，主要就是要给mail server用的，可以让Internet上面的信件马上找寻到Mail主机的位置，并且MX后面可以接数字，一个domain或者是一个主机可以有多个MX标志。当主要的mail server挂点时，由于有MX标号，信件不会直接退回，而是跑到下一个MX设定的主机去，并且暂存在该处，等到主要的mail server起来之后，这个MX设定的主机就会将信件传送到目的地。当有了MX标志之后，要传送mail的时候，可以直接依据DNS的MX标志直接将信件传送到该设定的MX邮件主机，而不需要去寻问到底邮件要寄到哪里去，实现<strong>邮件路由</strong>。</p>
+<h2 id="邮件传送流程"><a href="#邮件传送流程" class="headerlink" title="邮件传送流程"></a>邮件传送流程</h2><p>MUA（Mail User Agent）：邮件用户代理，即邮件客户端，用于收发邮件</p>
+<p>MTA（Mail Transfer Agent）：邮件传送代理，即邮件服务，具有收受邮件和转递邮件的功能</p>
+<p>MDA（Mail Delivery Agent）：邮件递送代理，是MTA下的一个程序。用于分析MTA收到的新建表头或内容等资料，决定这封邮件的去向，即MTA的转递功能是由MDA完成的。且MDA能过滤垃圾邮件、自动回复</p>
+<p>Mailbox：邮件信箱，即某个用户专用的邮件存放点，Linux默认的信箱目录为<code>/var/spool/mail</code></p>
+<img src="/2018/08/01/Postfix邮件服务器学习笔记/3.png">
+<p>step0：获取本地MTA的使用权限，即向MTA注册邮箱账号密码</p>
+<p>step1：编写邮件，传送到MTA。邮件包含：标头（收寄件人邮箱，标题）、内容</p>
+<p>step2.1：若该邮件的目的是本地端MTA账号，会通过MDA发往本地的mailbox</p>
+<p>step2.2：若该邮件的目的是远端MTA，则开始转递，向下一跳MTA的25端口发送</p>
+<p>step3：对方MTA接收邮件，等待远端用户读取</p>
+<p>MRA（Mail Retrieval Agent）：邮件恢复代理。当用户端收受信件时，使用的是MRA的POP3, IMAP等通讯协定，并非MTA的SMTP。</p>
+<h1 id="常见邮件服务或协议"><a href="#常见邮件服务或协议" class="headerlink" title="常见邮件服务或协议"></a>常见邮件服务或协议</h1><h2 id="SMTP"><a href="#SMTP" class="headerlink" title="SMTP"></a>SMTP</h2><p>SMTP（Send Mail Transfer Protocol）：是一种<strong>发送邮件</strong>的协议，使用TCP的25端口。在建立一个TCP连接后，在这个连接上进行控制、应答与数据发送。客户端以文本发送请求，服务器端回复3个数字的应答。</p>
+<p>客户端常见指令</p>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HELO \<domain\></domain\></td>
+<td>开始通信</td>
+</tr>
+<tr>
+<td>EHLO \<domain\></domain\></td>
+<td>开始通信（扩展HELO）</td>
+</tr>
+<tr>
+<td>MAIL FROM: \<reverse-path\></reverse-path\></td>
+<td>发送人</td>
+</tr>
+<tr>
+<td>RCPT TO: \<forward-path\></forward-path\></td>
+<td>接收人</td>
+</tr>
+<tr>
+<td>DATA</td>
+<td>发送电子邮件的正文</td>
+</tr>
+<tr>
+<td>RSET</td>
+<td>初始化</td>
+</tr>
+<tr>
+<td>VERY \<string\></string\></td>
+<td>确认用户名</td>
+</tr>
+<tr>
+<td>EXPN \<string\></string\></td>
+<td>将邮件组扩展为邮件地址列表</td>
+</tr>
+<tr>
+<td>NOOP</td>
+<td>请求应答</td>
+</tr>
+<tr>
+<td>QUIT</td>
+<td>关闭</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>每个指令和应答最后必须追加换行指令CR、LF</strong></p>
+</blockquote>
+<img src="/2018/08/01/Postfix邮件服务器学习笔记/1.png">
+<p>由于SMTP不具备验证发送者的功能，因此无法避免垃圾邮件，但也可通过POP before SMTP或SMTP认证对发送者认证。并且，<strong>邮件收发双方必须同时在线，否则邮件会发送失败。</strong></p>
+<h3 id="使用SMTP协议发送邮件"><a href="#使用SMTP协议发送邮件" class="headerlink" title="使用SMTP协议发送邮件"></a>使用SMTP协议发送邮件</h3><p>首先检查本机的25号端口是否开启。在root用户上向本地用户tom发送邮件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">[root@s1 ~]# telnet 127.0.0.1 25        # 使用telnet连接本地25端口</span><br><span class="line">Trying 127.0.0.1...</span><br><span class="line">Connected to 127.0.0.1.</span><br><span class="line">Escape character is &apos;^]&apos;.</span><br><span class="line">220 s1.localdomain ESMTP Postfix</span><br><span class="line">helo s1            # 开始通信，跟上主机名</span><br><span class="line">250 s1.localdomain</span><br><span class="line">mail from:root     # 发送方</span><br><span class="line">250 2.1.0 Ok</span><br><span class="line">rcpt to:tom        # 接收方</span><br><span class="line">250 2.1.5 Ok</span><br><span class="line">data               # 开始正文</span><br><span class="line">354 End data with &lt;CR&gt;&lt;LF&gt;.&lt;CR&gt;&lt;LF&gt;</span><br><span class="line">hello</span><br><span class="line">hello</span><br><span class="line">hello</span><br><span class="line">.             # 单独换一行，并打.  ，再换行结束正文</span><br><span class="line">250 2.0.0 Ok: queued as E4B5D20E4560</span><br><span class="line">quit          # 退出</span><br><span class="line">221 2.0.0 Bye</span><br><span class="line">Connection closed by foreign host.</span><br></pre></td></tr></table></figure>
+<p>切换到tom用户</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[tom@s1 ~]$ mail</span><br><span class="line">Heirloom Mail version 12.5 7/5/10.  Type ? for help.</span><br><span class="line">&quot;/var/spool/mail/tom&quot;: 1 message 1 new</span><br><span class="line">&gt;N  1 root@s1.localdomain   Thu Jan 24 05:18  15/432   </span><br><span class="line">&amp; 1             # 查看第一封邮件</span><br><span class="line">Message  1:</span><br><span class="line">From root@s1.localdomain  Thu Jan 24 05:18:01 2019</span><br><span class="line">Return-Path: &lt;root@s1.localdomain&gt;</span><br><span class="line">X-Original-To: tom</span><br><span class="line">Delivered-To: tom@s1.localdomain</span><br><span class="line">Date: Thu, 24 Jan 2019 05:17:05 +0800 (CST)</span><br><span class="line">From: root@s1.localdomain</span><br><span class="line">Status: R</span><br><span class="line"></span><br><span class="line">hello</span><br><span class="line">hello</span><br><span class="line">hello</span><br></pre></td></tr></table></figure>
+<h2 id="POP"><a href="#POP" class="headerlink" title="POP"></a>POP</h2><p>为了解决SMTP的弊端，引入了POP（Post Office Protocol）协议，这是一种用于<strong>接收邮件</strong>的协议，TCP端口110，发送端的邮件根据SMTP协议被转发到一直处于插电状态的POP服务器，客户端再根据POP协议从POP服务器接收对方发来的邮件，该过程中支持身份验证，邮件客户端会从邮件服务器上获取所有发给自己的新邮件，然后关闭连接，在关闭连接后，邮件服务器会删除所有被标记为已接收的邮件。当前POP的版本为3，写作POP3。</p>
+<img src="/2018/08/01/Postfix邮件服务器学习笔记/2.png">
+<p>客户端的应答只有两种：正常的”+OK”，错误的”-ERR”。</p>
+<p>POP3的收信方式：</p>
+<ol>
+<li>MUA 透过POP3连接到MRA 的110端口， 并且输入帐号与密码来取得正确的认证与授权</li>
+<li>MRA 确认该使用者帐号/密码没有问题后，会前往该使用者的Mailbox (<code>/var/spool/mail/使用者帐号</code>) 取得使用者的信件并传送给使用者的MUA上</li>
+<li>当所有的信件传送完毕后，使用者的mailbox内的资料将会被删除</li>
+</ol>
+<p>POP3与SSL结合称为POP3S</p>
+<h2 id="IMAP"><a href="#IMAP" class="headerlink" title="IMAP"></a>IMAP</h2><p>IMAP（Internet Message Access Protocol）因特网消息访问协议，与POP类似，是接收邮件的协议。在POP中，邮件有客户端进行管理，IMAP中邮件由服务器进行管理。不必从邮件服务器上下载所有邮件也可以阅读，并且会对已读和未读进行分类管理。当前版本为4，写作IMAP4。</p>
+<p>可以将mailbox的资料转存到主机上的家目录，不但可以建立邮件档案，也可以针对信件分类管理。</p>
+<h1 id="Sendmail服务"><a href="#Sendmail服务" class="headerlink" title="Sendmail服务"></a>Sendmail服务</h1><p>需要安装<code>sendmail</code>和<code>sendmaul-cf</code>，还要<code>m4</code>用于转换sendmail配置文件。安装后启动sendmail服务，并查看端口25。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># systemctl start sendmail.service</span><br><span class="line"># ss -anpt | grep 25</span><br><span class="line">LISTEN     0      10     127.0.0.1:25                       *:*                   users:((&quot;sendmail&quot;,pid=1851,fd=4))</span><br></pre></td></tr></table></figure>
+<p>sendmail的配置文件<code>/etc/mail/sendmail.mc</code>。其中以<code>dnl</code>开头的行为注释。</p>
+<p>将配置文件的<code>DAEMON_OPTIONS(Port=smtp,Addr=127.0.0.1, Name=MTA&#39;)dnl</code>注释掉。</p>
+<p>使用<code>m4</code>命令将<code>sendmail.mc</code>转换为sendmail真正的配置文件<code>sendmail.cf</code>，然后重启sendmail服务。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">m4 /etc/mail/sendmail.mc &gt; /etc/mail/sendmail.cf</span><br></pre></td></tr></table></figure>
+<h1 id="Postfix服务器搭建"><a href="#Postfix服务器搭建" class="headerlink" title="Postfix服务器搭建"></a>Postfix服务器搭建</h1><p>直接yum安装postfix。若安装了postfix，就要停止sendmail的所有相关服务。</p>
+<p>postfix服务的配置文件<code>/etc/postfix/main.cf</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">inet_interfaces = localhost    # 接收本地的请求。</span><br><span class="line"># all为所有请求，localhost-only为仅接收本地请求</span><br><span class="line">myhostname = host.domain.tld   # 系统主机名</span><br><span class="line">mydomain = domain.tld          # 系统域名</span><br><span class="line">myorigin = $mydomain           # 将@后的部分设为域名（非系统域名）</span><br><span class="line">mydestination = $myhostname    # 指定发给本地邮件的域名</span><br><span class="line">relayhost = $mydomain          # 中继服务器域名</span><br></pre></td></tr></table></figure>
+<p>可以直接使用命令<code>postconf -e</code>修改配置项。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">postconf -e &quot;inet_interfaces=all&quot;</span><br><span class="line">postconf -e &quot;myhostname=s1.example.com&quot;</span><br><span class="line">postconf -e &quot;mydomain=example.com&quot;</span><br><span class="line">postconf -e &quot;myorigin=example.com&quot;</span><br><span class="line">postconf -e &quot;inet_protocols=ipv4&quot;</span><br></pre></td></tr></table></figure>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
+<li>鸟哥的Linux私房菜</li>
+<li>图解TCP/IP</li>
+</ul>
+
       
     </div>
 
@@ -437,6 +552,16 @@
     
 
     <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Postfix/" rel="tag"># Postfix</a>
+          
+            <a href="/tags/邮件服务/" rel="tag"># 邮件服务</a>
+          
+            <a href="/tags/sendmail/" rel="tag"># sendmail</a>
+          
+        </div>
       
 
       
@@ -508,10 +633,23 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.png"
+                alt="tdLaogu" />
             
               <p class="site-author-name" itemprop="name">tdLaogu</p>
               <p class="site-description motion-element" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</p>
@@ -524,7 +662,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">75</span>
+                    <span class="site-state-item-count">76</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -767,7 +905,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">114</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">117</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -806,11 +950,15 @@
               <ul class="links-of-blogroll-list">
                 
                   <li class="links-of-blogroll-item">
-                    <a href="http://geekchen.top/" title="SuperChen" target="_blank">SuperChen</a>
+                    <a href="https://www.geekchen.me/" title="SuperChen" target="_blank">SuperChen</a>
                   </li>
                 
                   <li class="links-of-blogroll-item">
-                    <a href="http://geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                    <a href="https://note.geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://github.com/serchaofan" title="我的Github" target="_blank">我的Github</a>
                   </li>
                 
               </ul>
@@ -825,6 +973,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#邮件服务概述"><span class="nav-number">1.</span> <span class="nav-text">邮件服务概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Mail与DNS的相关性"><span class="nav-number">1.1.</span> <span class="nav-text">Mail与DNS的相关性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#邮件传送流程"><span class="nav-number">1.2.</span> <span class="nav-text">邮件传送流程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常见邮件服务或协议"><span class="nav-number">2.</span> <span class="nav-text">常见邮件服务或协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SMTP"><span class="nav-number">2.1.</span> <span class="nav-text">SMTP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#使用SMTP协议发送邮件"><span class="nav-number">2.1.1.</span> <span class="nav-text">使用SMTP协议发送邮件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#POP"><span class="nav-number">2.2.</span> <span class="nav-text">POP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IMAP"><span class="nav-number">2.3.</span> <span class="nav-text">IMAP</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Sendmail服务"><span class="nav-number">3.</span> <span class="nav-text">Sendmail服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Postfix服务器搭建"><span class="nav-number">4.</span> <span class="nav-text">Postfix服务器搭建</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">5.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
