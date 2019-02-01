@@ -116,7 +116,7 @@
 <meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/3.png">
 <meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/4.png">
 <meta property="og:image" content="https://github.com/2018/10/12/重学Docker笔记/5.png">
-<meta property="og:updated_time" content="2019-01-13T10:28:53.735Z">
+<meta property="og:updated_time" content="2019-01-31T06:46:04.314Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="重学Docker笔记">
 <meta name="twitter:description" content="重新学习Docker整理，docker版本18.06  Docker安装注意事项 Docker基础命令集 Docker核心原理 Docker镜像管理 Dockerfile Docker监控与安全">
@@ -234,7 +234,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">117</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">120</span></a>
   </li>
         
         
@@ -242,7 +242,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">76</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">77</span></a>
   </li>
         
         
@@ -391,7 +391,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-01-13 18:28:53" itemprop="dateModified" datetime="2019-01-13T18:28:53+08:00">2019-01-13</time>
+                <time title="修改时间：2019-01-31 14:46:04" itemprop="dateModified" datetime="2019-01-31T14:46:04+08:00">2019-01-31</time>
               
             
           </span>
@@ -501,10 +501,7 @@
 <li><code>docker history</code>：显示一个镜像的构建历史信息</li>
 <li><code>docker logs</code>：获取一个容器的日志</li>
 </ul>
-<p>  config      Manage Docker configs<br>  container   Manage containers<br>  image       Manage images<br>  node        Manage Swarm nodes<br>  plugin      Manage plugins<br>  secret      Manage Docker secrets<br>  service     Manage services<br>  stack       Manage Docker stacks<br>  swarm       Manage Swarm<br>  system      Manage Docker<br>  trust       Manage trust on Docker images<br>  volume      Manage volumes</p>
-<p>Commands:<br>  cp          Copy files/folders between a container and the local filesystem</p>
-<p>  deploy      Deploy a new stack or update an existing stack<br>  diff        Inspect changes to files or directories on a container’s filesystem<br>  export      Export a container’s filesystem as a tar archive<br>  import      Import the contents from a tarball to create a filesystem image<br>  inspect     Return low-level information on Docker objects<br>  load        Load an image from a tar archive or STDIN<br>  login       Log in to a Docker registry<br>  logout      Log out from a Docker registry<br>  logs        Fetch the logs of a container<br>  port        List port mappings or a specific mapping for the container<br>  ps          List containers<br>  pull        Pull an image or a repository from a registry<br>  push        Push an image or a repository to a registry</p>
-<p>  restart     Restart one or more containers<br>  rm          Remove one or more containers<br>  rmi         Remove one or more images<br>  run         Run a command in a new container<br>  save        Save one or more images to a tar archive (streamed to STDOUT by default)<br>  search      Search the Docker Hub for images<br>  stats       Display a live stream of container(s) resource usage statistics<br>  stop        Stop one or more running containers<br>  tag         Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE<br>  top         Display the running processes of a container<br>  update      Update configuration of one or more containers<br>  wait        Block until one or more containers stop, then print their exit codes</p>
+<p>常用命令调用过程：</p>
 <img src="/2018/10/12/重学Docker笔记/0.png">
 <h1 id="Docker核心原理"><a href="#Docker核心原理" class="headerlink" title="Docker核心原理"></a>Docker核心原理</h1><h2 id="namespace"><a href="#namespace" class="headerlink" title="namespace"></a>namespace</h2><p><strong>Linux内核虚拟化容器技术（LXC Kernel Namespace）</strong>，将某个特定的全局系统资源通过抽象方法使得namespace中的进程看起来拥有自己的隔离的全局系统资源实例。LXC提供以下六种隔离的系统调用。</p>
 <table>
@@ -612,8 +609,32 @@
 <ul>
 <li>docker daemon是docker的核心后台进程，响应client的请求，然后调度给容器操作。</li>
 <li>docker client向daemon发送请求，可以是命令<code>docker</code>，也可以是使用了docker API的应用。</li>
+<li>image management：docker通过distribution、registry、layer、image、reference等模块实现docker镜像管理。<ul>
+<li>distribution：与docker registry交互，上传下载镜像及存储registry的元数据</li>
+<li>registry：与docker registry有关的身份验证、镜像查找、镜像验证等操作</li>
+<li>image：与镜像元数据相关的存储、查找、镜像层索引、镜像tar包导入导出的交互操作</li>
+<li>reference：存储本地所有镜像的repository和tag名，维护与镜像ID间的映射关系</li>
+<li>layer：与镜像层、容器层元数据有关的增删改查，将镜像层操作映射到实际存储镜像层文件系统的graphdriver模块</li>
 </ul>
-<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+</li>
+<li>docker daemon包含的三个主要模块：execdriver（容器执行驱动）、volumedriver（volume存储驱动）、graphdriver（镜像存储驱动）<ul>
+<li>execdriver：是对namespaces、cgroups、selinux等系统操作的二次封装，比LXC功能更全面。默认实现是官方的libcontainer库</li>
+<li>volumedriver：是volume存储操作的执行者，负责volume增删改查。默认实现是local，默认将文件存放在docker根目录下volume目录</li>
+<li>graphdriver：是所有与容器镜像相关操作的执行者，会在docker工作目录下维护一组与镜像层对应的目录，存放镜像层关系和元数据。主要支持的graphdriver：aufs、btrfs、zfs、devicemapper、overlay、vfs</li>
+</ul>
+</li>
+<li>libnetwork：抽象出了容器网络模型（Container Network Model），提供统一接口。抽象除了sandbox、endpoint、network对象，由具体网络驱动操作对象，通过网络控制器的统一接口供调用者管理网络。主要实现：创建网络、创建network namespace、虚拟网卡和所有网络相关配置等</li>
+</ul>
+<h3 id="镜像管理"><a href="#镜像管理" class="headerlink" title="镜像管理"></a>镜像管理</h3><p>Docker镜像的文件内容以及一些运行Docker容器的配置文件组成了Docker容器的静态文件系统运行环境——rootfs。</p>
+<p>rootfs是Docker容器在启动时内部进程可见的文件系统，即Docker容器的根目录。docker daemon为Docker容器挂载rootfs时，先将rootfs设为只读（read-only），在挂载完毕后，利用联合挂载（union mount）在rootfs上再挂载一个读写层，使得读写层位于Docker容器文件系统的最顶层，下面是多个只读层。</p>
+<p>Docker镜像的特点：</p>
+<ul>
+<li>分层</li>
+<li>写时复制（copy-on-write）：在多个容器间共享镜像，只有Docker容器运行时文件系统变化时，才会把变化的文件写到可读写层。写时复制减少了镜像对磁盘空间的占用和容器启动时间。</li>
+<li>内容寻址存储（content-addressable storage）：该机制根据文件内容索引镜像和镜像层。会对镜像层生成内容哈希值，作为镜像层唯一标识。提高了镜像安全性，并能检测数据完整性。</li>
+<li>联合挂载：可以在一个挂载点同时挂载多个文件系统，将挂载点的原目录与被挂载内容进行整合。实现联合挂载的文件系统称为联合文件系统（union filesystem）。</li>
+</ul>
+<h3 id="存储管理"><a href="#存储管理" class="headerlink" title="存储管理"></a>存储管理</h3><h3 id="数据卷"><a href="#数据卷" class="headerlink" title="数据卷"></a>数据卷</h3><h3 id="网络管理"><a href="#网络管理" class="headerlink" title="网络管理"></a>网络管理</h3><h3 id="容器安全"><a href="#容器安全" class="headerlink" title="容器安全"></a>容器安全</h3><h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
 <li>《Docker开发指南》</li>
 <li>《Docker容器与容器云》</li>
 <li><a href="https://docs.docker.com/" target="_blank" rel="noopener">Docker官方文档 版本18.03</a></li>
@@ -747,7 +768,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-count">77</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -996,7 +1017,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">117</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">120</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -1068,7 +1095,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker安装注意事项"><span class="nav-number">1.</span> <span class="nav-text">Docker安装注意事项</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker基础命令集"><span class="nav-number">2.</span> <span class="nav-text">Docker基础命令集</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker核心原理"><span class="nav-number">3.</span> <span class="nav-text">Docker核心原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#namespace"><span class="nav-number">3.1.</span> <span class="nav-text">namespace</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cgroups"><span class="nav-number">3.2.</span> <span class="nav-text">cgroups</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#层级规则"><span class="nav-number">3.2.1.</span> <span class="nav-text">层级规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#子系统"><span class="nav-number">3.2.2.</span> <span class="nav-text">子系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cgroups实现原理"><span class="nav-number">3.2.3.</span> <span class="nav-text">cgroups实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroups如何判断资源超限并做出措施"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">cgroups如何判断资源超限并做出措施</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroup与任务之间的关联关系"><span class="nav-number">3.2.3.2.</span> <span class="nav-text">cgroup与任务之间的关联关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用注意"><span class="nav-number">3.2.3.3.</span> <span class="nav-text">使用注意</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker架构"><span class="nav-number">3.3.</span> <span class="nav-text">Docker架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker安装注意事项"><span class="nav-number">1.</span> <span class="nav-text">Docker安装注意事项</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker基础命令集"><span class="nav-number">2.</span> <span class="nav-text">Docker基础命令集</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Docker核心原理"><span class="nav-number">3.</span> <span class="nav-text">Docker核心原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#namespace"><span class="nav-number">3.1.</span> <span class="nav-text">namespace</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cgroups"><span class="nav-number">3.2.</span> <span class="nav-text">cgroups</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#层级规则"><span class="nav-number">3.2.1.</span> <span class="nav-text">层级规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#子系统"><span class="nav-number">3.2.2.</span> <span class="nav-text">子系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cgroups实现原理"><span class="nav-number">3.2.3.</span> <span class="nav-text">cgroups实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroups如何判断资源超限并做出措施"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">cgroups如何判断资源超限并做出措施</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroup与任务之间的关联关系"><span class="nav-number">3.2.3.2.</span> <span class="nav-text">cgroup与任务之间的关联关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用注意"><span class="nav-number">3.2.3.3.</span> <span class="nav-text">使用注意</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker架构"><span class="nav-number">3.3.</span> <span class="nav-text">Docker架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#镜像管理"><span class="nav-number">3.3.1.</span> <span class="nav-text">镜像管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#存储管理"><span class="nav-number">3.3.2.</span> <span class="nav-text">存储管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#数据卷"><span class="nav-number">3.3.3.</span> <span class="nav-text">数据卷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#网络管理"><span class="nav-number">3.3.4.</span> <span class="nav-text">网络管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#容器安全"><span class="nav-number">3.3.5.</span> <span class="nav-text">容器安全</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考资料"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
             
 
           </div>

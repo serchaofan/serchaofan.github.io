@@ -103,7 +103,7 @@
 
 
   <meta name="description" content="本篇包含以下知识点：  Nginx介绍 Nginx安装 Nginx配置文件解析 访问控制、身份认证与SSL Nginx日志 Nginx缓存">
-<meta name="keywords" content="server,集群,代理,负载均衡,Nginx,LNMP,缓存">
+<meta name="keywords" content="server,集群,代理,负载均衡,缓存,Nginx,LNMP">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Nginx笔记-1">
 <meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/05/02/Nginx笔记/index.html">
@@ -118,7 +118,7 @@
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/7.png">
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/3.png">
 <meta property="og:image" content="https://github.com/2018/05/02/Nginx笔记/4.png">
-<meta property="og:updated_time" content="2019-01-20T10:10:19.044Z">
+<meta property="og:updated_time" content="2019-01-29T04:32:43.194Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Nginx笔记-1">
 <meta name="twitter:description" content="本篇包含以下知识点：  Nginx介绍 Nginx安装 Nginx配置文件解析 访问控制、身份认证与SSL Nginx日志 Nginx缓存">
@@ -236,7 +236,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">117</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">120</span></a>
   </li>
         
         
@@ -244,7 +244,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">76</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">77</span></a>
   </li>
         
         
@@ -393,7 +393,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-01-20 18:10:19" itemprop="dateModified" datetime="2019-01-20T18:10:19+08:00">2019-01-20</time>
+                <time title="修改时间：2019-01-29 12:32:43" itemprop="dateModified" datetime="2019-01-29T12:32:43+08:00">2019-01-29</time>
               
             
           </span>
@@ -441,6 +441,7 @@
 <li><a href="#Nginx反向代理">Nginx反向代理</a></li>
 <li><a href="#Nginx邮件服务">Nginx邮件服务</a></li>
 <li><a href="#重写与重定向">重写与重定向</a></li>
+<li><a href="#Nginx与PHP">Nginx与PHP</a></li>
 <li><a href="#防盗链">防盗链</a></li>
 <li><a href="#Nginx常见模块">Nginx常见模块</a></li>
 <li><a href="">Nginx配置简单优化</a></li>
@@ -681,6 +682,78 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line">ACCESS_LOG=/var/log/nginx/access.log</span><br><span class="line">NEW_ACCESS_LOG=/var/log/nginx/access-$(date -d yesterday +%Y%m%d).log</span><br><span class="line">[ -f $ACCESS_LOG ] || exit 1</span><br><span class="line">  mv $ACCESS_LOG $NEW_ACCESS_LOG</span><br><span class="line">  /sbin/nginx -s reopen</span><br></pre></td></tr></table></figure>
 <p>添加定时任务</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 0 * * * /bin/sh XXX.sh &amp;&gt; /dev/null   #每天晚上12点切割日志</span><br></pre></td></tr></table></figure>
+<h1 id="Nginx的其他常见HTTP功能"><a href="#Nginx的其他常见HTTP功能" class="headerlink" title="Nginx的其他常见HTTP功能"></a>Nginx的其他常见HTTP功能</h1><h2 id="文件查找规则"><a href="#文件查找规则" class="headerlink" title="文件查找规则"></a>文件查找规则</h2><p>Nginx 为了响应一个请求，它将请求传递给一个内容处理程序，由配置文件中的<code>location</code>指令决定处理。</p>
+<p><strong>无条件内容处理程序</strong>首先被尝试 ：<code>perl</code> 、<code>proxy_pass</code>、<code>flv</code>、<code>mp4</code>等。如果这些处理程序都不匹配，那么 Nginx 会将该请求按顺序传递给下列操作之一，顺序依次是 ：<code>random index</code> 、 <code>index</code> 、 <code>autoindex</code> 、<code>gzip_static</code>、 <code>static</code> 。 </p>
+<p><strong>处理以斜线结束请求的是 index 处理程序</strong>。如果 gzip 没有被激活，那么 static 模块会处理该请求。</p>
+<p>这些模块如何在文件系统上找到适当的文件或者目录则由某些指令组合来决定。<strong><code>root</code> 指令最好定义在一个默认的 <code>server</code> 指令内 ， 或者至少在一个特定的 <code>location</code> 指令之外定义，以便它的有效界限为整个 server。</strong></p>
+<p>文件路径指令：</p>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>root</td>
+<td>设置文档根目录，URI后设置，可在文件系统中找到具体文件</td>
+</tr>
+<tr>
+<td>try_files</td>
+<td>测试文件的存在性，若前面的文件没找到，则最后的条目作为备用，需要确保最后一个路径或location存在</td>
+</tr>
+</tbody>
+</table>
+<p>例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">location / &#123;</span><br><span class="line">  try_files $uri $uri/ /40x.html;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="域名解析"><a href="#域名解析" class="headerlink" title="域名解析"></a>域名解析</h2><table>
+<thead>
+<tr>
+<th>指令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>resolver</td>
+<td>设置一个或多个域名解析服务器。可选valid参数，会覆盖域名记录的TTL</td>
+</tr>
+<tr>
+<td>resolver_timeout</td>
+<td>当解析服务器不可达时的等待时间，尽量设置的小。目前只适用于商业订阅</td>
+</tr>
+</tbody>
+</table>
+<p>该指令需要配置在server块中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">  resolver 8.8.8.8 valid=300s;</span><br><span class="line">  resolver_timeout 2s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="客户端交互"><a href="#客户端交互" class="headerlink" title="客户端交互"></a>客户端交互</h2><p>Nginx 与客户端交互的方式有多种，这些方式可以从连接本身 （IP 地址、超时、存活时间等）到内容协商头的属性。</p>
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>default_type</td>
+<td>设置响应的默认MIME类型。只有文件的MIME类型不匹配任何types，才会用此项</td>
+</tr>
+<tr>
+<td>types</td>
+<td>设置MIME类型到文件扩展名的映射，一般不用设置。只需要载入<code>conf/mime.types</code>即可</td>
+</tr>
+<tr>
+<td>ignore_invalid_headers</td>
+<td>禁止忽略无效名字的头。一个有效的名字由ASCII字母、数字、连字符号组成</td>
+</tr>
+<tr>
+<td>recursie_error_pages</td>
+<td>启用error_page实现多个重定向</td>
+</tr>
+</tbody>
+</table>
 <h1 id="Nginx缓存"><a href="#Nginx缓存" class="headerlink" title="Nginx缓存"></a>Nginx缓存</h1><p>Nginx的模块<code>ngx_http_proxy_module</code>自带缓存功能，Nginx可实现几种缓存：网页内容缓存，日志缓存，打开文件缓存，fastcgi缓存。Nginx的缓存功能主要由<code>proxy_chache</code>相关的命令集和<code>fastcgi_cache</code>相关命令集构成，前者用于反向代理，后者用于对FastCGI缓存。</p>
 <p>需要下载第三方的Nginx模块<code>ngx_cache_purge</code>，用于清除指定的URL缓存，<a href="http://labs.frickle.com/nginx_ngx_cache_purge/" target="_blank" rel="noopener">下载地址</a></p>
 <p>下载后解压，然后重新编译Nginx，通过<code>nginx -V</code>查看编译选项，复制过去然后加上解压后的模块目录（不是里面的.c文件）</p>
@@ -897,7 +970,7 @@
 <li><p><strong><code>proxy_redirect</code></strong>：用于修改后端服务器返回的响应头中的Location和Refresh</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_redirect  off;</span><br></pre></td></tr></table></figure>
 </li>
-<li><p><strong><code>proxy_buffer_size</code></strong>：用于读取从代理服务器接收的响应的第一部分的缓冲区的大小，这部分通常包含一个小的响应头。默认情况下，缓冲区大小等于一个内存页面，默认为4K或8K。</p>
+<li><p><strong><code>proxy_buffer_size</code></strong>：用于读取从代理服务器接收的响应的第一部分的<strong>缓冲区的大小</strong>，这部分通常包含一个小的响应头。默认情况下，缓冲区大小等于一个内存页面，默认为4K或8K。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">proxy_buffer_size  4k;</span><br></pre></td></tr></table></figure>
 </li>
 <li><p><strong><code>proxy_buffers</code></strong>：用于从代理服务器读取响应的缓冲区的数量(number)和大小(size)，用于单个连接。默认情况下，缓冲区大小等于一个内存页面。默认为4K或8K。语法：<code>proxy_buffers number size;</code></p>
@@ -995,6 +1068,54 @@
 </ul>
 </li>
 </ul>
+<h1 id="Nginx与PHP"><a href="#Nginx与PHP" class="headerlink" title="Nginx与PHP"></a>Nginx与PHP</h1><p>Nginx自带的FastCGI模块，不仅能接受php-fpm，还能与任何兼容FastCGI的服务器通信，该模块默认启用。</p>
+<p>常用指令：</p>
+<table>
+<thead>
+<tr>
+<th>FastCGI指令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fastcgi_buffer_size</td>
+<td>来自FastCGI服务器响应头的第一部分设置缓冲大小</td>
+</tr>
+<tr>
+<td>fastcgi_buffers</td>
+<td>设置来自FastCGI服务器响应的缓冲数量和大小，用于单个连接</td>
+</tr>
+<tr>
+<td>fastcgi_cache</td>
+<td>定义一个共享的内存zone，用于缓存</td>
+</tr>
+<tr>
+<td>fastcgi_no_cache</td>
+<td>指定一个或多个字符串，Nginx不会将来自FastCGI服务器的响应保存在缓存中</td>
+</tr>
+<tr>
+<td>fastcgi_keep_conn</td>
+<td>服务器不立即关闭连接以保持到FastCGI服务器的连接</td>
+</tr>
+<tr>
+<td>fastcgi_pass</td>
+<td>指定FastCGI服务器如何传递请求，格式：<code>address:port</code></td>
+</tr>
+<tr>
+<td>fastcgi_cache_path</td>
+<td>该指令用于设置存储缓存响应的目录和存储活跃的 key 和响应元数据的共享内存 zone</td>
+</tr>
+<tr>
+<td>fastcgi_connect_timeout</td>
+<td>指定Nignx将等待它接受连接的最长时间</td>
+</tr>
+<tr>
+<td>fastcgi_hide_header</td>
+<td>指定不应该传递到客户端的头列表</td>
+</tr>
+</tbody>
+</table>
 <h1 id="Nginx常见模块"><a href="#Nginx常见模块" class="headerlink" title="Nginx常见模块"></a>Nginx常见模块</h1><h2 id="gzip压缩"><a href="#gzip压缩" class="headerlink" title="gzip压缩"></a>gzip压缩</h2><p>gzip模块默认启用。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">http &#123;</span><br><span class="line">  gzip on;</span><br><span class="line">  gzip_comp_level 2;    # 指定gzip压缩等级（1-9）</span><br><span class="line">  gzip_types text/plain text/css application/xml application/json;</span><br><span class="line">  #指定除了text/html，其他需要压缩的MIME类型</span><br><span class="line">  </span><br><span class="line">  gzip_min_length 1024;     </span><br><span class="line">  # 在启用压缩前先确定响应的长度，若高于此处设定的值，则启用压缩</span><br><span class="line">  gzip_buffers  40 4k;  # 用于压缩响应使用的缓存数量和大小</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="LNMP分布式集群方案"><a href="#LNMP分布式集群方案" class="headerlink" title="LNMP分布式集群方案"></a>LNMP分布式集群方案</h1><h2 id="搭建Nginx-PHP环境"><a href="#搭建Nginx-PHP环境" class="headerlink" title="搭建Nginx+PHP环境"></a>搭建Nginx+PHP环境</h2><p>编译安装PHP，php版本7.2.11。</p>
@@ -1078,11 +1199,11 @@
           
             <a href="/tags/负载均衡/" rel="tag"># 负载均衡</a>
           
+            <a href="/tags/缓存/" rel="tag"># 缓存</a>
+          
             <a href="/tags/Nginx/" rel="tag"># Nginx</a>
           
             <a href="/tags/LNMP/" rel="tag"># LNMP</a>
-          
-            <a href="/tags/缓存/" rel="tag"># 缓存</a>
           
         </div>
       
@@ -1185,7 +1306,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">76</span>
+                    <span class="site-state-item-count">77</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -1434,7 +1555,13 @@
                     
                       
                     
-                    <span class="site-state-item-count">117</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">120</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -1506,7 +1633,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx介绍"><span class="nav-number">1.</span> <span class="nav-text">Nginx介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx安装"><span class="nav-number">2.</span> <span class="nav-text">Nginx安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx配置文件解析"><span class="nav-number">3.</span> <span class="nav-text">Nginx配置文件解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#全局配置"><span class="nav-number">3.1.</span> <span class="nav-text">全局配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#main块"><span class="nav-number">3.1.1.</span> <span class="nav-text">main块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模块配置"><span class="nav-number">3.2.</span> <span class="nav-text">模块配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#events块"><span class="nav-number">3.2.1.</span> <span class="nav-text">events块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http块"><span class="nav-number">3.2.2.</span> <span class="nav-text">http块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#server块"><span class="nav-number">3.2.3.</span> <span class="nav-text">server块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#location块"><span class="nav-number">3.2.4.</span> <span class="nav-text">location块</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#访问控制、身份认证与SSL"><span class="nav-number">4.</span> <span class="nav-text">访问控制、身份认证与SSL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx日志"><span class="nav-number">5.</span> <span class="nav-text">Nginx日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志切割"><span class="nav-number">5.1.</span> <span class="nav-text">日志切割</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx缓存"><span class="nav-number">6.</span> <span class="nav-text">Nginx缓存</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx负载均衡"><span class="nav-number">7.</span> <span class="nav-text">Nginx负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#轮询"><span class="nav-number">7.1.</span> <span class="nav-text">轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#权重"><span class="nav-number">7.2.</span> <span class="nav-text">权重</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ip-hash"><span class="nav-number">7.3.</span> <span class="nav-text">ip_hash</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx反向代理"><span class="nav-number">8.</span> <span class="nav-text">Nginx反向代理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#非HTTP型上游服务器"><span class="nav-number">8.1.</span> <span class="nav-text">非HTTP型上游服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Memcached服务器"><span class="nav-number">8.1.1.</span> <span class="nav-text">Memcached服务器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FastCGI服务器"><span class="nav-number">8.1.2.</span> <span class="nav-text">FastCGI服务器</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx邮件服务"><span class="nav-number">9.</span> <span class="nav-text">Nginx邮件服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重写与重定向"><span class="nav-number">10.</span> <span class="nav-text">重写与重定向</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#重写"><span class="nav-number">10.1.</span> <span class="nav-text">重写</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx常见模块"><span class="nav-number">11.</span> <span class="nav-text">Nginx常见模块</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#gzip压缩"><span class="nav-number">11.1.</span> <span class="nav-text">gzip压缩</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LNMP分布式集群方案"><span class="nav-number">12.</span> <span class="nav-text">LNMP分布式集群方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#搭建Nginx-PHP环境"><span class="nav-number">12.1.</span> <span class="nav-text">搭建Nginx+PHP环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginx-Apache动静分离"><span class="nav-number">12.2.</span> <span class="nav-text">Nginx+Apache动静分离</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">13.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx介绍"><span class="nav-number">1.</span> <span class="nav-text">Nginx介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx安装"><span class="nav-number">2.</span> <span class="nav-text">Nginx安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx配置文件解析"><span class="nav-number">3.</span> <span class="nav-text">Nginx配置文件解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#全局配置"><span class="nav-number">3.1.</span> <span class="nav-text">全局配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#main块"><span class="nav-number">3.1.1.</span> <span class="nav-text">main块</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#模块配置"><span class="nav-number">3.2.</span> <span class="nav-text">模块配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#events块"><span class="nav-number">3.2.1.</span> <span class="nav-text">events块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http块"><span class="nav-number">3.2.2.</span> <span class="nav-text">http块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#server块"><span class="nav-number">3.2.3.</span> <span class="nav-text">server块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#location块"><span class="nav-number">3.2.4.</span> <span class="nav-text">location块</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#访问控制、身份认证与SSL"><span class="nav-number">4.</span> <span class="nav-text">访问控制、身份认证与SSL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx日志"><span class="nav-number">5.</span> <span class="nav-text">Nginx日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#日志切割"><span class="nav-number">5.1.</span> <span class="nav-text">日志切割</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx的其他常见HTTP功能"><span class="nav-number">6.</span> <span class="nav-text">Nginx的其他常见HTTP功能</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#文件查找规则"><span class="nav-number">6.1.</span> <span class="nav-text">文件查找规则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#域名解析"><span class="nav-number">6.2.</span> <span class="nav-text">域名解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#客户端交互"><span class="nav-number">6.3.</span> <span class="nav-text">客户端交互</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx缓存"><span class="nav-number">7.</span> <span class="nav-text">Nginx缓存</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx负载均衡"><span class="nav-number">8.</span> <span class="nav-text">Nginx负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#轮询"><span class="nav-number">8.1.</span> <span class="nav-text">轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#权重"><span class="nav-number">8.2.</span> <span class="nav-text">权重</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ip-hash"><span class="nav-number">8.3.</span> <span class="nav-text">ip_hash</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx反向代理"><span class="nav-number">9.</span> <span class="nav-text">Nginx反向代理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#非HTTP型上游服务器"><span class="nav-number">9.1.</span> <span class="nav-text">非HTTP型上游服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Memcached服务器"><span class="nav-number">9.1.1.</span> <span class="nav-text">Memcached服务器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FastCGI服务器"><span class="nav-number">9.1.2.</span> <span class="nav-text">FastCGI服务器</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx邮件服务"><span class="nav-number">10.</span> <span class="nav-text">Nginx邮件服务</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#重写与重定向"><span class="nav-number">11.</span> <span class="nav-text">重写与重定向</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#重写"><span class="nav-number">11.1.</span> <span class="nav-text">重写</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx与PHP"><span class="nav-number">12.</span> <span class="nav-text">Nginx与PHP</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Nginx常见模块"><span class="nav-number">13.</span> <span class="nav-text">Nginx常见模块</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#gzip压缩"><span class="nav-number">13.1.</span> <span class="nav-text">gzip压缩</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LNMP分布式集群方案"><span class="nav-number">14.</span> <span class="nav-text">LNMP分布式集群方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#搭建Nginx-PHP环境"><span class="nav-number">14.1.</span> <span class="nav-text">搭建Nginx+PHP环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Nginx-Apache动静分离"><span class="nav-number">14.2.</span> <span class="nav-text">Nginx+Apache动静分离</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">15.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
