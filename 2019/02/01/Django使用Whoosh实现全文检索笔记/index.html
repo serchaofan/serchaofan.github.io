@@ -115,7 +115,9 @@
 <meta property="og:image" content="https://github.com/2019/02/01/Django使用Whoosh实现全文检索笔记/3.png">
 <meta property="og:image" content="https://github.com/2019/02/01/Django使用Whoosh实现全文检索笔记/4.png">
 <meta property="og:image" content="https://github.com/2019/02/01/Django使用Whoosh实现全文检索笔记/5.png">
-<meta property="og:updated_time" content="2019-02-01T09:03:20.123Z">
+<meta property="og:image" content="https://github.com/2019/02/01/Django使用Whoosh实现全文检索笔记/6.png">
+<meta property="og:image" content="https://github.com/2019/02/01/Django使用Whoosh实现全文检索笔记/7.png">
+<meta property="og:updated_time" content="2019-02-01T15:39:41.015Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Django使用Whoosh实现全文检索笔记">
 <meta name="twitter:description" content="在Django编写博客时添加简单的全文搜索的功能。使用到了haystack、whoosh和jieba三个项目">
@@ -373,7 +375,7 @@
                 
               
 
-              <time title="创建时间：2019-02-01 15:33:18 / 修改时间：17:03:20" itemprop="dateCreated datePublished" datetime="2019-02-01T15:33:18+08:00">2019-02-01</time>
+              <time title="创建时间：2019-02-01 15:33:18 / 修改时间：23:39:41" itemprop="dateCreated datePublished" datetime="2019-02-01T15:33:18+08:00">2019-02-01</time>
             
 
             
@@ -422,7 +424,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install django-heystack whoosh jieba</span><br></pre></td></tr></table></figure>
 <p>这三个库的版本</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">django-haystack==2.8.1</span><br><span class="line">jieba==0.39</span><br><span class="line">Whoosh==2.7.4</span><br></pre></td></tr></table></figure>
-<p>然后在Django的项目settings.py中添加配置。首先将<code>&#39;haystack&#39;</code>添加到<code>INSTALLED_APPS</code>列表中</p>
+<h1 id="简单实现"><a href="#简单实现" class="headerlink" title="简单实现"></a>简单实现</h1><p>然后在Django的项目settings.py中添加配置。首先将<code>&#39;haystack&#39;</code>添加到<code>INSTALLED_APPS</code>列表中</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">INSTALLED_APPS = [</span><br><span class="line">    <span class="string">'django.contrib.admin'</span>,</span><br><span class="line">......</span><br><span class="line">    <span class="string">'blog'</span>,</span><br><span class="line">    <span class="string">'account'</span>,</span><br><span class="line">    <span class="string">'haystack'</span>,</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 <p>并添加一端配置</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用于haystack的连接</span></span><br><span class="line">HAYSTACK_CONNECTIONS = &#123;</span><br><span class="line">    <span class="string">'default'</span>: &#123;</span><br><span class="line">        <span class="string">'ENGINE'</span>: <span class="string">'haystack.backends.whoosh_cn_backend.WhooshEngine'</span>,</span><br><span class="line">        <span class="string">'PATH'</span>: os.path.join(os.path.dirname(__file__), <span class="string">'whoosh_index'</span>),</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># 注这里一定要将官方文档中的whoosh_backend改为whoosh_cn_backend</span></span><br><span class="line"><span class="comment"># 因为是需要使用whoosh_cn_backend中的配置。否则无法检索中文</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 用于自动生成索引</span></span><br><span class="line">HAYSTACK_SIGNAL_PROCESSOR = <span class="string">'haystack.signals.RealtimeSignalProcessor'</span></span><br></pre></td></tr></table></figure>
@@ -463,10 +465,21 @@
 <img src="/2019/02/01/Django使用Whoosh实现全文检索笔记/4.png">
 <p>检索成功，跳转到结果页面。再进行中文单词检索</p>
 <img src="/2019/02/01/Django使用Whoosh实现全文检索笔记/5.png">
+<h1 id="改进1"><a href="#改进1" class="headerlink" title="改进1"></a>改进1</h1><p>不需要mysearch.html，不用在应用的urls中配置，不用配置views的mysearch方法。</p>
+<blockquote>
+<p>注：使用的是MDUI前端UI</p>
+</blockquote>
+<p>直接在网页中的搜索框中建立表单</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"mdui-col-xs-3"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"mdui-textfield mdui-textfield-expandable mdui-float-right"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">"mdui-textfield-icon mdui-btn mdui-btn-icon"</span>&gt;</span><span class="tag">&lt;<span class="name">i</span> <span class="attr">class</span>=<span class="string">"mdui-icon material-icons"</span>&gt;</span>search<span class="tag">&lt;/<span class="name">i</span>&gt;</span><span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">form</span> <span class="attr">method</span>=<span class="string">"get"</span> <span class="attr">target</span>=<span class="string">"_self"</span> <span class="attr">action</span>=<span class="string">"/search"</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">input</span> <span class="attr">name</span>=<span class="string">"q"</span> <span class="attr">class</span>=<span class="string">"mdui-textfield-input"</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">placeholder</span>=<span class="string">"Search"</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">class</span>=<span class="string">"mdui-textfield-close mdui-btn mdui-btn-icon"</span>&gt;</span><span class="tag">&lt;<span class="name">i</span> <span class="attr">class</span>=<span class="string">"mdui-icon material-icons"</span>&gt;</span>close<span class="tag">&lt;/<span class="name">i</span>&gt;</span><span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<img src="/2019/02/01/Django使用Whoosh实现全文检索笔记/6.png">
+<p><strong>注：在简单实现中，搜索出的结果是无法进行超链接的。需要进行小的修改</strong></p>
+<p>对搜索结果界面进行美化，使用与首页一致的卡片</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;% block content %&#125;</span><br><span class="line">&#123;% if query %&#125;</span><br><span class="line">  &lt;div class=&quot;mdui-typo-headline-opacity&quot; style=&quot;margin-top: 20px;&quot;&gt;搜索结果：&lt;/div&gt;</span><br><span class="line">  &lt;ul class=&quot;mdui-list mdui-center&quot;&gt;</span><br><span class="line">  &#123;% for result in page.object_list %&#125;</span><br><span class="line">    &lt;li class=&quot;mdui-card mdui-ripple mdui-shadow-2&quot; style=&quot;margin-bottom: 5px&quot;&gt;</span><br><span class="line">      &lt;a href=&quot;/&#123;&#123; page.number &#125;&#125;/&#123;&#123; result.object.id &#125;&#125;&quot;&gt;</span><br><span class="line">        &lt;div class=&quot;mdui-card-primary&quot;&gt;</span><br><span class="line">          &lt;div class=&quot;mdui-card-primary-title&quot;&gt;&#123;&#123; result.object.title &#125;&#125;&lt;/div&gt;</span><br><span class="line">          &lt;div class=&quot;mdui-card-primary-subtitle&quot;&gt;&#123;&#123; result.object.author &#125;&#125;&lt;/div&gt;</span><br><span class="line">          &lt;div class=&quot;mdui-card-primary-subtitle&quot;&gt;&#123;&#123; result.object.publish &#125;&#125;&lt;/div&gt;</span><br><span class="line">        &lt;/div&gt;</span><br><span class="line">      &lt;/a&gt;</span><br><span class="line">    &lt;/li&gt;</span><br><span class="line">  &#123;% empty %&#125;</span><br><span class="line">  &lt;div class=&quot;mdui-typo-headline-opacity&quot;&gt;未找到&lt;/div&gt;</span><br><span class="line">  &#123;% endfor %&#125;</span><br><span class="line">  &lt;/ul&gt;</span><br><span class="line"># 下面的内容不改</span><br><span class="line">......</span><br><span class="line">&#123;% endblock content %&#125;</span><br></pre></td></tr></table></figure>
+<img src="/2019/02/01/Django使用Whoosh实现全文检索笔记/7.png">
 <blockquote>
 <p>参考文章：</p>
 <p><a href="https://www.jianshu.com/p/8ad470cfe7cc" target="_blank" rel="noopener">django-haystack(全文检索-jieba分词)</a></p>
-<p><a href="https://www.cnblogs.com/fuhuixiang/p/4488029.html" target="_blank" rel="noopener">Django–全文检索功能</a></p>
+<p><a href="https://www.cnblogs.com/fuhuixiang/p/4488029.html" target="_blank" rel="noopener">Django—全文检索功能</a></p>
 </blockquote>
 
       
@@ -568,8 +581,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -905,6 +927,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#简单实现"><span class="nav-number">1.</span> <span class="nav-text">简单实现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#改进1"><span class="nav-number">2.</span> <span class="nav-text">改进1</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       

@@ -573,6 +573,7 @@
 </li>
 </ul>
 <h3 id="目录与配置文件概述"><a href="#目录与配置文件概述" class="headerlink" title="目录与配置文件概述"></a>目录与配置文件概述</h3><p>在Nagios服务器端安装完后，<code>/usr/local/nagios</code>中有以下目录：<br><code>bin</code>，<code>etc</code>，<code>sbin</code>，<code>share</code>，<code>libexec</code>，<code>var</code>，<code>var/archives</code>，<code>var/rw</code>。<br>其中<code>libexec</code>是存放外部插件的。<code>share</code>是存放网页文件的。<code>var/archives</code>是存放归档日志的。<code>var/rw</code>是存放外部命令的。</p>
+<div class="table-container">
 <table>
 <thead>
 <tr>
@@ -631,6 +632,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <p>Nagios配置中涉及到的定义：（建议按以下顺序配置）</p>
 <ol>
 <li>主机、主机组、服务、服务组</li>
@@ -658,13 +660,13 @@
 <p><strong>注：如果要在命令中使用<code>!</code>，<code>\</code>都要使用反斜杠转义</strong></p>
 <p>Nagios可用的所有宏：</p>
 <ul>
-<li>主机宏<br><code>$HOSTNAME$</code>：主机名，取自主机定义中<code>host_name</code><br><code>$HOSTADDRESS$</code>：主机IP地址，取自主机定义中<code>address</code></li>
-<li>服务宏<br><code>$SERVICESTATE$</code>：服务状态描述，三个可能：<code>w</code>，<code>u</code>，<code>c</code><br><code>$SERVICEDESC$</code>：对当前服务的描述</li>
-<li>联系人宏<br><code>$CONTACTNAME$</code>：联系人名，在联系人文件中定义</li>
-<li>通知宏<br><code>$NOTIFICATIONTYPE$</code>：返回状态信息。</li>
-<li>日期宏<br><code>$LONGDATETIME$</code>：当前日期，时间戳</li>
-<li>文件宏<br><code>$LOGFILE$</code>：日志文件保存位置<br><code>$MAINCONFIGFILE</code>：主配置文件保存位置</li>
-<li>其他宏<br><code>$ADMINMAIL$</code>：管理员E-mail地址<br><code>$ARGn$</code>：第n个命令参数，n是数字。最多支持32个参数宏。</li>
+<li>主机宏<br><script type="math/tex">HOSTNAME</script>：主机名，取自主机定义中<code>host_name</code><br><script type="math/tex">HOSTADDRESS</script>：主机IP地址，取自主机定义中<code>address</code></li>
+<li>服务宏<br><script type="math/tex">SERVICESTATE</script>：服务状态描述，三个可能：<code>w</code>，<code>u</code>，<code>c</code><br><script type="math/tex">SERVICEDESC</script>：对当前服务的描述</li>
+<li>联系人宏<br><script type="math/tex">CONTACTNAME</script>：联系人名，在联系人文件中定义</li>
+<li>通知宏<br><script type="math/tex">NOTIFICATIONTYPE</script>：返回状态信息。</li>
+<li>日期宏<br><script type="math/tex">LONGDATETIME</script>：当前日期，时间戳</li>
+<li>文件宏<br><script type="math/tex">LOGFILE</script>：日志文件保存位置<br><code>$MAINCONFIGFILE</code>：主配置文件保存位置</li>
+<li>其他宏<br><script type="math/tex">ADMINMAIL</script>：管理员E-mail地址<br><script type="math/tex">ARGn</script>：第n个命令参数，n是数字。最多支持32个参数宏。</li>
 </ul>
 <h4 id="commands-cfg"><a href="#commands-cfg" class="headerlink" title="commands.cfg"></a>commands.cfg</h4><p>定义命令。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">define command &#123;</span><br><span class="line">    command_name    check-host-alive      # 命令名</span><br><span class="line">    # 命令执行</span><br><span class="line">    command_line    $USER1$/check_ping -H $HOSTADDRESS$ -w 3000.0,80% -c 5000.0,100% -p 5</span><br><span class="line">    # 调用插件check_ping，-w为warning警告状态，-c为紧急，80%表示ping的临界值。-p 5表示每次发5个ping包</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <h4 id="hosts-cfg"><a href="#hosts-cfg" class="headerlink" title="hosts.cfg"></a>hosts.cfg</h4><p>默认不存在，定义主机。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">define host &#123;</span><br><span class="line">	use           linux-server    # 引用templates.cfg中linux-server的配置</span><br><span class="line">	host_name     web             # 主机名</span><br><span class="line">	alias         web-system5     # 别名</span><br><span class="line">	address       192.168.163.137 # IP地址</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">define hostgroup &#123;</span><br><span class="line">	hostgroup_name    web-servers # 主机组名</span><br><span class="line">	alias             web-servers # 别名</span><br><span class="line">	members           web         # 组成员（填host_name，逗号分隔）</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
