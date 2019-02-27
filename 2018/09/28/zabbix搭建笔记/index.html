@@ -132,7 +132,7 @@
 <meta property="og:image" content="https://github.com/2018/09/28/zabbix搭建笔记/16.png">
 <meta property="og:image" content="https://github.com/2018/09/28/zabbix搭建笔记/21.png">
 <meta property="og:image" content="https://github.com/2018/09/28/zabbix搭建笔记/22.png">
-<meta property="og:updated_time" content="2019-01-31T02:16:04.487Z">
+<meta property="og:updated_time" content="2019-02-14T10:03:40.242Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="zabbix搭建笔记">
 <meta name="twitter:description" content="zabbix概述 zabbix搭建 zabbix操作">
@@ -250,7 +250,7 @@
           
           <li class="menu-item menu-item-tags">
     <a href="/tags/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">122</span></a>
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">124</span></a>
   </li>
         
         
@@ -258,7 +258,7 @@
           
           <li class="menu-item menu-item-archives">
     <a href="/archives/" rel="section">
-      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">79</span></a>
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">80</span></a>
   </li>
         
         
@@ -407,7 +407,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-01-31 10:16:04" itemprop="dateModified" datetime="2019-01-31T10:16:04+08:00">2019-01-31</time>
+                <time title="修改时间：2019-02-14 18:03:40" itemprop="dateModified" datetime="2019-02-14T18:03:40+08:00">2019-02-14</time>
               
             
           </span>
@@ -615,6 +615,13 @@
 <h3 id="设置通知"><a href="#设置通知" class="headerlink" title="设置通知"></a>设置通知</h3><blockquote>
 <p>Administration –&gt; Media Types</p>
 </blockquote>
+<p>zabbix中提供的几种媒介（Media）类型：</p>
+<ul>
+<li>Email：电子邮件</li>
+<li>SMS：手机短信，通过连接至zabbix服务器GSM Modem发送通知</li>
+<li>Jabber：jabber消息。Jabber是一个开放的基于XML的协议，能实现基于Internet的即时通讯服务</li>
+<li>自定义脚本通知：调用位于配置文件的<code>AlertScriptsPath</code>变量定义的脚本目录中的脚本</li>
+</ul>
 <img src="/2018/09/28/zabbix搭建笔记/12.png">
 <p>Email的配置。</p>
 <img src="/2018/09/28/zabbix搭建笔记/13.png">
@@ -680,7 +687,40 @@
 <ul>
 <li>Link Templates：指定模板，可选择替换或添加。<em>Clear when unlinking</em>选项将不仅可以取消链接任何以前链接的模板，还可以删除所有继承自它们的元素（监控项、触发器等）。 </li>
 </ul>
-<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
+<h3 id="Zabbix事件"><a href="#Zabbix事件" class="headerlink" title="Zabbix事件"></a>Zabbix事件</h3><p>事件是基于时间戳进行标记的，是采取动作的基础，来源于三个途径：</p>
+<ul>
+<li>触发器事件：每次触发器状态改变就会生成相应事件</li>
+<li>发现（discovery）事件：zabbix会周期性扫描网络发现规则中的指定IP范围，一旦发现主机或服务，就会生成发现事件<ul>
+<li>有8类发现事件：Service Up，Service Down，Host Up，Host Down，Service Discovered，Service Lost，Host Discovered，Host Lost</li>
+</ul>
+</li>
+<li>主动agent自动发现事件：也称自动注册事件，当一个此前状态未知的主动agent发起检测请求时会生成该类事件</li>
+</ul>
+<p>因此，Zabbix的通知机制也称为基于事件的通知机制。</p>
+<h3 id="触发器"><a href="#触发器" class="headerlink" title="触发器"></a>触发器</h3><p>当每次采集的数据超出了设置的触发器阈值，则触发器状态会变为<strong>Problem</strong>，若数据在范围之内，则触发器状态变为<strong>OK</strong>。</p>
+<p>事件成功迭代（OK event generation）设置，用于控制如何生成正常事件（OK event）</p>
+<ul>
+<li>表达式（Expression）：当表达式结果为FALSE，Problem会生成一个OK事件</li>
+<li>恢复表达式（Recovery expression）：当表达式结果为FALSE，且恢复表达式结果为TRUE，Problem状态会变为OK事件。如果触发器的恢复条件和问题标准不同，则可以使用此设置。</li>
+<li>无（None）：正常事件从来不生成。可以和多重问题事件生成一起结合使用，以便在某事件发生时可以更简单的发送通知。</li>
+</ul>
+<p>事件成功关闭（OK event closes）设置，用来控制哪些问题事件（Problem events）被关闭</p>
+<ul>
+<li>所有问题（All problems）：正常事件（OK event）将关闭触发器创建的所有打开的问题</li>
+<li>所有问题如果标记的值匹配（All problems if tag values match）：正常事件（OK event）将关闭触发器创建的打开的问题，并且至少有一个匹配的标记值。</li>
+</ul>
+<p>触发器的严重性：</p>
+<ul>
+<li>未分类（Not classified）：未知严重性（灰）</li>
+<li>信息（Information）：提示（浅蓝）</li>
+<li>警告（Warning）：警告（黄）</li>
+<li>一般严重（Average）：一般问题（橙）</li>
+<li>严重（High）：发生重要的事（浅红）</li>
+<li>灾难（Disaster）：灾难，财务损失（红）</li>
+</ul>
+<p>触发器提示颜色可在Adminstration –&gt; General –&gt; Trigger severities中修改</p>
+<p>事件关联是一种<strong>设置自定义事件关闭（导致正常事件生成）的规则</strong>，该规则定义了<strong>新的问题事件如何与现有的问题事件配对，并通过生成相应的正常事件来关闭新的事件或匹配事件</strong>。</p>
+<h3 id="action"><a href="#action" class="headerlink" title="action"></a>action</h3><h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
 <li><a href="https://www.zabbix.com/documentation/3.4/zh/manual" target="_blank" rel="noopener">zabbix官方中文手册</a></li>
 <li><a href="#http://blog.51cto.com/cloumn/detail/33">51cto专栏——无监控 不运维</a></li>
 <li><a href="http://www.zsythink.net/archives/tag/zabbix/" target="_blank" rel="noopener">朱双印个人日志-zabbix</a></li>
@@ -816,7 +856,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">79</span>
+                    <span class="site-state-item-count">80</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -1075,7 +1115,11 @@
                     
                       
                     
-                    <span class="site-state-item-count">122</span>
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">124</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
@@ -1147,7 +1191,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#zabbix概述"><span class="nav-number">1.</span> <span class="nav-text">zabbix概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zabbix搭建"><span class="nav-number">2.</span> <span class="nav-text">zabbix搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#LNMP-LAMP环境搭建Zabbix"><span class="nav-number">2.1.</span> <span class="nav-text">LNMP/LAMP环境搭建Zabbix</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zabbix操作"><span class="nav-number">3.</span> <span class="nav-text">zabbix操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#监控一台主机"><span class="nav-number">3.1.</span> <span class="nav-text">监控一台主机</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置用户"><span class="nav-number">3.1.1.</span> <span class="nav-text">配置用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置主机"><span class="nav-number">3.1.2.</span> <span class="nav-text">配置主机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加监控项"><span class="nav-number">3.1.3.</span> <span class="nav-text">添加监控项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建触发器"><span class="nav-number">3.1.4.</span> <span class="nav-text">新建触发器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#设置通知"><span class="nav-number">3.1.5.</span> <span class="nav-text">设置通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建模板"><span class="nav-number">3.1.6.</span> <span class="nav-text">新建模板</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建图表"><span class="nav-number">3.1.7.</span> <span class="nav-text">新建图表</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#详细配置操作"><span class="nav-number">3.2.</span> <span class="nav-text">详细配置操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#主机资产管理"><span class="nav-number">3.2.1.</span> <span class="nav-text">主机资产管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#批量更新"><span class="nav-number">3.2.2.</span> <span class="nav-text">批量更新</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#zabbix概述"><span class="nav-number">1.</span> <span class="nav-text">zabbix概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zabbix搭建"><span class="nav-number">2.</span> <span class="nav-text">zabbix搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#LNMP-LAMP环境搭建Zabbix"><span class="nav-number">2.1.</span> <span class="nav-text">LNMP/LAMP环境搭建Zabbix</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#zabbix操作"><span class="nav-number">3.</span> <span class="nav-text">zabbix操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#监控一台主机"><span class="nav-number">3.1.</span> <span class="nav-text">监控一台主机</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置用户"><span class="nav-number">3.1.1.</span> <span class="nav-text">配置用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置主机"><span class="nav-number">3.1.2.</span> <span class="nav-text">配置主机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#添加监控项"><span class="nav-number">3.1.3.</span> <span class="nav-text">添加监控项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建触发器"><span class="nav-number">3.1.4.</span> <span class="nav-text">新建触发器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#设置通知"><span class="nav-number">3.1.5.</span> <span class="nav-text">设置通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建模板"><span class="nav-number">3.1.6.</span> <span class="nav-text">新建模板</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#新建图表"><span class="nav-number">3.1.7.</span> <span class="nav-text">新建图表</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#详细配置操作"><span class="nav-number">3.2.</span> <span class="nav-text">详细配置操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#主机资产管理"><span class="nav-number">3.2.1.</span> <span class="nav-text">主机资产管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#批量更新"><span class="nav-number">3.2.2.</span> <span class="nav-text">批量更新</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Zabbix事件"><span class="nav-number">3.2.3.</span> <span class="nav-text">Zabbix事件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#触发器"><span class="nav-number">3.2.4.</span> <span class="nav-text">触发器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#action"><span class="nav-number">3.2.5.</span> <span class="nav-text">action</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
             
 
           </div>
