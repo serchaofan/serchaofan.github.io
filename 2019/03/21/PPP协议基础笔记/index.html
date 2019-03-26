@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=6.2.0" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/mylogo-apple.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/mylogo-32x32.png?v=6.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/mylogo-16x16.png?v=6.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.2.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '6.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":true,"scrollpercent":true,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="PPP协议概述Point to Point Protocol点对点协议 特点：  支持动态分配IP地址，允许连接时协商IP地址。    支持同步与异步线路。支持多种网络层协议（TCP/IP等） 支持错误检测及纠错，支持数据压缩 支持身份验证。无重传机制，网络开销小  组成：  链路控制协议LCP：用于建立、配置、测试管理数据链路连接 网络控制协议NCP：协商链路上所传输的数据包格式等参数，建立配">
+<meta name="keywords" content="网络,华三,PPP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PPP协议基础笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2019/03/21/PPP协议基础笔记/index.html">
+<meta property="og:site_name" content="tdLaogu的小站">
+<meta property="og:description" content="PPP协议概述Point to Point Protocol点对点协议 特点：  支持动态分配IP地址，允许连接时协商IP地址。    支持同步与异步线路。支持多种网络层协议（TCP/IP等） 支持错误检测及纠错，支持数据压缩 支持身份验证。无重传机制，网络开销小  组成：  链路控制协议LCP：用于建立、配置、测试管理数据链路连接 网络控制协议NCP：协商链路上所传输的数据包格式等参数，建立配">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://github.com/2019/03/21/PPP协议基础笔记/1.jpg">
+<meta property="og:image" content="https://github.com/2019/03/21/PPP协议基础笔记/2.png">
+<meta property="og:image" content="https://github.com/2019/03/21/PPP协议基础笔记/4.png">
+<meta property="og:updated_time" content="2019-03-26T14:27:47.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PPP协议基础笔记">
+<meta name="twitter:description" content="PPP协议概述Point to Point Protocol点对点协议 特点：  支持动态分配IP地址，允许连接时协商IP地址。    支持同步与异步线路。支持多种网络层协议（TCP/IP等） 支持错误检测及纠错，支持数据压缩 支持身份验证。无重传机制，网络开销小  组成：  链路控制协议LCP：用于建立、配置、测试管理数据链路连接 网络控制协议NCP：协商链路上所传输的数据包格式等参数，建立配">
+<meta name="twitter:image" content="https://github.com/2019/03/21/PPP协议基础笔记/1.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2019/03/21/PPP协议基础笔记/"/>
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>PPP协议基础笔记 | tdLaogu的小站</title>
+  
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">tdLaogu的小站</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+    <a href="/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-home"></i> <br />首页</a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+    <a href="/tags/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />标签<span class="badge">135</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+    <a href="/archives/" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />归档<span class="badge">90</span></a>
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+    <a href="/about" rel="section">
+      <i class="menu-item-icon fa fa-fw fa-user"></i> <br />关于</a>
+  </li>
+
+      
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />搜索</a>
+        </li>
+      
+    </ul>
+  
+
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2019/03/21/PPP协议基础笔记/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="tdLaogu">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/head.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="tdLaogu的小站">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">PPP协议基础笔记
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-21 19:40:08" itemprop="dateCreated datePublished" datetime="2019-03-21T19:40:08+08:00">2019-03-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-03-26 22:27:47" itemprop="dateModified" datetime="2019-03-26T22:27:47+08:00">2019-03-26</time>
+              
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <a id="more"></a>
+<h1 id="PPP协议概述"><a href="#PPP协议概述" class="headerlink" title="PPP协议概述"></a>PPP协议概述</h1><p>Point to Point Protocol点对点协议</p>
+<p>特点：</p>
+<ol>
+<li>支持动态分配IP地址，允许连接时协商IP地址。   </li>
+<li>支持同步与异步线路。支持多种网络层协议（TCP/IP等）</li>
+<li>支持错误检测及纠错，支持数据压缩</li>
+<li>支持身份验证。无重传机制，网络开销小</li>
+</ol>
+<p>组成：</p>
+<ul>
+<li>链路控制协议LCP：用于建立、配置、测试管理数据链路连接</li>
+<li>网络控制协议NCP：协商链路上所传输的数据包格式等参数，建立配置不同网络层协议</li>
+<li>认证协议：用于对用户进行认证，包括PAP（Password Authentication Protocol密码认证协议）、CHAP（Challenge Handshake Authentication Protocol质询握手认证协议）、MS-CHAP（Microsoft CHAP微软CHAP协议）</li>
+</ul>
+<p>PPP会话过程：PPP的初始状态为不活动（dead）状态</p>
+<ol>
+<li>链路建立阶段：当物理层可用时，进入Establish阶段，发送LCP报文检测链路可用情况（LCP协商），若可用（协商成功）就成功建立，LCP进入Opened状态并上报up事件，否则失败，上报fail事件，进入Dead阶段。</li>
+<li>验证阶段（若配置了验证）：根据PPP帧中验证选项字段确定是否验证，若配置了验证，就进入Authenticate阶段，选择PAP或CHAP等验证。该阶段仅支持LCP和验证协议报文，其他报文都被丢弃。若验证失败进入Terminate状态，链路拆除，LCP变为Down。若成功就进入Network阶段</li>
+<li>网络层协商阶段（若配置了网络层协议）：PPP双方发送NCP报文协商网络层协议（如IPCP）及地址，NCP状态从Initial变为Request。协商成功后NCP状态变为Opened，链路建立成功。</li>
+<li>此后，PPP链路将一直保持通信，直至有明确的LCP或NCP消息关闭这条链路，或发生了某些外部事件（例如用户的干预）。</li>
+</ol>
+<img src="/2019/03/21/PPP协议基础笔记/1.jpg">
+<p>两种验证：</p>
+<ul>
+<li><p>PAP：两次握手。被验证方发起验证请求，向对端发送用户名和密码（明文），主验证方通过查询本地用户列表或RADIUS服务器，然后回应通过或拒绝。</p>
+<p>PAP支持双向认证。</p>
+</li>
+<li><p>CHAP：三次握手。主验证方发起验证请求Challenge，发送本端主机名和随机报文。被验证方收到后查询本地密码，若本端配置了CHAP默认密码，就选用此密码。否则在用户表查找主验证方用户名对应的密码，并选用。被验证方通过MD5对报文ID、被验证方密码、原随机数生成一个摘要，回复Response。主验证方对本端密码、相同随机数、报文ID进行MD5摘要，并进行比对，若相同则验证成功，回复Acknowledge，否则回复失败。</p>
+<p>CHAP不直接传输用户密码，而是传输通过MD5将密码与随机报文ID一起计算的结果，安全性高。认证方最多允许被认证方重传3次。</p>
+</li>
+</ul>
+<p>PPP帧格式：</p>
+<img src="/2019/03/21/PPP协议基础笔记/2.png">
+<h2 id="PPP-MP"><a href="#PPP-MP" class="headerlink" title="PPP MP"></a>PPP MP</h2><p>MP是MultiLink PPP的简写。将多条PPP链路捆绑后当作一条链路，实现<strong>带宽增加，负载分担</strong>，降低报文延时，备份。</p>
+<p>MP会将报文分片（小于最小分片包长时不分片）后，从MP链路下的多个PPP通道发送到对端，对端将这些分片组装起来传递给网络层处理。</p>
+<p>通过配置虚拟模板（virtual-template）（华三设备）实现。可用用户名捆绑或通过一个VT口派生多个捆绑，也可通过MP-Group实现。MP-Group是MP专用接口，一个MP-Group只能对应一个绑定</p>
+<h2 id="PPPOE"><a href="#PPPOE" class="headerlink" title="PPPOE"></a>PPPOE</h2><p>PPPoE描述了在以太网上建立PPPoE会话及封装PPP报文的方法。要求通信双方建立的是点到点关系，而不是在以太网中所出现的点到多点关系。</p>
+<p>PPPoE利用以太网将大量主机组成网络，然后<strong>通过一个远端接入设备为以太网上的主机提供互联网接入服务，并对接入的每台主机实现控制、计费功能</strong>。由于很好地结合了以太网的经济性及PPP良好的可扩展性与管理控制功能，PPPoE被广泛应用于小区组网等环境中。</p>
+<p>PPPoE协议将PPP报文封装在以太网帧之内，在以太网上提供点对点的连接。 </p>
+<p>PPPoE使用Client/Server模型。PPPoE Client向PPPoE Server发起连接请求，两者之间会话协商通过后，就建立PPPoE会话，此后PPPoE Server向PPPoE Client提供接入控制、认证等功能。</p>
+<p>根据PPPoE会话的起点所在位置的不同，有两种组网结构：</p>
+<ul>
+<li>第一种方式是在<strong>两台路由器之间建立PPPoE会话，所有主机通过同一个PPPoE会话传送数据，主机上不用安装PPPoE客户端拨号软件</strong>，一般是一个企业共用一个账号接入网络（图中PPPoE Client位于企业/公司内部，PPPoE Server是运营商的设备）。</li>
+<li>第二种方式是<strong>将PPPoE会话建立在Host和运营商的路由器之间，为每一个Host建立一个PPPoE会话，每个Host都是PPPoE Client，每个Host使用一个帐号</strong>，方便运营商对用户进行计费和控制。Host上必须安装PPPoE客户端拨号软件。</li>
+</ul>
+<h1 id="华三PPP环境搭建"><a href="#华三PPP环境搭建" class="headerlink" title="华三PPP环境搭建"></a>华三PPP环境搭建</h1><p>实验环境：两台路由器RT1和RT2，RT1为主验证方，RT2为被验证方</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]interface Serial 1/0</span><br><span class="line">[RT1-Serial1/0]ip address 192.168.1.1 24</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2]interface Serial 1/0</span><br><span class="line">[RT2-Serial1/0]ip address 192.168.1.2 24</span><br></pre></td></tr></table></figure>
+<h2 id="PAP单向验证配置"><a href="#PAP单向验证配置" class="headerlink" title="PAP单向验证配置"></a>PAP单向验证配置</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1-Serial1/0]link-protocol ppp       # 在串口配置封装的链路层协议为PPP</span><br><span class="line"># 缺省情况下，除以太网接口、VLAN接口、ATM接口外，其它接口封装的链路层协议均为PPP</span><br><span class="line"># 所以在串口可以不配这条</span><br><span class="line">[RT1-Serial1/0]ppp authentication-mode pap   # 设置验证方式为pap</span><br><span class="line">[RT1]local-user zhangsan class network # 为RT2添加验证用户zhangsan</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp   # 设置服务类型为ppp</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1/0]link-protocol ppp</span><br><span class="line">[RT2-Serial1/0]ppp pap local-user zhangsan password simple 123  # 在串口配置验证信息</span><br></pre></td></tr></table></figure>
+<p>查看串口的端口信息，检查是否配置成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">[RT1]display interface Serial</span><br><span class="line">Serial1/0</span><br><span class="line">Current state: UP            # 端口状态UP</span><br><span class="line">Line protocol state: UP      # 链路协议UP</span><br><span class="line">Description: Serial1/0 Interface</span><br><span class="line">Bandwidth: 64kbps</span><br><span class="line">Maximum Transmit Unit: 1500</span><br><span class="line">Hold timer: 10 seconds, retry times: 5</span><br><span class="line">Internet Address is 192.168.1.1/24 Primary</span><br><span class="line">Link layer protocol: PPP</span><br><span class="line">LCP: opened, IPCP: opened   # LCP和IPCP都开启了</span><br><span class="line">Output queue - Urgent queuing: Size/Length/Discards 0/100/0</span><br><span class="line">Output queue - Protocol queuing: Size/Length/Discards 0/500/0</span><br><span class="line">Output queue - FIFO queuing: Size/Length/Discards 0/75/0</span><br><span class="line">Last link flapping: 0 hours 45 minutes 27 seconds</span><br><span class="line">Last clearing of counters: Never</span><br></pre></td></tr></table></figure>
+<p>此时互相ping，能够ping通</p>
+<h2 id="PAP双向验证配置"><a href="#PAP双向验证配置" class="headerlink" title="PAP双向验证配置"></a>PAP双向验证配置</h2><p>互相配置验证用户</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2]local-user lisi class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-lisi]password simple 321</span><br><span class="line">[RT2-luser-network-lisi]service-type ppp</span><br></pre></td></tr></table></figure>
+<p>双方都要在串口配置PPP验证</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1-Serial1/0]ppp authentication-mode pap</span><br><span class="line">[RT1-Serial1/0]ppp pap local-user zhangsan password simple 123</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1/0]ppp authentication-mode pap</span><br><span class="line">[RT2-Serial1/0]ppp pap local-user lisi password simple 321</span><br></pre></td></tr></table></figure>
+<p>同理检查串口状态，并互相ping检查。</p>
+<h2 id="CHAP验证配置"><a href="#CHAP验证配置" class="headerlink" title="CHAP验证配置"></a>CHAP验证配置</h2><p>CHAP认证分为两种：认证方配置了用户名和认证方没有配置用户名。</p>
+<p>当认证方配置了用户名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">RT1（验证方）:</span><br><span class="line"># 配置对端的验证用户zhangsan</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT1-Serial1/0]ppp authentication-mode chap</span><br><span class="line"># 配置对端验证本端的用户，即RT1对应了用户lisi</span><br><span class="line">[RT1-Serial1/0]ppp chap user lisi</span><br><span class="line">[RT1-Serial1/0]ppp chap password simple 321  # 密码，可选</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line"># 配置对端验证用户lisi</span><br><span class="line">[RT2]local-user lisi class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-lisi]password simple 321</span><br><span class="line">[RT2-luser-network-lisi]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT2-Serial1/0]ppp authentication-mode chap</span><br><span class="line">[RT2-Serial1/0]ppp chap user zhangsan</span><br><span class="line">[RT2-Serial1/0]ppp chap password simple 123</span><br><span class="line"></span><br><span class="line">即：RT1的本地用户zhangsan是给RT2来验证的，RT2的本地用户lisi是给RT1来验证的</span><br></pre></td></tr></table></figure>
+<p>当验证方没有配置用户名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT1-Serial1/0]ppp authentication-mode chap</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1/0]ppp chap user zhangsan</span><br><span class="line">[RT2-Serial1/0]ppp chap password simple 123</span><br></pre></td></tr></table></figure>
+<h2 id="IP地址协商"><a href="#IP地址协商" class="headerlink" title="IP地址协商"></a>IP地址协商</h2><h3 id="直接指定对端IP地址"><a href="#直接指定对端IP地址" class="headerlink" title="直接指定对端IP地址"></a>直接指定对端IP地址</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1-Serial1/0]remote address 192.168.1.2</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1/0]ip address ppp-negotiate</span><br></pre></td></tr></table></figure>
+<p>然后查看RT2的串口端口IP</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[RT2-Serial1/0]display interface Serial 1/0 brief</span><br><span class="line">Brief information on interface(s) under route mode:</span><br><span class="line">Link: ADM - administratively down; Stby - standby</span><br><span class="line">Protocol: (s) - spoofing</span><br><span class="line">Interface            Link Protocol Main IP         Description</span><br><span class="line">Ser1/0               UP   UP       192.168.1.2</span><br></pre></td></tr></table></figure>
+<h3 id="配置地址池供对端选择"><a href="#配置地址池供对端选择" class="headerlink" title="配置地址池供对端选择"></a>配置地址池供对端选择</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]ip pool pool-1 192.168.1.10 192.168.1.20</span><br><span class="line">[RT1-Serial1/0]remote address pool pool-1</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1/0]ip address ppp-negotiate</span><br></pre></td></tr></table></figure>
+<p>可在RT1上查看地址池的分配情况</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[RT1]display ip pool pool-1</span><br><span class="line">Group name: default</span><br><span class="line">  Pool name           Start IP address    End IP address      Free   In use</span><br><span class="line">  pool-1              192.168.1.10        192.168.1.20        10     1</span><br><span class="line">In use IP addresses:</span><br><span class="line">  IP address          Interface</span><br><span class="line">  192.168.1.10        Ser1/0</span><br></pre></td></tr></table></figure>
+<h3 id="ISP域关联IP地址池"><a href="#ISP域关联IP地址池" class="headerlink" title="ISP域关联IP地址池"></a>ISP域关联IP地址池</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]ip pool pool-1 192.168.1.10 192.168.1.20</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT1]domain domain-1</span><br><span class="line">[RT1-isp-domain-1]authorization-attribute ip-pool pool-1</span><br><span class="line">[RT1-Serial1/0]ip address 192.168.1.1 24</span><br><span class="line">[RT1-Serial1/0]ppp authentication-mode pap domain domain-1</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1/0]ppp pap local-user zhangsan password simple 123</span><br><span class="line">[RT2-Serial1/0]ip address ppp-negotiate</span><br></pre></td></tr></table></figure>
+<p>之后链路会断开，等待一段时间后会再次up，RT2的IP也会分配好。</p>
+<h3 id="PPP常见配置项"><a href="#PPP常见配置项" class="headerlink" title="PPP常见配置项"></a>PPP常见配置项</h3><p>PPP协议可以为每条PPP链路提供基于流量的计费统计功能，具体统计内容包括出入两个方向上流经本链路的报文数和字节数。AAA可以获取这些流量统计信息用于计费控制。</p>
+<p>缺省情况下，PPP计费统计功能处于关闭状态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ppp account-statistics enable</span><br></pre></td></tr></table></figure>
+<p>轮询时间间隔指的是接口发送keepalive报文的周期。当接口上封装的链路层协议为PPP时，链路层会周期性地向对端发送keepalive报文。如果接口在<strong>10个keepalive周期内无法收到对端发来的keepalive报文</strong>，链路层会认为对端故障，上报链路层Down。</p>
+<p>用户可以通过<strong><code>timer-hold</code></strong>命令修改keepalive报文轮询的时间间隔。<strong>如果将轮询时间间隔配置为0秒，则不发送keepalive报文。</strong></p>
+<p>在速率非常低的链路上，轮询时间间隔不能配置过小。因为在低速链路上，大报文可能会需要很长的时间才能传送完毕，这样就会延迟keepalive报文的发送与接收。而接口如果在10个keepalive周期之后仍然无法收到对端的keepalive报文，它就会认为链路发生故障。如果keepalive报文被延迟的时间超过接口的这个限制，链路就会被认为发生故障而被关闭。</p>
+<p>缺省情况下，轮询时间间隔为10秒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timer-hold [period]</span><br></pre></td></tr></table></figure>
+<h2 id="MP配置"><a href="#MP配置" class="headerlink" title="MP配置"></a>MP配置</h2><p>MP的配置主要有两种方式，一种是通过虚拟模板（Virtual Template，VT）接口，一种是通过MP-group接口。</p>
+<ul>
+<li><p>通过虚拟模板接口配置MP</p>
+<p>VT是用于配置一个VA（Virtual Access，虚拟访问）接口的模板。将多个PPP链路捆绑成MP链路之后，需要创建一个VA接口与对端交换数据。此时，系统将选择一个VT，以便动态地创建一个VA接口。</p>
+<p>虚拟模板接口配置方式<strong>可以与认证相结合，可以根据对端的用户名找到指定的虚拟模板接口，从而利用模板上的配置，创建相应的捆绑（Bundle），以对应一条MP链路。</strong></p>
+<p>由一个虚拟模板接口可以派生出若干个捆绑，每个捆绑对应一条MP链路。从网络层看来，这若干条MP链路会形成一个点对多点的网络拓扑。系统可以根据接口接收到的认证用户名或终端标识符来进行MP捆绑，并以此来区分虚模板接口下的多个捆绑（对应多条MP链路）。</p>
+<p>系统支持3种绑定方式：</p>
+<ul>
+<li><strong>authentication</strong>：根据PPP的认证用户名进行MP捆绑，每个认证用户名对应一个捆绑。认证用户名是指PPP链路进行PAP、CHAP、MS-CHAP或MS-CHAP-V2认证时所接收到的对端用户名。</li>
+<li><strong>descriptor</strong>：根据PPP的终端描述符进行MP捆绑，每个终端描述符对应一个捆绑。终端标识符是用来唯一标识一台设备的标志，是指进行LCP协商时所接收到的对端终端标识符。</li>
+<li><strong>both</strong>：同时根据PPP的认证用户名和终端描述符进行MP捆绑。</li>
+</ul>
+</li>
+<li><p>通过MP-group接口配置MP</p>
+<p>MP-group接口是MP的专用接口，不支持其它应用，也不能利用对端的用户名来指定捆绑，同时也不能派生多个捆绑。与虚拟模板接口配置方式相比，MP-group接口配置方式更加快速高效、配置简单、容易理解。</p>
+</li>
+</ul>
+<h3 id="虚拟模板接口配置MP"><a href="#虚拟模板接口配置MP" class="headerlink" title="虚拟模板接口配置MP"></a>虚拟模板接口配置MP</h3><p>通过虚拟模板接口配置MP时，又可以细分为两种配置方式：</p>
+<ul>
+<li><p>将物理接口与虚拟模板接口直接关联：使用命令<strong><code>ppp mp virtual-template</code></strong>直接将链路绑定到指定的虚拟模板接口上，这时可以配置认证也可以不配置认证。如果不配置认证，系统将通过对端的终端描述符捆绑出MP链路；如果配置了认证，系统将通过用户名和/或对端的终端描述符捆绑出MP链路。</p>
+</li>
+<li><p>将用户名与虚拟模板接口关联：根据认证通过后的用户名查找相关联的虚拟模板接口，然后根据用户名和对端终端描述符捆绑出MP链路。这种方式需在要绑定的接口下配置<strong><code>ppp mp</code></strong>及双向认证（PAP、CHAP、MS-CHAP或MS-CHAP-V2），否则链路协商不通。</p>
+</li>
+</ul>
+<p>配置时需要注意：</p>
+<ul>
+<li><p><strong><code>ppp mp</code></strong>和<strong><code>ppp mp virtual-template</code></strong>命令互斥，即<strong>同一个接口只能采用一种配置方式。</strong></p>
+</li>
+<li><p>对于需要绑在一起的接口，必须采用同样的配置方式。</p>
+</li>
+<li><p>实际使用中也可以配置单向认证，即一端直接将物理接口绑定到虚拟模板接口，另一端则通过用户名查找虚拟模板接口。</p>
+</li>
+<li><p>不推荐使用同一个虚拟模板接口配置多种业务（如MP、L2TP、PPPoE等）。</p>
+</li>
+</ul>
+<p>实验环境：两台路由器，连着两根串口线</p>
+<img src="/2019/03/21/PPP协议基础笔记/4.png">
+<h4 id="将链路直接绑定到VT上"><a href="#将链路直接绑定到VT上" class="headerlink" title="将链路直接绑定到VT上"></a>将链路直接绑定到VT上</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]interface Virtual-Template 1   # 进入虚模板，号码可选1-8</span><br><span class="line">[RT1-Virtual-Template1]ip address 192.168.1.1 24</span><br><span class="line"></span><br><span class="line">[RT1-Serial1/0]link-protocol ppp</span><br><span class="line">[RT1-Serial1/0]ppp mp Virtual-Template 1</span><br><span class="line"></span><br><span class="line">[RT1-Serial2/0]link-protocol ppp</span><br><span class="line">[RT1-Serial2/0]ppp mp Virtual-Template 1</span><br><span class="line"></span><br><span class="line">在端口配置完后就会自动重启端口</span><br><span class="line">同理在RT2上:</span><br><span class="line">[RT2]interface Virtual-Template 1</span><br><span class="line">[RT2-Virtual-Template1]ip address 192.168.1.2 24</span><br><span class="line"></span><br><span class="line">[RT2-Serial1/0]link-protocol ppp</span><br><span class="line">[RT2-Serial1/0]ppp mp Virtual-Template 1</span><br><span class="line"></span><br><span class="line">[RT2-Serial2/0]link-protocol ppp</span><br><span class="line">[RT2-Serial2/0]ppp mp Virtual-Template 1</span><br></pre></td></tr></table></figure>
+<p>可以查看ppp mp的状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis ppp mp</span><br><span class="line">----------------------Slot0----------------------</span><br><span class="line">Template: Virtual-Template1</span><br><span class="line">max-bind: 16, fragment: enabled, min-fragment: 128</span><br><span class="line">  Master link: Virtual-Access0, Active members: 2, Bundle RT2</span><br><span class="line">  Peer&apos;s endPoint descriptor: RT2</span><br><span class="line">  Sequence format: long (rcv)/long (sent)</span><br><span class="line">  Bundle Up Time: 2019/03/24  04:55:11:467</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)/0 (sent)</span><br><span class="line">  Active member channels: 2 members</span><br><span class="line">        Serial1/0                 Up-Time:2019/03/24  04:55:11:467</span><br><span class="line">        Serial2/0                 Up-Time:2019/03/24  04:55:21:892</span><br></pre></td></tr></table></figure>
+<p>查看VA状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis interface Virtual-Access</span><br><span class="line">Virtual-Access0</span><br><span class="line">Current state: UP</span><br><span class="line">Line protocol state: UP</span><br><span class="line">Description: Virtual-Access0 Interface</span><br><span class="line">Bandwidth: 128kbps</span><br><span class="line">Maximum Transmit Unit: 1500</span><br><span class="line">Hold timer: 10 seconds, retry times: 5</span><br><span class="line">Internet Address is 192.168.1.1/24 Primary</span><br><span class="line">Link layer protocol: PPP</span><br><span class="line">LCP: opened, MP: opened, IPCP: opened</span><br><span class="line">Physical: MP, baudrate: 128000 bps</span><br><span class="line">Main interface: Virtual-Template1</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<h4 id="按用户名查找VT"><a href="#按用户名查找VT" class="headerlink" title="按用户名查找VT"></a>按用户名查找VT</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line"># 创建用户供RT2认证，需要为每个线路创一个</span><br><span class="line">[RT1]local-user rt2-user1 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-rt2-user1]password simple rt2-user1</span><br><span class="line">[RT1-luser-network-rt2-user1]service-type ppp</span><br><span class="line">[RT1]local-user rt2-user2 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-rt2-user2]password simple rt2-user2</span><br><span class="line">[RT1-luser-network-rt2-user2]service-type ppp</span><br><span class="line"></span><br><span class="line"># 用户绑定虚模板</span><br><span class="line">[RT1]ppp mp user rt2-user1 bind Virtual-Template 1</span><br><span class="line">[RT1]ppp mp user rt2-user2 bind Virtual-Template 1</span><br><span class="line"># 虚模板配置</span><br><span class="line">[RT1]interface Virtual-Template 1</span><br><span class="line">[RT1-Virtual-Template1]ip address 192.168.1.1 24</span><br><span class="line">[RT1-Virtual-Template1]ppp mp binding-mode authentication</span><br><span class="line"></span><br><span class="line"># 串口配置，填写对端提供给本端的用户</span><br><span class="line"># s1/0指定rt1-user1，s2/0指定rt1-user2</span><br><span class="line">[RT1-Serial1/0]link-protocol ppp</span><br><span class="line">[RT1-Serial1/0]ppp authentication-mode pap</span><br><span class="line">[RT1-Serial1/0]ppp pap local-user rt1-user1 password simple rt1-user1</span><br><span class="line">[RT1-Serial1/0]ppp mp</span><br><span class="line"></span><br><span class="line">[RT1-Serial2/0]link-protocol ppp</span><br><span class="line">[RT1-Serial2/0]ppp authentication-mode pap</span><br><span class="line">[RT1-Serial2/0]ppp pap local-user rt1-user2 password simple rt1-user2</span><br><span class="line">[RT1-Serial2/0]ppp mp</span><br><span class="line"></span><br><span class="line">同理RT2配置:</span><br><span class="line">[RT2]local-user rt1-user1 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-rt1-user1]password simple rt1-user1</span><br><span class="line">[RT2-luser-network-rt1-user1]service-type ppp</span><br><span class="line">[RT2]local-user rt1-user2 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-rt1-user2]password simple rt1-user2</span><br><span class="line">[RT2-luser-network-rt1-user2]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT2]ppp mp user rt1-user1 bind Virtual-Template 1</span><br><span class="line">[RT2]ppp mp user rt1-user2 bind Virtual-Template 1</span><br><span class="line"></span><br><span class="line">[RT2]int Virtual-Template 1</span><br><span class="line">[RT2-Virtual-Template1]ip address 192.168.1.2 24</span><br><span class="line">[RT2-Virtual-Template1]ppp mp binding-mode authentication</span><br><span class="line"></span><br><span class="line">[RT2-Serial1/0]ppp authentication-mode pap</span><br><span class="line">[RT2-Serial1/0]ppp pap local-user rt2-user1 password simple rt2-user1</span><br><span class="line">[RT2-Serial1/0]ppp mp</span><br><span class="line">[RT2-Serial2/0]ppp authentication-mode pap</span><br><span class="line">[RT2-Serial2/0]ppp pap local-user rt2-user2 password simple rt2-user2</span><br><span class="line">[RT2-Serial2/0]ppp mp</span><br></pre></td></tr></table></figure>
+<p>查看ppp mp信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis ppp mp</span><br><span class="line">----------------------Slot0----------------------</span><br><span class="line">Template: Virtual-Template1</span><br><span class="line">max-bind: 16, fragment: enabled, min-fragment: 128</span><br><span class="line">  Master link: Virtual-Access0, Active members: 1, Bundle rt2-user1  # VA0，用户绑定</span><br><span class="line">  Peer&apos;s endPoint descriptor: RT2</span><br><span class="line">  Sequence format: long (rcv)/long (sent)</span><br><span class="line">  Bundle Up Time: 2019/03/24  05:27:20:244</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)/0 (sent)</span><br><span class="line">  Active member channels: 1 members</span><br><span class="line">        Serial1/0                 Up-Time:2019/03/24  05:27:20:244</span><br><span class="line">  Master link: Virtual-Access1, Active members: 1, Bundle rt2-user2  # VA1</span><br><span class="line">  Peer&apos;s endPoint descriptor: RT2</span><br><span class="line">  Sequence format: long (rcv)/long (sent)</span><br><span class="line">  Bundle Up Time: 2019/03/24  05:27:48:932</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)/0 (sent)</span><br><span class="line">  Active member channels: 1 members</span><br><span class="line">        Serial2/0                 Up-Time:2019/03/24  05:27:48:932</span><br></pre></td></tr></table></figure>
+<h3 id="MP-group接口配置MP"><a href="#MP-group接口配置MP" class="headerlink" title="MP-group接口配置MP"></a>MP-group接口配置MP</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]interface MP-group 1</span><br><span class="line">[RT1-MP-group1]ip address 192.168.1.1 24</span><br><span class="line"></span><br><span class="line">[RT1-Serial1/0]ppp mp MP-group 1</span><br><span class="line">[RT1-Serial2/0]ppp mp MP-group 1</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2]interface MP-group 1</span><br><span class="line">[RT2-MP-group1]ip address 192.168.1.2 24</span><br><span class="line"></span><br><span class="line">[RT2-Serial1/0]ppp mp MP-group 1</span><br><span class="line">[RT2-Serial2/0]ppp mp MP-group 1</span><br></pre></td></tr></table></figure>
+<p>查看PPP MP信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis ppp mp</span><br><span class="line">----------------------Slot0----------------------</span><br><span class="line">Template: MP-group1</span><br><span class="line">max-bind: 16, fragment: enabled, min-fragment: 128</span><br><span class="line">  Master link: MP-group1, Active members: 2, Bundle Multilink</span><br><span class="line">  Peer&apos;s endPoint descriptor: MP-group1</span><br><span class="line">  Sequence format: long (rcv)/long (sent)</span><br><span class="line">  Bundle Up Time: 2019/03/24  05:41:40:229</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)/0 (sent)</span><br><span class="line">  Active member channels: 2 members</span><br><span class="line">        Serial1/0                 Up-Time:2019/03/24  05:41:40:229</span><br><span class="line">        Serial2/0                 Up-Time:2019/03/24  05:41:49:213</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+      
+
+
+    
+
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/网络/" rel="tag"># 网络</a>
+          
+            <a href="/tags/华三/" rel="tag"># 华三</a>
+          
+            <a href="/tags/PPP/" rel="tag"># PPP</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/03/21/IPv6基础笔记/" rel="next" title="IPv6基础笔记">
+                <i class="fa fa-chevron-left"></i> IPv6基础笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/03/21/VLAN基础笔记/" rel="prev" title="VLAN基础笔记">
+                VLAN基础笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/head.png"
+                alt="tdLaogu" />
+            
+              <p class="site-author-name" itemprop="name">tdLaogu</p>
+              <p class="site-description motion-element" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">90</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">135</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  <a href="https://github.com/serchaofan" target="_blank" title="GitHub"><i class="fa fa-fw fa-github"></i></a>
+                  
+                </span>
+              
+                <span class="links-of-author-item">
+                  <a href="mailto:624261309@qq.com" target="_blank" title="E-Mail"><i class="fa fa-fw fa-envelope"></i></a>
+                  
+                </span>
+              
+            </div>
+          
+
+          
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.geekchen.me/" title="SuperChen" target="_blank">SuperChen</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://note.geekfan.top/" title="Geekfan" target="_blank">Geekfan</a>
+                  </li>
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://github.com/serchaofan" title="我的Github" target="_blank">我的Github</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#PPP协议概述"><span class="nav-number">1.</span> <span class="nav-text">PPP协议概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#PPP-MP"><span class="nav-number">1.1.</span> <span class="nav-text">PPP MP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PPPOE"><span class="nav-number">1.2.</span> <span class="nav-text">PPPOE</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#华三PPP环境搭建"><span class="nav-number">2.</span> <span class="nav-text">华三PPP环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#PAP单向验证配置"><span class="nav-number">2.1.</span> <span class="nav-text">PAP单向验证配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PAP双向验证配置"><span class="nav-number">2.2.</span> <span class="nav-text">PAP双向验证配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CHAP验证配置"><span class="nav-number">2.3.</span> <span class="nav-text">CHAP验证配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IP地址协商"><span class="nav-number">2.4.</span> <span class="nav-text">IP地址协商</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#直接指定对端IP地址"><span class="nav-number">2.4.1.</span> <span class="nav-text">直接指定对端IP地址</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置地址池供对端选择"><span class="nav-number">2.4.2.</span> <span class="nav-text">配置地址池供对端选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ISP域关联IP地址池"><span class="nav-number">2.4.3.</span> <span class="nav-text">ISP域关联IP地址池</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PPP常见配置项"><span class="nav-number">2.4.4.</span> <span class="nav-text">PPP常见配置项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MP配置"><span class="nav-number">2.5.</span> <span class="nav-text">MP配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#虚拟模板接口配置MP"><span class="nav-number">2.5.1.</span> <span class="nav-text">虚拟模板接口配置MP</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#将链路直接绑定到VT上"><span class="nav-number">2.5.1.1.</span> <span class="nav-text">将链路直接绑定到VT上</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#按用户名查找VT"><span class="nav-number">2.5.1.2.</span> <span class="nav-text">按用户名查找VT</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MP-group接口配置MP"><span class="nav-number">2.5.2.</span> <span class="nav-text">MP-group接口配置MP</span></a></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">tdLaogu</span>
+
+  
+
+  
+</div>
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.2.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=6.2.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=6.2.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.2.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.2.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.2.0"></script>
+
+
+
+  
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
