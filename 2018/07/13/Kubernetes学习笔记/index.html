@@ -111,7 +111,8 @@
 <meta property="og:description" content="Kubernetes概述 Kubernetes简单部署">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://github.com/2018/07/13/Kubernetes学习笔记/1.png">
-<meta property="og:updated_time" content="2019-01-17T02:59:15.348Z">
+<meta property="og:image" content="https://github.com/2018/07/13/Kubernetes学习笔记/2.png">
+<meta property="og:updated_time" content="2019-03-25T03:05:56.414Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubernetes学习笔记-1">
 <meta name="twitter:description" content="Kubernetes概述 Kubernetes简单部署">
@@ -332,7 +333,7 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="tdLaogu">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/head.png">
+      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -386,7 +387,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-01-17 10:59:15" itemprop="dateModified" datetime="2019-01-17T10:59:15+08:00">2019-01-17</time>
+                <time title="修改时间：2019-03-25 11:05:56" itemprop="dateModified" datetime="2019-03-25T11:05:56+08:00">2019-03-25</time>
               
             
           </span>
@@ -467,23 +468,30 @@
 <li><p>Job：一次性任务，运行完成后pod销毁。</p>
 </li>
 </ul>
-<h2 id="k8s结构与组件"><a href="#k8s结构与组件" class="headerlink" title="k8s结构与组件"></a>k8s结构与组件</h2><p>Master组件：</p>
+<h2 id="k8s结构与组件"><a href="#k8s结构与组件" class="headerlink" title="k8s结构与组件"></a>k8s结构与组件</h2><p><strong>Master</strong>节点组件：</p>
 <ul>
-<li>kube-apiserver：K8s API，集群的统一入口，以HTTP API提供接口服务，所有对象资源的增删改查和监听工作都交给API Server处理，再交给etcd存储（可选）</li>
-<li>kube-controller-manager：控制器管理，处理集群中常规后台任务，一个资源对应一个控制器。</li>
-<li>kube-scheduler：根据调度算法为创建的pod选择节点。</li>
+<li><strong>kube-apiserver</strong>：K8s API，集群的统一入口，以HTTP API提供接口服务，所有对象资源的增删改查和监听工作都交给API Server处理，再交给etcd存储（可选），是集群控制的入口进程</li>
+<li><strong>kube-controller-manager</strong>：控制器管理，处理集群中常规后台任务，一个资源对应一个控制器。</li>
+<li><strong>kube-scheduler</strong>：根据调度算法为创建的pod选择节点。</li>
 </ul>
-<p>Node组件：</p>
+<p><strong>Node</strong>节点组件：</p>
 <ul>
-<li>kubelet：Master在Node上的Agent，管理本机运行的容器的生命周期，如创建容器、挂载数据卷，获取节点状态等工作，将每个pod转换为一组容器。</li>
-<li>kube-proxy：在Node节点上实现pod网络代理，维护网络规划和四层负载均衡工作。</li>
-<li>docker或rkt：底层容器引擎。</li>
+<li><strong>kubelet</strong>：Master在Node上的Agent，<strong>管理本机运行的容器的生命周期</strong>，如创建容器、挂载数据卷，获取节点状态等工作，将每个pod转换为一组容器。</li>
+<li><strong>kube-proxy</strong>：在Node节点上实现pod网络代理，<strong>维护网络规划和四层负载均衡</strong>工作，实现<strong>k8s service的通信和负载均衡</strong>。</li>
+<li><strong>docker或rkt</strong>：底层容器引擎。</li>
 </ul>
+<blockquote>
+<p>Node节点能在运行期间动态添加到k8s集群中，在默认情况下 kubelet 会向 Master 注册自己，这也是 Kubernetes推荐的 Node 管理方式。</p>
+<p>一旦 Node 被纳入集群管理范围， kubelet 进程就会定时向 Master 节点汇报自身的情报，例如操作系统、 Docker 版本、机器的 CPU 和内存情况，以及当前有哪些 Pod在运行等 ， 这样 Master 可以获知每个 Node 的资源使用情况，并实现高效均衡的资源调度策略。</p>
+<p>而某个 Node 超过指定时间不上报信息时，会被 Master 判定为“<strong>失联</strong>”， Node 的状态被标记为<strong>不可用</strong>（ Not Ready ），随后 Master 会触发“工作负载大转移”的自动流程 。 </p>
+</blockquote>
 <p>第三方服务：</p>
 <ul>
-<li>etcd：分布式键值存储系统，用于保持集群状态，如pod、service对象信息。</li>
+<li><strong>etcd</strong>：分布式键值存储系统，用于保持集群状态，如pod、service对象信息。</li>
 </ul>
 <img src="/2018/07/13/Kubernetes学习笔记/1.png">
+<p>每个 Pod 都有一个特殊的被称为“根容器”的 Pause 容器 。 Pause 容器对应的镜像属于 Kubemete平台的一部分，除了 Pause 容器，每个 Pod 还包含一个或多个紧密相关的用户业务容器。 </p>
+<img src="/2018/07/13/Kubernetes学习笔记/2.png">
 <p>在Kubernetes中运行的Pod正在一个私密的隔离网络上运行。默认情况下，它们可以从同一个kubernetes集群中的其他pod和服务中看到，但不能在该网络之外。当我们使用kubectl时，我们通过API端点进行交互以与我们的应用程序进行通信。</p>
 <p>kubectl命令可以创建一个代理，将代理转发到群集范围的专用网络。</p>
 <h1 id="Kubernetes简单部署"><a href="#Kubernetes简单部署" class="headerlink" title="Kubernetes简单部署"></a>Kubernetes简单部署</h1><p>实验环境：</p>
@@ -655,7 +663,7 @@
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
               <img class="site-author-image" itemprop="image"
-                src="/images/head.png"
+                src="/images/avatar.png"
                 alt="tdLaogu" />
             
               <p class="site-author-name" itemprop="name">tdLaogu</p>

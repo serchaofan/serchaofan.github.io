@@ -143,7 +143,7 @@
 <meta property="og:image" content="https://github.com/2019/02/18/无线安全渗透笔记/31.png">
 <meta property="og:image" content="https://github.com/2019/02/18/无线安全渗透笔记/32.png">
 <meta property="og:image" content="https://github.com/2019/02/18/无线安全渗透笔记/33.png">
-<meta property="og:updated_time" content="2019-02-27T11:38:19.858Z">
+<meta property="og:updated_time" content="2019-03-26T08:53:33.689Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="无线安全渗透笔记">
 <meta name="twitter:description" content="无线相关知识点 常用无线工具使用以及密码破解操作">
@@ -364,7 +364,7 @@
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="tdLaogu">
       <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/head.png">
+      <meta itemprop="image" content="/images/avatar.png">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
@@ -418,7 +418,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2019-02-27 19:38:19" itemprop="dateModified" datetime="2019-02-27T19:38:19+08:00">2019-02-27</time>
+                <time title="修改时间：2019-03-26 16:53:33" itemprop="dateModified" datetime="2019-03-26T16:53:33+08:00">2019-03-26</time>
               
             
           </span>
@@ -501,6 +501,28 @@
 <li>混杂模式：接收所有流过网卡的帧</li>
 </ul>
 <p>网卡默认工作模式为广播和直接。</p>
+<h2 id="WEP-WPA-WPA2"><a href="#WEP-WPA-WPA2" class="headerlink" title="WEP/WPA/WPA2"></a>WEP/WPA/WPA2</h2><p>WLAN委员会制定了三种数据加密协议：</p>
+<ul>
+<li>WEP（有线等效保密）</li>
+<li>WPA（WiFi保护访问）</li>
+<li>WPA2（WiFi保护访问v2）</li>
+</ul>
+<p>WEP的关键缺陷是它使用了RC4和短IV值（每224个帧就会循环使用一次），虽然IV值是很大的数字，但每5000个数据包重用4个IV值的概率为50%。因此只要能生成密集的流量，便能显著增加重用IV值的概率。</p>
+<p>WPA主要采用临时密钥完整性协议（TKIP）加密算法，旨在改进WEP。而WPA2强制使用AES-CCMP算法加密，比TKIP更强大。</p>
+<p>WPA和WPA2支持两种身份验证机制：</p>
+<ul>
+<li>基于EAP的身份验证（采用RADIUS，用于企业）</li>
+<li>基于预共享密钥（Pre-shared Key，用于个人）</li>
+</ul>
+<p>WPA和WPA2主要通过抓取握手包，再用字典进行穷举破解。</p>
+<p>WPA/WPA2 PSK验证的4次握手过程：</p>
+<ol>
+<li>申请者（WiFi客户端）与验证者（AP）验证并关联RR，并协商产生256位的预共享密钥</li>
+<li>验证者向申请者发送消息（包括预共享密钥、网络的SSID、验证者随机数ANonce、申请者随机数SNonce、验证者MAC地址（AP的MAC）、申请者MAC地址（WiFi客户端的MAC））</li>
+<li>申请者计算出<strong>成对临时密钥（PTK）</strong>作为每会话密钥（Per-session Key），用于加密AP和客户端间的数据。</li>
+<li>申请者再向验证方发送申请者随机数以及一个MIC（消息完整性检查）。验证方收到后，进行MIC验证，若验证无误，则用申请者随机数生成一个PTK</li>
+<li>验证方再向申请方发送确认信息，确认进行密钥安装。申请方安装后返回密钥安装确认信息。</li>
+</ol>
 <h1 id="常用无线工具使用以及密码破解操作"><a href="#常用无线工具使用以及密码破解操作" class="headerlink" title="常用无线工具使用以及密码破解操作"></a>常用无线工具使用以及密码破解操作</h1><p>实验使用了HAYSENSE厂的HS-8515NS无线网卡，驱动为RT3070。</p>
 <p>在虚拟机导入该网卡</p>
 <img src="/2019/02/18/无线安全渗透笔记/1.png">
@@ -678,6 +700,17 @@
 <img src="/2019/02/18/无线安全渗透笔记/32.png">
 <p>使用cowpatty破解密码</p>
 <img src="/2019/02/18/无线安全渗透笔记/33.png">
+<h2 id="解除验证DoS攻击"><a href="#解除验证DoS攻击" class="headerlink" title="解除验证DoS攻击"></a>解除验证DoS攻击</h2><p>WLAN容易受到DoS（拒绝服务）攻击，攻击手段包括以下：</p>
+<ul>
+<li>解除验证（Deauthentication）</li>
+<li>取消关联（Disassociation）</li>
+<li>CTS-RTS攻击</li>
+<li>信号干扰或频谱干扰</li>
+</ul>
+<h2 id="Evil-Twin攻击"><a href="#Evil-Twin攻击" class="headerlink" title="Evil Twin攻击"></a>Evil Twin攻击</h2><p>Evil Twin（克隆AP）攻击是一种针对WLAN基础设施的攻击。在受攻击的WLAN网络附近部署受攻击者控制的双胞胎AP，该无赖AP会通告与受攻击的网络完全相同的SSID，导致许多用户在不经意间连接到此AP。然后攻击者就可发动中间人攻击。</p>
+<h2 id="架设无赖AP"><a href="#架设无赖AP" class="headerlink" title="架设无赖AP"></a>架设无赖AP</h2><p>无赖AP是指<strong>未经授权便连接到需授权网络的AP</strong>，攻击者会将这样的AP作为私开的后门，从而绕过需授权网络中的安全控制机制。</p>
+<p>大多数情况下，无赖AP会被设置为开放验证且不启用加密。可以通过部署<strong>实际的物理设备</strong>作为无赖AP，也可以通过<strong>软件创建</strong>无赖AP，将其<strong>桥接到需授权网络</strong>的本地以太网网络。</p>
+<h2 id="误关联攻击"><a href="#误关联攻击" class="headerlink" title="误关联攻击"></a>误关联攻击</h2><h2 id="Caffe-Latte攻击"><a href="#Caffe-Latte攻击" class="headerlink" title="Caffe Latte攻击"></a>Caffe Latte攻击</h2><h2 id="解除对无线客户端的验证"><a href="#解除对无线客户端的验证" class="headerlink" title="解除对无线客户端的验证"></a>解除对无线客户端的验证</h2><h2 id="不碰AP的情况下破解WPA"><a href="#不碰AP的情况下破解WPA" class="headerlink" title="不碰AP的情况下破解WPA"></a>不碰AP的情况下破解WPA</h2>
       
     </div>
 
@@ -794,7 +827,7 @@
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
               <img class="site-author-image" itemprop="image"
-                src="/images/head.png"
+                src="/images/avatar.png"
                 alt="tdLaogu" />
             
               <p class="site-author-name" itemprop="name">tdLaogu</p>
@@ -1165,7 +1198,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#无线相关知识点"><span class="nav-number">1.</span> <span class="nav-text">无线相关知识点</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常用无线工具使用以及密码破解操作"><span class="nav-number">2.</span> <span class="nav-text">常用无线工具使用以及密码破解操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#字典工具crunch"><span class="nav-number">2.1.</span> <span class="nav-text">字典工具crunch</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#字典工具cupp"><span class="nav-number">2.2.</span> <span class="nav-text">字典工具cupp</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airmon-ng工具"><span class="nav-number">2.3.</span> <span class="nav-text">airmon-ng工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kismet工具"><span class="nav-number">2.4.</span> <span class="nav-text">kismet工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airodump-ng工具"><span class="nav-number">2.5.</span> <span class="nav-text">airodump-ng工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#aircrack-ng破解WEP与WPA加密"><span class="nav-number">2.6.</span> <span class="nav-text">aircrack-ng破解WEP与WPA加密</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动化破解工具gerix-wifi-cracker"><span class="nav-number">2.7.</span> <span class="nav-text">自动化破解工具gerix-wifi-cracker</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airgeddon工具"><span class="nav-number">2.8.</span> <span class="nav-text">airgeddon工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DOS攻击简单操作"><span class="nav-number">2.8.1.</span> <span class="nav-text">DOS攻击简单操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#握手包工具操作"><span class="nav-number">2.8.2.</span> <span class="nav-text">握手包工具操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动化破解工具wifite"><span class="nav-number">2.9.</span> <span class="nav-text">自动化破解工具wifite</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hirte工具伪造AP"><span class="nav-number">2.10.</span> <span class="nav-text">hirte工具伪造AP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不指定字典破解密码"><span class="nav-number">2.11.</span> <span class="nav-text">不指定字典破解密码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hashcat工具跑包"><span class="nav-number">2.12.</span> <span class="nav-text">hashcat工具跑包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cowpatty工具破解密码"><span class="nav-number">2.13.</span> <span class="nav-text">cowpatty工具破解密码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hash-table加速破解"><span class="nav-number">2.14.</span> <span class="nav-text">hash-table加速破解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#batch-table加速破解"><span class="nav-number">2.15.</span> <span class="nav-text">batch-table加速破解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pyrit工具补充"><span class="nav-number">2.16.</span> <span class="nav-text">pyrit工具补充</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airolib-ng生成彩虹表"><span class="nav-number">2.17.</span> <span class="nav-text">airolib-ng生成彩虹表</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#无线相关知识点"><span class="nav-number">1.</span> <span class="nav-text">无线相关知识点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#WEP-WPA-WPA2"><span class="nav-number">1.1.</span> <span class="nav-text">WEP/WPA/WPA2</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常用无线工具使用以及密码破解操作"><span class="nav-number">2.</span> <span class="nav-text">常用无线工具使用以及密码破解操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#字典工具crunch"><span class="nav-number">2.1.</span> <span class="nav-text">字典工具crunch</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#字典工具cupp"><span class="nav-number">2.2.</span> <span class="nav-text">字典工具cupp</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airmon-ng工具"><span class="nav-number">2.3.</span> <span class="nav-text">airmon-ng工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kismet工具"><span class="nav-number">2.4.</span> <span class="nav-text">kismet工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airodump-ng工具"><span class="nav-number">2.5.</span> <span class="nav-text">airodump-ng工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#aircrack-ng破解WEP与WPA加密"><span class="nav-number">2.6.</span> <span class="nav-text">aircrack-ng破解WEP与WPA加密</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动化破解工具gerix-wifi-cracker"><span class="nav-number">2.7.</span> <span class="nav-text">自动化破解工具gerix-wifi-cracker</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airgeddon工具"><span class="nav-number">2.8.</span> <span class="nav-text">airgeddon工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#DOS攻击简单操作"><span class="nav-number">2.8.1.</span> <span class="nav-text">DOS攻击简单操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#握手包工具操作"><span class="nav-number">2.8.2.</span> <span class="nav-text">握手包工具操作</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自动化破解工具wifite"><span class="nav-number">2.9.</span> <span class="nav-text">自动化破解工具wifite</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hirte工具伪造AP"><span class="nav-number">2.10.</span> <span class="nav-text">hirte工具伪造AP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不指定字典破解密码"><span class="nav-number">2.11.</span> <span class="nav-text">不指定字典破解密码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hashcat工具跑包"><span class="nav-number">2.12.</span> <span class="nav-text">hashcat工具跑包</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cowpatty工具破解密码"><span class="nav-number">2.13.</span> <span class="nav-text">cowpatty工具破解密码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#hash-table加速破解"><span class="nav-number">2.14.</span> <span class="nav-text">hash-table加速破解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#batch-table加速破解"><span class="nav-number">2.15.</span> <span class="nav-text">batch-table加速破解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pyrit工具补充"><span class="nav-number">2.16.</span> <span class="nav-text">pyrit工具补充</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#airolib-ng生成彩虹表"><span class="nav-number">2.17.</span> <span class="nav-text">airolib-ng生成彩虹表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解除验证DoS攻击"><span class="nav-number">2.18.</span> <span class="nav-text">解除验证DoS攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Evil-Twin攻击"><span class="nav-number">2.19.</span> <span class="nav-text">Evil Twin攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#架设无赖AP"><span class="nav-number">2.20.</span> <span class="nav-text">架设无赖AP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#误关联攻击"><span class="nav-number">2.21.</span> <span class="nav-text">误关联攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Caffe-Latte攻击"><span class="nav-number">2.22.</span> <span class="nav-text">Caffe Latte攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#解除对无线客户端的验证"><span class="nav-number">2.23.</span> <span class="nav-text">解除对无线客户端的验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#不碰AP的情况下破解WPA"><span class="nav-number">2.24.</span> <span class="nav-text">不碰AP的情况下破解WPA</span></a></li></ol></li></ol></div>
             
 
           </div>
