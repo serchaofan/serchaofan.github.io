@@ -2,19 +2,16 @@
 title: Django使用Whoosh实现全文检索笔记
 date: 2019-02-01 15:33:18
 tags: [Django, Whoosh, 全文检索, python]
+categories: [后端开发]
 ---
 
-
-
-在Django编写博客时添加简单的全文搜索的功能。使用到了haystack、whoosh和jieba三个项目
+在 Django 编写博客时添加简单的全文搜索的功能。使用到了 haystack、whoosh 和 jieba 三个项目
 
 <!--more-->
 
-* haystack是一个与whoosh交互的连接工具，属于一种全文检索的框架。[官网](http://haystacksearch.org/)
-* Whoosh是一个全文检索引擎，由python编写。[官方文档](https://whoosh.readthedocs.io/en/latest/)
-* jieba是一个中文分词工具。[github库](https://github.com/fxsjy/jieba)
-
-
+- haystack 是一个与 whoosh 交互的连接工具，属于一种全文检索的框架。[官网](http://haystacksearch.org/)
+- Whoosh 是一个全文检索引擎，由 python 编写。[官方文档](https://whoosh.readthedocs.io/en/latest/)
+- jieba 是一个中文分词工具。[github 库](https://github.com/fxsjy/jieba)
 
 首先需要安装这三个库
 
@@ -30,11 +27,9 @@ jieba==0.39
 Whoosh==2.7.4
 ```
 
-
-
 # 简单实现
 
-然后在Django的项目settings.py中添加配置。首先将`'haystack'`添加到`INSTALLED_APPS`列表中
+然后在 Django 的项目 settings.py 中添加配置。首先将`'haystack'`添加到`INSTALLED_APPS`列表中
 
 ```python
 INSTALLED_APPS = [
@@ -69,9 +64,7 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 >
 > 所有设置字段：<https://django-haystack.readthedocs.io/en/v2.8.1/settings.html#>
 
-
-
-在项目目录下的urls.py中添加url。
+在项目目录下的 urls.py 中添加 url。
 
 ```
 urlpatterns = [
@@ -96,19 +89,17 @@ class ArticleIndex(indexes.SearchIndex, indexes.Indexable):
     return self.get_model().objects.all()
 ```
 
-
-
-在templates下创建`search/indexes/应用名`目录，并在该应用名目录下创建 `模型类_text.txt`文件。
+在 templates 下创建`search/indexes/应用名`目录，并在该应用名目录下创建 `模型类_text.txt`文件。
 
 ```
 mkdir -p templates/search/indexes/blog
-touch templates/search/indexes/blog/article_text.txt   
+touch templates/search/indexes/blog/article_text.txt
 # txt文件的格式必须是：  要检索的模型类的小写_text.txt
 ```
 
 {% asset_img 1.png %}
 
-在该txt文件中列出所有要检索的字段，是该模型类中定义的字段，**一定要加上object**
+在该 txt 文件中列出所有要检索的字段，是该模型类中定义的字段，**一定要加上 object**
 
 ```
 {{ object.title }}
@@ -116,9 +107,7 @@ touch templates/search/indexes/blog/article_text.txt
 # 对标题和文章内容进行检索
 ```
 
-
-
-在search目录下创建一个`search.html`
+在 search 目录下创建一个`search.html`
 
 ```jinja2
 {% block content %}
@@ -142,9 +131,7 @@ touch templates/search/indexes/blog/article_text.txt
 {% endblock content %}
 ```
 
-
-
-在haystack安装的目录下中建立`ChineseAnalyzer.py`，路径例如：`venv/lib/python3.7/site-packages/haystack/backends`。不需要改，直接复制即可。
+在 haystack 安装的目录下中建立`ChineseAnalyzer.py`，路径例如：`venv/lib/python3.7/site-packages/haystack/backends`。不需要改，直接复制即可。
 
 ```python
 import jieba
@@ -181,8 +168,6 @@ from .ChineseAnalyzer import ChineseAnalyzer
 约164行的analyzer=StemmingAnalyzer() 修改为 analyzer=ChineseAnalyzer()
 ```
 
-
-
 重建索引
 
 ```
@@ -198,24 +183,20 @@ Prefix dict has been built succesfully.
 
 会在项目目录下生成一个`whoosh_index`目录，以后的检索就是基于这个目录。
 
-
-
-在应用目录下的urls中添加
+在应用目录下的 urls 中添加
 
 ```
 url(r'^mysearch/$', views.mysearch)
 ```
 
-这个名字可随便取，是普通的视图实现，即通过此url访问搜索表单。然后在views中添加实现方法
+这个名字可随便取，是普通的视图实现，即通过此 url 访问搜索表单。然后在 views 中添加实现方法
 
 ```
 def mysearch(request):
   return render(request, 'blog/mysearch.html')
 ```
 
-
-
-在templates目录的应用目录下创一个`mysearch.html`
+在 templates 目录的应用目录下创一个`mysearch.html`
 
 ```
 {% block content %}
@@ -226,8 +207,6 @@ def mysearch(request):
 </form>
 {% endblock content %}
 ```
-
-
 
 运行项目，添加几篇文章，进行测试。通过`/mysearch`访问表单页面
 
@@ -241,31 +220,36 @@ def mysearch(request):
 
 {% asset_img 5.png %}
 
+# 改进 1
 
+不需要 mysearch.html，不用在应用的 urls 中配置，不用配置 views 的 mysearch 方法。
 
-# 改进1
-
-不需要mysearch.html，不用在应用的urls中配置，不用配置views的mysearch方法。
-
-> 注：使用的是MDUI前端UI
+> 注：使用的是 MDUI 前端 UI
 
 直接在网页中的搜索框中建立表单
 
 ```html
 <div class="mdui-col-xs-3">
   <div class="mdui-textfield mdui-textfield-expandable mdui-float-right">
-    <button class="mdui-textfield-icon mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">search</i></button>
+    <button class="mdui-textfield-icon mdui-btn mdui-btn-icon">
+      <i class="mdui-icon material-icons">search</i>
+    </button>
     <form method="get" target="_self" action="/search">
-      <input name="q" class="mdui-textfield-input" type="text" placeholder="Search"/>
+      <input
+        name="q"
+        class="mdui-textfield-input"
+        type="text"
+        placeholder="Search"
+      />
     </form>
-    <button class="mdui-textfield-close mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">close</i></button>
+    <button class="mdui-textfield-close mdui-btn mdui-btn-icon">
+      <i class="mdui-icon material-icons">close</i>
+    </button>
   </div>
 </div>
 ```
 
 {% asset_img 6.png %}
-
-
 
 **注：在简单实现中，搜索出的结果是无法进行超链接的。需要进行小的修改**
 
@@ -297,12 +281,8 @@ def mysearch(request):
 
 {% asset_img 7.png %}
 
-
-
-
-
 > 参考文章：
 >
-> [django-haystack(全文检索-jieba分词)](https://www.jianshu.com/p/8ad470cfe7cc)
+> [django-haystack(全文检索-jieba 分词)](https://www.jianshu.com/p/8ad470cfe7cc)
 >
 > [Django--全文检索功能](https://www.cnblogs.com/fuhuixiang/p/4488029.html)

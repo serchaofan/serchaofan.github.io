@@ -1,102 +1,107 @@
 ---
 title: Nginx笔记-1
 date: 2018-05-02 17:20:03
-tags: [server,Nginx,LNMP,集群,缓存,代理,负载均衡]
+tags: [server, Nginx, LNMP, 集群, 缓存, 代理, 负载均衡]
+categories: [应用运维]
 ---
+
 本篇包含以下知识点：
-* [Nginx介绍](#Nginx介绍)
-* [Nginx安装](#Nginx安装)
-* [Nginx配置文件解析](#Nginx配置文件解析)
-* [访问控制、身份认证与SSL](#访问控制、身份认证与SSL)
-* [Nginx日志](#Nginx日志)
-* [Nginx缓存](#Nginx缓存)
+
+- [Nginx 介绍](#Nginx介绍)
+- [Nginx 安装](#Nginx安装)
+- [Nginx 配置文件解析](#Nginx配置文件解析)
+- [访问控制、身份认证与 SSL](#访问控制、身份认证与SSL)
+- [Nginx 日志](#Nginx日志)
+- [Nginx 缓存](#Nginx缓存)
 
 <!-- more -->
 
-* [Nginx负载均衡](#Nginx负载均衡)
-* [Nginx反向代理](#Nginx反向代理)
-* [Nginx邮件服务](#Nginx邮件服务)
-* [重写与重定向](#重写与重定向)
-* [Nginx与PHP](#Nginx与PHP)
-* [防盗链](#防盗链)
-* [Nginx常见模块](#Nginx常见模块)
-* [Nginx配置简单优化]()
-* [LNMP分布式集群方案](#LNMP分布式集群方案)
-* [Docker部署LNMP]()
+- [Nginx 负载均衡](#Nginx负载均衡)
+- [Nginx 反向代理](#Nginx反向代理)
+- [Nginx 邮件服务](#Nginx邮件服务)
+- [重写与重定向](#重写与重定向)
+- [Nginx 与 PHP](#Nginx与PHP)
+- [防盗链](#防盗链)
+- [Nginx 常见模块](#Nginx常见模块)
+- [Nginx 配置简单优化]()
+- [LNMP 分布式集群方案](#LNMP分布式集群方案)
+- [Docker 部署 LNMP]()
 
+# Nginx 介绍
 
+Nginx 有以下功能：
 
-# Nginx介绍
-Nginx有以下功能：
-* 负载均衡
-* HTTP web服务器
-* http协议的反向代理服务器
-* pop3\smtp\imap4等邮件协议的反向代理
-* 能缓存打开的文件（元数据） ，支持FastCGI、uWSGI协议，作为缓存服务器
-* 模块化（非DSO机制），过滤器zip，SSI，SSL
+- 负载均衡
+- HTTP web 服务器
+- http 协议的反向代理服务器
+- pop3\smtp\imap4 等邮件协议的反向代理
+- 能缓存打开的文件（元数据） ，支持 FastCGI、uWSGI 协议，作为缓存服务器
+- 模块化（非 DSO 机制），过滤器 zip，SSI，SSL
 
 特性：
-* 模块化设计，较好扩展性
-* 高可靠性：master/worker支持多进程，也支持多线程
-* 支持热备份：不停机更新配置文件，更换日志，更新服务器程序版本
-* 低内存消耗：10000个 keep-alive连接模式下非活动连接仅消耗2.5M内存
-* 热部署（平滑升级）：旧的配置维持现状，新的配置立刻使用，并在使用中逐步自动将旧配置替换为新配置。
 
-**Nginx架构：**
-nginx会以daemon方式启动进程，后台进程包含一个master进程和多个worker进程。
-master进程用于启动管理多个worker进程，若取消master进程，则nginx会以单进程运行
-一个请求只能在一个worker进程中处理，一个worker进程只能处理一个请求。worker进程个数一般设置为cpu核数
+- 模块化设计，较好扩展性
+- 高可靠性：master/worker 支持多进程，也支持多线程
+- 支持热备份：不停机更新配置文件，更换日志，更新服务器程序版本
+- 低内存消耗：10000 个 keep-alive 连接模式下非活动连接仅消耗 2.5M 内存
+- 热部署（平滑升级）：旧的配置维持现状，新的配置立刻使用，并在使用中逐步自动将旧配置替换为新配置。
 
-* master：加载配置文件、管理worker进程、平滑升级
-* worker：http服务、http代理、fastcgi代理
-* 事件驱动：epoll      
-* 消息通知：select、poll、rt signals
-* 模块类型：核心模块、标准http模块、可选http模块、邮件模块、第三方模块
+**Nginx 架构：**
+nginx 会以 daemon 方式启动进程，后台进程包含一个 master 进程和多个 worker 进程。
+master 进程用于启动管理多个 worker 进程，若取消 master 进程，则 nginx 会以单进程运行
+一个请求只能在一个 worker 进程中处理，一个 worker 进程只能处理一个请求。worker 进程个数一般设置为 cpu 核数
+
+- master：加载配置文件、管理 worker 进程、平滑升级
+- worker：http 服务、http 代理、fastcgi 代理
+- 事件驱动：epoll
+- 消息通知：select、poll、rt signals
+- 模块类型：核心模块、标准 http 模块、可选 http 模块、邮件模块、第三方模块
 
 {% asset_img nginx_jiagou.png jiagou %}
 
-**Master进程完成的工作：**
+**Master 进程完成的工作：**
 
-* 读取并验证配置文件
-* 创建、绑定及关闭套接字
-* 启动、终止及维护worker进程
-* 无需终止服务而重新配置
-* 控制非中断式程序升级（平滑升级），启用新的二进制程序，并且能在需要时回滚到老版本
-* 重新打开日志文件
-* 可编译嵌入式perl脚本
+- 读取并验证配置文件
+- 创建、绑定及关闭套接字
+- 启动、终止及维护 worker 进程
+- 无需终止服务而重新配置
+- 控制非中断式程序升级（平滑升级），启用新的二进制程序，并且能在需要时回滚到老版本
+- 重新打开日志文件
+- 可编译嵌入式 perl 脚本
 
-**Worker进程完成的工作：**
+**Worker 进程完成的工作：**
 
-* 接收、传入并处理来自客户端的请求
-* 提供反向代理及过滤功能
+- 接收、传入并处理来自客户端的请求
+- 提供反向代理及过滤功能
 
 **请求过程：**
 
-1. 在master进程里面，先建立好需要listen的socket（listenfd）之后，然后再fork出多个worker进程
-2. 所有worker进程的listenfd会在新连接到来时变得可读，为**保证只有一个进程处理该连接**，所有worker进程在注册listenfd读事件前抢accept_mutex，抢到互斥锁的那个进程注册listenfd读事件，在读事件里调用accept接受该连接。
-3. 当一个worker进程在accept这个连接之后，就开始读取请求，解析请求，处理请求，产生数据后，再返回给客户端，最后才断开连接
+1. 在 master 进程里面，先建立好需要 listen 的 socket（listenfd）之后，然后再 fork 出多个 worker 进程
+2. 所有 worker 进程的 listenfd 会在新连接到来时变得可读，为**保证只有一个进程处理该连接**，所有 worker 进程在注册 listenfd 读事件前抢 accept_mutex，抢到互斥锁的那个进程注册 listenfd 读事件，在读事件里调用 accept 接受该连接。
+3. 当一个 worker 进程在 accept 这个连接之后，就开始读取请求，解析请求，处理请求，产生数据后，再返回给客户端，最后才断开连接
 
-**IO复用**：
+**IO 复用**：
 
-​	单进程模型：阻塞，一次仅处理一个请求，无法应对高并发场景
+​ 单进程模型：阻塞，一次仅处理一个请求，无法应对高并发场景
 
-​	多进程模型：每个进程响应一个请求。缺陷：当请求量庞大时，会占用大量CPU及内存资源，因为每个请求访问的页面都会单独缓存，若访问的页面相同，会造成内存使用效率低，且进程间切换会消耗大量CPU资源
+​ 多进程模型：每个进程响应一个请求。缺陷：当请求量庞大时，会占用大量 CPU 及内存资源，因为每个请求访问的页面都会单独缓存，若访问的页面相同，会造成内存使用效率低，且进程间切换会消耗大量 CPU 资源
 
-​	Linux原生并不支持线程，Windows和SunOS都支持。Linux将线程当做进程来处理，但称作LWP轻量级进程（Light Weight Process），Linux进行线程管理是通过调用各种线程库实现的。
+​ Linux 原生并不支持线程，Windows 和 SunOS 都支持。Linux 将线程当做进程来处理，但称作 LWP 轻量级进程（Light Weight Process），Linux 进行线程管理是通过调用各种线程库实现的。
 
-​	多线程单请求模型：每个线程响应一个请求。线程和进程类似，也需要切换，但线程是轻量级的进程，切换消耗的资源很小。且同一进程内的线程共享一片存储空间，若有访问同一资源的请求，也可直接从存储空间调用该资源。线程对内存资源的需求量也比进程要小。而如果CPU数量只有1个，则多线程的优势基本无法体现，只有在多颗CPU的情况下，多线程才能发挥出极高的效率。
+​ 多线程单请求模型：每个线程响应一个请求。线程和进程类似，也需要切换，但线程是轻量级的进程，切换消耗的资源很小。且同一进程内的线程共享一片存储空间，若有访问同一资源的请求，也可直接从存储空间调用该资源。线程对内存资源的需求量也比进程要小。而如果 CPU 数量只有 1 个，则多线程的优势基本无法体现，只有在多颗 CPU 的情况下，多线程才能发挥出极高的效率。
 
-​	多线程多请求模型：一个线程响应多个请求。
+​ 多线程多请求模型：一个线程响应多个请求。
 
-# Nginx安装
+# Nginx 安装
 
-在安装nginx前需要安装以下环境：
-* gcc与gcc-c++等，可直接组安装Development Tools
-* prce-devel(perl的正则表达库)
-* zlib与zlib-devel(资料压缩的函数库)
-* openssl与openssl-devel(安全套接字密码库)
+在安装 nginx 前需要安装以下环境：
 
-> **注：带devel的包是一定要安装的。**
+- gcc 与 gcc-c++等，可直接组安装 Development Tools
+- prce-devel(perl 的正则表达库)
+- zlib 与 zlib-devel(资料压缩的函数库)
+- openssl 与 openssl-devel(安全套接字密码库)
+
+> **注：带 devel 的包是一定要安装的。**
 
 创建系统用户组`groupadd -r nginx`
 创建系统`useradd -r nginx -M -g nginx`
@@ -117,18 +122,17 @@ master进程用于启动管理多个worker进程，若取消master进程，则ng
 	--group=nginx \  # 指定用户组
 	--http-log-path=/var/log/nginx/access.log \  # 运行日志位置
 	--error-log-path=/var/log/nginx/error.log \  # 报错日志
-	--http-client-body-temp-path=/var/tmp/nginx/client \  
+	--http-client-body-temp-path=/var/tmp/nginx/client \
 	# 指定客户端post上传的$_FILES上传的文件地址，该目录需要自己创
 	--with-http_ssl_module \   # 加载ssl模块，默认没加载
 	--with-http_stub_status_module \  # 加载监控模块
 	--with-http_gzip_static_module \  # 加载gzip压缩模块
 	--with-debug  # 允许debug
 ```
+
 之后`make && make install`
 
-
-
-也可以通过配置的yum源安装，此例是centos7的repo配置。然后直接`yum install`最新的版本。
+也可以通过配置的 yum 源安装，此例是 centos7 的 repo 配置。然后直接`yum install`最新的版本。
 
 ```
 [nginx]
@@ -138,9 +142,7 @@ gpgcheck=0
 enabled=1
 ```
 
-
-
-nginx命令
+nginx 命令
 
 ```
 nginx
@@ -155,31 +157,31 @@ nginx
   -q           #在配置测试期间不显示非错误消息
 ```
 
+# Nginx 配置文件解析
 
-
-# Nginx配置文件解析
 配置文件`/etc/nginx.conf`
 配置文件组织结构：
 
-* 全局配置：main
-* 模块配置：events，http，server，location
+- 全局配置：main
+- 模块配置：events，http，server，location
 
 **注：配置的每条指令的结尾必须加上分号`;`**
 
-
-
 ## 全局配置
 
-### main块
+### main 块
 
-* 正常运行配置：
+- 正常运行配置：
+
 ```
 user Username [Groupname]  # 指定运行worker进程的用户
 pid PATH  # 指定nginx进程的pid文件
 worker_rlimit_nofile   # 指定一个worker进程所能打开的最大文件描述符数量
 worker_rlimit_sigpending  # 指定每个用户能发给worker进程的最大的信号数量
 ```
-* 性能优化配置：
+
+- 性能优化配置：
+
 ```
 worker_processes  # worker进程个数，通常为物理CPU核心数量-1
 可填auto，自动使用所有CPU。
@@ -187,15 +189,17 @@ worker_cpu_affinity CPUMask # 指定使用的cpu，cpumask为cpu掩码。
 # cpumask：0001,0010,0100,1000
 work_priority NICE  # 指定nice值，即优先级
 ```
+
 `worker_processes`和`work_connections`决定了最大并发数量。最大并发量即为`worker_processes × work_connections`
 
-而在反向代理场景，因为nginx既要维持和客户端的连接，又要维持和后端服务器的连接，因此处理一次连接要占用2个连接，所以最大并发数为：`worker_processes × worker_connections/2`
+而在反向代理场景，因为 nginx 既要维持和客户端的连接，又要维持和后端服务器的连接，因此处理一次连接要占用 2 个连接，所以最大并发数为：`worker_processes × worker_connections/2`
 
-Nginx可能还会打开其他的连接，这些都会占用文件描述符，影响并发数量
+Nginx 可能还会打开其他的连接，这些都会占用文件描述符，影响并发数量
 
 最大并发数量还受"允许打开的最大文件描述符数量"限制，可以使用`worker_rlimit_nofile`指令修改。或直接通过`ulimit -n`修改
 
-* 调试定位配置：
+- 调试定位配置：
+
 ```
 daemon {on|off}  # 是否以守护进程方式启动
 master_process {on|off}  # 是否以master模型运行
@@ -206,8 +210,10 @@ error_log PATH [level]  # 错误日志文件路径及日志等级。
 ```
 
 ## 模块配置
-### events块
-`events { }`事件驱动，并发响应连接。控制Nginx处理连接的方式
+
+### events 块
+
+`events { }`事件驱动，并发响应连接。控制 Nginx 处理连接的方式
 包含以下配置：
 
 ```
@@ -216,17 +222,19 @@ use {epoll | select | poll }  # 选择使用事件类型，最好让nginx自动�
 accept_mutex {on|off}  # 是否开启负载均衡锁，启用时，表示让多个worker进程轮流响应请求。默认开启
 lock_file PATH   # 锁文件路径
 ```
-### http块
-`http { }`处理http响应的配置
 
-注：http块下的文件相对路径是相对于Nginx的配置文件目录
+### http 块
+
+`http { }`处理 http 响应的配置
+
+注：http 块下的文件相对路径是相对于 Nginx 的配置文件目录
 
 包含以下配置：
 
 ```
 #include  用于引入配置文件
 #设置mime.types文件路径，若是相对地址则是相对于nginx.conf配置文件
-include       mime.types;     
+include       mime.types;
 
 #default_type用于设置默认文件类型
 #若在编译时设置了配置文件目录，则此项路径为/usr/share/mime/application/octet-stream.xml
@@ -245,7 +253,7 @@ sendfile        on;
 #会将多个http首部打包为单个报文。用于防止网络阻塞，但会额外占用资源
 #tcp_nopush     on;
 
-tcp_nodelay {on| off} 
+tcp_nodelay {on| off}
 #tcp 有一个nagle算法，将多个小的数据块打包传输以提高带宽利用率。
 #有时只需要访问一个较小页面，但由于nagle算法，要等待其他响应以打包为大数据块，所以会等较长时间才会返回页面。对keepalive模式下连接是否使用tcp_nodelay。通常关闭。
 
@@ -253,20 +261,20 @@ tcp_nodelay {on| off}
 #keepalive_timeout  0;
 
 #设置keepalive连接上最大请求资源数，默认100
-keepalive_requests 数量      
+keepalive_requests 数量
 
 #指明禁止指定浏览器使用keepalive功能
 keepalive_disable {none|browser}
 
 #设置发送响应报文的超时时长，默认60s
-send_timeout  时长     
+send_timeout  时长
 
 #接收客户端报文body的缓冲区大小，默认8k（32位|16k--64位）超出该大小时，会被存储于磁盘
-client_body_buffer_size  数值     
+client_body_buffer_size  数值
 
 #指定存储客户端报文的路径及子目录的结构数量
 #就是编译时--http-client-body-temp-path指定的路径
-client_body_temp_path PATH {level1 | level2 | level3}   
+client_body_temp_path PATH {level1 | level2 | level3}
 #例：client_body_temp_path /var/tmp/client_body  2 2 表示该目录下有2层目录，每层有两个子目录
 
 
@@ -285,7 +293,7 @@ error_page   500 502 503 504  /50x.html;
 server { }  # 虚拟主机模块
 ```
 
-### server块
+### server 块
 
 ```
 #虚拟主机监听的本地端口和主机名
@@ -306,9 +314,9 @@ location /XXX {}  #location块
 #在响应首部中添加字段
 add_header 字段名 值
 
-try_files  [页面] [uri | =code] 
+try_files  [页面] [uri | =code]
 #设置尝试打开的文件，若都找不到再返回最后一个uri
-#最后一个uri必须存在，且必须由别的location定义，不能在当前的location中，否则会死循环 
+#最后一个uri必须存在，且必须由别的location定义，不能在当前的location中，否则会死循环
 #例：try_files $uri xxx.html 先找用户需要的uri，若找不到返回xxx.html
 
 #显示访问连接信息。
@@ -318,65 +326,61 @@ try_files  [页面] [uri | =code]
 #  stub_status;
 #}
 #便可通过域名/status 查看。
-Active connections: 164 
+Active connections: 164
 server accepts handled requests
- 7595 7595 7601 
-Reading: 0 Writing: 164 Waiting: 0 
+ 7595 7595 7601
+Reading: 0 Writing: 164 Waiting: 0
 # 当前活动连接数
 已接收的连接个数，已处理的连接个数，已经处理的请求个数
 正在读取客户端的Header个数（Reading），正在返回给客户端的Header个数（Writing），长连接或等待状态的请求个数（Waiting）（当开启Keepalive时，该值为Active-Reading-Writing）。
 ```
 
-### location块
+### location 块
 
-目录映射。允许根据用户请求的URI匹配定义的location，匹配到就按该location中的配置处理
+目录映射。允许根据用户请求的 URI 匹配定义的 location，匹配到就按该 location 中的配置处理
 
-location的第一个`/ `为root中指定路径的最后的` /`
+location 的第一个`/`为 root 中指定路径的最后的`/`
 
-`alias` 设置别名，用于定义路径别名，**只用于location配置段**。
+`alias` 设置别名，用于定义路径别名，**只用于 location 配置段**。
 
 ```
 location /images {
-  root /data/www/imgs/ ;      
+  root /data/www/imgs/ ;
   # 即表示在URL中访问/images即为访问服务器中/data/www/imgs/images/目录
   # root为将location接在root指定的路径后
 }
 location /images {
-  alias /data/www/imgs/ ;     
+  alias /data/www/imgs/ ;
   # 即表示在URL中访问/images即为访问服务器的/data/www/imgs/ 目录
   # alias为整段替换
 }
 ```
 
-与root和alias指令相关的变量为`$document_root`、`$realpath_root`。
+与 root 和 alias 指令相关的变量为`$document_root`、`$realpath_root`。
 
-**`$document_root`的值即是root指令、alias指令的值**
+**`$document_root`的值即是 root 指令、alias 指令的值**
 
-**`$realpath_root`的值是对root、alias指令进行绝对路径换算后的值**
-
-
+**`$realpath_root`的值是对 root、alias 指令进行绝对路径换算后的值**
 
 **`location`匹配**
 
-* 不带符号URI：匹配该资源目录下的所有资源
+- 不带符号 URI：匹配该资源目录下的所有资源
 
-* `=` URL精确匹配，只匹配该资源
+- `=` URL 精确匹配，只匹配该资源
 
-* `~` 正则表达式匹配，区分大小写
+- `~` 正则表达式匹配，区分大小写
 
-* `~*` 正则表达式匹配，不区分大小写（例如 `location ~* \.(gif|jpg)$` 匹配`.gif`或`jpg`结尾的文件）
+- `~*` 正则表达式匹配，不区分大小写（例如 `location ~* \.(gif|jpg)$` 匹配`.gif`或`jpg`结尾的文件）
 
-* `^~` URI左半部分匹配，非正则匹配，不区分大小写
+- `^~` URI 左半部分匹配，非正则匹配，不区分大小写
 
-**优先级：`=` > `^~`>`~`或`~*`> 不带符号的URI**
+**优先级：`=` > `^~`>`~`或`~*`> 不带符号的 URI**
 
-若要将Nginx作为文件存放服务器，在location块中添加`autoindex on;`即可，并且要确保文件存放的目录中没有首页文件。
+若要将 Nginx 作为文件存放服务器，在 location 块中添加`autoindex on;`即可，并且要确保文件存放的目录中没有首页文件。
 
+# 访问控制、身份认证与 SSL
 
-
-# 访问控制、身份认证与SSL
-
-Nginx的两个配置访问控制的指令`allow`和`deny`，由模块`ngx_http_access_module`提供。
+Nginx 的两个配置访问控制的指令`allow`和`deny`，由模块`ngx_http_access_module`提供。
 
 ```
 allow|deny  IP地址[/mask]
@@ -385,32 +389,28 @@ allow|deny  all
 
 若同一个块中同时配置了多条`deny`或`allow`，则先出现的访问权限生效。若多个块中都配置了权限指令，则内层的优先级高于外层的。
 
-被访问控制deny的IP地址访问时会返回**403**状态码。
+被访问控制 deny 的 IP 地址访问时会返回**403**状态码。
 
-
-
-Nginx的basic身份认证指令`auth_basic`和`auth_basic_user_file`由模块`ngx_http_auth_basic_module`提供。可配置在http、server、location块中
+Nginx 的 basic 身份认证指令`auth_basic`和`auth_basic_user_file`由模块`ngx_http_auth_basic_module`提供。可配置在 http、server、location 块中
 
 ```
 auth_basic  描述 | off;   是否开启http_basic对用户认证
 auth_basic_user_file  FILE;  指定用户认证的账号文件
 ```
 
-可通过Apache的工具`htpasswd`创建用户认证文件
+可通过 Apache 的工具`htpasswd`创建用户认证文件
 
 `htpasswd -c -m -b /etc/nginx/secret mike 123456`
 
+使用 SSL 将网站配置为 HTTPS
 
+注：如果是编译安装，需要在构建时添加`--with_http_ssl_module`支持 SSL。
 
-使用SSL将网站配置为HTTPS
-
-注：如果是编译安装，需要在构建时添加`--with_http_ssl_module`支持SSL。
-
-首先进入目录`/etc/pki/CA/private`下创建服务器RSA私钥，叫`server.key`。
+首先进入目录`/etc/pki/CA/private`下创建服务器 RSA 私钥，叫`server.key`。
 
 `openssl genrsa -out server.key 2048`
 
-生成服务器的CSR证书请求文件。CSR证书请求文件是服务器的公钥，用于提交给CA机构进行签名。
+生成服务器的 CSR 证书请求文件。CSR 证书请求文件是服务器的公钥，用于提交给 CA 机构进行签名。
 
 `openssl req -new -key server.key -out server.csr`按要求填写信息即可
 
@@ -422,29 +422,29 @@ Locality Name (eg, city) [Default City]:Yangzhou
 Common Name (eg, your name or your server's hostname) []:system3.example.com
 ```
 
-CSR参数含义：
+CSR 参数含义：
 
-| 参数                     | 说明                                |
-| ------------------------ | ----------------------------------- |
-| Country Name             | 符合ISO的两个字母的国家代码，中国CN |
-| State or Province Name   | 省份                                |
-| Locality Name            | 城市                                |
-| Organization Name        | 公司名                              |
-| Organizational Unit Name | 组织名/部门名                       |
-| Common Name              | 使用SSL加密的域名，不能填错         |
-| Email Address            | 邮箱，可省略                        |
-| A challenge password     | 有的CA机构需要此密码，通常省略即可  |
-| An optional company name | 可选的公司名，可省略                |
+| 参数                     | 说明                                   |
+| ------------------------ | -------------------------------------- |
+| Country Name             | 符合 ISO 的两个字母的国家代码，中国 CN |
+| State or Province Name   | 省份                                   |
+| Locality Name            | 城市                                   |
+| Organization Name        | 公司名                                 |
+| Organizational Unit Name | 组织名/部门名                          |
+| Common Name              | 使用 SSL 加密的域名，不能填错          |
+| Email Address            | 邮箱，可省略                           |
+| A challenge password     | 有的 CA 机构需要此密码，通常省略即可   |
+| An optional company name | 可选的公司名，可省略                   |
 
-CA为服务器认证证书
+CA 为服务器认证证书
 
 `openssl x509 -req -days 30 -in server.csr -signkey server.key -out server.crt`
 
-> 在CA用私钥签名了证书后，该证书将用于浏览器验证请求的网站是否真实，防止网络通信过程中被篡改。
+> 在 CA 用私钥签名了证书后，该证书将用于浏览器验证请求的网站是否真实，防止网络通信过程中被篡改。
 >
-> 浏览器保存了受信任的CA机构的公钥，在请求HTTPS网站时，会利用CA公钥验证服务器证书，并检查域名是否吻合、证书是否过期等。
+> 浏览器保存了受信任的 CA 机构的公钥，在请求 HTTPS 网站时，会利用 CA 公钥验证服务器证书，并检查域名是否吻合、证书是否过期等。
 
-在Nginx配置文件中设置https配置。Nginx配置文件中已默认存在SSL配置，只是注释了，取消注释，并修改crt文件路径即可。
+在 Nginx 配置文件中设置 https 配置。Nginx 配置文件中已默认存在 SSL 配置，只是注释了，取消注释，并修改 crt 文件路径即可。
 
 ```
     server {
@@ -470,7 +470,7 @@ CA为服务器认证证书
 }
 ```
 
-在`/etc/hosts`中确定配置了system3的条目。在浏览器上输入`https://system3.example.com`会说明此连接不安全。是因为当前的证书是服务器自己作为CA签名的，所以浏览器无法信任。点添加例外，可查看该证书，与配置的一致。
+在`/etc/hosts`中确定配置了 system3 的条目。在浏览器上输入`https://system3.example.com`会说明此连接不安全。是因为当前的证书是服务器自己作为 CA 签名的，所以浏览器无法信任。点添加例外，可查看该证书，与配置的一致。
 
 {% asset_img 1.png %}
 
@@ -478,39 +478,37 @@ CA为服务器认证证书
 
 添加安全例外后，即可访问网页
 
+# Nginx 日志
 
+关于 Nginx 日志的指令如下：
 
-# Nginx日志
-
-关于Nginx日志的指令如下：
-
-* `log_format`：日志格式。格式：`log_format 格式名 格式（由变量组成）`，默认格式如下：
+- `log_format`：日志格式。格式：`log_format 格式名 格式（由变量组成）`，默认格式如下：
 
   `'$remote_addr - $remote_user [$time_local] "$request" ' '$status $body_bytes_sent "$http_referer" ' '"$http_user_agent" "$http_x_forwarded_for"'`
 
-  * `$remote_addr`：客户端的地址。如果Nginx服务器在后端，则该变量只能获取到前端（代理或负载均衡服务器）的IP地址
-  * `$remote_user`：远程客户端用户名称
-  * `$time_local`：记录访问时间和时区信息
-  * `$request`：记录用户访问时的url和http协议信息
-  * `$status`：记录客户端请求时返回的状态码
-  * `$body_bytes_sent`：记录服务器响应给客户端的主体大小
-  * `$http_referer`：记录此次请求是从哪个链接过来的，需要模块`ngx_http_referer_module`支持，默认已装，可以防止盗链问题
-  * `$http_user_agent`：记录客户端的浏览器信息。如使用什么浏览器发起的请求，是否是压力测试工具在测试等
-  * `$http_x_forward_for`：若要在`$remote_addr`中获取的是真正客户端的IP，则要添加此项，并且在前端的服务器要开启`x_forward_for`
+  - `$remote_addr`：客户端的地址。如果 Nginx 服务器在后端，则该变量只能获取到前端（代理或负载均衡服务器）的 IP 地址
+  - `$remote_user`：远程客户端用户名称
+  - `$time_local`：记录访问时间和时区信息
+  - `$request`：记录用户访问时的 url 和 http 协议信息
+  - `$status`：记录客户端请求时返回的状态码
+  - `$body_bytes_sent`：记录服务器响应给客户端的主体大小
+  - `$http_referer`：记录此次请求是从哪个链接过来的，需要模块`ngx_http_referer_module`支持，默认已装，可以防止盗链问题
+  - `$http_user_agent`：记录客户端的浏览器信息。如使用什么浏览器发起的请求，是否是压力测试工具在测试等
+  - `$http_x_forward_for`：若要在`$remote_addr`中获取的是真正客户端的 IP，则要添加此项，并且在前端的服务器要开启`x_forward_for`
 
-* `access_log`：访问日志的路径和采用的日志格式名。格式：`access_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]];`。若不指定格式名，默认为combined。buffer为日志缓冲区的大小，默认64K。flush为日志刷盘时间，即日志保存在缓冲区的最大时间。gzip为日志刷盘前是否压缩以及压缩级别。if指定条件。
+- `access_log`：访问日志的路径和采用的日志格式名。格式：`access_log path [format [buffer=size] [gzip[=level]] [flush=time] [if=condition]];`。若不指定格式名，默认为 combined。buffer 为日志缓冲区的大小，默认 64K。flush 为日志刷盘时间，即日志保存在缓冲区的最大时间。gzip 为日志刷盘前是否压缩以及压缩级别。if 指定条件。
 
-* `open_log_file_cache`：设置日志文件缓存。默认关闭，即每一条日志都是打开文件，写入后关闭，这样会消耗一定量的IO。而设置了缓存后，会等日志数量达到一个指标后一下写入日志文件。
+- `open_log_file_cache`：设置日志文件缓存。默认关闭，即每一条日志都是打开文件，写入后关闭，这样会消耗一定量的 IO。而设置了缓存后，会等日志数量达到一个指标后一下写入日志文件。
 
-  格式：`open_log_file_cache max=N [inactive=time] [min_uses=N] [valid=time];`。其中max为缓存中的最大文件描述符数量。inactive为存活时间，默认是10s。min_uses为在inactive时间段内，日志文件最少使用多少次后，该日志文件描述符记入缓存中，默认是1次。valid为检查频率，默认60s。
+  格式：`open_log_file_cache max=N [inactive=time] [min_uses=N] [valid=time];`。其中 max 为缓存中的最大文件描述符数量。inactive 为存活时间，默认是 10s。min_uses 为在 inactive 时间段内，日志文件最少使用多少次后，该日志文件描述符记入缓存中，默认是 1 次。valid 为检查频率，默认 60s。
 
-* `log_subrequest`：是否在access.log中记录子请求的访问日志。默认不记录
+- `log_subrequest`：是否在 access.log 中记录子请求的访问日志。默认不记录
 
-* `rewrite_log`：是否在error.log中记录notice级别的重写日志。默认关闭
+- `rewrite_log`：是否在 error.log 中记录 notice 级别的重写日志。默认关闭
 
 ## 日志切割
 
-默认Nginx不会自动切割日志。
+默认 Nginx 不会自动切割日志。
 
 **手动切割**：
 
@@ -521,7 +519,7 @@ nginx -s reopen
 
 **自动切割**：
 
-创建shell脚本
+创建 shell 脚本
 
 ```
 #!/bin/bash
@@ -538,28 +536,24 @@ NEW_ACCESS_LOG=/var/log/nginx/access-$(date -d yesterday +%Y%m%d).log
 0 0 * * * /bin/sh XXX.sh &> /dev/null   #每天晚上12点切割日志
 ```
 
-
-
-# Nginx的其他常见HTTP功能
+# Nginx 的其他常见 HTTP 功能
 
 ## 文件查找规则
 
 Nginx 为了响应一个请求，它将请求传递给一个内容处理程序，由配置文件中的`location`指令决定处理。
 
-**无条件内容处理程序**首先被尝试 ：`perl` 、`proxy_pass`、`flv`、`mp4`等。如果这些处理程序都不匹配，那么 Nginx 会将该请求按顺序传递给下列操作之一，顺序依次是 ：`random index` 、 `index` 、 `autoindex` 、` gzip_static`、 `static` 。 
+**无条件内容处理程序**首先被尝试 ：`perl` 、`proxy_pass`、`flv`、`mp4`等。如果这些处理程序都不匹配，那么 Nginx 会将该请求按顺序传递给下列操作之一，顺序依次是 ：`random index` 、 `index` 、 `autoindex` 、`gzip_static`、 `static` 。
 
 **处理以斜线结束请求的是 index 处理程序**。如果 gzip 没有被激活，那么 static 模块会处理该请求。
 
-这些模块如何在文件系统上找到适当的文件或者目录则由某些指令组合来决定。**` root` 指令最好定义在一个默认的 `server` 指令内 ， 或者至少在一个特定的 `location` 指令之外定义，以便它的有效界限为整个 server。**
-
-
+这些模块如何在文件系统上找到适当的文件或者目录则由某些指令组合来决定。**`root` 指令最好定义在一个默认的 `server` 指令内 ， 或者至少在一个特定的 `location` 指令之外定义，以便它的有效界限为整个 server。**
 
 文件路径指令：
 
-| 指令      | 说明                                                         |
-| --------- | ------------------------------------------------------------ |
-| root      | 设置文档根目录，URI后设置，可在文件系统中找到具体文件        |
-| try_files | 测试文件的存在性，若前面的文件没找到，则最后的条目作为备用，需要确保最后一个路径或location存在 |
+| 指令      | 说明                                                                                             |
+| --------- | ------------------------------------------------------------------------------------------------ |
+| root      | 设置文档根目录，URI 后设置，可在文件系统中找到具体文件                                           |
+| try_files | 测试文件的存在性，若前面的文件没找到，则最后的条目作为备用，需要确保最后一个路径或 location 存在 |
 
 例：
 
@@ -569,16 +563,14 @@ location / {
 }
 ```
 
-
-
 ## 域名解析
 
-| 指令             | 说明                                                         |
-| ---------------- | ------------------------------------------------------------ |
-| resolver         | 设置一个或多个域名解析服务器。可选valid参数，会覆盖域名记录的TTL |
-| resolver_timeout | 当解析服务器不可达时的等待时间，尽量设置的小。目前只适用于商业订阅 |
+| 指令             | 说明                                                                |
+| ---------------- | ------------------------------------------------------------------- |
+| resolver         | 设置一个或多个域名解析服务器。可选 valid 参数，会覆盖域名记录的 TTL |
+| resolver_timeout | 当解析服务器不可达时的等待时间，尽量设置的小。目前只适用于商业订阅  |
 
-该指令需要配置在server块中
+该指令需要配置在 server 块中
 
 ```
 server {
@@ -587,33 +579,27 @@ server {
 }
 ```
 
-
-
 ## 客户端交互
 
 Nginx 与客户端交互的方式有多种，这些方式可以从连接本身 （IP 地址、超时、存活时间等）到内容协商头的属性。
 
-| 指令                   | 说明                                                         |
-| ---------------------- | ------------------------------------------------------------ |
-| default_type           | 设置响应的默认MIME类型。只有文件的MIME类型不匹配任何types，才会用此项 |
-| types                  | 设置MIME类型到文件扩展名的映射，一般不用设置。只需要载入`conf/mime.types`即可 |
-| ignore_invalid_headers | 禁止忽略无效名字的头。一个有效的名字由ASCII字母、数字、连字符号组成 |
-| recursie_error_pages   | 启用error_page实现多个重定向                                 |
+| 指令                   | 说明                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| default_type           | 设置响应的默认 MIME 类型。只有文件的 MIME 类型不匹配任何 types，才会用此项      |
+| types                  | 设置 MIME 类型到文件扩展名的映射，一般不用设置。只需要载入`conf/mime.types`即可 |
+| ignore_invalid_headers | 禁止忽略无效名字的头。一个有效的名字由 ASCII 字母、数字、连字符号组成           |
+| recursie_error_pages   | 启用 error_page 实现多个重定向                                                  |
 
+# Nginx 缓存
 
+Nginx 的模块`ngx_http_proxy_module`自带缓存功能，Nginx 可实现几种缓存：网页内容缓存，日志缓存，打开文件缓存，fastcgi 缓存。Nginx 的缓存功能主要由`proxy_chache`相关的命令集和`fastcgi_cache`相关命令集构成，前者用于反向代理，后者用于对 FastCGI 缓存。
 
+需要下载第三方的 Nginx 模块`ngx_cache_purge`，用于清除指定的 URL 缓存，[下载地址](http://labs.frickle.com/nginx_ngx_cache_purge/)
 
-
-# Nginx缓存
-
-Nginx的模块`ngx_http_proxy_module`自带缓存功能，Nginx可实现几种缓存：网页内容缓存，日志缓存，打开文件缓存，fastcgi缓存。Nginx的缓存功能主要由`proxy_chache`相关的命令集和`fastcgi_cache`相关命令集构成，前者用于反向代理，后者用于对FastCGI缓存。
-
-需要下载第三方的Nginx模块`ngx_cache_purge`，用于清除指定的URL缓存，[下载地址](http://labs.frickle.com/nginx_ngx_cache_purge/)
-
-下载后解压，然后重新编译Nginx，通过`nginx -V`查看编译选项，复制过去然后加上解压后的模块目录（不是里面的.c文件）
+下载后解压，然后重新编译 Nginx，通过`nginx -V`查看编译选项，复制过去然后加上解压后的模块目录（不是里面的.c 文件）
 
 ```
-./configure  
+./configure
 ........
    --add-module=/root/ngx_cache_purge-2.3
 ```
@@ -626,39 +612,35 @@ adding module in /root/ngx_cache_purge-2.3
  + ngx_http_cache_purge_module was configured
 ```
 
-然后**只要`make`就行，不能`make install`，不然就是重新安装Nginx了**
+然后**只要`make`就行，不能`make install`，不然就是重新安装 Nginx 了**
 
-最后还要替换nginx启动文件，在重新编译后，nginx的下载目录中有个`objs`目录，将里面的`nginx`启动脚本复制到`/usr/sbin/`下，替换原来的`nginx`
+最后还要替换 nginx 启动文件，在重新编译后，nginx 的下载目录中有个`objs`目录，将里面的`nginx`启动脚本复制到`/usr/sbin/`下，替换原来的`nginx`
 
 ```
-rm -f /usr/sbin/nginx 
+rm -f /usr/sbin/nginx
 cp /root/nginx-1.14.0/objs/nginx /usr/sbin/
 ```
 
 通过`nginx -V`查看，`--add-module=/root/ngx_cache_purge-2.3`已成功编译
 
+Nginx 自带的缓存相关指令有三个：
 
+- `proxy_cache_path`：配置缓存存放路径。常用格式：`proxy_cache_path path [levels=levels] keys_zone=name:size [max_size=size] [inactive=time];`。
+  - `levels`：缓存目录级别以及缓存目录名的字符数，数字间用冒号分隔。最多可有三层目录，目录名最多两个字符。例：`levels=1:2:2`表示一共三层目录，第一层目录名 1 字符，第二和第三层目录名为 2 字符。
+  - `keys_zone`：缓存标识名和内存中缓存的最大空间。名字必须唯一。可在`keys_zone`的值后加上`:内存缓存空间`指定内存中的缓存空间大小
+  - `max_size`：磁盘中缓存目录的最大空间
+  - `inactive`：缓存的默认时长，到达指定时间却没被访问的缓存会被自动删除
+- `proxy_cache`：指定要使用的缓存方法，使用`proxy_cache_path`中`keys_zone`指定的名称。格式：`proxy_cache 缓存标识名;`
+- `proxy_cache_valid`：根据状态码指定缓存有效期。格式：`proxy_cache_valid 状态码（可指定多个，或直接指定any） 时间（支持m|h等时间单位）;`
 
-Nginx自带的缓存相关指令有三个：
-
-* `proxy_cache_path`：配置缓存存放路径。常用格式：`proxy_cache_path path [levels=levels] keys_zone=name:size [max_size=size] [inactive=time];`。
-  * `levels`：缓存目录级别以及缓存目录名的字符数，数字间用冒号分隔。最多可有三层目录，目录名最多两个字符。例：`levels=1:2:2`表示一共三层目录，第一层目录名1字符，第二和第三层目录名为2字符。
-  * `keys_zone`：缓存标识名和内存中缓存的最大空间。名字必须唯一。可在`keys_zone`的值后加上`:内存缓存空间`指定内存中的缓存空间大小
-  * `max_size`：磁盘中缓存目录的最大空间
-  * `inactive`：缓存的默认时长，到达指定时间却没被访问的缓存会被自动删除
-* `proxy_cache`：指定要使用的缓存方法，使用`proxy_cache_path`中`keys_zone`指定的名称。格式：`proxy_cache 缓存标识名;`
-* `proxy_cache_valid`：根据状态码指定缓存有效期。格式：`proxy_cache_valid 状态码（可指定多个，或直接指定any） 时间（支持m|h等时间单位）;`
-
-
-
-在配置文件添加缓存配置。首先在http块下（server块外）添加缓存路径，路径可根据需要自定义
+在配置文件添加缓存配置。首先在 http 块下（server 块外）添加缓存路径，路径可根据需要自定义
 
 ```
 proxy_temp_path   /data/ngxcache/proxy_temp_dir;
 proxy_cache_path  /data/ngxcache/proxy_cache_dir levels=1:2 keys_zone=cache_one:1000m max_size=1g;
 ```
 
-然后在server块中的location块添加其余的缓存配置
+然后在 server 块中的 location 块添加其余的缓存配置
 
 ```
 location / {
@@ -669,7 +651,7 @@ location / {
 }
 ```
 
-当开启缓存后，Nginx会生成进程`cache_manager`对缓存进行管理。
+当开启缓存后，Nginx 会生成进程`cache_manager`对缓存进行管理。
 
 ```
 nginx      1359   1356  0 11:23 ?        00:00:00 nginx: cache manager process
@@ -678,15 +660,15 @@ nginx      1360   1356  0 11:23 ?        00:00:00 nginx: cache loader process
 
 可在`server`块中添加`add_header X-Cache $upstream_cache_status;`，该参数用于显示缓存状态返回值，一共有七种：
 
-| 返回值      | 说明                                                         |
-| ----------- | ------------------------------------------------------------ |
-| HIT         | 缓存                                                         |
-| MISS        | 未命中，请求被传送到后端                                     |
-| EXPIRED     | 缓存已过期，请求被传到后端                                   |
-| UPDATING    | 正在更新缓存，将使用旧的应答                                 |
-| STALE       | 无法从后端服务器更新缓存时，返回了旧的缓存                   |
-| BYPASS      | 缓存被绕过了                                                 |
-| REVALIDATED | 在启用proxy_cache_revalidate后，当缓存内容过期后时，Nginx通过一次If-Modified-Since的请求头去验证缓存内容是否过期，此时会返回该状态 |
+| 返回值      | 说明                                                                                                                                    |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| HIT         | 缓存                                                                                                                                    |
+| MISS        | 未命中，请求被传送到后端                                                                                                                |
+| EXPIRED     | 缓存已过期，请求被传到后端                                                                                                              |
+| UPDATING    | 正在更新缓存，将使用旧的应答                                                                                                            |
+| STALE       | 无法从后端服务器更新缓存时，返回了旧的缓存                                                                                              |
+| BYPASS      | 缓存被绕过了                                                                                                                            |
+| REVALIDATED | 在启用 proxy_cache_revalidate 后，当缓存内容过期后时，Nginx 通过一次 If-Modified-Since 的请求头去验证缓存内容是否过期，此时会返回该状态 |
 
 ```
 add_header X-Cache "$upstream_cache_status from $server_addr";
@@ -713,11 +695,11 @@ server {
 }
 ```
 
-通过浏览器访问`http://web`。如果是第一次访问，会发现状态是MISS
+通过浏览器访问`http://web`。如果是第一次访问，会发现状态是 MISS
 
 {% asset_img 5.png %}
 
-若再次访问，则状态会变为HIT。
+若再次访问，则状态会变为 HIT。
 
 {% asset_img 6.png %}
 
@@ -735,43 +717,39 @@ server {
 
 另外常用的三种缓存：
 
-* `open_log_cache`：日志缓存
-* `open_file_cache`：文件缓存
-* `fastcgi_cache`：fastcgi缓存
+- `open_log_cache`：日志缓存
+- `open_file_cache`：文件缓存
+- `fastcgi_cache`：fastcgi 缓存
 
+# Nginx 负载均衡
 
+Nginx 提供负载均衡模块`ngx_http_upstream_module`，且 Nginx 有四种典型的负载均衡配置方式。
 
-# Nginx负载均衡
+| 配置方式               | 说明                                                                                                                                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 轮询 round-robin       | 默认配置方式，每个请求按照时间顺序逐一分配到不同后端服务器                                                                                                                                                               |
+| 权重                   | 利用 weight 指定轮询的权重比率，weight 与访问比率成正比。用于后端服务器性能不均的情况                                                                                                                                    |
+| ip_hash                | 每个请求按访问 IP 的 hash 结果分配，使每个访客固定访问一个后端服务器，可解决 Session 问题                                                                                                                                |
+| fair（第三方）         | 按后端服务器响应时间来分配请求，响应时间短的优先                                                                                                                                                                         |
+| url_hash（第三方）     | 按访问 URL 的哈希结果来分配请求，使每个 URL 固定访问一个后端服务器。适用于后端服务器做缓存的情况                                                                                                                         |
+| 一致性 Hash（Tengine） | 将每个服务器虚拟成 N 个节点，均匀分布在哈希环上，每次请求时会根据配置参数计算出一个 Hash，在哈希环上查找离这个哈希值最近的虚拟节点，对应服务器作为该次请求的后端服务器。好处：若增加或减少了机器，对整个集群的影响会最小 |
 
-Nginx提供负载均衡模块`ngx_http_upstream_module`，且Nginx有四种典型的负载均衡配置方式。
+Nginx 作负载均衡的优点：
 
-| 配置方式              | 说明                                                         |
-| --------------------- | ------------------------------------------------------------ |
-| 轮询round-robin       | 默认配置方式，每个请求按照时间顺序逐一分配到不同后端服务器   |
-| 权重                  | 利用weight指定轮询的权重比率，weight与访问比率成正比。用于后端服务器性能不均的情况 |
-| ip_hash               | 每个请求按访问IP的hash结果分配，使每个访客固定访问一个后端服务器，可解决Session问题 |
-| fair（第三方）        | 按后端服务器响应时间来分配请求，响应时间短的优先             |
-| url_hash（第三方）    | 按访问URL的哈希结果来分配请求，使每个URL固定访问一个后端服务器。适用于后端服务器做缓存的情况 |
-| 一致性Hash（Tengine） | 将每个服务器虚拟成N个节点，均匀分布在哈希环上，每次请求时会根据配置参数计算出一个Hash，在哈希环上查找离这个哈希值最近的虚拟节点，对应服务器作为该次请求的后端服务器。好处：若增加或减少了机器，对整个集群的影响会最小 |
-
-Nginx作负载均衡的优点：
-
-* 配置简单
-* 成本低
-* 支持Rewrite重写规则
-* 有内置的健康检查功能
-* 节省带宽：支持Gzip，可添加浏览器本地缓存的Header
-* 稳定性高：高并发的情况下也基本不会宕机
-
-
+- 配置简单
+- 成本低
+- 支持 Rewrite 重写规则
+- 有内置的健康检查功能
+- 节省带宽：支持 Gzip，可添加浏览器本地缓存的 Header
+- 稳定性高：高并发的情况下也基本不会宕机
 
 ## 轮询
 
 实验环境：
 
-* 负载均衡器：172.16.246.133
-* 后端服务器1：172.16.246.134
-* 后端服务器2：172.16.246.135
+- 负载均衡器：172.16.246.133
+- 后端服务器 1：172.16.246.134
+- 后端服务器 2：172.16.246.135
 
 仅需在负载均衡服务器上配置
 
@@ -806,7 +784,7 @@ WEB2
 
 ## 权重
 
-仍在负载均衡器上配置，仅修改upstream块
+仍在负载均衡器上配置，仅修改 upstream 块
 
 ```
 upstream sys1.example.com {
@@ -815,13 +793,13 @@ upstream sys1.example.com {
 }
 ```
 
-| 参数         | 说明                                                         |
-| ------------ | ------------------------------------------------------------ |
-| weight       | 权重                                                         |
-| max_fails    | 允许请求失败次数，默认为1。当超过最大次数时，返回proxy_next_upstream指令定义的错误 |
-| fail_timeout | 在经历max_fails次失败后，暂停服务的时间                      |
-| backup       | 预备备份机器，当所有其他主机都down后，就会启用该主机         |
-| down         | 指定的server暂不参与负载均衡                                 |
+| 参数         | 说明                                                                                  |
+| ------------ | ------------------------------------------------------------------------------------- |
+| weight       | 权重                                                                                  |
+| max_fails    | 允许请求失败次数，默认为 1。当超过最大次数时，返回 proxy_next_upstream 指令定义的错误 |
+| fail_timeout | 在经历 max_fails 次失败后，暂停服务的时间                                             |
+| backup       | 预备备份机器，当所有其他主机都 down 后，就会启用该主机                                |
+| down         | 指定的 server 暂不参与负载均衡                                                        |
 
 查看现象
 
@@ -859,13 +837,11 @@ WEB2
 WEB2
 ```
 
-每个IP地址绑定一个web服务器，可能会导致某些web服务器负载很大，有的很少，反而无法保证负载均衡。
+每个 IP 地址绑定一个 web 服务器，可能会导致某些 web 服务器负载很大，有的很少，反而无法保证负载均衡。
 
+upstream 块补充指令：
 
-
-upstream块补充指令：
-
-* `keepalive`：指定每个worker进程缓存到上游服务器的连接数。需要先将`proxy_http_version`设为1.1，`proxy_set_header`设为`Connection ""`
+- `keepalive`：指定每个 worker 进程缓存到上游服务器的连接数。需要先将`proxy_http_version`设为 1.1，`proxy_set_header`设为`Connection ""`
 
   ```
   upstream apache {
@@ -879,21 +855,17 @@ upstream块补充指令：
   }
   ```
 
-* `least_conn`：直接激活最少连接算法，将请求发送至活跃连接数最少的服务器。
+- `least_conn`：直接激活最少连接算法，将请求发送至活跃连接数最少的服务器。
 
+# Nginx 反向代理
 
-
-# Nginx反向代理
-
-在模块`ngx_http_proxy_module`中与Nginx反向代理有关的指令：`proxy_pass`，用于设置后端服务器的地址，仅用于`location`块。可以设置代理服务器的协议和地址以及映射位置的可选URI。
-
-
+在模块`ngx_http_proxy_module`中与 Nginx 反向代理有关的指令：`proxy_pass`，用于设置后端服务器的地址，仅用于`location`块。可以设置代理服务器的协议和地址以及映射位置的可选 URI。
 
 实验环境：
 
-* 代理服务器：172.16.246.133
-* 后端服务器1：172.16.246.134
-* 后端服务器2：172.16.246.135
+- 代理服务器：172.16.246.133
+- 后端服务器 1：172.16.246.134
+- 后端服务器 2：172.16.246.135
 
 只需要在代理服务器上配置即可
 
@@ -914,7 +886,7 @@ upstream块补充指令：
     }
 ```
 
-然后在本机上配置hosts文件
+然后在本机上配置 hosts 文件
 
 ```
 172.16.246.133  web1 web2
@@ -937,11 +909,9 @@ location ~* \.php$ {
 }
 ```
 
-
-
 补充指令：
 
-* **`proxy_set_header`**：在将客户端请求转交给后端服务器前，更改请求头信息。默认只重新定义了两个字段
+- **`proxy_set_header`**：在将客户端请求转交给后端服务器前，更改请求头信息。默认只重新定义了两个字段
 
   ```
   proxy_set_header Host       $proxy_host;
@@ -957,48 +927,48 @@ location ~* \.php$ {
   proxy_set_header Connection close;
   ```
 
-  若设置了`X-Real-IP`，且后端服务器是httpd，则可以修改httpd配置文件中的`LogFormat`，添加一个`%{X-Real-IP}i`。而若后端是Nginx，则不用修改了，因为Nginx的`log_format`中已默认配置了`$remote_addr`，即客户端IP。
+  若设置了`X-Real-IP`，且后端服务器是 httpd，则可以修改 httpd 配置文件中的`LogFormat`，添加一个`%{X-Real-IP}i`。而若后端是 Nginx，则不用修改了，因为 Nginx 的`log_format`中已默认配置了`$remote_addr`，即客户端 IP。
 
   如果启用了缓存，则标题字段为“If-Modified-Since”，“If-Unmodified-Since”，“If-None-Match”，“If-Match”，“Range”和“If-Range”来自原始请求不会传递给代理服务器。
 
-* **`proxy_connect_timeout`**：配置Nginx与后端代理服务器尝试连接的超时时间，默认60s，且通常不会大于75秒。
+- **`proxy_connect_timeout`**：配置 Nginx 与后端代理服务器尝试连接的超时时间，默认 60s，且通常不会大于 75 秒。
 
   ```
   proxy_connect_timeout  30;
   ```
 
-* **`proxy_read_timeout`**：配置Nginx向后端服务器组发出read请求后，等待响应的超时时间。仅在**两个连续的读操作之间**设置超时，而不是整个响应。如果代理服务器在此时间内未传输任何内容，则关闭连接。默认为60秒。
+- **`proxy_read_timeout`**：配置 Nginx 向后端服务器组发出 read 请求后，等待响应的超时时间。仅在**两个连续的读操作之间**设置超时，而不是整个响应。如果代理服务器在此时间内未传输任何内容，则关闭连接。默认为 60 秒。
 
   ```
   proxy_read_timeout  15;
   ```
 
-* **`proxy_send_timeout`**：配置Nginx向后端服务器组发出write请求后，等待响应的超时时间。仅在**两个连续的写操作之间**设置超时，而不是整个请求。如果代理服务器在此时间内未收到任何内容，则关闭连接。默认为60秒。
+- **`proxy_send_timeout`**：配置 Nginx 向后端服务器组发出 write 请求后，等待响应的超时时间。仅在**两个连续的写操作之间**设置超时，而不是整个请求。如果代理服务器在此时间内未收到任何内容，则关闭连接。默认为 60 秒。
 
   ```
   proxy_send_timeout  15;
   ```
 
-* **`proxy_redirect`**：用于修改后端服务器返回的响应头中的Location和Refresh
+- **`proxy_redirect`**：用于修改后端服务器返回的响应头中的 Location 和 Refresh
 
   ```
   proxy_redirect  off;
   ```
 
-* **`proxy_buffer_size`**：用于读取从代理服务器接收的响应的第一部分的**缓冲区的大小**，这部分通常包含一个小的响应头。默认情况下，缓冲区大小等于一个内存页面，默认为4K或8K。
+- **`proxy_buffer_size`**：用于读取从代理服务器接收的响应的第一部分的**缓冲区的大小**，这部分通常包含一个小的响应头。默认情况下，缓冲区大小等于一个内存页面，默认为 4K 或 8K。
 
   ```
   proxy_buffer_size  4k;
   ```
 
-* **`proxy_buffers`**：用于从代理服务器读取响应的缓冲区的数量(number)和大小(size)，用于单个连接。默认情况下，缓冲区大小等于一个内存页面。默认为4K或8K。语法：`proxy_buffers number size;`
+- **`proxy_buffers`**：用于从代理服务器读取响应的缓冲区的数量(number)和大小(size)，用于单个连接。默认情况下，缓冲区大小等于一个内存页面。默认为 4K 或 8K。语法：`proxy_buffers number size;`
 
   ```
   proxy_buffers  32  4k;
-  # 那么最多支持的并发活动连接数 = 分配给nginx的内存量（字节）/ (number×size×1024) 
+  # 那么最多支持的并发活动连接数 = 分配给nginx的内存量（字节）/ (number×size×1024)
   ```
 
-* **`proxy_temp_file_write_size`**：当启用从代理服务器到临时文件的响应缓冲时，限制一次写入临时文件的数据大小。默认情况下，size由`proxy_buffer_size`和`proxy_buffers`指令设置的两个缓冲区限制。默认为8k或16k。
+- **`proxy_temp_file_write_size`**：当启用从代理服务器到临时文件的响应缓冲时，限制一次写入临时文件的数据大小。默认情况下，size 由`proxy_buffer_size`和`proxy_buffers`指令设置的两个缓冲区限制。默认为 8k 或 16k。
 
   ```
   proxy_temp_file_write_size  64k;
@@ -1006,13 +976,11 @@ location ~* \.php$ {
 
 可以讲这些代理指令单独存放为一个配置文件，然后在主配置文件的代理块中`include`应用。
 
+## 非 HTTP 型上游服务器
 
+### Memcached 服务器
 
-## 非HTTP型上游服务器
-
-### Memcached服务器
-
-Nginx提供memcached模块并默认开启，用于与memcached守护进程通信，此时Nginx并不是充当反向代理，而是使Nginx使用memcached协议会话，因此key的查询能够在请求传递到应用服务器之前完成。
+Nginx 提供 memcached 模块并默认开启，用于与 memcached 守护进程通信，此时 Nginx 并不是充当反向代理，而是使 Nginx 使用 memcached 协议会话，因此 key 的查询能够在请求传递到应用服务器之前完成。
 
 ```
 upstream memcaches {
@@ -1027,13 +995,11 @@ server {
 }
 ```
 
-`memcached_pass`将使用`$memcached_key`变量实现key查找。
+`memcached_pass`将使用`$memcached_key`变量实现 key 查找。
 
+### FastCGI 服务器
 
-
-### FastCGI服务器
-
-fastcgi模块也是默认开启。开启后Nginx可使用FastCGI协议与多个上游服务器会话。
+fastcgi 模块也是默认开启。开启后 Nginx 可使用 FastCGI 协议与多个上游服务器会话。
 
 ```
 upstream fastcgis {
@@ -1045,25 +1011,19 @@ location / {
 }
 ```
 
+SCGI 与 uWSGI 服务器与 FastCGI 类似，分别使用`scgi_pass`与`uwsgi_pass`指定上游服务器。
 
+# Nginx 邮件服务
 
-SCGI与uWSGI服务器与FastCGI类似，分别使用`scgi_pass`与`uwsgi_pass`指定上游服务器。
+Nginx 提供邮件代理服务，能代理 POP3、IMAP、SMTP。
 
-
-
-# Nginx邮件服务
-
-Nginx提供邮件代理服务，能代理POP3、IMAP、SMTP。
-
-每一个进入的请求都会基于相应的协议处理，对于每一个协议，Nginx都需要一个用户名密码认证服务，如果认证成功，则连接被代理到邮件服务器。
+每一个进入的请求都会基于相应的协议处理，对于每一个协议，Nginx 都需要一个用户名密码认证服务，如果认证成功，则连接被代理到邮件服务器。
 
 {% asset_img 7.png %}
 
-Nginx邮件服务，若是编译安装，则需要在构建时指定`--with-mail`。
+Nginx 邮件服务，若是编译安装，则需要在构建时指定`--with-mail`。
 
-
-
-如果代理pop3服务，在配置文件中添加以下配置
+如果代理 pop3 服务，在配置文件中添加以下配置
 
 ```
 mail {
@@ -1076,30 +1036,28 @@ mail {
 }
 ```
 
-如果是代理imap服务，则同理，而可以不用指定`protocol imap;`，因为imap是默认值。而端口号改为143。
+如果是代理 imap 服务，则同理，而可以不用指定`protocol imap;`，因为 imap 是默认值。而端口号改为 143。
 
-如果代理smtp服务，则修改`protocol`后，再修改端口号为25。
+如果代理 smtp 服务，则修改`protocol`后，再修改端口号为 25。
 
-Nginx还为三种服务提供了可选指令，能做到根据服务器的情况灵活代理。
+Nginx 还为三种服务提供了可选指令，能做到根据服务器的情况灵活代理。
 
 最好在`mail`块中，指定`server_name`，为邮件代理提供统一入口。
 
-
-
 # 重写与重定向
 
-Nginx提供模块`ngx_http_rewrite_module`实现URL重写与重定向。`rewrite`指令能用于`server`、`location`、`if`块中。Nginx的rewrite需要pcre的支持。
+Nginx 提供模块`ngx_http_rewrite_module`实现 URL 重写与重定向。`rewrite`指令能用于`server`、`location`、`if`块中。Nginx 的 rewrite 需要 pcre 的支持。
 
 `rewrite regex replacement [flag];`
 
-其中regex为正则表达式，replacement为符合正则的替换算法。flag为进一步处理的标识。以下为flag的可选值：
+其中 regex 为正则表达式，replacement 为符合正则的替换算法。flag 为进一步处理的标识。以下为 flag 的可选值：
 
-| 参数值    | 说明                              |
-| --------- | --------------------------------- |
-| last      | 终止rewrite，继续匹配             |
-| break     | 终止rewrite，不再继续匹配         |
-| redirect  | 临时重定向，返回的HTTP状态码为302 |
-| permanent | 永久重定向，返回的HTTP状态码为301 |
+| 参数值    | 说明                                 |
+| --------- | ------------------------------------ |
+| last      | 终止 rewrite，继续匹配               |
+| break     | 终止 rewrite，不再继续匹配           |
+| redirect  | 临时重定向，返回的 HTTP 状态码为 302 |
+| permanent | 永久重定向，返回的 HTTP 状态码为 301 |
 
 例：
 
@@ -1110,14 +1068,14 @@ rewrite ^/(.*) http://www1.example.com/$1 permanent;
 # $1对应的是前面正则表达式的()部分
 ```
 
-rewrite有以下的作用：
+rewrite 有以下的作用：
 
-* 使URL更加规范，方便开发
-* 使搜索引擎收录网站内容
-* 网站换域名后，让旧域名的访问跳转到新域名上
-* 根据特殊变量、目录、客户端信息进行URL跳转
+- 使 URL 更加规范，方便开发
+- 使搜索引擎收录网站内容
+- 网站换域名后，让旧域名的访问跳转到新域名上
+- 根据特殊变量、目录、客户端信息进行 URL 跳转
 
-应用实验：使www1.example.com和example.com访问同一个地址
+应用实验：使 www1.example.com 和 example.com 访问同一个地址
 
 ```
 server {
@@ -1135,16 +1093,14 @@ server {
 }
 ```
 
-
-
 ## 重写
 
 两种匹配规则：
 
-* `break`：本条规则匹配完成后，不再继续匹配后续任何规则
-* `last`：本条规则匹配完成后，继续向下匹配新的location URI规则
+- `break`：本条规则匹配完成后，不再继续匹配后续任何规则
+- `last`：本条规则匹配完成后，继续向下匹配新的 location URI 规则
 
-在server块中添加以下内容：
+在 server 块中添加以下内容：
 
 ```
 # !-e判断请求指定的资源是否不存在，若不存在就执行if块中的指令。$request_filename表示当前请求的文件路径
@@ -1161,7 +1117,7 @@ if (!-e $request_filename) {
 400 ERROR
 ```
 
-若使用last标记：
+若使用 last 标记：
 
 ```
 
@@ -1169,11 +1125,11 @@ if (!-e $request_filename) {
 
 常用的测试：
 
-* 双目测试：
+- 双目测试：
 
-  * `~`，`!~`：正则匹配与不匹配（区分大小写）
-  * `=`，`!=`：精确匹配与不匹配
-  * `~*`，`!~*`：正则匹配与不匹配（不区分大小写）
+  - `~`，`!~`：正则匹配与不匹配（区分大小写）
+  - `=`，`!=`：精确匹配与不匹配
+  - `~*`，`!~*`：正则匹配与不匹配（不区分大小写）
 
   使用案例：
 
@@ -1182,41 +1138,35 @@ if (!-e $request_filename) {
   if ($request_uri ~* "/forum"){}
   ```
 
-* 单目测试：
-  * `-f`，`!-f`：文件存在与不存在
-  * `-d`，`!-d`：目录存在与不存在
-  * `-e`，`!-e`：文件或目录存在与不存在
-  * `-x`，`!-x`：判断是否可执行与不可执行
+- 单目测试：
+  - `-f`，`!-f`：文件存在与不存在
+  - `-d`，`!-d`：目录存在与不存在
+  - `-e`，`!-e`：文件或目录存在与不存在
+  - `-x`，`!-x`：判断是否可执行与不可执行
 
+# Nginx 与 PHP
 
-
-# Nginx与PHP
-
-Nginx自带的FastCGI模块，不仅能接受php-fpm，还能与任何兼容FastCGI的服务器通信，该模块默认启用。
+Nginx 自带的 FastCGI 模块，不仅能接受 php-fpm，还能与任何兼容 FastCGI 的服务器通信，该模块默认启用。
 
 常用指令：
 
-| FastCGI指令             | 说明                                                         |
-| ----------------------- | ------------------------------------------------------------ |
-| fastcgi_buffer_size     | 来自FastCGI服务器响应头的第一部分设置缓冲大小                |
-| fastcgi_buffers         | 设置来自FastCGI服务器响应的缓冲数量和大小，用于单个连接      |
-| fastcgi_cache           | 定义一个共享的内存zone，用于缓存                             |
-| fastcgi_no_cache        | 指定一个或多个字符串，Nginx不会将来自FastCGI服务器的响应保存在缓存中 |
-| fastcgi_keep_conn       | 服务器不立即关闭连接以保持到FastCGI服务器的连接              |
-| fastcgi_pass            | 指定FastCGI服务器如何传递请求，格式：`address:port`          |
+| FastCGI 指令            | 说明                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| fastcgi_buffer_size     | 来自 FastCGI 服务器响应头的第一部分设置缓冲大小                              |
+| fastcgi_buffers         | 设置来自 FastCGI 服务器响应的缓冲数量和大小，用于单个连接                    |
+| fastcgi_cache           | 定义一个共享的内存 zone，用于缓存                                            |
+| fastcgi_no_cache        | 指定一个或多个字符串，Nginx 不会将来自 FastCGI 服务器的响应保存在缓存中      |
+| fastcgi_keep_conn       | 服务器不立即关闭连接以保持到 FastCGI 服务器的连接                            |
+| fastcgi_pass            | 指定 FastCGI 服务器如何传递请求，格式：`address:port`                        |
 | fastcgi_cache_path      | 该指令用于设置存储缓存响应的目录和存储活跃的 key 和响应元数据的共享内存 zone |
-| fastcgi_connect_timeout | 指定Nignx将等待它接受连接的最长时间                          |
-| fastcgi_hide_header     | 指定不应该传递到客户端的头列表                               |
+| fastcgi_connect_timeout | 指定 Nignx 将等待它接受连接的最长时间                                        |
+| fastcgi_hide_header     | 指定不应该传递到客户端的头列表                                               |
 
+# Nginx 常见模块
 
+## gzip 压缩
 
-
-
-# Nginx常见模块
-
-## gzip压缩
-
-gzip模块默认启用。
+gzip 模块默认启用。
 
 ```
 http {
@@ -1224,24 +1174,20 @@ http {
   gzip_comp_level 2;    # 指定gzip压缩等级（1-9）
   gzip_types text/plain text/css application/xml application/json;
   #指定除了text/html，其他需要压缩的MIME类型
-  
-  gzip_min_length 1024;     
+
+  gzip_min_length 1024;
   # 在启用压缩前先确定响应的长度，若高于此处设定的值，则启用压缩
   gzip_buffers  40 4k;  # 用于压缩响应使用的缓存数量和大小
 }
 ```
 
+# LNMP 分布式集群方案
 
+## 搭建 Nginx+PHP 环境
 
+编译安装 PHP，php 版本 7.2.11。
 
-
-# LNMP分布式集群方案
-
-## 搭建Nginx+PHP环境
-
-编译安装PHP，php版本7.2.11。
-
-确保`zlib`及其库`zlib-devel`，`gd`及其库`gd-devel`，`curl`及其库`libcurl`、`libcurl-devel`，`openssl`及其库`openssl-devel`，`libxml2`和`libxml2-devel`（php编译必须的依赖包），`libjpeg`及其库`libjpeg-devel`，`libpng`及其库`libpng-devel`，`freetype-devel`
+确保`zlib`及其库`zlib-devel`，`gd`及其库`gd-devel`，`curl`及其库`libcurl`、`libcurl-devel`，`openssl`及其库`openssl-devel`，`libxml2`和`libxml2-devel`（php 编译必须的依赖包），`libjpeg`及其库`libjpeg-devel`，`libpng`及其库`libpng-devel`，`freetype-devel`
 
 ```
 ./configure   --prefix=/usr/local/php7.2 \
@@ -1260,13 +1206,13 @@ http {
    --with-mhash \            # mhash加密支持
    --enable-bcmath \         # 精确计算功能
    --enable-opcache          # 开启opcache，一种php代码优化器
-   
+
 make && make install
 ```
 
-安装完成后，php-fpm是无法通过`systemctl`管理的。需要以下配置
+安装完成后，php-fpm 是无法通过`systemctl`管理的。需要以下配置
 
-php配置文件目录
+php 配置文件目录
 
 ```
 /usr/local/php7.2/etc/
@@ -1278,9 +1224,9 @@ php配置文件目录
 
 需要将`php-fpm.conf.default`改名为`php-fpm.conf`。然后进入解压包的目录中`sapi/fpm`目录，里面有一个`php-fpm.service`，将该文件的权限改为`754`，然后复制到`/usr/lib/systemd/system/`中。
 
-如果是CentOS/Redhat 6系列，则将`init.d.php-fpm`复制到`/etc/init.d/`中并改名为`php-fpm`，添加执行权限，然后`chkconfig --add php-fpm`。
+如果是 CentOS/Redhat 6 系列，则将`init.d.php-fpm`复制到`/etc/init.d/`中并改名为`php-fpm`，添加执行权限，然后`chkconfig --add php-fpm`。
 
-查看`php-fpm.service`，确保PID文件、配置文件路径正确。
+查看`php-fpm.service`，确保 PID 文件、配置文件路径正确。
 
 ```
 [Unit]
@@ -1302,7 +1248,7 @@ WantedBy=multi-user.target
 
 `/usr/local/php7.2/sbin/php-fpm -t`检查配置文件是否正确。
 
-再启动php-fpm，`systemctl start php-fpm.service`
+再启动 php-fpm，`systemctl start php-fpm.service`
 
 ```
 ps -ef | grep php-fpm
@@ -1314,11 +1260,11 @@ ss -anpt | grep php-fpm
 LISTEN     0      128    127.0.0.1:9000                     *:*                   users:(("php-fpm",pid=47199,fd=5),("php-fpm",pid=47198,fd=5),("php-fpm",pid=47197,fd=7))
 ```
 
-可以看出，php-fpm监听了9000端口，主进程用户为root，子进程用户为nobody。
+可以看出，php-fpm 监听了 9000 端口，主进程用户为 root，子进程用户为 nobody。
 
 可以将`bin`和`sbin`目录添加到环境变量中，将配置文件软连接到`/etc/php/`中，方便操作。
 
-php-fpm主配置文件`php-fpm.conf`，该配置文件采用的是INI的格式
+php-fpm 主配置文件`php-fpm.conf`，该配置文件采用的是 INI 的格式
 
 ```
 [global]          # 全局配置
@@ -1332,7 +1278,7 @@ include=/usr/local/php7.2/etc/php-fpm.d/*.conf  # 进程池配置存放目录
 ; process.max = 128
 ```
 
-php-fpm进程池配置文件`www.conf`，采用的也是INI格式
+php-fpm 进程池配置文件`www.conf`，采用的也是 INI 格式
 
 ```
 [www]              # 进程池配置
@@ -1352,7 +1298,7 @@ access.log = log/$pool.access.log     # 日志文件，默认不记录日志
 ;php_flag[display_errors] = off    # 以php_flag的方式替换php.ini中display_errors的值
 ```
 
-在php的解压包中，有两个关于`php.ini`的配置文件：`php.ini-production`和`php.ini-development`，其中production适用于实际上线环境（安全性高），development适合于开发环境（便于调试）。选择其中一个复制到php安装目录下`lib/php/`中，并改名为`php.ini`。
+在 php 的解压包中，有两个关于`php.ini`的配置文件：`php.ini-production`和`php.ini-development`，其中 production 适用于实际上线环境（安全性高），development 适合于开发环境（便于调试）。选择其中一个复制到 php 安装目录下`lib/php/`中，并改名为`php.ini`。
 
 ```
 [PHP]            # PHP核心配置
@@ -1377,14 +1323,14 @@ allow_url_fopen = On                # 是否允许打开远程文件
 # 若不开启，要访问的文件不存在，则直接返回错误“No input file specified”
 
 [Date]               # 时间与日期配置
-;date.timezone = Asia/Shanghai      # 时区         
+;date.timezone = Asia/Shanghai      # 时区
 
 [Session]            # 会话配置
 session.save_handler = files        # 将会话以文件形式保存
 ;session.save_path = "/tmp"         # 会话保存目录
 ```
 
-修改Nginx配置文件，取消以下行的注释：
+修改 Nginx 配置文件，取消以下行的注释：
 
 ```
 location ~ \.php$ {
@@ -1395,7 +1341,7 @@ location ~ \.php$ {
   include        fastcgi.conf;  # 包含了当前目录下的fastcgi_params配置
   # 一定要设置为fastcgi.conf，不能设为fastcgi_params
   # 因为.conf文件不_params文件多了一条
-  # fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;   
+  # fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
   # 这是指定了脚本的路径
 }
 ```
@@ -1426,17 +1372,15 @@ fastcgi_param  DOCUMENT_ROOT      $document_root;
 
 {% asset_img 3.png %}
 
+## Nginx+Apache 动静分离
 
-
-## Nginx+Apache动静分离
-
-Nginx提供外部访问，静态请求直接由Nginx处理，动态请求转交给Apache处理，实现动静分离。
+Nginx 提供外部访问，静态请求直接由 Nginx 处理，动态请求转交给 Apache 处理，实现动静分离。
 
 {% asset_img 4.png %}
 
-首先要确保Apache已支持PHP。确保Apache是`--enable-so`的，会在Apache的`bin/`下有一个`apxs`命令，是Apache的一个扩展工具（Apache extension tools），用于编译模块。php的configure可用apxs编译用于Apache访问PHP的模块。
+首先要确保 Apache 已支持 PHP。确保 Apache 是`--enable-so`的，会在 Apache 的`bin/`下有一个`apxs`命令，是 Apache 的一个扩展工具（Apache extension tools），用于编译模块。php 的 configure 可用 apxs 编译用于 Apache 访问 PHP 的模块。
 
-使用`php -i | grep configure`查看php的编译参数
+使用`php -i | grep configure`查看 php 的编译参数
 
 ```
 Configure Command =>  './configure'  '--prefix=/usr/local/php7.2' '--enable-fpm' '--with-zlib' '--enable-zip' '--enable-mbstring' '--with-mcrypt' '--with-mysql' '--with-mysqli' '--with-pdo-mysql' '--with-gd' '--with-jpeg-dir' '--with-png-dir' '--with-freetype-dir' '--with-curl' '--with-openssl' '--with-mhash' '--enable-bcmath' '--enable-opcache'
@@ -1447,15 +1391,13 @@ Configure Command =>  './configure'  '--prefix=/usr/local/php7.2' '--enable-fpm'
 **注：**如果此时直接编译仍然会报错，错误来自于`apxs`命令。报错信息如下：
 
 ```
-./configure: /usr/local/httpd-2.4/bin/apxs: /replace/with/path/to/perl/interpreter: 
+./configure: /usr/local/httpd-2.4/bin/apxs: /replace/with/path/to/perl/interpreter:
 bad interpreter: No such file or directory
 ```
 
 查看`apxs`命令。第一行是`#!/replace/with/path/to/perl/interpreter -w`肯定是不存在的，需要替换为`#!/usr/bin/perl -w`。重试`./configure`，然后`make`（不要`make install`）。
 
-
-
-修改httpd的配置文件，以下为要修改的内容
+修改 httpd 的配置文件，以下为要修改的内容
 
 ```
 Listen 81     # 防止与Nginx冲突，要修改端口号
@@ -1467,7 +1409,7 @@ Listen 81     # 防止与Nginx冲突，要修改端口号
 </VirtualHost>
 ```
 
-修改Nginx配置文件，将以下行取消注释并修改
+修改 Nginx 配置文件，将以下行取消注释并修改
 
 ```
 location ~ \.php$ {
@@ -1478,13 +1420,11 @@ location ~ \.php$ {
 }
 ```
 
-
-
 # 参考文章
 
-* [nginx基础及提供web服务(nginx.conf详解)](http://www.cnblogs.com/f-ck-need-u/p/7683027.html)
-* [nginx日志配置](http://www.ttlsa.com/linux/the-nginx-log-configuration/)
-* Nginx高性能Web服务器实战教程
-* 高性能网站构建实战
-* 跟老男孩学Linux运维 Web集群实战
-* 精通Nginx（第二版）
+- [nginx 基础及提供 web 服务(nginx.conf 详解)](http://www.cnblogs.com/f-ck-need-u/p/7683027.html)
+- [nginx 日志配置](http://www.ttlsa.com/linux/the-nginx-log-configuration/)
+- Nginx 高性能 Web 服务器实战教程
+- 高性能网站构建实战
+- 跟老男孩学 Linux 运维 Web 集群实战
+- 精通 Nginx（第二版）

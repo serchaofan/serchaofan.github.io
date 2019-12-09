@@ -1,44 +1,43 @@
 ---
 title: Docker Compose学习笔记
 date: 2018-07-30 17:32:29
-tags: [docker,docker-compose,云计算,容器编排]
+tags: [docker, docker-compose, 云计算, 容器编排]
+categories: [云计算]
 ---
 
 环境：docker：18.06.1，docker-compose：1.22.0
 
-docker18.06对应的Compose文件格式版本为3.7
+docker18.06 对应的 Compose 文件格式版本为 3.7
 
 本篇包含以下内容：
 
-* [docker-compose介绍](#docker-compose介绍)
-* [Compose文件格式](#Compose文件格式)
-* [docker-compose示例](#docker-compose示例)
+- [docker-compose 介绍](#docker-compose介绍)
+- [Compose 文件格式](#Compose文件格式)
+- [docker-compose 示例](#docker-compose示例)
 
 <!-- more -->
 
-# docker-compose介绍
+# docker-compose 介绍
 
-`Docker Compose`是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。在配置文件中，所有的容器通过services来定义，然后使用docker-compose脚本来启动，停止和重启应用，和应用中的服务以及所有依赖服务的容器。
+`Docker Compose`是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。在配置文件中，所有的容器通过 services 来定义，然后使用 docker-compose 脚本来启动，停止和重启应用，和应用中的服务以及所有依赖服务的容器。
 
-**Compose的特性**
+**Compose 的特性**
 
-* 通过项目名称将单个主机隔离成多个环境，能将应用环境复制多份，还能防止使用相同名称的服务的应用间的干扰
-* 能够保护卷中的数据，如果Compose发现存在之前运行过的容器，它会把旧容器中的数据卷拷贝到新的容器中
-* 只会重新创建改变过的容器，Compose会缓存用于创建容器的配置信息，当你重启服务时，如果服务没有被更改，Compose就会重用已经存在的容器，加快了修改应用的速度
+- 通过项目名称将单个主机隔离成多个环境，能将应用环境复制多份，还能防止使用相同名称的服务的应用间的干扰
+- 能够保护卷中的数据，如果 Compose 发现存在之前运行过的容器，它会把旧容器中的数据卷拷贝到新的容器中
+- 只会重新创建改变过的容器，Compose 会缓存用于创建容器的配置信息，当你重启服务时，如果服务没有被更改，Compose 就会重用已经存在的容器，加快了修改应用的速度
 
 **编排：**Orchestration，根据被部署的对象间的耦合关系以及被部署对象对环境的依赖，制定部署流程中各个动作的执行顺序，部署过程中所需要的依赖文件和被部署文件的存储位置和获取方式，以及如何验证部署成功。这些信息都会在编排工具中以制定格式定义并保存。
 
 **部署：**Deployment，按照编排所指定的内容和流程，在目标机器上执行编排指定环境初始化，存放指定的依赖和文件，运行指定的部署动作，按照编排中规则确认是否部署成功。
 
-> 以上编排和部署定义摘选自《docker容器与容器云》
+> 以上编排和部署定义摘选自《docker 容器与容器云》
 
+**docker-compose 安装**
 
+使用 pip 快速安装`pip install docker-compose`
 
-**docker-compose安装**
-
-使用pip快速安装`pip install docker-compose`
-
-docker-compose参数选项：
+docker-compose 参数选项：
 
 ```
 docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
@@ -59,11 +58,9 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
   --compatibility             Compose将尝试将v3文件中的部署密钥转换为其非Swarm等效项
 ```
 
+**docker-compose 命令：**
 
-
-**docker-compose命令：**
-
-* **`build`**：构建或重构服务（services）
+- **`build`**：构建或重构服务（services）
 
   ```
   build [options] [--build-arg key=val...] [SERVICE...]
@@ -75,9 +72,9 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --build-arg key=val     设置服务的构建时变量
   ```
 
-* **`bundle`**：从Compose文件生成Docker包
+- **`bundle`**：从 Compose 文件生成 Docker 包
 
-  镜像必须存储摘要，这需要与Docker Registry进行交互。如果没有为所有镜像存储摘要，可以使用`docker-compose pull`或`docker-compose push`来获取。
+  镜像必须存储摘要，这需要与 Docker Registry 进行交互。如果没有为所有镜像存储摘要，可以使用`docker-compose pull`或`docker-compose push`来获取。
 
   ```
   bundle [options]
@@ -85,7 +82,7 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       -o, --output PATH          包文件路径，默认为"项目名.dab"
   ```
 
-* **`config`**：校验并查看compose文件
+- **`config`**：校验并查看 compose 文件
 
   ```
   config [options]
@@ -95,13 +92,13 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --volumes                列出所有数据卷
   ```
 
-* **`down`**：停止并删除容器、网络、镜像、数据卷
+- **`down`**：停止并删除容器、网络、镜像、数据卷
 
   默认能删除的内容：
 
-  * Compose文件中定义的服务的容器
-   * Compose文件的`networks`中定义的网络
-   * 默认网络（如果使用）
+  - Compose 文件中定义的服务的容器
+  - Compose 文件的`networks`中定义的网络
+  - 默认网络（如果使用）
 
   ```
   down [options]
@@ -113,14 +110,14 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       -t, --timeout TIMEOUT   指定几秒后关闭（默认10s）
   ```
 
-* **`events`**：从容器接收实时事件
+- **`events`**：从容器接收实时事件
 
   ```
   events [options] [SERVICE...]
       --json      使用json格式输出事件
   ```
 
-* **`exec`**：在运行的容器中执行命令
+- **`exec`**：在运行的容器中执行命令
 
   ```
   exec [options] [-e KEY=VAL...] SERVICE COMMAND [ARGS...]
@@ -133,21 +130,21 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       -w, --workdir DIR 设置工作目录
   ```
 
-* **`images`**：列出镜像
+- **`images`**：列出镜像
 
   ```
   images [options] [SERVICE...]
       -q, --quiet  静默模式，只显示镜像号
   ```
 
-* **`kill`**：杀死容器
+- **`kill`**：杀死容器
 
   ```
   kill [options] [SERVICE...]
       -s SIGNAL         发送给容器的SIGNAL，默认为SIGKILL
   ```
 
-* **`logs`**：显示容器的输出
+- **`logs`**：显示容器的输出
 
   ```
   logs [options] [SERVICE...]
@@ -157,13 +154,13 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --tail="all"        显示日志的末尾行数
   ```
 
-* **`pause`**：暂停服务
+- **`pause`**：暂停服务
 
   ```
   pause [SERVICE...]
   ```
 
-* **`ps`**：列出容器，执行此命令时必须`cd`到项目的根目录下
+- **`ps`**：列出容器，执行此命令时必须`cd`到项目的根目录下
 
   ```
   ps [options] [SERVICE...]
@@ -172,7 +169,7 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --filter KEY=VAL     根据属性过滤服务
   ```
 
-* **`port`**：显示用于绑定的公共端口
+- **`port`**：显示用于绑定的公共端口
 
   ```
   port [options] SERVICE PRIVATE_PORT
@@ -180,7 +177,7 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --index=index     设置容器的索引，默认为1
   ```
 
-* **`pull`**：拉取服务镜像
+- **`pull`**：拉取服务镜像
 
   ```
   pull [options] [SERVICE...]
@@ -191,21 +188,21 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --include-deps          同时拉取依赖的服务
   ```
 
-* **`push`**：推送服务镜像
+- **`push`**：推送服务镜像
 
   ```
   push [options] [SERVICE...]
       --ignore-push-failures  忽略推送失败的镜像
   ```
 
-* **`restart`**：重启服务
+- **`restart`**：重启服务
 
   ```
   restart [options] [SERVICE...]
     -t, --timeout TIMEOUT      指定几秒后重启（默认10s）
   ```
 
-* **`rm`**：删除停止的容器
+- **`rm`**：删除停止的容器
 
   ```
   rm [options] [SERVICE...]
@@ -214,7 +211,7 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       -v            删除任何关联的匿名数据卷，默认不会删除
   ```
 
-* **`run`**：运行一次性命令
+- **`run`**：运行一次性命令
 
   ```
   run [options] [-v VOLUME...] [-p PORT...] [-e KEY=VAL...] [-l KEY=VALUE...] SERVICE [COMMAND] [ARGS...]
@@ -234,32 +231,32 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       -w, --workdir=""      容器中的工作目录
   ```
 
-* **`start`**：启动已存在的容器
+- **`start`**：启动已存在的容器
 
   ```
   start [SERVICE...]
   ```
 
-* **`stop`**：停止运行中的容器，并不会删除它们
+- **`stop`**：停止运行中的容器，并不会删除它们
 
   ```
   stop [options] [SERVICE...]
     -t, --timeout TIMEOUT      指定几秒后关闭（默认10s）
   ```
 
-* **`top`**：显示服务的进程
+- **`top`**：显示服务的进程
 
   ```
   top [SERVICE...]
   ```
 
-* **`unpause`**：恢复暂停的服务
+- **`unpause`**：恢复暂停的服务
 
   ```
   unpause [SERVICE...]
   ```
 
-* **`up`**：创建并启动容器
+- **`up`**：创建并启动容器
 
   默认会启动相连的服务。
 
@@ -283,13 +280,11 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
       --scale SERVICE=NUM        将SERVICE扩展到NUM个实例。会覆盖Compose文件中的"scale"设置（如果存在）
   ```
 
+# Compose 文件格式
 
+Compose 文件采用[YAML 语法]()，文件名以`.yml`或`.yaml`结尾，默认应存放在项目的根目录中，文件名应为`docker-compose.yml`。在 Compose 文件中无需再指定 Dockerfile 中已定义的项。
 
-# Compose文件格式
-
-Compose文件采用[YAML语法]()，文件名以`.yml`或`.yaml`结尾，默认应存放在项目的根目录中，文件名应为`docker-compose.yml`。在Compose文件中无需再指定Dockerfile中已定义的项。
-
-文件格式为3.7，所以compose文件最开始要写上`version: "3"`
+文件格式为 3.7，所以 compose 文件最开始要写上`version: "3"`
 
 然后定义服务`services`，在`services:`下添加服务，开始对服务的配置。
 
@@ -297,43 +292,43 @@ Compose文件采用[YAML语法]()，文件名以`.yml`或`.yaml`结尾，默认�
 
 `context`：用于指定构建上下文。
 
-`dockerfile`：用于指定Dockerfile文件
+`dockerfile`：用于指定 Dockerfile 文件
 
-`args`：用于给Dockerfile文件中`ARG`定义的参数传参
+`args`：用于给 Dockerfile 文件中`ARG`定义的参数传参
 
 ```
 version: "3"
-services: 
+services:
   webapp:
     build: ./dir     可以这样直接指定上下文路径
-    
+
   webapp:
     build:           也可以作为具有在上下文中指定的路径的对象
       context: ./dir 然后通过context指定上下文路径
       当提供的值是相对路径时，context被解释为相对于Compose文件的位置。此目录也是发送到Docker daemon的构建上下文
-    build: 
+    build:
       context: .
       dockerfile: webapp.dockerfile   还可以指定Dockerfile文件
       args:          可以为Dockerfile文件传参
         args1: 123
         args2: 345
       也可以这样表示：
-      args: 
+      args:
       - args1=123
       - args2=345
     image: webapp:tag  可以指定构建镜像，会生成一个名为webapp，并打上tag标签的镜像
     在群集模式下使用Compose文件（版本3）部署堆栈时，将忽略image选项。 docker stack命令仅接受预先构建的图像。
 ```
 
-> 注：YAML布尔值（true，false，yes，no，on，off）必须用引号括起来，以便解析器将它们解释为字符串。
+> 注：YAML 布尔值（true，false，yes，no，on，off）必须用引号括起来，以便解析器将它们解释为字符串。
 
-`cache_from`：指定Docker引擎用于实现缓存的镜像列表
+`cache_from`：指定 Docker 引擎用于实现缓存的镜像列表
 
 `labels`：使用标签将元数据添加到生成的镜像中，可使用数组或字典
 
 `shm_size`：为构建的容器设置`/dev/shm`分区的大小，指定字节数或字节值字符串，如`2mb`或`2000000`
 
-`target`：根据Dockerfile中的定义构建指定的阶段
+`target`：根据 Dockerfile 中的定义构建指定的阶段
 
 ```
   build:
@@ -360,37 +355,31 @@ command: bundle exec thin -p 3000
 command: ["bundle", "exec", "thin", "-p", "3000"]
 ```
 
-`container_name`：自定义该容器名称。由于Docker容器名称必须是唯一的，因此如果指定了自定义名称，则无法将服务扩展到多个容器
+`container_name`：自定义该容器名称。由于 Docker 容器名称必须是唯一的，因此如果指定了自定义名称，则无法将服务扩展到多个容器
 
-`volumes`：卷挂载路径设置。格式：`宿主机源路径:容器目的路径[:访问权限]`，默认访问权限为读写。可使用相对路径，相对于compose文件所在目录。
+`volumes`：卷挂载路径设置。格式：`宿主机源路径:容器目的路径[:访问权限]`，默认访问权限为读写。可使用相对路径，相对于 compose 文件所在目录。
 
 `links`：链接到另一个服务中的容器，格式：`服务名[:别名]`
 
-`external-links`：链接到docker-compose.yml外部的容器，甚至并非 Compose 管理的容器。
+`external-links`：链接到 docker-compose.yml 外部的容器，甚至并非 Compose 管理的容器。
 
-`expose`：暴露端口，但不映射到宿主机，只被连接的服务访问。最好使用字符串表示数字，因为YAML会解析`xx:yy`这种数字格式为 60 进制，容器端口小于 60 可能出错。
+`expose`：暴露端口，但不映射到宿主机，只被连接的服务访问。最好使用字符串表示数字，因为 YAML 会解析`xx:yy`这种数字格式为 60 进制，容器端口小于 60 可能出错。
 
 `ports`：暴露端口信息，格式：`[宿主机IP:][端口:]容器端口`，可用`-`表示一个端口范围
 
+# docker-compose 示例
 
-
-# docker-compose示例
-
-首先是docker-compose官方文档中的示例：
+首先是 docker-compose 官方文档中的示例：
 
 ```
 
 ```
-
-
-
-
 
 ### 参考文章
 
-* [Docker三剑客之Compose-一](https://blog.csdn.net/vchy_zhao/article/details/70238413)
-* [Docker三剑客之Compose-二](https://blog.csdn.net/vchy_zhao/article/details/70238432)
-* [Docker三剑客之Compose-三](https://blog.csdn.net/vchy_zhao/article/details/70238461)
-* [docker-compose教程（安装，使用, 快速入门）](https://blog.csdn.net/pushiqiang/article/details/78682323)
-* [docker-compose官方文档](https://docs.docker.com/compose/)
-* [Docker系列之（五）：使用Docker Compose编排容器](https://www.cnblogs.com/ee900222/p/docker_5.html)
+- [Docker 三剑客之 Compose-一](https://blog.csdn.net/vchy_zhao/article/details/70238413)
+- [Docker 三剑客之 Compose-二](https://blog.csdn.net/vchy_zhao/article/details/70238432)
+- [Docker 三剑客之 Compose-三](https://blog.csdn.net/vchy_zhao/article/details/70238461)
+- [docker-compose 教程（安装，使用, 快速入门）](https://blog.csdn.net/pushiqiang/article/details/78682323)
+- [docker-compose 官方文档](https://docs.docker.com/compose/)
+- [Docker 系列之（五）：使用 Docker Compose 编排容器](https://www.cnblogs.com/ee900222/p/docker_5.html)

@@ -1,43 +1,52 @@
 ---
 title: Chrony/NTP学习笔记
 date: 2018-01-31 22:42:55
-tags: [server,Chrony,NTP]
+tags: [server, Chrony, NTP]
+categories: [系统运维]
 ---
-## Chrony/NTP学习笔记
+
+## Chrony/NTP 学习笔记
+
 **本篇包含以下内容**
 
-* chrony介绍
-* chrony配置
-* ntpd配置
+- chrony 介绍
+- chrony 配置
+- ntpd 配置
 
 <!-- more -->
 
-##### NTP协议介绍
-NTP全称Network Time Protocol网络时间协议，用于同步计算机时间。保证局域网服务器与时间服务器的时间保持一致，并支持使用加密确认的方式防止恶意协议攻击。<br>
+##### NTP 协议介绍
 
-自CentOS7.2后，chronyd服务代替原来的ntpd服务，性能提高且配置简单。
+NTP 全称 Network Time Protocol 网络时间协议，用于同步计算机时间。保证局域网服务器与时间服务器的时间保持一致，并支持使用加密确认的方式防止恶意协议攻击。<br>
 
-根据红帽文档，chronyd与ntpd的区别在于：
-* chronyd使用更好的算法，同步精度、速度与对系统的影响都比ntpd更好。
-* chronyd可以在更大的范围内调整系统时间速率，且能在时钟损坏或不稳定的计算机上正常工作。
-* 当网络故障时，chronyd仍能很好地工作，而ntpd必须定时轮询时间参考才能正常工作。
-* chronyd可以快速适应时钟速率的突然变化，ntpd则需要一段时间才能稳定。
-* chronyd提供对孤立网络的支持，手动输入校准时间，并通过算法计算实时时间，估计计算机增减时间的速率，从而调整时间。
+自 CentOS7.2 后，chronyd 服务代替原来的 ntpd 服务，性能提高且配置简单。
 
+根据红帽文档，chronyd 与 ntpd 的区别在于：
+
+- chronyd 使用更好的算法，同步精度、速度与对系统的影响都比 ntpd 更好。
+- chronyd 可以在更大的范围内调整系统时间速率，且能在时钟损坏或不稳定的计算机上正常工作。
+- 当网络故障时，chronyd 仍能很好地工作，而 ntpd 必须定时轮询时间参考才能正常工作。
+- chronyd 可以快速适应时钟速率的突然变化，ntpd 则需要一段时间才能稳定。
+- chronyd 提供对孤立网络的支持，手动输入校准时间，并通过算法计算实时时间，估计计算机增减时间的速率，从而调整时间。
 
 #### 实验
-环境
-* CentOS7.4
 
-##### Chrony基础搭建
+环境
+
+- CentOS7.4
+
+##### Chrony 基础搭建
+
 步骤
-1. 安装chrony服务（默认已安装）
-    `yum install chrony`<br>
-    安装完后会有两个程序，一个chronyd服务，一个chronyc监控配置程序。
+
+1. 安装 chrony 服务（默认已安装）
+   `yum install chrony`<br>
+   安装完后会有两个程序，一个 chronyd 服务，一个 chronyc 监控配置程序。
 2. 启动服务，设置开机自启<br>
-    `systemctl start chronyd`<br>
-    `systemctl enable chronyd`<br>
-3. chrony的配置文件/etc/chrony.conf
+   `systemctl start chronyd`<br>
+   `systemctl enable chronyd`<br>
+3. chrony 的配置文件/etc/chrony.conf
+
 ```
 server ntp.sjtu.edu.cn iburst
 server s1a.time.edu.cn iburst
@@ -58,19 +67,21 @@ rtcsync
 #allow 192.168.0.0/16
 //允许指定网段或主机使用服务
 
-#keyfile /etc/chrony.keys  
+#keyfile /etc/chrony.keys
 //设置密钥文件，可做NTP加密
 
 logdir /var/log/chrony
 //设置日志文件
 
 ```
+
 4. 防火墙放行并重启服务<br>
-`firewall-cmd --permanent --add-service=ntp`<br>
-`firewall-cmd --permanent --add-rich-rule='rule family=ipv4 port port=123 protocol=udp accept'`<br>
-`firewall-cmd --reload`<br>
-`systemctl restart chronyd`
+   `firewall-cmd --permanent --add-service=ntp`<br>
+   `firewall-cmd --permanent --add-rich-rule='rule family=ipv4 port port=123 protocol=udp accept'`<br>
+   `firewall-cmd --reload`<br>
+   `systemctl restart chronyd`
 5. 查看同步源信息
+
 ```
 chronyc sourcestats
 //查看同步源状态
@@ -85,24 +96,27 @@ time.njnet.edu.cn           4   3    10   +810.140  43784.844  +7121us    14ms
 chronyc sources //查看同步源，结果与上一条类似
 
 ```
+
 6. 自动同步时间<br>
-`chronyc sources -v`
+   `chronyc sources -v`
 
-若要局域网内同步时间，只要客户端都安装chrony，且配置文件的server设置为此服务器ip即可。
+若要局域网内同步时间，只要客户端都安装 chrony，且配置文件的 server 设置为此服务器 ip 即可。
 
-##### ntpd基础搭建
-1. 安装ntpd服务
-`yum install ntp`
+##### ntpd 基础搭建
+
+1. 安装 ntpd 服务
+   `yum install ntp`
 2. 修改配置文件`/etc/ntp.conf`
-在restrict段添加允许的主机网段
-`restrict 192.168.163.0 mask 255.255.255.0`
-允许指定网段或主机使用服务（类似chrony的allow）
-server字段与chrony类似，指定上游ntp服务器。
-3. 重启ntpd`systemctl restart ntpd.service`
+   在 restrict 段添加允许的主机网段
+   `restrict 192.168.163.0 mask 255.255.255.0`
+   允许指定网段或主机使用服务（类似 chrony 的 allow）
+   server 字段与 chrony 类似，指定上游 ntp 服务器。
+3. 重启 ntpd`systemctl restart ntpd.service`
 
-在ntpd服务未开启时，可用命令`ntpdate 0.centos.pool.ntp.org`手动同步。这条命令只能在ntpd未开启时才有效。
+在 ntpd 服务未开启时，可用命令`ntpdate 0.centos.pool.ntp.org`手动同步。这条命令只能在 ntpd 未开启时才有效。
 
-命令`ntpq -p`列出NTP服务器与上游服务器的连接状态
+命令`ntpq -p`列出 NTP 服务器与上游服务器的连接状态
+
 ```
 # ntpq -p
      remote           refid      st t when poll reach   delay   offset  jitter
@@ -120,6 +134,7 @@ offset：时间补偿的结果
 ```
 
 **扩展内容**
+
 ```
 系统时间与BIOS时间不一定相同。
 查看硬件BIOS时间：

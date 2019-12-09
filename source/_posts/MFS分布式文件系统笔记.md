@@ -2,141 +2,130 @@
 title: MFS分布式文件系统笔记
 date: 2018-12-06 17:13:31
 tags: [MFS, 文件系统, 分布式, 存储]
+categories: [应用运维]
 ---
 
-* [分布式文件系统](#分布式文件系统)
-* [MFS概述](#MFS概述)
-* [MFS简单部署](#MFS简单部署)
-* [MFS高可用](#MFS高可用)
+- [分布式文件系统](#分布式文件系统)
+- [MFS 概述](#MFS概述)
+- [MFS 简单部署](#MFS简单部署)
+- [MFS 高可用](#MFS高可用)
 
 <!--more-->
 
 {% asset_img 0.png %}
 
-
-
 # 分布式文件系统
 
 Distributed File System（DFS）分布式文件系统是开放软件基金会（OSF）的分布式计算环境（DCE）中的文件系统部分，指文件系统管理的物理存储资源不一定直接连接在本地节点上，具有以下特性：
 
-* 只读共享：任何客户端只能访问文件，不能修改。
-* 受控写操作：允许多个用户打开同一个文件，但只有一个用户能进行写操作，并且该用户的修改不能立刻在其他用户上体现。
-* 并发写操作：允许多个用户同时读写一个文件，需要操作系统进行大量监控工作防止文件重写，并保证用户看到最新消息。
+- 只读共享：任何客户端只能访问文件，不能修改。
+- 受控写操作：允许多个用户打开同一个文件，但只有一个用户能进行写操作，并且该用户的修改不能立刻在其他用户上体现。
+- 并发写操作：允许多个用户同时读写一个文件，需要操作系统进行大量监控工作防止文件重写，并保证用户看到最新消息。
 
-传统的DFS，如NFS，所有的数据和元数据存放在一起，通过单一的存储服务器提供服务，这种模式称为**In-band Mode**，随着客户端数量增加，服务器成为整个文件系统的瓶颈。
+传统的 DFS，如 NFS，所有的数据和元数据存放在一起，通过单一的存储服务器提供服务，这种模式称为**In-band Mode**，随着客户端数量增加，服务器成为整个文件系统的瓶颈。
 
-新型的DFS利用存储区域网络（SAN），将应用服务器直接与存储设备连接，提升了传输能力，应用服务器直接访问SAN中的数据，只有关于信息的元数据才经过元数据服务器处理，减少了数据传输的中间环节，减轻了元数据服务器的负载。这种模式称为**Out-band Mode**。
+新型的 DFS 利用存储区域网络（SAN），将应用服务器直接与存储设备连接，提升了传输能力，应用服务器直接访问 SAN 中的数据，只有关于信息的元数据才经过元数据服务器处理，减少了数据传输的中间环节，减轻了元数据服务器的负载。这种模式称为**Out-band Mode**。
 
-区分两种模式的依据：元数据操作的控制信息是否与文件数据一起通过服务器转发。In-band Mode需要服务器转发，Out-band Mode可直接访问。
+区分两种模式的依据：元数据操作的控制信息是否与文件数据一起通过服务器转发。In-band Mode 需要服务器转发，Out-band Mode 可直接访问。
 
+# MFS 概述
 
+MooseFS 是一个具备容错功能的高可用分布式网络文件系统，MFS 将数据分散在多台服务器上，确保一份数据有多份备份，且备份分布在不同服务器上，而用户看到的只是一个资源，即对用户透明。MFS 就类似一个 unix 的文件系统，包含层级结构、文件属性等。
 
-# MFS概述
+- 分层目录树结构
+- 存储支持 POSIX 标准的文件属性
+- 支持特殊文件，如块设备、字符设备、管道、套接字、链接文件
+- 支持基于 IP 地址和密码的方式访问文件系统
 
-MooseFS是一个具备容错功能的高可用分布式网络文件系统，MFS将数据分散在多台服务器上，确保一份数据有多份备份，且备份分布在不同服务器上，而用户看到的只是一个资源，即对用户透明。MFS就类似一个unix的文件系统，包含层级结构、文件属性等。
+MFS 特性：
 
-* 分层目录树结构
-* 存储支持POSIX标准的文件属性
-* 支持特殊文件，如块设备、字符设备、管道、套接字、链接文件
-* 支持基于IP地址和密码的方式访问文件系统
+- 高可靠性：一份数据多份副本
+- 高可扩展性：轻松实现横向或纵向扩展
+- 高可容错性：可实现回收站机制
+- 高数据一致性：即使文件被写入或访问时，仍可以进行一致性快照
 
-MFS特性：
+MFS 应用场景：
 
-* 高可靠性：一份数据多份副本
-* 高可扩展性：轻松实现横向或纵向扩展
-* 高可容错性：可实现回收站机制
-* 高数据一致性：即使文件被写入或访问时，仍可以进行一致性快照
+- 大规模高并发的线上数据存储及访问
+- 大规模数据处理，如日志分析。
+- 尽量在文件系统服务器前架设缓存服务器，而不是一味地扩容
 
-MFS应用场景：
+MFS 组成：
 
-* 大规模高并发的线上数据存储及访问
-* 大规模数据处理，如日志分析。
-* 尽量在文件系统服务器前架设缓存服务器，而不是一味地扩容
+- 管理服务器（managing servers）：也称 master servers，管理整个文件系统的主机，存储每个文件的元数据（大小信息、属性、文件路径）
+- 数据存储服务器（data servers）：也称 chunk servers，存储文件并进行同步的服务器，如果确定的话，文件要做多于一份的备份。此服务器是真正的数据载体，最好组 raid5 或 raid0 或 raid10。实际环境中应该至少有三台以上。
+- 元数据备份服务器（metadata backup servers）：也称 metalogger server，存储元数据修改日志并周期下载主元数据文件
+- 客户端：使用`mfsmount`进程与管理服务器或数据存储服务器通信以获取与修改元数据信息的主机
 
-MFS组成：
-
-* 管理服务器（managing servers）：也称master servers，管理整个文件系统的主机，存储每个文件的元数据（大小信息、属性、文件路径）
-* 数据存储服务器（data servers）：也称chunk servers，存储文件并进行同步的服务器，如果确定的话，文件要做多于一份的备份。此服务器是真正的数据载体，最好组raid5或raid0或raid10。实际环境中应该至少有三台以上。
-* 元数据备份服务器（metadata backup servers）：也称metalogger server，存储元数据修改日志并周期下载主元数据文件
-* 客户端：使用`mfsmount`进程与管理服务器或数据存储服务器通信以获取与修改元数据信息的主机
-
-
-
-## MFS读过程
+## MFS 读过程
 
 1. 客户端向元数据服务器（master）发出读请求。
-2. 元数据服务器把所需数据的存放位置（chunk server IP和chunk编号）告知客户端
-3. 客户端向已知的chunk server发送请求
-4. chunk server向客户端发送数据。
+2. 元数据服务器把所需数据的存放位置（chunk server IP 和 chunk 编号）告知客户端
+3. 客户端向已知的 chunk server 发送请求
+4. chunk server 向客户端发送数据。
 
 {% asset_img 3.png %}
 
 数据传输并不经过元数据服务器，减轻了元数据服务器的压力，也增大了整个系统的吞吐能力。
 
-
-
-## MFS写过程
+## MFS 写过程
 
 1. 客户端向元数据服务器发送写请求
 
-2. 元数据服务器与chunk server交互（只要当所需chunks存在才交互）
+2. 元数据服务器与 chunk server 交互（只要当所需 chunks 存在才交互）
 
-   a. 元数据服务器在某些服务器上创建chunks
+   a. 元数据服务器在某些服务器上创建 chunks
 
-   b. chunk server告知元数据服务器chunks创建成功
+   b. chunk server 告知元数据服务器 chunks 创建成功
 
-3. 元数据服务器告知客户端可写的chunk server上的指定chunks
+3. 元数据服务器告知客户端可写的 chunk server 上的指定 chunks
 
-4. 客户端向指定chunk server写数据
+4. 客户端向指定 chunk server 写数据
 
-5. chunk server之间进行同步
+5. chunk server 之间进行同步
 
-6. chunk server互相通知同步成功
+6. chunk server 互相通知同步成功
 
-7. chunk server告知客户端写入成功
+7. chunk server 告知客户端写入成功
 
 8. 客户端告知元数据服务器写入成功
 
 {% asset_img 4.png %}
 
-
-
-# MFS简单部署
+# MFS 简单部署
 
 实验环境：
 
-* Master：192.168.60.134
+- Master：192.168.60.134
 
   MFS VIP：192.168.60.200
 
-* Backup：192.168.60.135
+- Backup：192.168.60.135
 
-* Chunk1：192.168.60.136
+- Chunk1：192.168.60.136
 
-* Chunk2：192.168.60.130
+- Chunk2：192.168.60.130
 
-* Client：192.168.60.131
+- Client：192.168.60.131
 
 {% asset_img 1.png %}
 
-先要配置官方源，[官网配置](https://moosefs.com/download/#current)，版本3.0
+先要配置官方源，[官网配置](https://moosefs.com/download/#current)，版本 3.0
 
-对Master：`yum install moosefs-master moosefs-cgi moosefs-cgiserv moosefs-cli`
+对 Master：`yum install moosefs-master moosefs-cgi moosefs-cgiserv moosefs-cli`
 
-对chunkserver：`yum install moosefs-chunkserver`
+对 chunkserver：`yum install moosefs-chunkserver`
 
-对metalogger：`yum install moosefs-metalogger`
+对 metalogger：`yum install moosefs-metalogger`
 
-对Client：`yum install moosefs-client`
+对 Client：`yum install moosefs-client`
 
+## 启动 master
 
-
-## 启动master
-
-Master的配置文件目录`/etc/mfs/`
+Master 的配置文件目录`/etc/mfs/`
 
 - `mfsexports.cfg`：被挂载目录及权限控制文件
-- `mfsmaster.cfg`：master主配置文件
+- `mfsmaster.cfg`：master 主配置文件
 - `mfstopology.cfg`：
 
 ### mfsmaster.cfg
@@ -149,7 +138,7 @@ LOCK_MEMORY = 0           # 执行mlockall()以避免mfsmaster进程溢出
 NICE_LEVEL = -19          # 运行优先级
 DATA_PATH = /var/lib/mfs  # 数据存放路径
 EXPORTS_FILENAME = /etc/mfs/mfsexports.cfg      # exports文件路径
-TOPOLOGY_FILENAME = /etc/mfs/mfstopology.cfg    # 
+TOPOLOGY_FILENAME = /etc/mfs/mfstopology.cfg    #
 BACK_LOGS = 50                # metalogger改变的log文件数量
 MATOML_LISTEN_HOST = *        # metalogger监听IP地址
 MATOML_LISTEN_PORT = 9419     # metalogger监听端口
@@ -171,24 +160,22 @@ REPLICATIONS_DELAY_INIT = 60  # 延迟复制的时间
 
 其中挂载点路径有两个注意：
 
-- `/`表示以MFS根为根目录
-- `.`表示以MFSMETA文件系统为根目录
+- `/`表示以 MFS 根为根目录
+- `.`表示以 MFSMETA 文件系统为根目录
 
 参数可设置以下访问权限，逗号分隔多个参数：
 
 - ro：只读
 - rw：读写
 - alldirs：允许挂载任何指定的子目录
-- maproot：映射为root
+- maproot：映射为 root
 - password：指定客户端密码
-
-
 
 ### 启动操作
 
-先在master上配置VIP。`ifconfig ens32:0 192.168.60.200/24 up`。
+先在 master 上配置 VIP。`ifconfig ens32:0 192.168.60.200/24 up`。
 
-在master上使用命令`mfsmaster start`即可启动主服务器。会开启三个端口
+在 master 上使用命令`mfsmaster start`即可启动主服务器。会开启三个端口
 
 ```
 master <-> metaloggers module: listen on *:9419
@@ -196,10 +183,10 @@ master <-> chunkservers module: listen on *:9420
 main master server module: listen on *:9421
 ```
 
-其中9419用于监听metalogger，9420监听chunkserver，9421监听master
+其中 9419 用于监听 metalogger，9420 监听 chunkserver，9421 监听 master
 
 ```
-mfsmaster 
+mfsmaster
     -c    指定mfsmaster配置文件
     -f    在前端运行
     -i    忽略元数据结构错误
@@ -214,11 +201,9 @@ mfsmaster
     kill      杀死
 ```
 
-可以使用命令`mfscgiserv start`启动MFS的图形化web监控，通过9425端口访问，该图形化web是用python写的。
+可以使用命令`mfscgiserv start`启动 MFS 的图形化 web 监控，通过 9425 端口访问，该图形化 web 是用 python 写的。
 
-
-
-## 启动metalogger
+## 启动 metalogger
 
 配置文件`/etc/mfs/mfsmetalogger.cfg`
 
@@ -229,7 +214,7 @@ MASTER_RECONNECTION_DELAY = 5     # 重连延迟
 MASTER_TIMEOUT = 10               # 连接超时时间
 ```
 
-启动metalogger，`mfsmetalogger start`，查看端口可看到与master建立了长连接
+启动 metalogger，`mfsmetalogger start`，查看端口可看到与 master 建立了长连接
 
 ```
 ESTAB  0  0  192.168.60.135:40476  192.168.60.200:9419  users:(("mfsmetalogger",pid=7735,fd=8))
@@ -237,9 +222,7 @@ ESTAB  0  0  192.168.60.135:40476  192.168.60.200:9419  users:(("mfsmetalogger",
 
 `mfsmetalogger`命令与`mfsmaster`类似。
 
-
-
-## 启动chunkserver
+## 启动 chunkserver
 
 准备磁盘，分区、制作文件系统并挂载。
 
@@ -248,7 +231,7 @@ mount /dev/sdb1 /var/mfsdata
 chown -R mfs:mfs /var/mfsdata   # 一定要执行，否则启动失败
 ```
 
-chunkserver挂载点配置文件`/etc/mfs/mfshdd.cfg`，只要将挂载点写入该文件即可。
+chunkserver 挂载点配置文件`/etc/mfs/mfshdd.cfg`，只要将挂载点写入该文件即可。
 
 ```
 echo "/var/mfsdata" >> /etc/mfs/mfshdd.cfg
@@ -263,21 +246,19 @@ CSSERV_LISTEN_HOST = *       # 监听客户端IP，即指允许指定的客户�
 CSSERV_LISTEN_PORT = 9422    # 监听客户端的端口
 ```
 
-命令`mfschunkserver start `启动chunkserver。
+命令`mfschunkserver start`启动 chunkserver。
 
-但通过web查看状态，发现已经使用了260M左右。
+但通过 web 查看状态，发现已经使用了 260M 左右。
 
 {% asset_img 2.png %}
 
-因为master向data服务器申请空间是按最少256M申请的，低于256M则不会再申请空间，因此用于MFS的磁盘空间一定要大于256M，并且空闲的空间一定要大于1G才能参与分配，即用于MFS磁盘的空间大小至少大于1G，应该从几个G开始。
+因为 master 向 data 服务器申请空间是按最少 256M 申请的，低于 256M 则不会再申请空间，因此用于 MFS 的磁盘空间一定要大于 256M，并且空闲的空间一定要大于 1G 才能参与分配，即用于 MFS 磁盘的空间大小至少大于 1G，应该从几个 G 开始。
 
+## 启动 client
 
+MFS 客户端的挂载依赖于 fuse 工具，需要先安装。默认系统已安装。但需要安装内核模块`modprobe fuse`。客户端上也要配置`hosts`文件添加 mfsmaster。
 
-## 启动client
-
-MFS客户端的挂载依赖于fuse工具，需要先安装。默认系统已安装。但需要安装内核模块`modprobe fuse`。客户端上也要配置`hosts`文件添加mfsmaster。
-
-创建mfs组与mfs用户，创建挂载目录
+创建 mfs 组与 mfs 用户，创建挂载目录
 
 ```
 groupadd mfs
@@ -285,11 +266,11 @@ useradd -g mfs mfs -s /sbin/nologin
 mkdir /mnt/mfsdata
 ```
 
-使用`mfsmount`挂载mfs。`mfsmount /mnt/mfsdata -H mfsmaster`
+使用`mfsmount`挂载 mfs。`mfsmount /mnt/mfsdata -H mfsmaster`
 
 挂载完成后，查看`df`可发现挂载成功。
 
-客户端的`/bin/`中有许多mfs的工具，但都指向`mfstools`
+客户端的`/bin/`中有许多 mfs 的工具，但都指向`mfstools`
 
 在挂载目录中创建文件
 
@@ -309,8 +290,6 @@ aaa:
 		copy 2: 192.168.60.136:9422 (status:VALID)
 ```
 
-
-
 在客户端的`/mnt/mfsdata/`中有以下目录
 
 ```
@@ -318,7 +297,7 @@ aaa:
 conf  ini  jpg  md  png
 ```
 
-创建备份`mfssetgoal -r 3 conf `，备份三份conf目录。
+创建备份`mfssetgoal -r 3 conf`，备份三份 conf 目录。
 
 ```
 # mfssetgoal -r 3 conf
@@ -335,9 +314,7 @@ conf:
 conf: 3                # 有三份备份
 ```
 
-
-
-MFS数据存放在chunk中，类似block，数据是会分为多个chunk的，每个chunk的大小为64M，若一个文件大于64M，则会分为多个chunk。
+MFS 数据存放在 chunk 中，类似 block，数据是会分为多个 chunk 的，每个 chunk 的大小为 64M，若一个文件大于 64M，则会分为多个 chunk。
 
 ```
 # dd if=/dev/zero of=./aaa bs=1M count=63       # 63M的文件在一个chunk中
@@ -348,7 +325,7 @@ aaa:
 		copy 2: 192.168.60.136:9422 (status:VALID)
 
 # dd if=/dev/zero of=./bbb bs=1M count=65      # 65M的文件分为了两个chunk存储
-# mfsfileinfo bbb 
+# mfsfileinfo bbb
 bbb:
 	chunk 0: 000000000000000B_00000001 / (id:11 ver:1)
 		copy 1: 192.168.60.130:9422 (status:VALID)
@@ -358,12 +335,10 @@ bbb:
 		copy 2: 192.168.60.136:9422 (status:VALID)
 ```
 
-
-
 查看文件删除后会在回收站里的时间
 
 ```
-# mfsgettrashtime conf/1.conf 
+# mfsgettrashtime conf/1.conf
 conf/1.conf: 86400        # 86400s，即一天
 ```
 
@@ -375,7 +350,7 @@ conf/:
  inodes with trashtime changed:           1001
 ```
 
-挂载mfs回收站
+挂载 mfs 回收站
 
 ```
 # mfsmount -H mfsmaster -m /mnt/mfs-trash
@@ -383,61 +358,51 @@ conf/:
 sustained  trash
 ```
 
+## master 宕机切换
 
+在 master 上`/var/lib/mfs/`中存放修改记录`changelog.X.mfs`和元数据记录`metadata.mfs.back`
 
-## master宕机切换
+在 backup 的`/var/lib/mfs/`中也存放着修改记录`changelog_ml.X.mfs`和元数据记录`metadata_ml.mfs.back`和`metadata.mfs`
 
-在master上`/var/lib/mfs/`中存放修改记录`changelog.X.mfs`和元数据记录`metadata.mfs.back`
+若要在 backup 上恢复数据并身份转为 master，可以通过命令`mfsmaster -a`直接恢复。
 
-在backup的`/var/lib/mfs/`中也存放着修改记录`changelog_ml.X.mfs`和元数据记录`metadata_ml.mfs.back`和`metadata.mfs`
+> 注：`mfsmetarestore`命令在 1.7 版本已被废除。
 
-若要在backup上恢复数据并身份转为master，可以通过命令`mfsmaster -a`直接恢复。
-
-> 注：`mfsmetarestore`命令在1.7版本已被废除。
-
-
-
-## MFS集群内各角色的启动与停止
+## MFS 集群内各角色的启动与停止
 
 规范的启动顺序：
 
-1. 启动Masters
-2. 启动所有chunk servers
-3. 启动metalogger
+1. 启动 Masters
+2. 启动所有 chunk servers
+3. 启动 metalogger
 4. 挂载客户端
 
 规范的停止顺序：
 
 1. 客户端卸载挂载
-2. 停止所有chunk servers
-3. 停止metalogger
-4. 停止master
+2. 停止所有 chunk servers
+3. 停止 metalogger
+4. 停止 master
 
-
-
-# MFS高可用
+# MFS 高可用
 
 有几个解决方法：
 
-* 部署多个日志备份服务器（metalogger）
-* 使用heartbeat或keepalived+DRBD实现master高可用
-* 使用keepalived+inotify实现master高可用（不推荐）
+- 部署多个日志备份服务器（metalogger）
+- 使用 heartbeat 或 keepalived+DRBD 实现 master 高可用
+- 使用 keepalived+inotify 实现 master 高可用（不推荐）
 
-
-
-## keepalived+DRBD实现高可用
+## keepalived+DRBD 实现高可用
 
 实验环境：
 
-* Master：192.168.60.134
-* Backup：192.168.60.135
-* Chunk1：192.168.60.136
-* Chunk2：192.168.60.130
-* Client：192.168.60.131
+- Master：192.168.60.134
+- Backup：192.168.60.135
+- Chunk1：192.168.60.136
+- Chunk2：192.168.60.130
+- Client：192.168.60.131
 
-
-
-在Master和Backup上设置DRBD分区，sdc大小2G，sdc1有400M做元数据存储，剩余sdc2做数据存储。
+在 Master 和 Backup 上设置 DRBD 分区，sdc 大小 2G，sdc1 有 400M 做元数据存储，剩余 sdc2 做数据存储。
 
 ```
    设备 Boot      Start         End      Blocks   Id  System
@@ -445,7 +410,7 @@ sustained  trash
 /dev/sdc2          821248     4194303     1686528   83  Linux
 ```
 
-在Master和Backup上都修改DRBD配置，创建`mfs.res`
+在 Master 和 Backup 上都修改 DRBD 配置，创建`mfs.res`
 
 ```
 resource mfsdata {
@@ -465,16 +430,14 @@ resource mfsdata {
 }
 ```
 
-创建DRBD操作
+创建 DRBD 操作
 
 ```
 drbdadm create-md all
 drbdadm up all
 ```
 
-
-
-配置keepalived，在两台主机上配置
+配置 keepalived，在两台主机上配置
 
 ```
 global_defs {      # 保持默认即可
@@ -503,38 +466,3 @@ vrrp_instance VI_1 {
     }
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

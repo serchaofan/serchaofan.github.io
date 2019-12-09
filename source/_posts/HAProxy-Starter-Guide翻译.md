@@ -2,6 +2,7 @@
 title: HAProxy Starter Guide翻译
 date: 2018-12-02 23:45:17
 tags: [HAProxy,翻译]
+categories: [应用运维]
 ---
 
 > 译者：[serchaofan](https://github.com/serchaofan)

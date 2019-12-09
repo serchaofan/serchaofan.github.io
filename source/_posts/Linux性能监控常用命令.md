@@ -1,26 +1,23 @@
 ---
 title: Linux性能监控常用命令
 date: 2018-08-01 20:57:03
-tags: [性能,监控,运维]
+tags: [性能, 监控, 运维]
+categories: [系统运维]
 ---
 
-* [top与htop]()
-* [uptime,free和vmstat]()
-* [mpstat与iostat]()
-* [ps和pstree]()
-* 
-
-
-
-
+- [top 与 htop]()
+- [uptime,free 和 vmstat]()
+- [mpstat 与 iostat]()
+- [ps 和 pstree]()
+-
 
 <!-- more -->
 
-# top与htop
+# top 与 htop
 
 ## top
 
-查看动态进程状态，默认每5秒刷新一次。
+查看动态进程状态，默认每 5 秒刷新一次。
 
 ```
 top
@@ -36,7 +33,7 @@ top - 02:20:36 up  6:48,  1 user,  load average: 0.00, 0.00, 0.00
 Tasks: 145 total,   2 running, 143 sleeping,   0 stopped,   0 zombie
 %Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
 KiB Mem :  2029396 total,  1600964 free,   161512 used,   266920 buff/cache
-KiB Swap:  2097148 total,  2097148 free,        0 used.  1670652 avail Mem 
+KiB Swap:  2097148 total,  2097148 free,        0 used.  1670652 avail Mem
 # Tasks为进程数
 # us：用户占用cpu百分比
   sy：系统占用cpu百分比
@@ -47,23 +44,23 @@ KiB Swap:  2097148 total,  2097148 free,        0 used.  1670652 avail Mem
   si：可中断睡眠时间比率
   st：被偷走时间比率，一般为虚拟机占用
 
-   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND    
+   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
 # PR：优先级
 # NI：nice值，负数为高优先级，正数为低优先级
-# VIRT：虚拟内存总量    
-# RES：进程实际使用内存    
-# SHR：共享内存  
+# VIRT：虚拟内存总量
+# RES：进程实际使用内存
+# SHR：共享内存
 # S：进程状态。有五种状态：D-不可中断的睡眠态  R-运行态  S-睡眠态  T-停止  Z-僵尸态
 # TIME+：进程使用CPU的时间总计（单位1/100秒）
 ```
 
-进入top视图后的操作
+进入 top 视图后的操作
 
 ```
 1：查看每个逻辑CPU的状况
-P：按cpu使用率排序（默认） 
-M：按内存使用率排序 
-N：按PID排序 
+P：按cpu使用率排序（默认）
+M：按内存使用率排序
+N：按PID排序
 T：根据TIME+进行排序
 H：切换为线程
 l：切换负载信息
@@ -88,9 +85,7 @@ r：设置指定进程的nice优先级
 
 可通过鼠标点击操作，`h`查看帮助
 
-
-
-# uptime,free和vmstat
+# uptime,free 和 vmstat
 
 ## uptime
 
@@ -104,13 +99,13 @@ up 12 days, 13:33--系统启动时长
 load average: 0.01,0.02,0.05--系统在最近的1,5,15分钟的平均负载
 ```
 
-> 负载率(load)，即特定时间长度内，cpu运行队列中的平均进程数(包括线程)，一般平均每分钟每核的进程数小于3都认为正常，大于5时负载已经非常高。Linux运行队列包括正在运行的、在等待的、处于可中断睡眠态（IO等待）的进程。若为多核CPU，还需要除以核数。
+> 负载率(load)，即特定时间长度内，cpu 运行队列中的平均进程数(包括线程)，一般平均每分钟每核的进程数小于 3 都认为正常，大于 5 时负载已经非常高。Linux 运行队列包括正在运行的、在等待的、处于可中断睡眠态（IO 等待）的进程。若为多核 CPU，还需要除以核数。
 >
-> 平均负载最佳值为1，意味着每个进程都能立刻访问CPU，并且没有丢失CPU周期
+> 平均负载最佳值为 1，意味着每个进程都能立刻访问 CPU，并且没有丢失 CPU 周期
 
 ## free
 
-查看内存与swap分区使用状况，实际是从`/proc/meminfo`中读取数据的
+查看内存与 swap 分区使用状况，实际是从`/proc/meminfo`中读取数据的
 
 ```
 free
@@ -132,7 +127,7 @@ total  used  free  shared  buff/cache  available
 
 ## vmstat
 
-报告进程、内存、分页、块IO、中断、CPU活动信息，能够显示平均数据和实时样本。
+报告进程、内存、分页、块 IO、中断、CPU 活动信息，能够显示平均数据和实时样本。
 
 ```
 vmstat [options] [delay [count]]
@@ -149,10 +144,10 @@ vmstat [options] [delay [count]]
  刷新间隔 [次数]  设置持续刷新间隔及刷新次数
 ```
 
-* 虚拟内存模式
+- 虚拟内存模式
 
 ```
-vmstat      
+vmstat
 procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
  r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
 Proc：
@@ -180,7 +175,7 @@ cpu：
   st：steal,虚拟软件花费时间
 ```
 
-* 磁盘模式
+- 磁盘模式
 
 ```
 vmstat -d
@@ -202,15 +197,13 @@ IO：
   sec：IO花费时间（单位秒）
 ```
 
-
-
-# mpstat与iostat
+# mpstat 与 iostat
 
 `mpstat`与`iostat`都在`sysstat`包中，若没有这两个命令，则需要安装`dnf install sysstat`
 
 ## mpstat
 
-用于报告在多处理器服务器上每个可用CPU的统计数据。
+用于报告在多处理器服务器上每个可用 CPU 的统计数据。
 
 ```
 mpstat [ 选项 ] [ <时间间隔> [ <次数> ] ]
@@ -220,7 +213,7 @@ mpstat [ 选项 ] [ <时间间隔> [ <次数> ] ]
     CPU  显示intr/s，但排列难以阅读
     SCPU 显示intr/s，排版容易阅读
     ALL  显示所有中断统计信息
-  -P {cpu编号|ON|ALL} 
+  -P {cpu编号|ON|ALL}
     cpu  指明统计的cpu编号（0开始）
     ON   每个在线CPU的统计数据
     ALL  所有CPU的统计数据
@@ -245,19 +238,13 @@ CPU：CPU编号
 
 ## iostat
 
-
-
-
-
-
-
-# ps和pstree
+# ps 和 pstree
 
 ## ps
 
-ps命令有两种风格：BSD和Unix。BSD格式的参数前不加`-`，Unix格式会在参数前加`-`
+ps 命令有两种风格：BSD 和 Unix。BSD 格式的参数前不加`-`，Unix 格式会在参数前加`-`
 
-* 查看所有进程
+- 查看所有进程
 
 ```
 ps ax    # a表示此tty下的所有程序（不区分用户），x表示所有程序（不区分tty终端机），若增加u参数，可以用户为主的格式来显示程序状况
@@ -265,11 +252,11 @@ ps -ef   # -e显示所有程序，只显示PID、TTY、TIME、CMD，-f增加显�
 
 ps aux
 USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND
-USER：进程发起用户 
-PID：进程号 
+USER：进程发起用户
+PID：进程号
 %CPU，%MEM：CPU，内存占用率
-VSZ：虚拟内存（单位kb） 
-RSS：常驻内存（实际物理内存）（单位kb） 
+VSZ：虚拟内存（单位kb）
+RSS：常驻内存（实际物理内存）（单位kb）
 TTY：该进程在哪个终端运行
 STAT：进程状态
 	S：可中断睡眠
@@ -289,14 +276,14 @@ C：CPU占用率
 STIME：进程启动时间
 ```
 
-* 显示用户进程
+- 显示用户进程
 
 ```
 ps -f -u [用户名1,用户名2...]   #-u指定用户，可指定多个，不能加-e，不然等于没指定
 例：ps -f -u apache
 ```
 
-* 显示指定进程
+- 显示指定进程
 
 ```
 ps -f -C [进程]    # -C指定进程名，进程名必须是精确的，不能用通配符。同样不能指定-e
@@ -304,7 +291,7 @@ ps -f -C [进程]    # -C指定进程名，进程名必须是精确的，不能�
 ps -f -p [进程号]  # -p指定进程号
 ```
 
-* 通过cpu或内存占用对进程排序
+- 通过 cpu 或内存占用对进程排序
 
 ```
 ps -ef --sort=[+|-]pcpu,[+|-]pmem
@@ -312,34 +299,34 @@ ps -ef --sort=[+|-]pcpu,[+|-]pmem
 例：ps -ef --sort=-pcpu | head -6 显示CPU占用排名前五的进程
 ```
 
-* 以树显示进程层级关系
+- 以树显示进程层级关系
 
 ```
 ps -f --forest
 例：ps -f --forest -C httpd
 ```
 
-* 查看指定父进程下的所有子进程
+- 查看指定父进程下的所有子进程
 
 ```
 ps --ppid [PPID]
 ```
 
-* 显示进程的线程
+- 显示进程的线程
 
 ```
 ps -f -L -C [进程]或-p [进程号]   #显示指定进程的线程
 例：ps -f -L -C httpd
 ```
 
-* 指定要显示的列
+- 指定要显示的列
 
 ```
 ps -o pid,uname,pcpu,pmem,comm,etime
 其中：uname为用户名，etime为进程已运行时间
 ```
 
-* 通过`watch`命令将ps变为实时查看器
+- 通过`watch`命令将 ps 变为实时查看器
 
 ```
 watch
@@ -365,12 +352,8 @@ watch
 -Z          显示selinux上下文（需要开启selinux）
 ```
 
-
-
-
-
 ### 参考文章
 
-* [10 basic examples of Linux ps command](https://www.binarytides.com/linux-ps-command/)
-* [ps命令的10个例子](https://linux.cn/article-2358-1.html)
-* Linux性能优化大师
+- [10 basic examples of Linux ps command](https://www.binarytides.com/linux-ps-command/)
+- [ps 命令的 10 个例子](https://linux.cn/article-2358-1.html)
+- Linux 性能优化大师
