@@ -244,15 +244,59 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 
 ### 请求管理
 
+`[coordinator]`
+
+- `write-timeout = "10s"` 写入请求等待直到“超时”错误返回给调用方的持续时间。默认值为 10 秒。环境变量：`INFLUXDB_COORDINATOR_WRITE_TIMEOUT`
+- `max-concurrent-queries = 0` 实例上允许的最大运行查询数。 默认设置为 0，允许无限数量的查询。环境变量：`INFLUXDB_COORDINATOR_MAX_CONCURRENT_QUERIES`
+- `query-timeout = "0s"` 终止查询之前，允许执行查询的最大持续时间。 默认设置 0，允许查询不受时间限制地运行。环境变量：`INFLUXDB_COORDINATOR_QUERY_TIMEOUT`
+- `max-select-point = 0` SELECT 语句可以处理的最大点数。 默认设置 0，允许 SELECT 语句处理无限数量的点。环境变量：`INFLUXDB_COORDINATOR_MAX_SELECT_POINT`
+- `max-select-series = 0` SELECT 语句可以处理的最大序列数。默认设置 0，允许 SELECT 语句处理无限数量的序列。环境变量：`INFLUXDB_COORDINATOR_MAX_SELECT_SERIES`
+- `max-select-buckets = 0` 查询可以处理的 GROUP BY time()存储桶的最大数量。默认设置 0，允许查询处理无限数量的存储桶。环境变量：`INFLUXDB_COORDINATOR_MAX_SELECT_BUCKETS`
+
 ### 保留策略
+
+`[retention]`设置控制用于收回旧数据的保留策略的实施。
+
+- `enabled = true` 设置为 false 可以防止 InfluxDB 强制执行保留策略。环境变量：`INFLUXDB_RETENTION_ENABLED`
+- `check-interval = "30m0s"` InfluxDB 检查以强制执行保留策略的时间间隔。环境变量：`INFLUXDB_RETENTION_CHECK_INTERVAL`
 
 ### 碎片预创建
 
+`[shard-precreation]`设置控制分片的增量，以便在数据到达之前可以使用分片。只有在创建后将在未来具有开始时间和结束时间的分片才会被创建。永远不会预先创建全部或部分过去的碎片。
+
+- `enabled = true` 确定是否启用碎片预创建服务。环境变量：`INFLUXDB_SHARD_PRECREATION_ENABLED`
+- `check-interval = "10m"` 运行检查以预创建新分片的时间间隔。环境变量：`INFLUXDB_SHARD_PRECREATION_CHECK_INTERVAL`
+- `advance-period = "30m"` 预先为其创建碎片的最长期限。 默认的 30m 应该适用于大多数系统。 将来将此设置增加太多会导致效率低下。环境变量：`INFLUXDB_SHARD_PRECREATION_ADVANCE_PERIOD`
+
 ### 监控
 
-### HTTP 锚点
+`[monitor]`
+默认情况下，InfluxDB 将数据写入`_internal`数据库。如果该数据库不存在，InfluxDB 会自动创建它。 `_internal`数据库上的 DEFAULT 保留策略为 7 天。如果要使用 7 天保留策略以外的保留策略，则必须创建它。
+
+- `store-enabled = true`
+  设置为 false 可在内部禁用记录统计信息。 如果设置为 false，将大大增加诊断安装问题的难度。环境变量：`INFLUXDB_MONITOR_STORE_ENABLED`
+- `store-database = "_internal"`
+  记录的统计信息的目标数据库。环境变量：`INFLUXDB_MONITOR_STORE_DATABASE`
+- `store-interval = "10s"`
+  InfluxDB 记录统计信息的时间间隔。 默认值为每十秒钟（10 秒）。环境变量：`INFLUXDB_MONITOR_STORE_INTERVAL`
+
+### HTTP 端点
+
+`[http]`控制 InfluxDB 如何配置 HTTP 端点。
+
+- `enabled = true` 确定是否启用 HTTP 端点。环境变量：`INFLUXDB_HTTP_ENABLED`
+- `bind-address = ":8086"` HTTP 服务使用的绑定地址（端口）。环境变量：`INFLUXDB_HTTP_BIND_ADDRESS`
+- `auth-enabled = false` 确定是否通过 HTTP 和 HTTPS 启用用户身份验证。 要要求身份验证，请将值设置为 true。环境变量：`INFLUXDB_HTTP_AUTH_ENABLED`
+- `log-enabled = true` 确定是否启用 HTTP 请求日志记录。环境变量：`INFLUXDB_HTTP_LOG_ENABLED`
+- `access-log-path = ""` 访问日志的路径。 如果未指定或无法访问指定的路径，将退回到 stderr，这会将 HTTP 日志与内部 InfluxDB 日志混合在一起。
+- `max-connection-limit = 0` 一次可打开的最大连接数。超出限制的新连接将被删除。默认值 0 将禁用该限制。
 
 ### 日志
+
+`[logging]`控制记录器如何将日志发送到输出。
+
+- `format = "auto"` 确定要用于日志的日志编码器。 可选 auto（默认），logfmt 和 json。 使用默认的自动选项，如果输出是输出到 TTY 设备（例如终端），则使用更加用户友好的控制台编码。 如果输出是文件，则 auto 选项使用 logfmt 编码。 logfmt 和 json 选项对于与外部工具集成很有用。环境变量：`INFLUXDB_LOGGING_FORMAT`
+- `level = "info"` 要发出的日志级别。 可选为 error、warn、info(默认值)和 debug。等于或高于指定级别的日志将被发出。环境变量：`INFLUXDB_LOGGING_LEVEL`
 
 ## InfluxQL 要点整理
 
@@ -318,6 +362,134 @@ InfluxDB 可以显示有关每个节点的统计和诊断信息。
 - 可通过 HTTP API 访问 8086 端口`/metrics`，获取当前信息
 
 ## HTTP_API 查询
+
+### debug
+
+`/debug/pprof`：运行时的一些参数信息。包含以下参数：
+
+- allocs：过去所有内存分配的样本
+- block：导致跟踪原语阻塞的堆栈跟踪
+- cmdline：当前程序的命令行调用
+- goroutine：所有当前 goroutine 的堆栈跟踪
+- heap：活动对象的内存分配的采样。可以指定 gc GET 参数以在获取堆样本之前运行 GC。
+- mutex：竞争互斥锁持有人的堆栈痕迹
+- profile：CPU 配置文件。 可以在 GET 参数中指定持续时间。 获取概要文件后，使用`go tool pprof`命令调查概要文件。
+- threadcreate：堆栈跟踪，导致创建新的 OS 线程
+- trace：当前程序执行的跟踪。可以在 GET 参数中指定持续时间。 获取跟踪文件后，使用`go tool trace`命令调查跟踪。
+
+可直接通过`/debug/pprof`访问，或`/debug/pprof/<profile>`查看指定参数，或 go tool 命令查看`go tool pprof http://localhost:8086/debug/pprof/heap`
+还可以通过`/debug/pprof/all`获取信息的 tar.gz 包，包含所有参数信息的 txt 文本，`curl -o profiles.tar.gz "http://localhost:8086/debug/pprof/all"`
+
+`/debug/requests`：可跟踪对`/write`和`/query`的 HTTP 客户端请求，会按用户名和 IP 地址返回写入和查询的次数。
+
+```
+curl http://localhost:8086/debug/requests
+
+{
+  "user1:123.45.678.91": {"writes":1,"queries":0},
+}
+```
+
+可设置`seconds`设置客户端收集信息的持续时间（以秒为单位）。默认持续时间为 10 秒。
+
+```
+curl http://localhost:8086/debug/requests?seconds=60
+
+{
+  "user1:123.45.678.91": {"writes":3,"queries":0},
+  "user1:000.0.0.0": {"writes":0,"queries":16},
+  "user2:xx.xx.xxx.xxx": {"writes":4,"queries":0}
+}
+```
+
+`/debug/vars`可获取统计信息
+
+```
+curl http://localhost:8086/debug/vars
+
+{
+  "system": {"currentTime":"2019-12-19T09:11:19.458636472Z","started":"2019-12-16T08:46:03.377469744Z","uptime":260716},
+  "cmdline": ["/usr/bin/influxd","-config","/etc/influxdb/influxdb.conf"],
+...
+}
+```
+
+### ping
+
+`/ping`可获取当前 Influxdb 的实例信息，默认情况下，`/ping`返回一个简单的 HTTP 204 状态响应，以使客户端知道服务器正在运行。
+当 verbose 选项设置为 true 时（`/ping？verbose=true`）（默认 erbose 为 false），返回 HTTP 200 状态。
+
+```
+curl http://localhost:8086/ping?verbose=true
+
+{"version":"1.7.9"}
+```
+
+### query
+
+`/query`可用于查询数据和管理数据库、保留策略和用户。支持 GET 和 POST
+
+```
+curl -G 'http://localhost:8086/query?db=mydb' --data-urlencode 'q=SELECT * FROM "mymeas"'
+
+{"results":[{"statement_id":0,"series":[{"name":"mymeas","columns":["time","myfield","mytag1","mytag2"],"values":[["2017-03-01T00:16:18Z",33.1,null,null],["2017-03-01T00:17:18Z",12.4,"12","14"]]}]}]}
+```
+
+若要使用带插入的`INTO`语句，则需要使用 POST
+
+```
+curl -XPOST 'http://localhost:8086/query?db=mydb' --data-urlencode 'q=SELECT * INTO "newmeas" FROM "mymeas"'
+
+{"results":[{"statement_id":0,"series":[{"name":"result","columns":["time","written"],"values":[["1970-01-01T00:00:00Z",2]]}]}]}
+```
+
+若要创建数据库
+
+```
+curl -XPOST 'http://localhost:8086/query' --data-urlencode 'q=CREATE DATABASE "mydb"'
+
+{"results":[{"statement_id":0}]}
+```
+
+一些请求参数：
+
+- `db=`：查询（大部分 select 和 show）需要此参数，设置数据库
+- `epoch=`：返回具有指定精度的纪元时间戳。 默认情况下，InfluxDB 以 RFC3339 格式返回时间戳（以纳秒为单位）。
+- `p=`：设置登录密码（若开启了验证）
+- `u=`：设置登录用户（若开启了验证）
+- `pretty=true`：开启美化过的 json 格式输出
+- `q=`：InfluxQL 查询语句
+
+若要一次上传多个请求，查询语句间用`;`分隔
+
+```
+curl -G http://localhost:8086/query\?db\=test
+    --data-urlencode "q=select * from go_info;select * from node_cpu_seconds_total"
+```
+
+若要返回 csv 格式，可加上参数`-H "Accept: application/csv"`，系统以纪元格式返回时间戳而不是 RFC3339 格式。
+
+若要读取文件中的查询语句，可加上参数`-F "q=@<path_to_file>" -F "async=true"`，文件中的语句必须以`;`分隔。
+
+### write
+
+`/write`写入数据库，支持 POST
+建议在写入时，将时间的精度降低，例如设为`precision=s`，这会在压缩方面有所改善。
+
+写入一个点
+
+```
+curl -XPOST "http://localhost:8086/write?db=mydb&precision=s" --data-binary 'mymeas,mytag=1 myfield=90 1463683075'
+```
+
+写入一个点并指定保留策略，可使用参数`rp`指定策略
+
+```
+curl -XPOST "http://localhost:8086/write?db=mydb&rp=myrp" --data-binary 'mymeas,mytag=1 myfield=90'
+```
+
+其余参数与 query 类似，可参照 query 的参数
+从文件读入指令需要用参数`--data-binary @data.txt`，要注意文件中的指令间要用换行分隔
 
 ## 认证授权
 

@@ -5,7 +5,7 @@ categories: [云计算]
 date: 2019-12-13 11:41:10
 ---
 
-Prometheus 是最初在 SoundCloud 上构建的开源系统监视和警报工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。
+Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。
 
 <!--more-->
 
@@ -48,8 +48,8 @@ Prometheus 是最初在 SoundCloud 上构建的开源系统监视和警报工具
 ## 工作流程
 
 Prometheus server 定期从配置好的 jobs 或者 exporters 中拉 metrics，或者接收来自 Pushgateway 发过来的 metrics，或者从其他的 Prometheus server 中拉 metrics。
-Prometheus server 在本地存储收集到的 metrics，并运行已定义好的 alert.rules，记录新的时间序列或者向 Alertmanager 推送警报。
-Alertmanager 根据配置文件，对接收到的警报进行处理，发出告警。
+Prometheus server 在本地存储收集到的 metrics，并运行已定义好的 alert.rules，记录新的时间序列或者向 Alertmanager 推送报警。
+Alertmanager 根据配置文件，对接收到的报警进行处理，发出告警。
 在图形界面中，可视化采集数据。
 
 ## 数据模型
@@ -449,9 +449,30 @@ quantile(0.5, http_requests_total)
 {} 656
 ```
 
+### 常用函数
+
+|  函数名   | 作用                                           |  函数名   | 作用                                       |
+| :-------: | ---------------------------------------------- | :-------: | ------------------------------------------ |
+|    abs    | 返回绝对值                                     |  absent   | 检查是否有样本数据                         |
+|   ceil    | 向上取整                                       |   floor   | 向下取整                                   |
+|  changes  | 区间向量内每个样本数据值变化的次数             | clamp_max | 样本数据值若大于 max，则改为 max           |
+| clamp_min | 样本数据值若小于 min，则改为 min               |   delta   | 区间向量第一个元素和最后一个元素之间的差值 |
+| increase  | 区间向量中的第一个和最后一个样本并返回其增长量 |   irate   | 计算区间向量的增长率                       |
+|   rate    | 计算区间向量在时间窗口内平均增长速率           |   round   | 返回向量中所有样本值的最接近的整数         |
+|   sort    | 对向量按元素的值进行升序排序                   | sort_desc | 对向量按元素的值进行降序排序               |
+
 ## AlertManager 报警
 
-Prometheus 的警报分为两个部分。 Prometheus 服务器中的警报规则将警报发送到 Alertmanager。 然后，警报管理器通过电子邮件，通话通知系统和聊天平台等方法管理这些警报，包括静默，禁止，聚合和发出通知。
+Prometheus 的报警分为两个部分。 Prometheus 服务器中的报警规则将报警发送到 Alertmanager。 然后，报警管理器将重复数据删除，分组，再通过电子邮件，通话通知系统和聊天平台等方法管理这些报警，包括静默，禁止，聚合和发出通知。
+
+分组（Grouping）将性质相似的警报归类为单个通知。当许多系统同时发生故障，并且可能同时发出数百到数千个警报时，这种方法尤其有用。警报分组、分组通知的定时以及这些通知的接收者由配置文件中的路由树配置。
+
+抑制（Inhibition）是当某些其他警报已经触发时，抑制某些警报的通知。发出警报，通知整个群集不可访问。 可以将 Alertmanager 配置为使与该群集有关的所有其他警报静音，这样可以防止与实际问题无关的数百或数千个触发警报的通知。通过 Alertmanager 的配置文件配置抑制。
+
+静默（Sliences）是一种简单地在给定时间内静音警报的简单方法。静默是基于匹配器（matchers）配置的，就像路由树一样。将检查传入警报是否与活动静默的所有相等或正则表达式匹配。如果这样做了，将不会发送该警报的通知。静默是在 Alertmanager 的 web 界面配置的。
+
+Alertmanager 支持配置以创建高可用性集群。这可以使用`——cluster-*`标志进行配置。重点是不要在 Prometheus 和它的 Alertmanagers 之间进行负载平衡，而是将 Prometheus 指向一个所有 Alertmanagers 的列表。
+
 下载：https://prometheus.io/download/#alertmanager
 解压后执行 alertmanager 命令，需要当前目录有配置文件，默认配置文件为：
 
@@ -557,4 +578,372 @@ remote_write:
 
 remote_read:
   - url: "http://192.168.0.16:8086/api/v1/prom/read?db=test"
+```
+
+## HTTP API
+
+Prometheus API 使用了 JSON 格式的响应内容。 当 API 调用成功后将会返回 2xx 的 HTTP 状态码。当 API 调用失败时可能返回以下几种不同的 HTTP 状态码：
+
+- `404 Bad Request`：参数错误或者缺失
+- `422 Unprocessable Entity`：表达式无法执行
+- `503 Service Unavailiable`：请求超时或者被中断
+
+### 表达式请求
+
+瞬时数据请求：`/api/v1/query`，有 GET 和 POST 两种方法。有以下参数，参数间用`&`连接：
+
+- `query=`：PromQL 表达式
+- `time=<rfc3339 | unix_timestamp>`：用于指定用于计算 PromQL 的时间戳。可选参数，默认情况下使用当前系统时间。
+- `timeout=`：超时设置。可选参数，默认情况下使用`-query.timeout` 的全局设置。
+
+请求结果的`data`段的结构如下：
+
+```
+{
+  "resultType": "matrix" | "vector" | "scalar" | "string",
+  "result": <value>
+}
+```
+
+示例：
+
+```
+curl 'http://localhost:9090/api/v1/query?query=up&time=2015-07-01T20:10:51.781Z'
+{
+   "status" : "success",
+   "data" : {
+      "resultType" : "vector",
+      "result" : [
+         {
+            "metric" : {
+               "__name__" : "up",
+               "job" : "prometheus",
+               "instance" : "localhost:9090"
+            },
+            "value": [ 1435781451.781, "1" ]
+         },
+         ...
+      ]
+    }
+}
+```
+
+区间数据请求：`/api/v1/query_range`，支持 GET 和 POST。有以下参数：
+
+- `query=`: PromQL 表达式。
+- `start=`: 起始时间。
+- `end=`: 结束时间。
+- `step=`: 查询步长。
+- `timeout=`: 超时设置。可选参数，默认情况下使用`-query.timeout`的全局设置。
+
+请求结果的`data`段结构：
+
+```
+{
+  "resultType": "matrix",
+  "result": <value>
+}
+```
+
+示例：
+
+```
+curl 'http://localhost:9090/api/v1/query_range?query=up&start=2015-07-01T20:10:30.781Z&end=2015-07-01T20:11:00.781Z&step=15s'
+{
+   "status" : "success",
+   "data" : {
+      "resultType" : "matrix",
+      "result" : [
+         {
+            "metric" : {
+               "__name__" : "up",
+               "job" : "prometheus",
+               "instance" : "localhost:9090"
+            },
+            "values" : [
+               [ 1435781430.781, "1" ],
+               [ 1435781445.781, "1" ],
+               [ 1435781460.781, "1" ]
+            ]
+         },
+         ...
+      ]
+   }
+}
+```
+
+### 请求元数据
+
+请求序列信息：`/api/v1/series`，有 GET 和 POST 方法。有以下参数：
+
+- `match[] = <series_selector>`：重复的序列选择器参数，用于选择要返回的序列。必须至少提供一个`match[]`参数。
+- `start = <rfc3339 | unix_timestamp>`：开始时间戳。
+- `end = <rfc3339 | unix_timestamp>`：结束时间戳。
+
+查询结果的`data`部分由一个对象列表组成，这些对象包含标识每个系列的标签名/值对。
+
+```
+curl -g 'http://localhost:9090/api/v1/series?' --data-urlencode='match[]=up' --data-urlencode='match[]=process_start_time_seconds{job="prometheus"}'
+
+{
+   "status" : "success",
+   "data" : [
+      {
+         "__name__" : "up",
+         "job" : "prometheus",
+         "instance" : "localhost:9090"
+      },
+      ...
+   ]
+}
+```
+
+获取标签（label）名：`/api/v1/labels`，支持 GET 和 POST。
+
+```
+curl 'localhost:9090/api/v1/labels'
+{
+    "status": "success",
+    "data": [
+        "__name__",
+        "call",
+        "code",
+        "config",
+        "dialer_name",
+        "endpoint",
+        ...
+    ]
+}
+```
+
+获取标签值：`/api/v1/label/<label_name>/values`，仅支持 GET
+
+```
+curl http://localhost:9090/api/v1/label/job/values
+{
+   "status" : "success",
+   "data" : [
+      "node",
+      "prometheus"
+   ]
+}
+```
+
+### targets
+
+获取 targets：`/api/v1/targets`，支持 GET。
+活动（active）目标和已删除（dropped）目标都是响应的一部分。 `labels`表示在重新标记后的标签集。`discoverLabel`表示在重新标记之前在服务发现期间检索到的未修改的标签。
+
+```
+curl http://localhost:9090/api/v1/targets
+{
+  "status": "success",
+  "data": {
+    "activeTargets": [
+      {
+        "discoveredLabels": {
+          "__address__": "127.0.0.1:9090",
+          "__metrics_path__": "/metrics",
+          "__scheme__": "http",
+          "job": "prometheus"
+        },
+        "labels": {
+          "instance": "127.0.0.1:9090",
+          "job": "prometheus"
+        },
+        "scrapeUrl": "http://127.0.0.1:9090/metrics",
+        "lastError": "",
+        "lastScrape": "2017-01-17T15:07:44.723715405+01:00",
+        "health": "up"
+      }
+    ],
+    "droppedTargets": [
+      {
+        "discoveredLabels": {
+          "__address__": "127.0.0.1:9100",
+          "__metrics_path__": "/metrics",
+          "__scheme__": "http",
+          "job": "node"
+        },
+      }
+    ]
+  }
+}
+```
+
+### rules
+
+获取 rules：`/api/v1/rules`，支持 GET。返回当前加载的报警和记录规则的列表，还返回由每个报警规则的 Prometheus 实例触发的当前活动报警。
+
+```
+curl http://localhost:9090/api/v1/rules
+
+{
+    "data": {
+        "groups": [
+            {
+                "rules": [
+                    {
+                        "alerts": [
+                            {
+                                "activeAt": "2018-07-04T20:27:12.60602144+02:00",
+                                "annotations": {
+                                    "summary": "High request latency"
+                                },
+                                "labels": {
+                                    "alertname": "HighRequestLatency",
+                                    "severity": "page"
+                                },
+                                "state": "firing",
+                                "value": "1e+00"
+                            }
+                        ],
+                        "annotations": {
+                            "summary": "High request latency"
+                        },
+                        "duration": 600,
+                        "health": "ok",
+                        "labels": {
+                            "severity": "page"
+                        },
+                        "name": "HighRequestLatency",
+                        "query": "job:request_latency_seconds:mean5m{job=\"myjob\"} > 0.5",
+                        "type": "alerting"
+                    },
+                    {
+                        "health": "ok",
+                        "name": "job:http_inprogress_requests:sum",
+                        "query": "sum(http_inprogress_requests) by (job)",
+                        "type": "recording"
+                    }
+                ],
+                "file": "/rules.yaml",
+                "interval": 60,
+                "name": "example"
+            }
+        ]
+    },
+    "status": "success"
+}
+```
+
+### alerts
+
+获取 alerts：`/api/v1/alerts`，支持 GET。返回所有启用的报警的列表。
+
+```
+curl http://localhost:9090/api/v1/alerts
+
+{
+    "data": {
+        "alerts": [
+            {
+                "activeAt": "2018-07-04T20:27:12.60602144+02:00",
+                "annotations": {},
+                "labels": {
+                    "alertname": "my-alert"
+                },
+                "state": "firing",
+                "value": "1e+00"
+            }
+        ]
+    },
+    "status": "success"
+}
+```
+
+### alertmanager
+
+获取 alertmanager 信息：`/api/v1/alertmanagers`。支持 GET。返回 Prometheus alertmanager 发现的当前状态的概述。
+
+```
+curl http://localhost:9090/api/v1/alertmanagers
+{
+  "status": "success",
+  "data": {
+    "activeAlertmanagers": [
+      {
+        "url": "http://127.0.0.1:9090/api/v1/alerts"
+      }
+    ],
+    "droppedAlertmanagers": [
+      {
+        "url": "http://127.0.0.1:9093/api/v1/alerts"
+      }
+    ]
+  }
+}
+```
+
+### status
+
+获取该结点的当前的 Prometheus 配置：`/api/v1/status/config`，支持 GET。
+配置作为转储的 YAML 文件返回。 由于 YAML 库的限制，不包括 YAML 注释。
+
+```
+curl http://localhost:9090/api/v1/status/config
+{
+  "status": "success",
+  "data": {
+    "yaml": "<content of the loaded config file in YAML>",
+  }
+}
+```
+
+获取配置 Prometheus 的标志值：`/api/v1/status/flags`，支持 GET。
+
+```
+curl http://localhost:9090/api/v1/status/flags
+{
+  "status": "success",
+  "data": {
+    "alertmanager.notification-queue-capacity": "10000",
+    "alertmanager.timeout": "10s",
+    "log.level": "info",
+    "query.lookback-delta": "5m",
+    "query.max-concurrency": "20",
+    ...
+  }
+}
+```
+
+获取关于 Prometheus 服务器的各种运行时信息属性：`/api/v1/status/runtimeinfo`，支持 GET。
+根据运行时属性的性质，返回的值具有不同的类型。
+
+```
+curl http://localhost:9090/api/v1/status/runtimeinfo
+{
+  "status": "success",
+  "data": {
+    "startTime": "2019-11-02T17:23:59.301361365+01:00",
+    "CWD": "/",
+    "reloadConfigSuccess": true,
+    "lastConfigTime": "2019-11-02T17:23:59+01:00",
+    "chunkCount": 873,
+    "timeSeriesCount": 873,
+    "corruptionCount": 0,
+    "goroutineCount": 48,
+    "GOMAXPROCS": 4,
+    "GOGC": "",
+    "GODEBUG": "",
+    "storageRetention": "15d"
+  }
+}
+```
+
+获取关于 Prometheus 服务器的各种构建信息属性：`/api/v1/status/buildinfo`，支持 GET。
+
+```
+curl http://localhost:9090/api/v1/status/buildinfo
+{
+  "status": "success",
+  "data": {
+    "version": "2.13.1",
+    "revision": "cb7cbad5f9a2823a622aaa668833ca04f50a0ea7",
+    "branch": "master",
+    "buildUser": "julius@desktop",
+    "buildDate": "20191102-16:19:59",
+    "goVersion": "go1.13.1"
+  }
+}
 ```

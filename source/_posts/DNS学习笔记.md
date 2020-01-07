@@ -1,6 +1,6 @@
 ---
 date: 2018-01-28 20:22:42
-title: DNS学习笔记（1）
+title: DNS学习笔记
 tags: [server, DNS]
 categories: [应用运维]
 ---

@@ -8,21 +8,13 @@ categories: [应用运维]
 本篇包含以下内容
 
 - [Ansible 结构](#Ansible结构)
-
 - [Ansible 安装](#Ansible安装)
-
 - [Inventory](#Inventory)
-
 - [Ansible 常见模块](#Ansible常见模块)
-
 - [Playbook](#Playbook)
-
   <!-- more -->
-
 - [Ansible 变量](#Ansible变量)
-
 - [Jinja2 过滤器](#Jinja2过滤器)
-
 - [Ansible-Tower](#Ansible-Tower)
 
 Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节点和远程节点间的通信，实现批量自动化操作。

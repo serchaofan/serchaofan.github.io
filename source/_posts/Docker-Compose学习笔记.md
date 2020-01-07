@@ -36,6 +36,12 @@ docker18.06 对应的 Compose 文件格式版本为 3.7
 **docker-compose 安装**
 
 使用 pip 快速安装`pip install docker-compose`
+或通过 compose 的 github 库按提示安装[docker-compose 的 github](https://github.com/docker/compose/releases)
+
+```
+curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+```
 
 docker-compose 参数选项：
 
@@ -282,7 +288,7 @@ docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
 
 # Compose 文件格式
 
-Compose 文件采用[YAML 语法]()，文件名以`.yml`或`.yaml`结尾，默认应存放在项目的根目录中，文件名应为`docker-compose.yml`。在 Compose 文件中无需再指定 Dockerfile 中已定义的项。
+Compose 文件采用 YAML，文件名以`.yml`或`.yaml`结尾，默认应存放在项目的根目录中，文件名应为`docker-compose.yml`。在 Compose 文件中无需再指定 Dockerfile 中已定义的项。
 
 文件格式为 3.7，所以 compose 文件最开始要写上`version: "3"`
 
@@ -369,13 +375,214 @@ command: ["bundle", "exec", "thin", "-p", "3000"]
 
 # docker-compose 示例
 
-首先是 docker-compose 官方文档中的示例：
+## 官方 wordpress 案例
+
+只需要一个`docker-compose.yml`文件即可
+
+```yaml
+version: "3.3"
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - "8000:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+volumes:
+  db_data: {}
+```
+
+然后通过 8000 端口访问。
+命令`docker-compose down`删除容器和默认网络，但保留 WordPress 数据库。
+
+命令`docker-compose down --volumes`删除容器，默认网络和 WordPress 数据库。
+
+## 官方 Django 案例
+
+配置 Dockerfile
+
+```dockerfile
+FROM python
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /code
+WORKDIR /code
+COPY requirements.txt /code/
+RUN pip install -r requirements.txt
+COPY . /code/
+```
+
+配置 requirements.txt
+
+```
+Django>=2.0
+psycopg2>=2.7
+```
+
+配置 compose 文件
+
+```yaml
+version: "3"
+
+services:
+  db:
+    image: postgres
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+```
+
+创建 Django 项目
+
+```
+docker-compose run web django-admin startproject djangoapp .
+```
+
+启动后，django 项目就创建完成了，当前目录就是 django 的根目录，编辑`settings.py`，修改数据库配置
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
+    }
+}
+```
+
+同时根据 compose 文件中的暴露地址修改 settings 中的 `ALLOWED_HOSTS`
+
+```python
+ALLOWED_HOSTS = ['0.0.0.0']
+```
+
+然后`docker-compose up`启动，通过配置的 8000 端口访问
+
+```
+$ docker-compose ps
+     Name                    Command               State           Ports
+---------------------------------------------------------------------------------
+djangoapp_db_1    docker-entrypoint.sh postgres    Up      5432/tcp
+djangoapp_web_1   python manage.py runserver ...   Up      0.0.0.0:8000->8000/tcp
+
+
+$ docker ps -a
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+17743c2c1145        djangoapp_web       "python manage.py ru…"   10 minutes ago      Up 17 seconds       0.0.0.0:8000->8000/tcp   djangoapp_web_1
+4a5e0f4f5559        postgres            "docker-entrypoint.s…"   43 minutes ago      Up 18 seconds       5432/tcp                 djangoapp_db_1
 
 ```
 
+## 官方 Flask 案例
+
+创建`app.py`
+
+```python
+import time
+
+import redis
+from flask import Flask
+
+app = Flask(__name__)
+cache = redis.Redis(host='redis', port=6379)
+
+
+def get_hit_count():
+    retries = 5
+    while True:
+        try:
+            return cache.incr('hits')
+        except redis.exceptions.ConnectionError as exc:
+            if retries == 0:
+                raise exc
+            retries -= 1
+            time.sleep(0.5)
+
+
+@app.route('/')
+def hello():
+    count = get_hit_count()
+    return 'Hello World! I have been seen {} times.\n'.format(count)
 ```
 
-### 参考文章
+配置`requirements.txt`
+
+```
+flask
+redis
+```
+
+创建 Dockerfile
+
+```dockerfile
+FROM python:3.7-alpine
+WORKDIR /code
+ENV FLASK_APP app.py
+ENV FLASK_RUN_HOST 0.0.0.0
+RUN apk add --no-cache gcc musl-dev linux-headers
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["flask", "run"]
+```
+
+创建 compose 文件
+
+```yaml
+version: "3"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+  redis:
+    image: "redis:alpine"
+```
+
+然后`docker-compose up`启动即可，通过 5000 端口访问  
+也可添加 volume，存储项目代码
+
+```yaml
+version: "3"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/code
+    environment:
+      FLASK_ENV: development
+  redis:
+    image: "redis:alpine"
+```
+
+**参考文章**
 
 - [Docker 三剑客之 Compose-一](https://blog.csdn.net/vchy_zhao/article/details/70238413)
 - [Docker 三剑客之 Compose-二](https://blog.csdn.net/vchy_zhao/article/details/70238432)

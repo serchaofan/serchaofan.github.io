@@ -16,9 +16,7 @@ categories: [应用运维]
 - [httpd 认证授权](#httpd认证授权)
 - [页面重定向](#页面重定向)
 - [.htaccess 文件](#.htaccess文件)
-
-<!-- more -->
-
+  <!-- more -->
 - [CGI](#CGI)
 - [动态 httpd](#动态httpd)
 - [httpd 与 SSL](#httpd与SSL)
@@ -332,31 +330,18 @@ AuthGroupFile  指定组认证文件，文件中分组格式为"组名: 组成�
 **`Require`指令**：只能放在`Directory`容器中，用于控制对目录的访问权限，功能由`mod_authz_core`模块提供。有以下配置：
 
 - `Require all granted | denied`：允许|拒绝所有人访问该目录
-
 - `Require method http方法 ...`：只有指定的 http 方法（如 get,post）才能访问该目录
-
 - `Require expr 正则表达式`：只要满足指定正则表达式才能访问
-
 - `Require user 用户...`：只有指定用户能访问
-
 - `Require valid-user 用户...`：认证列表中所有用户都可访问
-
   > 关于用户的认证需要`mod_authz_user`模块
-
 - `Require group 组...`：指定组内的用户才能访问
-
 - `Require file-owner`：web 用户名必须与请求文件的 UID 对应用户名一致才能访问
-
 - `Require file-group`：web 用户名必须为请求文件的 gid 组中的一员才能访问
-
   > 组认证需要`mod_authz_groupfile`模块
-
 - `Require ip IP地址[/Mask]...`：指定 IP 能访问该目录
-
 - `Require host 域名...`：指定域名能访问该目录
-
   > 关于 ip 和 host 的认证需要`mod_authz_host`模块
-
 - 若`Require`后加上`not`则是取反。
 
 **认证实验：**
@@ -406,13 +391,13 @@ AuthGroupFile  指定组认证文件，文件中分组格式为"组名: 组成�
 
 是否启用`.htaccess`文件取决于`AllowOverride`指令，该指令决定是否启用文件中定义的指令。
 
-通常，只有在无法访问主服务器配置文件时才应使用.htaccess 文件。.htaccess 文件主要面向于没有 root 访问权限而无法改动主配置文件的用户，允许他们通过配置各自网站的.htaccess 文件自行进行配置修改。
+通常，只有在无法访问主服务器配置文件时才应使用`.htaccess` 文件。`.htaccess` 文件主要面向于没有 root 访问权限而无法改动主配置文件的用户，允许他们通过配置各自网站的`.htaccess` 文件自行进行配置修改。
 
 应该避免使用`.htaccess`文件的两点原因：
 
-- 当 AllowOverride 设置为允许使用.htaccess 文件时，httpd 将在每个目录中查找.htaccess 文件。因此，允许.htaccess 文件会导致性能下降，且每次请求文档时都会加载.htaccess 文件。
+- 当 AllowOverride 设置为允许使用`.htaccess` 文件时，httpd 将在每个目录中查找`.htaccess` 文件。因此，允许`.htaccess` 文件会导致性能下降，且每次请求文档时都会加载`.htaccess` 文件。
 
-  httpd 必须在所有更高级别的目录中查找.htaccess 文件，以便拥有必须应用的完整指令。 例如，如果从目录`/www/htdocs/example`中请求文件，httpd 必须查找以下文件
+  httpd 必须在所有更高级别的目录中查找`.htaccess` 文件，以便拥有必须应用的完整指令。 例如，如果从目录`/www/htdocs/example`中请求文件，httpd 必须查找以下文件
 
   ```
   /.htaccess
@@ -423,11 +408,11 @@ AuthGroupFile  指定组认证文件，文件中分组格式为"组名: 组成�
 
   这样会查找四个文件，即使不存在。
 
-  若指定重定向的指令，则在.htaccess 上下文中，必须重新编译每个对目录的请求的正则表达式
+  若指定重定向的指令，则在`.htaccess` 上下文中，必须重新编译每个对目录的请求的正则表达式
 
 - 允许用户修改服务器配置可能导致无法控制的更改，必须对用户的权限进行精细的控制，准确地设置 AllowOverride 的内容。
 
-由于会从最上级目录迭代向下查找.htaccess 文件，所以，若不同的.htaccess 文件中有相同指令，则最下层的.htaccess 文件中的该指令生效，下层的文件中的指令会覆盖上层文件中相同的指令。
+由于会从最上级目录迭代向下查找`.htaccess` 文件，所以，若不同的`.htaccess` 文件中有相同指令，则最下层的`.htaccess` 文件中的该指令生效，下层的文件中的指令会覆盖上层文件中相同的指令。
 
 ## .htaccess 文件的常用示例
 
@@ -791,7 +776,7 @@ LoadModule mpm_event_module modules/mod_mpm_event.so
 
 {% asset_img 3.png %}
 
-**各 MPM 模式的简单优化：**若是 rpm 安装，就在`httpd.conf`中添加，若为源码安装，就在`/usr/local/httpd-2.4/conf/extra/httpd-mpm.conf`中找到对应模块修改。以下参数基本采用配置文件默认值。
+**各 MPM 模式的简单优化：** 若是 rpm 安装，就在`httpd.conf`中添加，若为源码安装，就在`/usr/local/httpd-2.4/conf/extra/httpd-mpm.conf`中找到对应模块修改。以下参数基本采用配置文件默认值。
 
 - `worker`模式
 

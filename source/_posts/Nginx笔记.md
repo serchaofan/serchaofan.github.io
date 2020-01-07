@@ -1,5 +1,5 @@
 ---
-title: Nginx笔记-1
+title: Nginx笔记
 date: 2018-05-02 17:20:03
 tags: [server, Nginx, LNMP, 集群, 缓存, 代理, 负载均衡]
 categories: [应用运维]
@@ -13,9 +13,7 @@ categories: [应用运维]
 - [访问控制、身份认证与 SSL](#访问控制、身份认证与SSL)
 - [Nginx 日志](#Nginx日志)
 - [Nginx 缓存](#Nginx缓存)
-
 <!-- more -->
-
 - [Nginx 负载均衡](#Nginx负载均衡)
 - [Nginx 反向代理](#Nginx反向代理)
 - [Nginx 邮件服务](#Nginx邮件服务)
@@ -640,7 +638,35 @@ proxy_temp_path   /data/ngxcache/proxy_temp_dir;
 proxy_cache_path  /data/ngxcache/proxy_cache_dir levels=1:2 keys_zone=cache_one:1000m max_size=1g;
 ```
 
-然后在 server 块中的 location 块添加其余的缓存配置
+**Nginx 启动后，缓存加载程序只进行加载一次**，加载时会将缓存的元数据加载到共享内存区域，但是如果**一次加载整个缓存全部内容可能会使 Nginx 刚启动的前几分钟性能消耗严重，大幅度降低 Nginx 的性能**。所以可以在 proxy_cache_path 命令中**配置缓存迭代加载**。缓存迭代加载一共可以设置三个参数：
+
+```
+loader_threshold - 迭代的持续时间，以毫秒为单位(默认为200)
+loader_files     - 在一次迭代期间加载的最大项目数(默认为100)
+loader_sleeps    - 迭代之间的延迟(以毫秒为单位)(默认为50)
+```
+
+例：`proxy_cache_path /data/ngxcache/proxy_cache_dir keys_zone=cache_one:10m loader_threshold=300 loader_files=200;`
+
+```
+proxy_cache_methods[GET HEAD POST];
+```
+
+在虚拟服务器下配置`proxy_cache_methods`命令可以指定该虚拟服务器下什么类型的 HTTP 方法可以被缓存。默认情况下 GET 请求及 HEAD 请求会被缓存，而 POST 请求不会被缓存。
+
+```
+proxy_cache_bypass  $cookie_nocache  $arg_nocache$arg_comment;
+```
+
+`proxy_cache_bypass`命令可以配置不会向客户端响应缓存，而是直接将请求转发给后端服务进行请求数据。可以通过上述命令配置需要绕过缓存的请求 URL，也就是说 URL 中包含该配置的值，则这次请求会直接跳过缓存直接请求后端服务去获取数据。
+
+```
+proxy_cache_min_uses 2;
+```
+
+`proxy_cache_min_uses`命令可以设置当某请求最少响应几次后会被缓存。若设置为 2 则表示每个请求最少被请求 2 次后会加入到缓存中。
+
+例：简单添加 location 缓存配置
 
 ```
 location / {
@@ -720,6 +746,65 @@ server {
 - `open_log_cache`：日志缓存
 - `open_file_cache`：文件缓存
 - `fastcgi_cache`：fastcgi 缓存
+
+## 清除缓存
+
+如果缓存过期则需要从缓存中删除过期的缓存文件，防止新旧缓存出现交错出错，当 Nginx 接收到自定义 HTTP 头或者 PURGE 请求时，缓存将会被清除。
+
+在 HTTP 节点下创建一个新变量\$purge_method 来标识使用 PURGE 方法的请求并删除匹配的 URL。
+
+```
+http {
+  map $request_method $purge_method {
+    PURGE 1;
+    default 0;
+  }
+}
+```
+
+进入虚拟服务器配置，在 location 中配置高速缓存，并且指定缓存清除请求命令`proxy_cache_purge`。
+
+```
+server {
+  listen 80;
+  server_name web;
+  location / {
+    proxy_cache cache_one;
+    proxy_cache_purge $purge_method;
+  }
+}
+```
+
+发送清除命令
+
+配置`proxy_cache_purge`指令后需要发送 PURGE 请求来清除缓存。例如使用 PURGE 方式请求 url:
+
+```
+PURGE web/app
+```
+
+则 app 对应的缓存中的数据将被删除。但是，这些高速缓存数据不会从缓存中完全删除，它们将保留在磁盘上，直到它们被删除为非活动状态，或由缓存清除进程处理。
+
+限制 IP 访问清除命令：清除缓存这种命令一般需要权限才可进行操作，所以一般需要配置允许发送缓存清除请求的 IP 地址：
+
+```
+geo $purge_allowed {
+ default 0;
+ 192.168.0.1/24 1;
+}
+map $request_method $purge_method {
+ PURGE $purge_allowed;
+ default 0;
+}
+```
+
+当 Nginx 接收到清除缓存请求时，Nginx 检查客户端 IP 地址，若 IP 地址已经获得清除缓存权限，则$purge_method设置为$purge_allowed，值为 1 表示允许清除缓存，值为 0 表示表示 IP 地址未获得权限。
+
+从缓存中完全删除文件：高速缓存数据不会从缓存中完全删除，它们将保留在磁盘上，直到它们被删除为非活动状态，或由缓存清除进程处理。要完全删除与 getArticle 相匹配的缓存数据，需要在`proxy_cache_path`添加参数 purger，该参数表示永久的遍历所有缓存条目，并删除与通配符相匹配的条目。
+
+```
+proxy_cache_path /data/ngx_cache/proxy_cache_dir keys_zone=cache_one:10m purger=on;
+```
 
 # Nginx 负载均衡
 
@@ -1424,6 +1509,7 @@ location ~ \.php$ {
 
 - [nginx 基础及提供 web 服务(nginx.conf 详解)](http://www.cnblogs.com/f-ck-need-u/p/7683027.html)
 - [nginx 日志配置](http://www.ttlsa.com/linux/the-nginx-log-configuration/)
+- [Nginx 缓存原理及机制](https://mp.weixin.qq.com/s?__biz=MzU5MTc1ODA0OQ==&mid=2247484867&idx=1&sn=0ef618a9ee29fdae99e5da1517acf085&chksm=fe2b524dc95cdb5bd4da28a7384a0da17f73b4d3af463a3004c06e5e01195b2a83995eb3d4b7&scene=21#wechat_redirect)
 - Nginx 高性能 Web 服务器实战教程
 - 高性能网站构建实战
 - 跟老男孩学 Linux 运维 Web 集群实战
