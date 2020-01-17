@@ -31,7 +31,7 @@ DHCP 的基本原则：尽可能为客户端分配**原来使用**的地址。
 DHCP 的分配顺序：1.静态分配的 2.客户端曾经会用过的 3.最先找到的可用 IP。
 
 **DHCP 报文与请求过程**
-{% asset_img dhcp-qingqiu.png dhcp-qingqiu %}
+{% asset_img dhcp-qingqiu.png %}
 
 DHCP 工作过程
 

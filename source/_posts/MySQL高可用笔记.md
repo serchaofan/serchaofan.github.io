@@ -5,14 +5,173 @@ tags: [MySQL, 高可用]
 categories: [应用运维]
 ---
 
-- [MySQL 高可用概述](#MySQL高可用概述)
-- [MySQL 主从复制](#MySQL主从复制)
-- [MySQL 读写分离](#MySQL读写分离)
-- [MySQL 常用调优策略](#MySQL常用调优策略)
-
 <!--more-->
 
 # MySQL 高可用概述
+
+# MySQL 多实例
+
+在一台服务器上，配置多个 MySQL 使用不同端口同时运行。为了便于管理 mysql 多实例，最好将配置文件、数据文件等单独存放在一个目录进行统一管理。
+
+```
+mkdir -p /mysql/{3306,3307}/{data,conf,log}
+```
+
+可以下载 mysql 的二进制包，解压后放在`/usr/local/mysql`中
+
+```
+/usr/local/mysql/
+├── LICENSE
+├── README
+├── bin
+├── docs
+├── include
+├── lib
+├── man
+├── share
+└── support-files
+```
+
+创建用户 mysql，并赋权`chown -R mysql:mysql /usr/local/mysql`
+
+创建配置文件`my.cnf`，以下为配置模板
+
+```
+[client]
+port            = 3306
+socket          = /mysql/3306/mysql.sock
+
+[mysql]
+no-auto-rehash
+
+[mysqld]
+user    = mysql
+port    = 3306
+socket  = /mysql/3306/mysql.sock
+basedir = /usr/local/mysql
+datadir = /mysql/3306/data
+pid-file = /mysql/3306/mysql.pid
+server-id = 1	# 不同实例的id,不同的实例配置中务必要用不同的id
+log-bin = /mysql/3306/mysql-bin
+log-error = /mysql/3306/log/error.log
+log-slow-queries = /mysql/3306/log/slow.log
+
+open_files_limit = 1024
+back_log = 600
+max_connections = 800
+max_connect_errors = 3000
+table_cache = 614
+external-locking = FALSE
+max_allowed_packet =8M
+sort_buffer_size = 1M
+join_buffer_size = 1M
+thread_cache_size = 100
+thread_concurrency = 2
+query_cache_size = 2M
+query_cache_limit = 1M
+query_cache_min_res_unit = 2k
+#default_table_type = InnoDB
+thread_stack = 192K
+#transaction_isolation = READ-COMMITTED
+tmp_table_size = 2M
+max_heap_table_size = 2M
+long_query_time = 1
+#log_long_format
+
+relay-log = /mysql/3306/log/relay-bin
+relay-log-info-file = /mysql/3306/log/relay-log.info
+binlog_cache_size = 1M
+max_binlog_cache_size = 1M
+max_binlog_size = 2M
+expire_logs_days = 7
+key_buffer_size = 16M
+read_buffer_size = 1M
+read_rnd_buffer_size = 1M
+bulk_insert_buffer_size = 1M
+#myisam_sort_buffer_size = 1M
+#myisam_max_sort_file_size = 10G
+#myisam_max_extra_sort_file_size = 10G
+#myisam_repair_threads = 1
+#myisam_recover
+lower_case_table_names = 1
+skip-name-resolve
+slave-skip-errors = 1032,1062
+replicate-ignore-db=mysql
+innodb_additional_mem_pool_size = 4M
+innodb_buffer_pool_size = 32M
+innodb_data_file_path = ibdata1:128M:autoextend
+innodb_file_io_threads = 4
+innodb_thread_concurrency = 8
+innodb_flush_log_at_trx_commit = 2
+innodb_log_buffer_size = 2M
+innodb_log_file_size = 4M
+innodb_log_files_in_group = 3
+innodb_max_dirty_pages_pct = 90
+innodb_lock_wait_timeout = 120
+innodb_file_per_table = 0
+
+[mysqldump]
+quick
+max_allowed_packet = 2M
+
+[mysqld_safe] # 服务启动配置
+log-error = /mysql/3306/log/mysql_3306.err
+pid-file = /mysql/3306/mysqld.pid
+```
+
+创建 mysql 启动脚本
+
+```shell
+#!/bin/sh
+port=3306
+mysql_user="mysql"
+mysql_pwd="123456"
+CmdPath="/usr/local/mysql/bin/"
+mysql_sock="/mysql/${port}/mysql.sock"
+#start Mysql Services
+function_start_mysql()
+{
+    if [ ! -e "$mysql_sock" ];then
+      printf "Starting MySQL...\n"
+      /bin/sh ${CmdPath}/mysqld_safe --defaults-file=/mysql/${port}/conf/my.cnf 2>&1 > /dev/null &
+    else
+      printf "MySQL is running...\n"
+      exit
+    fi
+}
+#stop Mysql Services
+function_stop_mysql()
+{
+    if [ ! -e "$mysql_sock" ];then
+       printf "MySQL is stopped...\n"
+       exit
+    else
+       printf "Stoping MySQL...\n"
+       ${CmdPath}/mysqladmin -u ${mysql_user} -p${mysql_pwd} -S /mysql/${port}/mysql.sock shutdown
+   fi
+}
+#restart Mysql Services
+function_restart_mysql()
+{
+    printf "Restarting MySQL...\n"
+    function_stop_mysql
+    sleep 2
+    function_start_mysql
+}
+case $1 in
+start)
+    function_start_mysql
+;;
+stop)
+    function_stop_mysql
+;;
+restart)
+    function_restart_mysql
+;;
+*)
+    printf "Usage: /mysql/${port}/mysql {start|stop|restart}\n"
+esac
+```
 
 # MySQL 主从复制
 

@@ -1,72 +1,85 @@
 ---
 title: Samba基础学习笔记
 date: 2018-05-02 17:18:06
-tags: [server,Samba]
+tags: [server, Samba]
 ---
+
 本篇笔记包含以下内容：
-* [Samba原理](#Samba原理)
-* [Samba基础配置](#Samba基础配置)
-  * [服务器端](#服务器端)
-  * [客户端](#客户端)
+
+- [Samba 原理](#Samba原理)
+- [Samba 基础配置](#Samba基础配置)
+  - [服务器端](#服务器端)
+  - [客户端](#客户端)
 
 <!-- more -->
 
-{% asset_img sambalogo.jpg sambalogo %}
+{% asset_img sambalogo.jpg %}
 
-## Samba原理
-Samba最初的目的是为了Windows和Linux之间的沟通，实现不同操作系统的资源共享，如今成为了十分安全，高效的文件服务。
-Samba有以下主要功能：
-* 共享文件与打印机
-* 提供身份认证，给不同身份的用户不同的访问权限和文件
-* 可进行域名解析，将计算机的NetBIOS名解析为IP地址
-* samba能收集局域网上用户广播的主机信息，提供检索服务，也称为浏览服务，能显示共享目录，打印机等资源
-* 支持SSL
+# Samba 原理
 
-Samba整合了SMB协议和NetBIOS协议，基于TCP/IP。
-**NetBIOS协议**
-NetBIOS（Network Basic Input/Output System），网络基本输入输出系统协议，属于会话层协议。能通过该协议获取计算机主机名，并解析为IP地址。
-**SMB协议**
-SMB（Send Messsage Block），运行于NBT协议（NetBIOS over TCP/IP），属于表示层与应用层协议。端口号：139/TCP，137、138/UDP。
+Samba 最初的目的是为了 Windows 和 Linux 之间的沟通，实现不同操作系统的资源共享，如今成为了十分安全，高效的文件服务。
+Samba 有以下主要功能：
 
-**SMB协议工作流程**
+- 共享文件与打印机
+- 提供身份认证，给不同身份的用户不同的访问权限和文件
+- 可进行域名解析，将计算机的 NetBIOS 名解析为 IP 地址
+- samba 能收集局域网上用户广播的主机信息，提供检索服务，也称为浏览服务，能显示共享目录，打印机等资源
+- 支持 SSL
+
+Samba 整合了 SMB 协议和 NetBIOS 协议，基于 TCP/IP。
+**NetBIOS 协议**
+NetBIOS（Network Basic Input/Output System），网络基本输入输出系统协议，属于会话层协议。能通过该协议获取计算机主机名，并解析为 IP 地址。
+**SMB 协议**
+SMB（Send Messsage Block），运行于 NBT 协议（NetBIOS over TCP/IP），属于表示层与应用层协议。端口号：139/TCP，137、138/UDP。
+
+**SMB 协议工作流程**
+
 1. 协议协商
-客户端向Samba服务器发送Negport请求报文，列出所有支持的SMB版本。服务器收到后回应Negport报文，列出希望客户端使用的SMB版本。
+   客户端向 Samba 服务器发送 Negport 请求报文，列出所有支持的 SMB 版本。服务器收到后回应 Negport 报文，列出希望客户端使用的 SMB 版本。
 2. 建立连接
-确定了SMB版本，客户端会发送Session Setup请求报文，包含用户名与密码，建立连接。服务器收到后进行验证并回应报文，若验证通过，就返回为该用户分配的唯一UID，若失败则返回失败信息。
+   确定了 SMB 版本，客户端会发送 Session Setup 请求报文，包含用户名与密码，建立连接。服务器收到后进行验证并回应报文，若验证通过，就返回为该用户分配的唯一 UID，若失败则返回失败信息。
 3. 访问共享资源
-客户端向服务器发送Tree Connect请求报文，包含要访问的共享资源名。服务器收到后，根据配置文件确定是否该用户能访问，返回一个响应报文，若允许访问，就给该用户与共享资源连接分配一个TID，用户即可访问该资源。
+   客户端向服务器发送 Tree Connect 请求报文，包含要访问的共享资源名。服务器收到后，根据配置文件确定是否该用户能访问，返回一个响应报文，若允许访问，就给该用户与共享资源连接分配一个 TID，用户即可访问该资源。
 4. 断开连接
-客户端向服务器发送Tree Disconnect报文，请求服务器断开连接，服务器也回应一个响应，并断开连接。
+   客户端向服务器发送 Tree Disconnect 报文，请求服务器断开连接，服务器也回应一个响应，并断开连接。
 
-**Samba守护进程**
-* 用户若要访问Windows上的公共资源，必须加入该Windows主机的群组Workgroup，并该用户主机必须设置一个主机名（不是hostname），该主机名是建立在NetBIOS协议上的，可称为NetBIOS Name，在同一个群组中，该NetBIOS Name必须唯一。
-* 用户是否能访问并对该文件进行操作不仅需要通过服务器身份认证，还需要对该文件具有权限。
+**Samba 守护进程**
 
-Samba服务有两个守护进程
-* smbd：用于管理samba主机共享目录、文件、打印机等，利用TCP传输文件，开放端口为139/TCP和445/TCP
-* nmbd：用于管理群组、NetBIOS Name的解析，基于UDP，开启端口137/UDP，138/UDP进行解析
+- 用户若要访问 Windows 上的公共资源，必须加入该 Windows 主机的群组 Workgroup，并该用户主机必须设置一个主机名（不是 hostname），该主机名是建立在 NetBIOS 协议上的，可称为 NetBIOS Name，在同一个群组中，该 NetBIOS Name 必须唯一。
+- 用户是否能访问并对该文件进行操作不仅需要通过服务器身份认证，还需要对该文件具有权限。
 
-Samba安装包：
-* samba：包含samba的守护进程文件，samba文档，logrotate配置文件，开机默认选项配置文件
-* samba-common：包含samba主要配置文件smb.conf，配置文件检查程序testparm等
-* samba-client：samba客户端程序，提供客户端操作指令集
+Samba 服务有两个守护进程
 
-## Samba基础配置
+- smbd：用于管理 samba 主机共享目录、文件、打印机等，利用 TCP 传输文件，开放端口为 139/TCP 和 445/TCP
+- nmbd：用于管理群组、NetBIOS Name 的解析，基于 UDP，开启端口 137/UDP，138/UDP 进行解析
+
+Samba 安装包：
+
+- samba：包含 samba 的守护进程文件，samba 文档，logrotate 配置文件，开机默认选项配置文件
+- samba-common：包含 samba 主要配置文件 smb.conf，配置文件检查程序 testparm 等
+- samba-client：samba 客户端程序，提供客户端操作指令集
+
+# Samba 基础配置
+
 实验环境：
-* 两台虚拟机：
-	samba服务器：192.168.163.103/24
-	samba客户端：192.168.163.104/24
-* 系统：CentOS7
-* Selinux：未开启
-* firewalld：未开启
 
-### 服务器端
-**安装samba客户端**
+- 两台虚拟机：
+  samba 服务器：192.168.163.103/24
+  samba 客户端：192.168.163.104/24
+- 系统：CentOS7
+- Selinux：未开启
+- firewalld：未开启
+
+## 服务器端
+
+**安装 samba 客户端**
+
 ```
 yum install samba-common samba
 systemctl enable smb nmb
 systemctl start smb nmb
 ```
+
 **创建共享目录，可随意创**
 `mkdir /var/smbshare`
 **修改配置文件`/etc/samba/smb.conf`**
@@ -74,6 +87,7 @@ systemctl start smb nmb
 配置文件存在以下配置块：
 `[global]` 全局选项，对所有资源生效
 基础配置则不需要修改
+
 ```
 [global]
     workgroup = SAMBA   #设置群组
@@ -95,9 +109,11 @@ systemctl start smb nmb
     cups options = raw #设置cups的选项，raw为允许在windows客户端上加载驱动
 
 ```
+
 `[homes]`为特殊共享目录，表示用户主目录
 `[printers]`为特殊共享目录，表示打印机
 配置共享资源：
+
 ```
 [smbshare]
     comment = smbshare  #资源描述
@@ -113,14 +129,16 @@ systemctl start smb nmb
     directory mask = 0775 #创建目录默认权限链路
     hosts allow =192.168.163. #白名单
 ```
+
 可通过`testparm`检查配置文件是否正确
 可通过`man smb.conf`查看详细配置文件选项
-**创建用户并添加到samba**
-由于该用户是提供给客户端用于登录samba的，所以在服务器端应设置为不能登陆，并且为了安全性，不要设密码。
+**创建用户并添加到 samba**
+由于该用户是提供给客户端用于登录 samba 的，所以在服务器端应设置为不能登陆，并且为了安全性，不要设密码。
 `useradd mike -s /sbin/nologin`
-**注：**samba并不是将系统中的用户变为samba用户的，samba的用户是独立于linux系统的，但必须在linux系统中存在，才能映射，所以linux系统中需要创建同名用户。
-将用户添加到smb服务器的用户列表中，并设置smb登录密码
+**注：**samba 并不是将系统中的用户变为 samba 用户的，samba 的用户是独立于 linux 系统的，但必须在 linux 系统中存在，才能映射，所以 linux 系统中需要创建同名用户。
+将用户添加到 smb 服务器的用户列表中，并设置 smb 登录密码
 `smbpasswd -a mike`，然后输入登录密码
+
 ```
 smbpasswd [options] [username]
 	-a  add添加
@@ -128,8 +146,10 @@ smbpasswd [options] [username]
 	-n  no password不设置密码，需要smb.conf中global设置nullpasswords=true开启
 	-x  delete删除用户
 ```
-或者使用另一条命令`pdbedit`，用于管理SMB服务的账号信息数据库
+
+或者使用另一条命令`pdbedit`，用于管理 SMB 服务的账号信息数据库
 `pdbedit -a -u mike`
+
 ```
 pdbedit [options] [username]
     -a 添加
@@ -139,8 +159,10 @@ pdbedit [options] [username]
 ```
 
 **注：**
-* 若安装并开启了firewalld，需要开启端口TCP139端口，UDP137、138端口，并放行服务samba。
-* 若安装并开启了Selinux，需要添加上下文
+
+- 若安装并开启了 firewalld，需要开启端口 TCP139 端口，UDP137、138 端口，并放行服务 samba。
+- 若安装并开启了 Selinux，需要添加上下文
+
 ```
 chcon -R -t samba_share_t /var/smbshare
 或semanage fcontext -a -t samba_share_t /var/smbshare
@@ -152,12 +174,14 @@ setsebool -P samba_enable_home_dirs on
 配置完后restorecon -Rv /var/smbshare
 ```
 
-### 客户端
-**安装samba客户端**
+## 客户端
+
+**安装 samba 客户端**
 `yum install samba-client cifs-utils`
-`cifs-utils`是让Windows系统能使用公共文件系统的工具。
-`CIFS`是微软开发的公共Internet文件系统协议，能够支持网上邻居。
+`cifs-utils`是让 Windows 系统能使用公共文件系统的工具。
+`CIFS`是微软开发的公共 Internet 文件系统协议，能够支持网上邻居。
 **查看服务器给指定用户提供的共享目录的信息**
+
 ```
 # smbclient -L //192.168.163.103/smbshare -U mike
 Enter SAMBA\mike's password:
@@ -178,39 +202,46 @@ Reconnecting with SMB1 for workgroup listing.
         ---------            -------
         SAMBA                SYSTEM3
 ```
+
 从返回信息可得知共享资源以及群组和服务器名
-**登录smb服务器，进入指定资源**
+**登录 smb 服务器，进入指定资源**
+
 ```
 # smbclient //192.168.163.103/smbshare -U mike
 Enter SAMBA\mike's password:
 Try "help" to get a list of possible commands.
-smb: \> 
+smb: \>
 ```
-已进入该共享目录，并进入samba客户端命令行模式，可通过`help`查看能进行的操作
+
+已进入该共享目录，并进入 samba 客户端命令行模式，可通过`help`查看能进行的操作
 常用命令如下：
 `put [本机文件路径] [资源中相对路径]` 上传文件
 `get [资源路径]` 下载文件
 
 **客户端挂载**
-* 创建认证文件
+
+- 创建认证文件
+
 ```
 # vim /root/secure/auth.smb
 username=mike
 password=redhat
 domain=SAMBA
 ```
+
 设置该文件的权限，这个文件的机密性很重要
 `chmod 700 /root/secure`
 `chmod 600 /root/secure/auth.smb`
-* 挂载共享目录
-`mount -t cifs -o rw,credentials=/root/secure/auth.smb //192.168.163.103/smbshare /shares/smbshare`
 
-**Windows端登录及挂载**
-在Windows端，可在文件资源管理器的地址栏输入`\\192.168.163.103\smbshare`登录进入smb服务器的该资源。
+- 挂载共享目录
+  `mount -t cifs -o rw,credentials=/root/secure/auth.smb //192.168.163.103/smbshare /shares/smbshare`
+
+**Windows 端登录及挂载**
+在 Windows 端，可在文件资源管理器的地址栏输入`\\192.168.163.103\smbshare`登录进入 smb 服务器的该资源。
 若要挂载，在“此电脑”中右击，选择“添加一个网络位置”，按“下一步”，进入以下界面，填入要挂载的共享目录
 
-{% asset_img guazai1.PNG guazai1 %}
+{% asset_img guazai1.PNG %}
 
 然后不断“下一步”，即可设置完成。在“此电脑”查看，已成功挂载。
 
-{% asset_img guazai2.PNG guazai2 %}
+{% asset_img guazai2.PNG %}

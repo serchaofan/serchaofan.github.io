@@ -5,25 +5,7 @@ tags: [server, Nginx, LNMP, 集群, 缓存, 代理, 负载均衡]
 categories: [应用运维]
 ---
 
-本篇包含以下知识点：
-
-- [Nginx 介绍](#Nginx介绍)
-- [Nginx 安装](#Nginx安装)
-- [Nginx 配置文件解析](#Nginx配置文件解析)
-- [访问控制、身份认证与 SSL](#访问控制、身份认证与SSL)
-- [Nginx 日志](#Nginx日志)
-- [Nginx 缓存](#Nginx缓存)
 <!-- more -->
-- [Nginx 负载均衡](#Nginx负载均衡)
-- [Nginx 反向代理](#Nginx反向代理)
-- [Nginx 邮件服务](#Nginx邮件服务)
-- [重写与重定向](#重写与重定向)
-- [Nginx 与 PHP](#Nginx与PHP)
-- [防盗链](#防盗链)
-- [Nginx 常见模块](#Nginx常见模块)
-- [Nginx 配置简单优化]()
-- [LNMP 分布式集群方案](#LNMP分布式集群方案)
-- [Docker 部署 LNMP]()
 
 # Nginx 介绍
 
@@ -55,7 +37,7 @@ master 进程用于启动管理多个 worker 进程，若取消 master 进程，
 - 消息通知：select、poll、rt signals
 - 模块类型：核心模块、标准 http 模块、可选 http 模块、邮件模块、第三方模块
 
-{% asset_img nginx_jiagou.png jiagou %}
+{% asset_img nginx_jiagou.png %}
 
 **Master 进程完成的工作：**
 
@@ -1228,6 +1210,92 @@ if (!-e $request_filename) {
   - `-d`，`!-d`：目录存在与不存在
   - `-e`，`!-e`：文件或目录存在与不存在
   - `-x`，`!-x`：判断是否可执行与不可执行
+
+# Nginx 优化
+
+## 安全优化
+
+### 隐藏 Nginx 版本号
+
+```
+# curl -I localhost
+HTTP/1.1 200 OK
+Server: nginx/1.14.1     # nginx的版本号会被轻松获取
+Content-Type: text/html
+Content-Length: 4057
+......
+```
+
+通过修改配置，在 http 块中添加
+
+```
+server_tokens off;
+```
+
+再次访问
+
+```
+# curl -I localhost
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html
+Content-Length: 4057
+.....
+```
+
+这样配置，在 nginx 的报错页面中也不会出现版本号。
+
+## 性能优化
+
+### nginx 单个进程允许的客户端最大连接数
+
+`worker_connections`为 nginx 单个进程允许的客户端最大连接数，这个连接数包含了所有连接，如代理连接、客户端连接等，需要根据服务器性能和内存消耗来指定，同时还与最大打开文件数（worker_rlimit_nofile）有关，在配置`ulimit -HSn 65535`后，该配置才能生效。
+该参数配置在`event`块。
+
+nginx 的总并发连接 = worker 数量 \* worker_connections
+
+### worker 进程最大打开文件数
+
+`worker_rlimit_nofile`为 nginx worker 进程最大打开文件数，可设置为`ulimit -n`的大小。配置在主标签段，不属于任何块。
+
+### 优化服务器域名的散列表
+
+散列表和监听端口关联，每个端口都最多关联到三张表：
+
+- 确切名字的散列表
+- 以星号起始的通配符名字的散列表
+- 以星号结束的通配符名字的散列表
+
+Nginx 会按以上的顺序依次查找域名，为了尽快找到域名，尽量使用确切名字。若定义了大量名字，或定义了非常长的名字，则需要在 HTTP 配置块中调整`server_names_hash_max_size`和`server_names_hash_bucket_size`的值。nginx 默认的值取决于 cpu 缓存行长度，可能是 32 或 64 或 128。配置在主标签段。
+
+先尝试设置`server_names_hash_max_size`，差不多为名字列表的名字总量，若不能解决问题再设置`server_names_hash_bucket_size`。
+
+`server_names_hash_max_size`默认为 512kb，一般是 cpu L1 的 4-5 倍，不要加单位，默认单位为 kb。
+
+### nginx 连接参数优化
+
+`keepalive_timeout`设置连接会话保持时间，默认 65。
+`client_header_timeout`设置读取客户端请求头数据的超时时间，若超过这个时间，客户端还没发送完整的 header 数据，nginx 会返回 408（request time out）错误，默认 60，推荐为 15，有单位。设置在 http 或 server 块。
+`client_body_timeout`同上，是客户端请求体的超时时间，默认为 60s。设置在 http 或 server 块或 location 块。
+`send_timeout`指定响应客户端的超时时间，仅限于两个连接活动之间的时间，若超过这个时间客户端没有活动，则 nginx 连接关闭，默认 60s，推荐 25s，有单位。设置在 http 或 server 块或 location 块。
+
+### 上传文件大小限制
+
+`client_max_body_size`限制上传文件大小，具体根据业务调整，默认为 1m，推荐先设为 8m。设置在 http 或 server 块或 location 块。
+
+### FastCGI 优化
+
+### gzip 压缩
+
+### expires 缓存
+
+## 放盗链
+
+## 防爬虫
+
+## CDN 加速
+
+## Nginx 降权
 
 # Nginx 与 PHP
 

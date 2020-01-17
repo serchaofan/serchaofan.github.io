@@ -1,5 +1,5 @@
 ---
-title: Docker存储学习笔记-1
+title: Docker存储学习笔记
 date: 2018-07-06 13:33:01
 tags: [docker, 存储]
 categories: [云计算]

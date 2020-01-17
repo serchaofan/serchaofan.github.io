@@ -105,17 +105,11 @@ kubectl 命令可以创建一个代理，将代理转发到群集范围的专用
 实验环境：
 
 - 3 台虚拟机 CentOS7
-
 - Kubernetes 版本 1.12
-
 - Docker 版本 18.06（k8s1.12 最高支持 docker18.06）
-
   > 如果版本过高需要重新下载安装`yum install docker-ce-<VERSION STRING>`，如`yum install docker-ce-18.06.0.ce`
-
 - Node1：Master，192.168.60.130
-
 - Node2：Node，192.168.60.131
-
 - Node3：Node，192.168.60.132
 
 Master 节点上不需要安装 docker，但需要安装 etcd、kubectl、kubeadm

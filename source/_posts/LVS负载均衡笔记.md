@@ -52,21 +52,21 @@ LVS 集群采用三层结构：
 **如何实现高可用性？**
 调度器上有资源监测进程时刻监视各个服务器结点的健康状况，当服务器对**ICMP ping 不可达**时或者网络服务在**指定的时间内没有响应**时，资源监测进程会通知内核将该服务器**从调度列表中删除**。一旦监测到服务器恢复工作，通知调度器将其加入调度列表，管理员也可通过命令随时向调度列表添加或移除服务器。
 调度器存在单点故障问题，因此需要对调度器进行主从备份，并用 HeartBeat 机制进行主从故障监测。当从调度器不能听得主调度器的心跳时，从调度器通过 ARP 欺骗 （Gratuitous ARP）来接管集群对外的 VIP，同时接管主调度器的工作来提供负载调度服务。当主调度器恢复后，有两种**恢复机制**。第一种为**主调度器自动变成从调度器（类似抢占）**，另一种为**从调度器释放 VIP，主调度器收回 VIP 继续提供负载调度服务**。
-当主调度器失效时，**主调度器上所有已建立连接的状态信息将丢失，已有连接会中断。**客户需要重新连接从调度器，从调度器才会将新连接调度到各个服务器上。因此，调度器在内核中实现了一种高效同步机制，将主调度器的状态信息及时同步到从调度器。当从调度器接管时，绝大部分已建立的连接会持续下去。
+当主调度器失效时，**主调度器上所有已建立连接的状态信息将丢失，已有连接会中断。** 客户需要重新连接从调度器，从调度器才会将新连接调度到各个服务器上。因此，调度器在内核中实现了一种高效同步机制，将主调度器的状态信息及时同步到从调度器。当从调度器接管时，绝大部分已建立的连接会持续下去。
 
 ## 三种 IP 负载均衡技术
 
 - **VS/NAT**：调度器重写请求报文的目标地址，根据预设算法，将请求分派给实际服务器，实际服务器在响应报文通过调度器时，报文的源地址被重写，再返回给客户。
-  **优点：**节约 IP 地址，能对内部进行伪装
-  **缺点：**效率低，返回给请求方的流量需经过 DR 且请求和响应报文都要 DR 进行地址的重写，当客户端请求增多时，DR 的处理能力会成为瓶颈
+  **优点：** 节约 IP 地址，能对内部进行伪装
+  **缺点：** 效率低，返回给请求方的流量需经过 DR 且请求和响应报文都要 DR 进行地址的重写，当客户端请求增多时，DR 的处理能力会成为瓶颈
   完整过程：
 
   1. PC 向调度器发送请求报文，调度器收到后根据调度算法选择后端的实际服务器，将报文中目的 IP 与目的端口改写为实际服务器的 IP 地址与端口，并进行转发。
   2. 实际服务器收到后，进行处理，将结果返回给调度器
   3. 调度器再将源 IP 地址与源端口改回为调度器的 IP 和端口，回复给 PC。
 
-  {% asset_img NAT-huanjing.png NAT-huanjing %}
-  {% asset_img NAT-baowen.png NAT-baowen %}
+  {% asset_img NAT-huanjing.png %}
+  {% asset_img NAT-baowen.png %}
   **数据包流向：客户端-->调度器-->实际服务器-->调度器-->客户端**
 
 - **VS/TUN**（IP Tunneling）：调度器将请求报文通过 IP 隧道转发到实际服务器，实际服务器将响应报文直接回复给客户，调度器仅需处理请求报文，将请求报文的地址重写，无需重写响应报文的地址，极大解放了调度器，集群系统的最大吞吐量能提高 10 倍。
@@ -75,7 +75,7 @@ LVS 集群采用三层结构：
 
   由于多个 RS 都共享一个隧道 IP（为 VIP），所以需要通过 ARP 进行 IP 地址解析出 MAC，而为了不让 RS 响应 ARP 请求导致出现错误，必须对 RS 进行抑制操作，这样只有 DR 进行 ARP 响应，也就让 PC 认为 DR 就是实际服务器。
 
-  **注：**由于调度器不会对 IP 报文进行修改，所以 TCP 报文中的目的端口也不会修改，因此要求 RS 与 DR 的端口号必须一致
+  **注：** 由于调度器不会对 IP 报文进行修改，所以 TCP 报文中的目的端口也不会修改，因此要求 RS 与 DR 的端口号必须一致
 
   完整过程：
 
@@ -88,8 +88,8 @@ LVS 集群采用三层结构：
 
   VS/TUN 模式一般会用来负载调度缓存服务器组，这些缓存服务器一般放置在不同网络环境，可以就近返回数据给客户端。在请求对象不能在缓存服务器本地找到的情况下，缓存服务器要向源服务器发请求，将结果取回，最后将结果返回给客户。
 
-  {% asset_img TUN-huanjing.png TUN-huanjing %}
-  {% asset_img TUN-baowen.png TUN-baowen %}
+  {% asset_img TUN-huanjing.png %}
+  {% asset_img TUN-baowen.png %}
   **数据包流向：客户端-->调度器-->实际服务器-->客户端**
 
 - **VS/DR**（Direct Routing）：与 VS/TUN 类似，但调度器改写的是数据包的目的 MAC 地址，通过链路层进行负载分担。此法没有 IP 隧道的开销，但要求调度器与实际服务器**必须在同一网段**，也就是说 RIP 可用公网地址。
@@ -101,7 +101,7 @@ LVS 集群采用三层结构：
 
   **注：**因为与 VS/TUN 类似，直接修改以太网帧，所以对于 IP 报文不会做修改，因此**RS 的端口号必须与 DR 一致**。且**RS 上必须配置 VIP（通过配置环回口 IP 地址），VIP 为网卡别名的 IP 地址，仅用于回复数据包时使用作为源地址，不能用于通信**。由于流出接口为 RIP 所在网卡接口，因此源 MAC 地址为 RIP 所在接口的 MAC 地址。且**并不支持端口映射。**
 
-  {% asset_img DR-baowen.png DR-baowen %}
+  {% asset_img DR-baowen.png %}
   **数据包流向：客户端-->调度器-->实际服务器-->客户端**
 
 **三种模式的比较**
@@ -167,7 +167,7 @@ sysctl -w net.ipv4.conf.lo.arp_announce=2
   - **源地址散列**（Source Hashing）：将请求的源地址作为散列键，从静态分配的散列表中找出对应服务器。
 - 动态反馈调度
   - **最少连接**（Least Connections）：动态将网络请求调度到已建立的连接数最少的服务器上。计算方法：活跃连接数 active\*256+非活跃连接数 inactive
-  - **加权最少连接**（Weighted Least Connections）：当集群中服务器性能差异较大的情况下使用。具有较高权值的服务器将承受较大比例的活动连接负载。调度器可以自动问询真实服务器的负载情况并动态调整权值。**此算法为默认调度算法。**计算方法：(active\*256+inactive)/weight
+  - **加权最少连接**（Weighted Least Connections）：当集群中服务器性能差异较大的情况下使用。具有较高权值的服务器将承受较大比例的活动连接负载。调度器可以自动问询真实服务器的负载情况并动态调整权值。**此算法为默认调度算法。** 计算方法：(active\*256+inactive)/weight
   - **基于局部性最少连接**（Locality-Based Least Connections）：针对 IP 地址的负载均衡，用于缓存集群系统。根据请求的 IP 地址找出该目标 IP 地址最近使用的服务器，若该服务器不可用，则用最少连接原则选出一个可用的服务器。该算法维护的是从一个目标 IP 地址到**一台**服务器的映射。
   - **带复制的基于局部性最少连接**（Locality-Based Least Connections with Replication）：针对 IP 地址的负载均衡，根据请求的目标 IP 地址找出与之对应的服务器组，按最小连接原则选出一台服务器。若该服务器超载，就在集群中按最小连接原则选出一台服务器，添加到服务器组中。该算法维护的是从一个目标 IP 地址到**一组**服务器的映射。
 
@@ -177,11 +177,11 @@ sysctl -w net.ipv4.conf.lo.arp_announce=2
 
 需要持久连接的原因：若连接是基于 SSL 的，则在建立连接时需要交换密钥，认证 CA 等操作，若每次刷新就又分配别的 RS，则会造成资源浪费，速度变慢，因此需要持久连接。
 
-每一次建立连接后，DR 会在内存缓冲区中为每一个客户端与 RS 建立映射关系（该记录也称**“持久连接模板”**），并且能做到对同一客户端的所有请求（不局限于一个服务）都定位到一台 RS。
+每一次建立连接后，DR 会在内存缓冲区中为每一个客户端与 RS 建立映射关系（该记录也称 **“持久连接模板”** ），并且能做到对同一客户端的所有请求（不局限于一个服务）都定位到一台 RS。
 
 持久连接分类：
 
-- **PPC（Persistent Port Connections）持久端口连接**：将来自同一客户端对同一个集群的请求都定向到先前访问的 RS 上。
+- **PPC（Persistent Port Connections）持久端口连接**：将来自同一客户端对同一个集群的请求（同一端口）都定向到先前访问的 RS 上。
 
 - **PCC（Persistent Client Connections）持久客户端连接**：将来自同一客户端对同一个集群所有端口（即所有服务）的请求都定向到先前访问的 RS 上。
 
@@ -602,7 +602,7 @@ vrrp_instance VI_1 {
     virtual_router_id 51
     priority 120
     advert_int 1
-    authentication {
+    authentication {         # 不同实例的认证密码最好不同，以确保接管正常
         auth_type PASS
         auth_pass 1111
     }
@@ -645,7 +645,7 @@ virtual_server 172.16.246.140 80 {       # 虚拟主机
 }
 ```
 
-可以将 DR 上的该配置文件传到 Backup 上，修改配置。
+可以将 DR 上的该配置文件传到 Backup 上，修改配置。还要修改`router_id`的配置，因为`router_id`用于标识不同服务器
 
 ```
 # 只要修改以下配置
@@ -726,7 +726,346 @@ RS1
 - `MISC_CHECK`：加载自定义健康状态检查脚本来检查对象是否健康（脚本的返回值需要是 0 或 1）
 - `DNS_CHECK`：通过 DNS 检查 RS 是否健康
 
-> 参考文档
+**若出现两台服务器争抢同一 IP 资源时，要先排查两个地方：**
+
+- 主备两台服务器之间是否正常通信，如果不正常是否有 iptables 防火墙阻挡
+- 主备两台服务器对应的 keepalived.conf 配置是否出错
+
+**解决裂脑的常见方案：**
+
+- 如果开启防火墙，一定要放行心跳信息，一般通过允许 IP 段解决
+- 拉一条以太网网线作心跳线冗余
+- 通过监控软件监测裂脑
+- 若备节点出现 VIP，且主节点完好正常，则说明发生裂脑了。
+
+## Keepalived 双实例双主模式配置
+
+多实例，即业务 A 在 hostA 上是主模式，在 hostB 上是备模式，而业务 B 在 hostA 上是备模式，在 hostB 上是主模式。
+
+实验环境：
+
+- `172.17.1.128`：业务 A 的 master，业务 B 的 backup
+- `172.17.1.129`：业务 A 的 backup，业务 B 的 master
+- 业务 A 的 VIP：`172.17.1.100`
+- 业务 B 的 VIP：`172.17.1.200`
+
+172,17.1.128 的配置：
+
+```
+vrrp_instance BusinessA {
+    state MASTER
+    interface ens32
+    virtual_router_id 100
+    priority 120
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        172.16.1.100/24 dev ens32 label ens32:1
+    }
+}
+
+vrrp_instance BusinessB {
+    state BACKUP
+    interface ens32
+    virtual_router_id 200
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        172.16.1.200/24 dev ens32 label ens32:2
+    }
+}
+```
+
+172.17.1.129 的配置：
+
+```
+vrrp_instance BusinessA {
+    state BACKUP
+    interface ens32
+    virtual_router_id 100
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        172.16.1.100/24 dev ens32 label ens32:1
+    }
+}
+
+vrrp_instance BusinessB {
+    state MASTER
+    interface ens32
+    virtual_router_id 200
+    priority 120
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        172.16.1.200/24 dev ens32 label ens32:2
+    }
+}
+```
+
+重新启动 keepalived，查看`ip addr`
+
+```
+ens32: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:0c:29:05:bd:c3 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.1.128/24 brd 172.16.1.255 scope global dynamic noprefixroute ens32
+       valid_lft 1800sec preferred_lft 1800sec
+    inet 172.16.1.100/24 scope global secondary ens32:1
+       valid_lft forever preferred_lft forever
+    inet 172.16.1.200/24 scope global secondary ens32:2
+       valid_lft forever preferred_lft forever
+
+ens32: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:0c:29:74:d9:f9 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.1.129/24 brd 172.16.1.255 scope global dynamic noprefixroute ens32
+       valid_lft 1722sec preferred_lft 1722sec
+    inet 172.16.1.200/24 scope global secondary ens32:2
+       valid_lft forever preferred_lft forever
+    inet 172.16.1.100/24 scope global secondary ens32:1
+       valid_lft forever preferred_lft forever
+```
+
+## Nginx 负载均衡配合 Keepalived
+
+实验环境：
+
+- LB 1: `172.16.1.128`
+- LB 2: `172.16.1.129`
+- 业务 A VIP：172.16.1.100
+- 业务 B VIP：172.16.1.200
+- web RS1：172.17.0.2
+  - 业务 A：80 端口
+  - 业务 B：81 端口
+- web RS2：172.17.0.3
+  - 业务 A：80 端口
+  - 业务 B：81 端口
+    {% asset_img 5.png %}
+
+RS1 上的 nginx 配置 server 块：
+
+```
+    server {
+        listen       80;
+        server_name  business-a-2;
+        root         /usr/share/nginx/html;
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+		        index index.html;
+        }
+    }
+    server {
+        listen       81;
+        server_name  business-b-2;
+        root         /usr/share/nginx/html-1;
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+		        index index.html;
+        }
+    }
+```
+
+RS2 上的 nginx 配置 server 块：
+
+```
+    server {
+        listen       80;
+        server_name  business-a-3;
+        root         /usr/share/nginx/html;
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+	          index index.html;
+        }
+    }
+
+    server {
+        listen     81;
+        server_name  business-b-3;
+        root       /usr/share/nginx/html-1;
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+            index index.html;
+        }
+    }
+```
+
+LB1 和 LB2 的 nginx 上配置负载均衡：
+
+```
+    upstream business-a-pool {
+        server 172.17.0.2:80 weight=1;
+        server 172.17.0.3:80 weight=1;
+    }
+
+    upstream business-b-pool {
+        server 172.17.0.2:81 weight=1;
+        server 172.17.0.3:81 weight=1;
+    }
+```
+
+LB 上的 keepalived 配置沿用上面双实例的配置。
+
+LB1 和 LB2 的 nginx 的 server 块一致，配置如下：
+
+```
+    server {
+        listen       172.16.1.100:80;
+        server_name  business-a;
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+            proxy_pass http://business-a-pool;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+        }
+    }
+    server {
+        listen       172.16.1.200:80;
+        server_name  business-b;
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+            proxy_pass http://business-b-pool;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $remote_addr;
+        }
+    }
+```
+
+依次访问两个业务，实现了多实例的负载均衡与高可用：
+
+```
+$ curl 172.16.1.100
+business-a 172.17.0.2:80
+
+$ curl 172.16.1.100
+business-a 172.17.0.3:80
+
+$ curl 172.16.1.200
+business-b 172.17.0.3:81
+
+$ curl 172.16.1.200
+business-b 172.17.0.2:81
+```
+
+## 解决服务监听网卡上不存在 IP 地址的问题
+
+若在 nginx 配置中 server 块的 listen 配置一个本机没有的 ip 地址，则会报错
+解决方法：在`/etc/sysctl.conf`添加配置`net.ipv4.ip_nonlocal_bind = 1`或通过命令`sysctl -w net.ipv4.ip_nonlocal_bind=1`
+然后`sysctl -p`使配置生效。
+
+## 解决高可用服务只针对物理服务器的问题
+
+若出现机器未宕机且 keepalived 正常工作，然而是服务挂了，keepalived 则无法进行切换。有两种方法解决当服务挂掉的时候也能实现 keepalived 的 IP 漂移切换。
+
+- 写守护进程脚本处理。当本地 nginx 业务出现问题，就强制停掉 keepalived 以实现 IP 漂移。
+  ```shell
+  #!/bin/bash
+  while true
+  do
+    if [ `netstat -lntup | grep nginx | wc -l` ne 1 ]; then
+      systemctl stop keepalived
+    fi
+    sleep 5
+  done
+  ```
+- 使用监测脚本，然后配置在 keepalived 的配置文件中。脚本与上面类似，但是去掉`sleep 5`，然后在配置文件中添加：
+  ```
+  vrrp_script chk_nginx_proxy {
+    script "脚本路径"
+    interval 2   //当nginx挂掉时，keepalived在2秒内就会按照脚本停止
+  }
+  ```
+  并在 vrrp 实例中添加
+  ```
+  track_script {
+    chk_nginx_proxy
+  }
+  ```
+
+## 解决多组 keepalived 服务器在一个局域网的冲突问题
+
+若同一个局域网内存在多组 keepalived 服务器对，就会造成 IP 多播地址冲突问题，导致接管错乱，不同组 keepalived 都会默认使用`224.0.0.18`作为多播地址。
+解决方法：每个 keepalived 对指定唯一多播地址。
+
+```
+global_defs {
+  ......
+  vrrp_mcast_group4  224.0.0.19    //指定多播地址
+}
+```
+
+## 配置指定文件接受 Keepalived 日志
+
+keepalived 默认日志输出到`/var/log/messages`，所以最好单独记录该日志。
+修改`/etc/sysconfig/keepalived`，
+
+```
+KEEPALIVED_OPTIONS="-D -d -S 0"
+```
+
+选项含义：
+
+```
+# --vrrp               -P    只与vrrp子系统运行
+# --check              -C    只与健康检查子系统运行
+# --dont-release-vrrp  -V    在keepalived进程停止时不移除VIP和VIP的路由
+# --dont-release-ipvs  -I    在keepalived进程停止时不移除ipvs策略
+# --dump-conf          -d    导出配置数据
+# --log-detail         -D    输出详细日志
+# --log-facility       -S    本地syslog设备（0-7，默认为LOG_DAEMON）
+```
+
+然后在`/etc/rsyslog.conf`中添加 keepalived 配置
+
+```
+local0.*        /var/log/keepalived.log
+```
+
+并在`*.info;mail.none;authpriv.none;cron.none`后添加`local0.none`
+
+```
+*.info;mail.none;authpriv.none;cron.none;local0.none     /var/log/messages
+```
+
+重启 rsyslog 服务 `systemctl restart rsyslog.service`
+
+## 开发监测 Keepalived 裂脑脚本
+
+在备服务器上执行脚本，若能 ping 通主节点且备节点有 VIP，就报警。
+
+```shell
+#!/bin/bash
+VIP=172.16.1.100
+LB1_IP=172.16.1.128
+while true
+do
+  ping -c 2 -W 3 $LB1_IP &>/dev/null
+  if [ $? -eq 0 -a `ip addr | grep "$LB1_IP"|wc -l` -eq 1 ];then
+    echo "split brain ...."
+  sleep 5
+done
+```
+
+# 参考文档
+
 > [LVS 中文官方文档](http://www.linuxvirtualserver.org/zh/index.html) > [骏马金龙 LVS 系列文章](http://www.cnblogs.com/f-ck-need-u/p/8451982.html#1-lvs-) > [负载均衡的原理](https://mp.weixin.qq.com/s?__biz=MzIxMjE5MTE1Nw==&mid=2653193749&idx=1&sn=9321bf2c628b8d60913336ff6592f823&chksm=8c99f4cfbbee7dd9e580eac24a5d481993a09bc93720dddc70d602e38e923012e1d7b245a76e&mpshare=1&scene=23&srcid=0528GJKDr5wutmhQnNTVwG1H#rd)
 > 高性能网站构建实战
 > [Linux 之虚拟服务器 LVS 搭建](https://mp.weixin.qq.com/s?__biz=MzA4NzQzMzU4Mg==&mid=2652921952&idx=1&sn=c9e4cee313f9052095d499d5be41c2dd&chksm=8bed4861bc9ac1778610eace025dfa685e661f04b53b539666b597d649e3429be01048242010&mpshare=1&scene=23&srcid=0710bpqIBIAZyCVTrxFmag58#rd)

@@ -7,16 +7,6 @@ categories: [云计算]
 
 **主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**
 
-本篇涉及知识点：
-
-- [Docker 网络模式](#Docker网络模式)
-- [跨主机网络](#跨主机网络)
-  - [Overlay](#Overlay)
-  - [Macvlan](#Macvlan)
-- [补充知识点](#补充知识点)
-  - [支持 IPv6](#支持IPv6)
-  - [配置 iptables](#配置iptables)
-
 <!-- more -->
 
 # Docker 网络模式
@@ -393,8 +383,7 @@ my-nginx
 ```
 
 > 注：overlay 网络会因为需要自动创建，但不会自动删除（当服务不需要该网络后）。需要手动删除服务和网络。
-> `docker service rm my-nginx`
-> `docker network rm nginx-net nginx-net-2`
+> `docker service rm my-nginx` > `docker network rm nginx-net nginx-net-2`
 
 ## Macvlan
 
@@ -409,6 +398,12 @@ my-nginx
 
 **使用 IPvlan**
 可以使用三层 IPvlan 取代二层 Macvlan。通过指定`-o ipvlan_mode=l2`
+
+**macvlan 网络的注意条件**
+
+- 大多数云提供商会阻塞访问 macvlan 网络，可能需要物理访问网络设备。
+- macvlan 网络驱动程序仅适用于 Linux 主机，而 Mac 的 Docker 桌面，Windows 的 Docker 桌面或 Windows Server 的 Docker EE 不支持。
+- 至少需要 3.9 版的 Linux 内核，建议使用 4.0 或更高版本。
 
 ## 补充知识点
 

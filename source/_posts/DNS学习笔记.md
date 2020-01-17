@@ -54,11 +54,11 @@ options timeout:n attempts:n  # 指定解析超时时间(默认5秒)和解析次
 
 - 递归：服务器收到请求时，若不能解析，则把请求转发到下一台服务器直到有一台解析成功。注：是收到请求的服务器去问，一个问下一个，最后解析完成后原路返回。
 
-{% asset_img digui.png digui %}
+{% asset_img digui.png %}
 
 - 迭代：服务器收到请求时，若不能解析，则按根域->一级域名->二级域名->三级域名依次询问，直到解析成功。注：是本地服务器去不断问。
 
-{% asset_img diedai.png diedai %}
+{% asset_img diedai.png %}
 
 禁止递归查询的原因：对于授权域名服务器，若打开了递归查询，相当于配置为开放 DNS 服务器，会造成大量数据流量。所以在授权域名服务器上，应该禁用递归查询。
 `recursion no;`
@@ -69,7 +69,7 @@ options timeout:n attempts:n  # 指定解析超时时间(默认5秒)和解析次
 # DNS 深入理解
 
 **DNS 报文解析**
-{% asset_img format.png format %}
+{% asset_img format.png %}
 
 **分类**
 
@@ -220,11 +220,11 @@ DNS 系统采用阶层式管理，上一级的服务器只记录下一层的主�
 环境
 
 - CentOS7，内核 3.10
-- 虚拟机网段：192.168.163.0/24
-- DNS 服务器 IP 地址：192.168.163.102/24
-- DNS 服务器主机名：system2.example.com
-- 网关：192.168.163.254
-- 客户端主机名：system3.example.com
+- 虚拟机网段：`192.168.163.0/24`
+- DNS 服务器 IP 地址：`192.168.163.102/24`
+- DNS 服务器主机名：`system2.example.com`
+- 网关：`192.168.163.254`
+- 客户端主机名：`system3.example.com`
 
 DNS 服务相关配置文件
 
@@ -368,7 +368,7 @@ zone "163.168.192.in-addr.arpa" IN {
 
 - 使用命令`nslookup`
   输入域名测试
-  {% asset_img nslookup.png nslookup %}
+  {% asset_img nslookup.png %}
 
 # 常用命令
 

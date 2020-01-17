@@ -1,13 +1,13 @@
 ---
 title: Cuda环境搭建
 date: 2018-08-16 12:45:45
-tags: [CUDA, Nvidia, 人工智能, 深度学习]
-categories: [人工智能]
+tags: [CUDA]
+categories: []
 ---
 
-CUDA 为
+<!--more-->
 
-## CUDA 搭建
+# CUDA 搭建
 
 CUDA 环境搭建大致需要以下步骤：
 
@@ -15,9 +15,7 @@ CUDA 环境搭建大致需要以下步骤：
 - CUDA 安装
 - cuDNN 安装
 
-<!--more-->
-
-### Nvidia 驱动安装
+## Nvidia 驱动安装
 
 首先卸载现有的驱动（如果不是最新的话）
 
@@ -34,7 +32,3 @@ CUDA 环境搭建大致需要以下步骤：
 `sudo apt-get install nvidia-smi`
 
 使用`nvidia-smi`查看显卡详细信息
-
-```
-
-```

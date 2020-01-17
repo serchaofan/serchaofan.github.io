@@ -109,8 +109,6 @@ tags: [docker, 云计算]
 | Mount     | 挂载点（文件系统）                           |
 | User      | 用户与用户组                                 |
 
-[详细实现原理笔记](https://github.com/serchaofan/laogu-learnnamespace)
-
 ## cgroups
 
 cgroups 全称**control groups**，是 Linux 内核的一种机制，可根据需求把一系列系统任务及子任务整合到**按资源划分等级的不同组**内，从而为系统资源管理提供一个统一的框架。即 cgroups 可以限制、记录任务组所使用的物理资源。
