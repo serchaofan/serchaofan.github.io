@@ -12,6 +12,8 @@ categories: [系统运维]
 
 <!-- more -->
 
+**所有工具进行系统性能分析的思路都是相同的。**
+
 # top 与 htop
 
 ## top
@@ -79,6 +81,7 @@ KiB Swap:  2097148 total,  2097148 free,        0 used.  1670652 avail Mem
 - u：显示指定用户的进程
 - n 或#：设置最多显示的进程量
 - r：设置指定进程的 nice 优先级
+- F: 选择要排序的字段
 
 ## htop
 
@@ -152,60 +155,74 @@ vmstat [options] [delay [count]]
 
 - 虚拟内存模式
 
-```
-vmstat
-procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
- r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
-Proc：
-  r：可运行进程的数量（正在运行+等待运行）
-  b：不可中断睡眠进程的数量
-memory：
-  swpd：虚拟内存使用量
-  free：空闲内存
-  buff：缓冲区内存
-  cache：用作缓存的内存
-swap：
-  si：swap in,从磁盘换入的内存数量/s
-  so：swap out,交换到磁盘的内存数量/s
-io：
-  bi：block in,从块设备收到的块数/s
-  bo：block out,发送到块设备的块数/s
-system：
-  in：interrupt,每秒中断数量
-  cs：context switch,每秒上下文切换数量
-cpu：
-  us：非内核代码运行时间
-  sy：内核代码运行时间
-  id：idle,空闲花费时间，包含IOwait时间
-  wa：wait,IO等待花费时间
-  st：steal,虚拟软件花费时间
-```
+  ```
+  vmstat
+  procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+  r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+  Proc：
+    r：可运行进程的数量（正在运行+等待运行）
+    b：不可中断睡眠进程的数量
+  memory：
+    swpd：虚拟内存使用量
+    free：空闲内存
+    buff：缓冲区内存
+    cache：用作缓存的内存
+  swap：
+    si：swap in,从磁盘换入的内存数量/s
+    so：swap out,交换到磁盘的内存数量/s
+  io：
+    bi：block in,从块设备收到的块数/s
+    bo：block out,发送到块设备的块数/s
+  system：
+    in：interrupt,每秒中断数量
+    cs：context switch,每秒上下文切换数量
+  cpu：
+    us：非内核代码运行时间
+    sy：内核代码运行时间
+    id：idle,空闲花费时间，包含IOwait时间
+    wa：wait,IO等待花费时间
+    st：steal,虚拟软件花费时间
+  ```
 
 - 磁盘模式
 
-```
-vmstat -d
-disk- ------------reads------------ ------------writes----------- -----IO------
-       total merged sectors      ms  total merged sectors      ms    cur    sec
-disk：磁盘名
-reads：
-  total：成功读取的总量
-  merged：合并后分组的读
-  sectors：成功读取的扇区
-  ms：读取花费时间（单位毫秒）
-writes：
-  total：成功写入的总量
-  merged：合并后分组的写
-  sectors：成功写入的扇区
-  ms：写入花费时间（单位毫秒）
-IO：
-  cur：正在进行的IO
-  sec：IO花费时间（单位秒）
-```
+  ```
+  vmstat -d
+  disk- ------------reads------------ ------------writes----------- -----IO------
+        total merged sectors      ms  total merged sectors      ms    cur    sec
+  disk：磁盘名
+  reads：
+    total：成功读取的总量
+    merged：合并后分组的读
+    sectors：成功读取的扇区
+    ms：读取花费时间（单位毫秒）
+  writes：
+    total：成功写入的总量
+    merged：合并后分组的写
+    sectors：成功写入的扇区
+    ms：写入花费时间（单位毫秒）
+  IO：
+    cur：正在进行的IO
+    sec：IO花费时间（单位秒）
+  ```
 
-# mpstat 与 iostat
+一旦 Linux 将一个文件载入到 RAM 中，当程序使用完这个文件，并不会将它从 RAM 中删除，而是缓存在 RAM 中，如果还有程序要访问这个文件，会大大提高读取速度。若系统需要为活动进程提供 RAM，则经过一段时间，系统的可用 RAM 就会越来越少。
 
-`mpstat`与`iostat`都在`sysstat`包中，若没有这两个命令，则需要安装`dnf install sysstat`
+想要知道进程确切使用了多少内存，需要将总消耗内存减去缓存文件大小。若一个进程转为空闲状态，则 Linux 会将占用的内存释放。
+
+# mpstat、 iostat 与 sar
+
+`mpstat`与`iostat`都在`sysstat`包中，若没有这两个命令，则需要安装`sysstat`
+sysstat 包包含以下命令：
+
+- iostat
+- mpstat
+- pidstat
+- sar
+- tapestat
+
+若要进行长时间的负载记录和统计，需要启动 sysstat 服务。`systemctl start sysstat.service`，启用 sysstat 后，会每 10 分钟收集一次系统状态，并存储到`/var/log/sa`或`/var/log/sysstat`中
+若是 debian 系的系统，还需要修改配置`/etc/sysconfig/sysstat`，将`ENABLED`修改为 true，开启收集系统动态数据。
 
 ## mpstat
 
@@ -230,19 +247,136 @@ mpstat [ 选项 ] [ <时间间隔> [ <次数> ] ]
 ```
 mpstat -u
 CPU  %usr  %nice  %sys  %iowait  %irq  %soft  %steal  %guest  %gnice  %idle
-CPU：CPU编号
-%usr：用户级别（应用）执行时CPU使用率
-%nice：用户级别使用nice优先级执行时CPU使用率
-%sys：系统级别（内核）执行时CPU使用率（不包括硬件软件中断服务的时间）
-%iowait：系统未完成磁盘I/O请求期间，CPU空闲时间百分比
-%irq：CPU硬件中断时间百分比
-%soft：CPU软件中断时间百分比
-%steal：虚拟化软件为其他虚拟CPU服务时，虚拟CPU非主动等待时间百分比
-%guest：CPU运行虚拟处理器花费时间百分比
-%idle：CPU空闲时间百分比
 ```
 
+- CPU：CPU 编号
+- `%usr`：用户级别（应用）执行时 CPU 使用率
+- `%nice`：用户级别使用 nice 优先级执行时 CPU 使用率
+- `%sys`：系统级别（内核）执行时 CPU 使用率（不包括硬件软件中断服务的时间）
+- `%iowait`：系统未完成磁盘 I/O 请求期间，CPU 空闲时间百分比
+- `%irq`：CPU 硬件中断时间百分比
+- `%soft`：CPU 软件中断时间百分比
+- `%steal`：虚拟化软件为其他虚拟 CPU 服务时，虚拟 CPU 非主动等待时间百分比
+- `%guest`：CPU 运行虚拟处理器花费时间百分比
+- `%idle`：CPU 空闲时间百分比
+
 ## iostat
+
+当 I/O 等待时间占 CPU 时间比例很高时，首先要检查系统是否正在大量使用交换空间，若还有大量可用 RAM，则查看哪个进程占用了大量 I/O。
+
+```
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           9.71    0.01    4.89    0.09    0.00   85.30
+
+Device             tps    kB_read/s    kB_wrtn/s    kB_read    kB_wrtn
+loop0             0.00         0.00         0.00        147          0
+......
+sda               7.57        96.06       114.12   39466421   46888861
+......
+sdb               0.00         0.01         0.00       3562        144
+loop13            0.00         0.00         0.00       1419          0
+sdc               0.09         9.42         0.01    3869460       3816
+```
+
+- tps：设备每秒传输量（I/O 请求）
+- kB_read/s：每秒从设备读取的数据量
+- kB_wrtn/s：每秒向设备写入的数据量
+- kB_read：从设备读取的总数据量
+- kB_wrtn：向设备写入的总数据量
+
+当系统处于 I/O 高负载时，首先观察每个分区的负载，并确定分区中存放的是什么服务的数据，然后确定高负载 I/O 操作是写入还是读取，从而分析是什么服务占用了大量 I/O。
+
+## sar
+
+sar 用于收集系统的各种负载信息。数据存在`/var/log/sa/`下的`saX`文件中，X 为当天是本月的几号，如当月 19 号，则会生成日志`/var/log/sa/sa19`。
+
+```
+	-B	             分页状况
+	-b	             I/O 和传输速率信息状况
+	-d	             块设备状况
+	-F [ MOUNT ]     文件系统统计信息
+	-H	             交换空间利用率
+	-I { <int_list> | SUM | ALL } 中断统计
+	-n { <keyword> [,...] | ALL } 网络统计
+		DEV	    网络接口
+		NFS	    NFS客户端
+		NFSD	  NFS服务器端
+		SOCK	  Sockets	(v4)
+		IP	    IP负载(v4)
+		TCP	    TCP负载(v4)
+	-q	             队列长度和平均负载
+	-r [ ALL ]       内存利用率信息
+	-S	             交换空间利用率信息
+	-u [ ALL ]       CPU 利用率信息
+	-v	             内核表统计信息
+	-W	             交换信息
+	-w	             任务创建与系统转换信息
+	-y	             TTY 设备信息
+```
+
+`sar`直接输出当天的 CPU 统计信息。默认 10 分钟收集一次。
+
+```
+12:25:14     LINUX RESTART	(4 CPU)
+
+12时35分01秒     CPU     %user     %nice   %system   %iowait    %steal     %idle
+12时45分01秒     all      5.67      0.00      4.74      0.11      0.00     89.47
+12时55分01秒     all      5.67      0.00      4.60      0.06      0.00     89.67
+......
+14时25分01秒     all      5.58      0.00      4.74      0.03      0.00     89.65
+14时35分01秒     all      5.61      0.00      4.72      0.03      0.00     89.63
+平均时间:     all      5.65      0.00      4.71      0.05      0.00     89.60
+```
+
+`sar -r`输出 RAM 统计信息
+
+```
+20:20:03    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty
+12:30:02       268208    451380    549032     67.18      3268    275912    312828     10.73    211764    134792         0
+12:40:02       268152    451324    549088     67.19      3268    275912    312828     10.73    211764    134792         0
+......
+14:30:02       265232    448896    552008     67.55      3268    276348    312824     10.73    214348    132792         0
+14:40:02       265244    448908    551996     67.54      3268    276348    312824     10.73    214356    132792         0
+Average:       265875    449326    551365     67.47      3268    276153    312999     10.74    213254    133725         0
+```
+
+`sar -b`输出磁盘统计信息
+
+```
+20:20:03          tps      rtps      wtps   bread/s   bwrtn/s
+12:30:02         0.38      0.04      0.34      3.04      9.77
+12:40:02         0.02      0.00      0.02      0.00      0.28
+12:50:02         0.05      0.00      0.05      0.00      0.78
+......
+14:40:02         0.03      0.00      0.03      0.00      0.47
+Average:         0.10      0.01      0.09      0.31      1.69
+```
+
+tps 为每秒总传输的数据量，是 rtps 和 wtps 的总和。bread/s 为平均每秒读取的数据量。
+
+`sar -s`和`-e`通常组合使用，指定要查看的项在某段时间内的统计
+
+```
+# sar -s 12:33:00 -e 13:21:00
+
+12:40:02        CPU     %user     %nice   %system   %iowait    %steal     %idle
+12:50:02        all      0.16      0.00      0.47      0.01      0.00     99.36
+13:00:02        all      0.12      0.00      0.48      0.01      0.00     99.40
+13:10:02        all      0.11      0.00      0.46      0.01      0.00     99.42
+13:20:02        all      0.12      0.00      0.45      0.01      0.00     99.42
+Average:        all      0.13      0.00      0.47      0.01      0.00     99.40
+```
+
+若要查看本月指定几号的记录，则用`-f`指定统计日志文件
+
+```
+# sar -r -f /var/log/sa/sa19 -s 13:00:00 -e 13:30:00
+
+13:00:02    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty
+13:10:02       265584    448928    551656     67.50      3268    276048    313296     10.75    212760    134228         0
+13:20:02       265520    448888    551720     67.51      3268    276052    313296     10.75    212776    134232         0
+Average:       265552    448908    551688     67.51      3268    276050    313296     10.75    212768    134230         0
+```
 
 # ps 和 pstree
 
@@ -252,94 +386,94 @@ ps 命令有两种风格：BSD 和 Unix。BSD 格式的参数前不加`-`，Unix
 
 - 查看所有进程
 
-```
-ps ax    # a表示此tty下的所有程序（不区分用户），x表示所有程序（不区分tty终端机），若增加u参数，可以用户为主的格式来显示程序状况
-ps -ef   # -e显示所有程序，只显示PID、TTY、TIME、CMD，-f增加显示UID、PPID、C、STIME
+  ```
+  ps ax    # a表示此tty下的所有程序（不区分用户），x表示所有程序（不区分tty终端机），若增加u参数，可以用户为主的格式来显示程序状况
+  ps -ef   # -e显示所有程序，只显示PID、TTY、TIME、CMD，-f增加显示UID、PPID、C、STIME
 
-ps aux
-USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND
-USER：进程发起用户
-PID：进程号
-%CPU，%MEM：CPU，内存占用率
-VSZ：虚拟内存（单位kb）
-RSS：常驻内存（实际物理内存）（单位kb）
-TTY：该进程在哪个终端运行
-STAT：进程状态
-	S：可中断睡眠
-	<：高优先级
-	s：子进程
-	+：位于后台
-	R：运行（Running）
-	T：停止状态（Terminate）
-	Z：僵尸进程（Zombie）
-START————进程开启时间
-TIME：进程已启动时间
-COMMAND：产生进程的命令名
+  ps aux
+  USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND
+  USER：进程发起用户
+  PID：进程号
+  %CPU，%MEM：CPU，内存占用率
+  VSZ：虚拟内存（单位kb）
+  RSS：常驻内存（实际物理内存）（单位kb）
+  TTY：该进程在哪个终端运行
+  STAT：进程状态
+    S：可中断睡眠
+    <：高优先级
+    s：子进程
+    +：位于后台
+    R：运行（Running）
+    T：停止状态（Terminate）
+    Z：僵尸进程（Zombie）
+  START————进程开启时间
+  TIME：进程已启动时间
+  COMMAND：产生进程的命令名
 
-ps -ef中不同的几个
-PPID：父进程ID
-C：CPU占用率
-STIME：进程启动时间
-```
+  ps -ef中不同的几个
+  PPID：父进程ID
+  C：CPU占用率
+  STIME：进程启动时间
+  ```
 
 - 显示用户进程
 
-```
-ps -f -u [用户名1,用户名2...]   #-u指定用户，可指定多个，不能加-e，不然等于没指定
-例：ps -f -u apache
-```
+  ```
+  ps -f -u [用户名1,用户名2...]   #-u指定用户，可指定多个，不能加-e，不然等于没指定
+  例：ps -f -u apache
+  ```
 
 - 显示指定进程
 
-```
-ps -f -C [进程]    # -C指定进程名，进程名必须是精确的，不能用通配符。同样不能指定-e
-例：ps -f -C httpd
-ps -f -p [进程号]  # -p指定进程号
-```
+  ```
+  ps -f -C [进程]    # -C指定进程名，进程名必须是精确的，不能用通配符。同样不能指定-e
+  例：ps -f -C httpd
+  ps -f -p [进程号]  # -p指定进程号
+  ```
 
 - 通过 cpu 或内存占用对进程排序
 
-```
-ps -ef --sort=[+|-]pcpu,[+|-]pmem
---sort用于指定多个字段，pcpu为按CPU排序，pmem为按内存排序，+为升序，-为降序
-例：ps -ef --sort=-pcpu | head -6 显示CPU占用排名前五的进程
-```
+  ```
+  ps -ef --sort=[+|-]pcpu,[+|-]pmem
+  --sort用于指定多个字段，pcpu为按CPU排序，pmem为按内存排序，+为升序，-为降序
+  例：ps -ef --sort=-pcpu | head -6 显示CPU占用排名前五的进程
+  ```
 
 - 以树显示进程层级关系
 
-```
-ps -f --forest
-例：ps -f --forest -C httpd
-```
+  ```
+  ps -f --forest
+  例：ps -f --forest -C httpd
+  ```
 
 - 查看指定父进程下的所有子进程
 
-```
-ps --ppid [PPID]
-```
+  ```
+  ps --ppid [PPID]
+  ```
 
 - 显示进程的线程
 
-```
-ps -f -L -C [进程]或-p [进程号]   #显示指定进程的线程
-例：ps -f -L -C httpd
-```
+  ```
+  ps -f -L -C [进程]或-p [进程号]   #显示指定进程的线程
+  例：ps -f -L -C httpd
+  ```
 
 - 指定要显示的列
 
-```
-ps -o pid,uname,pcpu,pmem,comm,etime
-其中：uname为用户名，etime为进程已运行时间
-```
+  ```
+  ps -o pid,uname,pcpu,pmem,comm,etime
+  其中：uname为用户名，etime为进程已运行时间
+  ```
 
 - 通过`watch`命令将 ps 变为实时查看器
 
-```
-watch
-  -n 指定指令执行间隔
-  -d 高亮显示指令输出信息不同之处
-例：watch -n 1 'ps -e -o pid,uname,cmd,pmem,pcpu --sort=-pcpu,-pmem | head -11'
-```
+  ```
+  watch
+    -n 指定指令执行间隔
+    -d 高亮显示指令输出信息不同之处
+  例：watch -n 1 'ps -e -o pid,uname,cmd,pmem,pcpu --sort=-pcpu,-pmem | head -11'
+  ```
 
 ## pstree
 
@@ -358,9 +492,9 @@ watch
 -Z          显示selinux上下文（需要开启selinux）
 ```
 
-### 参考文章
-
-- [10 basic examples of Linux ps command](https://www.binarytides.com/linux-ps-command/)
-- [ps 命令的 10 个例子](https://linux.cn/article-2358-1.html)
-- Linux 性能优化大师
-- DevOps 故障排除 Linux 服务器运维最佳实践
+> 参考文章
+>
+> - [10 basic examples of Linux ps command](https://www.binarytides.com/linux-ps-command/)
+> - [ps 命令的 10 个例子](https://linux.cn/article-2358-1.html)
+> - Linux 性能优化大师
+> - DevOps 故障排除 Linux 服务器运维最佳实践
