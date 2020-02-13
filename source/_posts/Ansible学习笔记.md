@@ -21,10 +21,6 @@ Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节�
 
 {% asset_img 0.png %}
 
-Ansible 有企业版本的收费软件 Ansible Tower，中心化的 Ansible 管理节点，向管理员提供 web 接口。实现：1. 管理员在 Ansible Tower 上使用分享主机的 SSH 密钥，但不能查看和复制私钥 2. Ansible 的 web 上的所有管理员都可共享 Playbook 脚本 3. Ansible Tower 可收集展示所有主机的 Playbook 执行情况。
-
-Ansible Tower 提供了一个数据库来存储 inventory 配置信息，这个数据库可以通过 web 访问，或通过 REST 访问。Tower 与所有使用的 Ansible 动态 inventory 源保持同步，并提供了一个图形化的 inventory 编辑器。
-
 # Ansible 结构
 
 Ansible 具有以下核心组件：
@@ -204,280 +200,6 @@ database_server: system2.example.com
 然后在 inventory 文件中指定该文件`/etc/ansible/group_vars/servers`
 可以为一个主机，或一个组，创建一个目录，目录名就是主机名或组名。目录中的可以创建多个文件，文件中的变量都会被读取为主机或组的变量。
 
-# Ansible 常见模块
-
-## cron
-
-```
-cron 计划任务模块
-	month         # 指定月份
-	minute        # 指定分钟
-	job           # 指定任务（需要state=present）
-	day           # 指定小时
-	hour          # 指定小时
-	weekday       # 周几
-	name          # 指定名称（默认为*）
-	user          # 使用的用户身份去执行
-	special_time  # 指定执行的时间
-	reboot        # 重启时
-	yearly        # 每年
-	# 还有annually  monthly  weekly  daily  hourly
-	state         # 添加或删除
-	present       # 安装
-	absent        # 移除
-	backup        # 对远程主机上原有任务计划做备份
-	cron_file     # 使用指定文件替换远程主机上/etc/cron.d/中的任务计划
-
-	例：ansible webserver -m cron -a ' minute="*/10" job="/bin/echo hello" name="test" state=present '
-```
-
-## user
-
-```
-user 用户账号管理
-	name         # 用户名
-	uid          # UID
-	state        # 状态
-		present      # 添加
-		absent       # 移除
-	password     # 设置密码
-	group        # 所属组
-	groups       # 附加组（用逗号分隔）
-	home         # 家目录
-	createhome   # 是否创建家目录
-	comment      # 注释
-	system       # 是否设为系统用户
-	generate_ssh_key=yes        # 是否加密密码
-	ssh_key_bits=2048           # 加密密钥长度
-	ssh_key_file=.ssh/id_rsa    # 密码文件
-	注：指定password参数时，不能使用后面这一串密码会被直接传送到被管理主机的/etc/shadow文件中，所以需要先将密码字符串进行加密处理。然后将得到的字符串放到password中即可。
-	默认加密方式是根据/etc/login.defs的ENCRYPT_METHOD指定，默认为SHA512
-```
-
-## group
-
-```
-group 组管理
-	gid      # GID
-	name     # 组名
-	state    # 状态
-	system   # 是否是系统组
-```
-
-## copy
-
-```
-copy 复制文件，类似scp，需要关闭所有机器的selinux，否则会报错
-	src      # 本地源路径
-	dest     # 远程主机目标路径
-	owner    # 指定拥有者
-	group    # 指定所属组
-	mode     # 设置权限
-	content  # 取代src=，表示直接用此处信息生成文件内容
-	backup   # 在覆盖前备份原文件，两个选项（yes | no）
-	directory_mode    # 递归设置目录权限，默认为系统默认权限
-	force  # 用于设置当目标主机包含该文件，但内容不同时的操作
-	       # 若设置为yes，则强制覆盖，若为no，则只有当目标主机的目标位置不存在该文件时，才复制。
-	       # 默认为yes
-# 所有的file模块里的选项都可以在这里使用
-# 若出现了有关selinux的报错，可在被控机上安装libselinux-python解决
-# ansible all -m yum
-```
-
-## template
-
-用法和 copy 模块用法基本一致，主要用于复制模板。
-
-```
-template
-    backup    # 拷贝的同时也创建一个包含时间戳信息的备份文件，默认为no
-    dest=     # 目标路径
-    force     # 设置为yes (默认)时，将覆盖远程同名文件。设置为no时，忽略同名文件的拷贝
-    group     # 设置远程文件的所属组
-    owner     # 设置远程文件的所有者
-    mode      # 设置远程文件的权限。使用数值表示时不能省略第一位，如0644。
-              # 也可以使用'u+rwx'或'u=rw,g=r,o=r'等方式设置
-    src=      # ansible控制器上Jinja2格式的模板所在位置，可以是相对或绝对路径
-    validate  # 在复制到目标主机后但放到目标位置之前，执行此选项指定的命令。
-              # 一般用于检查配置文件语法，语法正确则保存到目标位置。
-              # 如果要引用目标文件名，则使用%s，下面的示例中的s%即表示目标机器上的/etc/nginx/nginx.conf。
-```
-
-## file
-
-```
-file 设置文件属性
-	path         # 设置文件路径（必填）
-	dest         # 设置目的路径
-	name         # 设置文件名
-	owner        # 指定拥有者
-	group        # 指定所属组
-	mode         # 设置权限
-	recurse      # 递归设置目录属性
-	state        # 文件状态
-		file         # 文件不存在就不会被创建
-		dictionary   # 若目录不存在，就自动创建
-		link         # 创建软连接
-		hard         # 创建硬链接
-		touch        # 若不存在就自动创建
-		absent       # 删除文件或目录
-	src          # 指定源文件，只应用于state=link的情况
-	force        # 强制创建软链接。
-	             # 两种情况：1.当源文件不存在，但之后会建立
-	                        2.要先取消已创建的软链接，再重新创
-```
-
-## service
-
-```
-service 管理服务运行状态
-	enabled      # 是否开机自启（yes| no）
-	name         # 指定服务名（必填）
-	state        # 指定服务状态
-		started      # 启动
-		stoped       # 停止
-		restarted    # 重启
-		reloaded     # 重新加载
-	arguments    # 服务参数
-	pattern      # 设置模式
-	# 通过status指令来查看服务的状态时
-	# 若没有响应，就会通过ps指令在进程中根据该模式进行查找
-	# 如果匹配到，则认为该服务依然在运行
-	runlevel     # 运行级别
-	sleep        # 若执行restarted，则在stop和start键沉睡几秒
-```
-
-## command
-
-若不指定模块，则默认使用 command 模块。command 模块不能解析变量(如\$HOME)和某些操作符("<", ">", "\|", ";"以及"&")，若需要使用以上符号，就要用 shell 模块。
-
-```
-command
-    chdir        # 在执行定义的命令前进入指定目录
-    creates      # 创建文件，参数为一个文件或一个glob表达式，若已经存在就不会执行
-    removes:     # 删除文件，参数为一个文件或一个glob表达式，若不存在就不会执行
-    stdin:       # 可要求输入读取指定值
-```
-
-## shell
-
-```
-shell 在远程主机上运行命令，一般要使用管道符语法时，会使用shell模块。与raw模块类似
-	例：ansible all -m shell -a 'echo hello'
-```
-
-## script
-
-```
-script 将本地脚本复制到远程主机并运行
-	例：ansible  all -m script -a '/tmp/a.sh'
-```
-
-## yum
-
-```
-yum 安装程序包
-    config_file         # yum的配置文件
-    disable_gpg_check   # 关闭gpg_check
-    disablerepo         # 不启用某个源
-    enablerepo          # 启用某个源
-    name                # 程序包名
-    state               # 设置状态
-        present         # 安装
-        latest          # 安装
-        absent          # 卸载
-```
-
-注：yum 模块是基于 python2，若要基于 python3 安装，需要模块 dnf。否则会以下报错：
-
-```
-    192.168.163.103 | FAILED! => {
-    "changed": false,
-    "msg": "The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.. The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead."
-	}
-```
-
-也可通过 command 模块直接安装：`ansible 主机 -m command -a 'yum -y install 软件'`
-
-## dnf
-
-类似 yum，但由于 yum 基于 python2，若有依赖于 python3 的软件包则会报错，因此可用 dnf 代替，并且 dnf 的安装速度都有提升。常用参数与 yum 一致。
-
-## setup
-
-```
-setup 收集远程主机的facts，获取主机信息
-    # 每个被管理节点在接受并运行管理命令前，会将自己主机相关信息（如操作系统信息，IP地址等报告给ansible）
-    filter     # 过滤器（正则表达式）
-    例：ansible 192.168.163.103 -m setup -a 'filter=ansible_eth[0-2]'
-```
-
-```
----
-- hosts: group1
-  remote_user: root
-  tasks:
-    - name: get system info
-      debug: msg="system = {{ ansible_os_family }} kernel = {{ ansible_kernel }} ip_addr = {{ ansible_all_ipv4_addresses }}"
-# 用ansible XXX -m setup就能看到所有变量名
-```
-
-收集 Facts 会消耗额外的时间，若不需要，可以在 playbook 中关闭
-
-```
-- hosts: group1
-  gather_facts: no
-```
-
-## synchronize
-
-```
-synchronize 使用rsync同步文件
-    archive       # 归档，相当于同时开启recursive(递归)、links、perms、times、owner、group、-D选项都为yes ，默认该项为开启
-    checksum      # 跳过检测sum值，默认关闭
-    compress      # 是否开启压缩，默认yes
-    copy_links    # 复制链接文件，默认为no ，注意后面还有一个links参数
-    delete        # 删除不存在的文件，默认no
-    dest          # 目录路径
-    dest_port     # 默认目录主机上的端口 ，默认是22，走的ssh协议
-    dirs          # 传速目录不进行递归，默认为no，即进行目录递归
-    rsync_opts    # rsync参数部分
-    set_remote_user    # 主要用于/etc/ansible/hosts中定义或默认使用的用户-与rsync使用的用户不同的情况
-    mode          # push或pull 模块
-        # push模式一般用于从本机向远程主机上传文件
-        # pull 模式用于从远程主机上取文件
-```
-
-## mount
-
-```
-mount 设置挂载点
-    dump
-    fstype     # 必选项，挂载文件的类型
-    name       # 必选项，挂载点
-    opts       # 传递给mount命令的参数
-    src        # 必选项，要挂载的文件
-    state      # 必选项present：只处理fstab中的配置
-    present    # 只处理fstab中的配置
-    absent     # 删除挂载点
-    mounted    # 自动创建挂载点并挂载
-    umounted   # 卸载
-```
-
-## get_url
-
-```
-get_url    用于从http、ftp、https服务器上下载文件（类似于wget）
-	sha256sum   # 下载完成后进行sha256 check；
-	timeout     # 下载超时时间，默认10s
-	url         # 下载的URL
-	dest        # 本地存放路径
-	url_password/url_username    # 主要用于需要用户名密码进行验证的情况
-	use_proxy   # 使用代理，代理需事先在环境变更中定义
-```
-
-**查看模块用法信息`ansible-doc 模块名`**
-
 # Playbook
 
 一个简单的配置管理和多主机部署系统。Playbook 是由一个或多个“Plays”组成的列表。将事先归为一组的主机装扮为通过 Ansible 的任务 Task 定义好的角色。任务也就是调用 Ansible 的模块将多个“play”组织到一个 playbook 中。playbook 的模板使用 Python 的 jinja2 模块处理。
@@ -581,46 +303,35 @@ ok: [172.16.246.133] => {
 }
 ```
 
-简单试验分析：
-
 ```yaml
-创建test.yml
-- hosts: system3
+# 若定义的是个列表，也通过序号直接调用
+---
+- hosts: test
+  vars:
+    foo_list:
+      - python
+      - java
+      - go
   tasks:
-    - name: echo hello
-      command: 'echo hello'
-    - name: create user
-      user: name=apache password=redhat state=present uid=1003
+    - name: print foo_list
+      debug: msg="{{ foo_list }}"
+    - name: print foo_list[1]
+      debug: msg="{{ foo_list[1] }}"
 
-root@system2 ~ > ansible-playbook test.yml
+结果：
+TASK [print foo_list] *****************************************************************************
+ok: [192.168.60.129] => {
+    "msg": [
+        "python",
+        "java",
+        "go"
+    ]
+}
 
-PLAY [system3] *****************************************************************
-
-TASK [Gathering Facts] *********************************************************
-ok: [192.168.163.103]
-
-TASK [echo hello] **************************************************************
-changed: [192.168.163.103]
-
-TASK [create user] *************************************************************
-changed: [192.168.163.103]
-
-PLAY RECAP *********************************************************************
-192.168.163.103            : ok=3    changed=2    unreachable=0    failed=0
-
-# changed说明发生了改变。
-# 若再次执行一遍，会出现以下改变
-
-TASK [echo hello] **************************************************************
-changed: [192.168.163.103]
-
-TASK [create user] *************************************************************
-ok: [192.168.163.103]
-
-PLAY RECAP *********************************************************************
-192.168.163.103            : ok=3    changed=1    unreachable=0    failed=0
-# 创建用户不再是changed，而是ok，而输出打印hello仍然为changed。
-# 因为用户已创建了，就不会再创建，这体现了playbook的幂等性。而打印文字并不符合只需要执行一遍的特性。
+TASK [print foo_list[0]] **************************************************************************
+ok: [192.168.60.129] => {
+    "msg": "python"
+}
 ```
 
 ## register
@@ -661,7 +372,7 @@ Handlers 也是 task 的列表，若 notify 有定义，则 handlers 一定要�
 
 一个 handler 最多只执行一次，并且**在所有 task 都执行完后再执行**，即 handler 是按照定义的顺序执行的，并不是按照 task 的调用顺序执行的。如果有多个任务调用同一个 handler，则也只执行一次。
 
-```
+```yaml
 - hosts: test
     tasks:
       - name: install apache
@@ -675,6 +386,14 @@ Handlers 也是 task 的列表，若 notify 有定义，则 handlers 一定要�
         service: name=httpd state=restarted
 ```
 
+若要再一个 playbook 的中间执行 handlers，需要使用 meta 模块实现。
+
+```
+- meta: XXXXX
+```
+
+一般情况若 play 在执行到 handlers 前就失败了，则 handlers 不会执行，但可以通过 mega 模块的`--force-handlers`选项强制执行 handlers。
+
 ## 逻辑控制
 
 三种逻辑控制语句：
@@ -686,6 +405,8 @@ Handlers 也是 task 的列表，若 notify 有定义，则 handlers 一定要�
 ### 条件判断
 
 当需要根据变量等信息判断是否需要执行某 task 时，则需要条件判断
+
+#### when
 
 ```yaml
 tasks:
@@ -705,28 +426,133 @@ PLAY RECAP *********************************************************************
 192.168.163.104            : ok=1    changed=0    unreachable=0    failed=0
 
 # 经过判断system4不满足when条件，所以skipping跳过，而system3满足，所以changed
-
-可使用and、or、not进行逻辑连接或判断，==、!=、>、<、>=、<=进行算数比较
-
-可使用is exists或is not exists判断指定的文件是否存在，且可通过not取反
-即not XXX is exists 等于 XXX is not exists
-
-可使用defined、undefined、none判断变量是否已定义，以及变量是否为空
-
-可使用success或succeeded、failure或failed、change或changed、skip或skipped分别判断任务返回状态是否为成功、任务返回状态是否为失败、任务返回状态是否为改变、任务返回状态是否为跳过
-
-可使用file、directory、link、mount判断路径是否为一个文件、目录、链接、挂载点
-
-可使用lower、upper判断字符串是否为纯小写、纯大写
-
-可使用even、odd判断数值是否为偶数、奇数，可用divisibleby(num)判断是否可以整除数值num
-
-可用version(version值,'算数比较符')比较版本与指定值的大小
-
-可用string、number分别判断值是否为字符串或数字
-
-可用subset、superset（版本2.5及以上）|issubset、issuperset（版本2.5以下）判断一个list是否是另一个list的子集或父集
 ```
+
+- 可使用 and、or、not 进行逻辑连接或判断，==、!=、>、<、>=、<=进行算数比较
+- 可使用 is exists 或 is not exists 判断指定的文件是否存在，且可通过 not 取反
+  即 not XXX is exists 等于 XXX is not exists
+- 可使用 defined、undefined、none 判断变量是否已定义，以及变量是否为空
+- 可使用 success 或 succeeded、failure 或 failed、change 或 changed、skip 或 skipped 分别判断任务返回状态是否为成功、任务返回状态是否为失败、任务返回状态是否为改变、任务返回状态是否为跳过
+- 可使用 file、directory、link、mount 判断路径是否为一个文件、目录、链接、挂载点
+- 可使用 lower、upper 判断字符串是否为纯小写、纯大写
+- 可使用 even、odd 判断数值是否为偶数、奇数，可用 divisibleby(num)判断是否可以整除数值 num
+- 可用 version(version 值,'算数比较符')比较版本与指定值的大小
+- 可用 string、number 分别判断值是否为字符串或数字
+- 可用 subset、superset（版本 2.5 及以上）|issubset、issuperset（版本 2.5 以下）判断一个 list 是否是另一个 list 的子集或父集
+
+#### changed_when、failed_when
+
+对命令结果进行判断。
+
+可以使用`changed_when`对结果返回信息进行重写，而不是单纯的`changed`。
+
+示例：
+
+```yaml
+PHP composer安装依赖项
+若返回信息包含'Nothing to install update'，说明并没有changed，只有在显示其他安装成功信息时才changed
+---
+- hosts: test
+  gather_facts: no
+  tasks:
+    - command: composer global require phpinit/phpinit --prefer-dist
+      register: composer_result
+      changed_when: "'Nothing to install or update' not in composer_result.stdout"
+```
+
+可使用`failed_when`对错误进行判断。`failed_when`能匹配程序写入 stderr 的报错信息
+
+示例：
+
+```yaml
+判断jenkins是否运行失败
+---
+- hosts: test
+  gather_facts: no
+  tasks:
+    - shell: java -jar ~/jenkins-cli.jar -s http://localhost:8000
+        create-job  'myjob' < /usr/local/myjob.xml
+      register: import
+      failed_when: "import.stderr and 'already exists' not in import.stderr"
+```
+
+#### ignore_errors
+
+某些任务在运行中会报出错误，但是不会影响运行，而此时报错却会导致 playbook 执行中断。需要在会出现这类报错的任务中添加`ignore_errors`来屏蔽所有错误消息，但是屏蔽错误消息也会影响排错。
+
+### 任务间流程控制
+
+默认情况下，任务是在指定的机器上执行的，但有时一些任务需要在特定的机器上执行（例如向某台服务器发送通知），所以需要 ansible 的任务委托功能。
+`delegate_to`可指定某项任务在特定服务器上运行，其他任务照旧。
+
+示例：
+
+```yaml
+操作对象全体为webservers，但添加监控对象需要在监控服务的主机上运行
+---
+- hosts: webservers
+  gather_facts: no
+  tasks:
+    - command: monitor-server webservers {{ inventory_hostname }}
+      delegate_to: "{{ monitoring_master }}"
+```
+
+若需要一个任务在 ansible 服务器本机运行，有两种方法
+
+- 将该任务委托给 127.0.0.1
+- 使用模块`local_action`
+  ```yaml
+  tasks:
+    - local_action: xxxx
+  ```
+
+某些情况下，需要等待主机上的某个条件达成或某个状态的恢复（如等待主机上的服务重启或端口打开），此时需要暂停 playbook 的执行，知道该主机状态达到要求。
+
+示例：
+
+```yaml
+- name: 等待webserver启动
+    local_action:
+      module: wait_for
+      host: webserver-1
+      port: 80
+      delay: 10
+      timeout: 300
+      state: started
+  # 会每10s检查一次是否webserver-1的80端口开启，若超过300s仍未开启则返回错误
+```
+
+wait_for 模块常用于：
+
+- 使用 host、port、timeout 来判断一段时间内主机的端口是否可用
+- 使用 path 和 timeout 判断某个路径下文件是否存在
+- 使用 host、port、stat 判断活动连接数是否被耗尽
+- 使用 delay 指定 timeout 时间内检查的间隔
+
+### 交互式提示
+
+在执行过程中若需要用户输入数据，则可用到`vars_prompt`实现交互。
+
+示例：
+
+```yaml
+---
+- hosts: all
+  vars_prompt:
+    - name: share_user
+      prompt: "Input your network username?"
+    - name: share_pass
+      prompt: "Inpur your network password?"
+      private: yes
+```
+
+vars_prompt 常用选项：
+
+- default：默认值
+- private：若为 yes 则输入不可见
+- confirm：要求输入两次，常用于密码
+
+**尽量避免使用交互式，会降低运维的自动化。**
 
 ### 迭代（循环）
 
@@ -1144,6 +970,16 @@ tasks:
    ignore_errors: True
 ```
 
+# Ansible 插件类型
+
+当前 ansible 已有十几种插件类型。几个重点常用的插件类型：
+
+- Connection 类：用于与远端主机通信。默认提供 paramiko、native ssh、local 等方式。
+- Lookup 类：循环体功能。如 with_items、with_fileglob 等遍历功能插件
+- Vars 类：变量。如 通过 host_vars、group_vars 或 inventory 生成的
+- Filter 类：Jinja2 的 Filter，常见实现为 to_yaml、to_json
+- Callback 类：捕捉响应事件，允许进行自定义响应。是最常用的插件类型
+
 # Ansible 变量
 
 Ansible 有三个组成部分：
@@ -1164,6 +1000,15 @@ Ansible 有三个组成部分：
 **Ansible 所有变量的优先级（从高到低）：**
 
 - **extra vars**：通过命令传入的变量
+
+  ```
+  # 指定字段
+  ansible-playbook a.yml --extra-vars "foo=bar"
+
+  # 引入单独的变量文件，如json、yaml
+  ansible-playbook a.yml --extra-vars "@vars.json"
+  ansible-playbook a.yml --extra-vars "@vars.yaml"
+  ```
 
 - **task vars**：仅在该任务中使用的变量
 
@@ -1225,6 +1070,35 @@ Ansible 有三个组成部分：
 - **play vars**：Playbook 中的`vars`关键字下定义的参数
 
 - **host facts**：Ansible 在执行 Playbook 时，收集到的远程主机的信息
+  两种获取 facts 的方法。一种是 playbook 中开启`gather_facts`（默认开启），一种是自定义 facts，在远端主机的`/etc/ansible/facts.d/`创建一个`.fact` 文件，例如`settings.fact`。
+
+  ```
+  [systeminfo]
+  Manufacturer=VMware, Inc.
+  ProductName=VMware Virtual Platform
+  SerialNumber=VMware-56 4d 07 14 97 13 ce 07-df 17 d7 3d 71 1b e1 a8
+  UUID=14074d56-1397-07ce-df17-d73d711be1a8
+  ```
+
+  ```
+  $ ansible test -m setup -a "filter=ansible_local"
+  192.168.60.129 | SUCCESS => {
+      "ansible_facts": {
+          "ansible_local": {
+              "settings": {
+                  "systeminfo": {
+                      "manufacturer": "VMware, Inc.",
+                      "productname": "VMware Virtual Platform",
+                      "serialnumber": "VMware-56 4d 07 14 97 13 ce 07-df 17 d7 3d 71 1b e1 a8",
+                      "uuid": "14074d56-1397-07ce-df17-d73d711be1a8"
+                  }
+              }
+          },
+          "discovered_interpreter_python": "/usr/libexec/platform-python"
+      },
+      "changed": false
+  }
+  ```
 
 - **playbook host_vars**：Playbook 同级子目录`host_vars`中文件内定义的变量
 
@@ -1232,7 +1106,11 @@ Ansible 有三个组成部分：
 
 - **inventory host_vars**：可在两个地方定义。一是在 inventory 文件中直接定义，二是在 Inventory 文件的同级子目录`host_vars`中**与 host 同名的文件**中定义
 
-- **inventory group_vars**：可在两个地方定义。一是在 inventory 文件中直接定义，二是在 Inventory 文件的同级子目录`group_vars`中**与 group 同名的文件**中定义
+  ```
+  在/etc/ansible/host_vars目录中创建host同名文件，如host1.example.com，以yaml语法在其中配置变量
+  ```
+
+- **inventory group_vars**：可在两个地方定义。一是在 inventory 文件中直接定义，二是在 Inventory 文件的同级子目录`group_vars`中**与 group 同名的文件**中定义。操作同上
 
 - **inventory vars**：Inventory 文件中定义的变量
 
@@ -1298,7 +1176,7 @@ lookup 既能读取 Ansible 管理节点上文件系统的文件内容，还能�
 
 - lookup 读取配置文件
 
-  ```
+  ```ini
   demo.ini配置文件：
   [global]
   port = 873
@@ -1355,7 +1233,7 @@ lookup 既能读取 Ansible 管理节点上文件系统的文件内容，还能�
 
 - lookup 读取 DNS 解析的值。可以向 DNS 服务器查询指定域的 DNS 记录，可查询任何 DNS 记录（包括正向和反向）
 
-  ```
+  ```yaml
   tasks:
     - debug: msg="ipv4 address of baidu.com  {{ lookup('dig', 'baidu.com') }}"
     - debug: msg="txt record of baidu.com  {{ lookup('dig', 'baidu.com', 'qtype=TXT') }}"
@@ -1384,6 +1262,56 @@ lookup 既能读取 Ansible 管理节点上文件系统的文件内容，还能�
       "msg": "fqdn of '8.8.8.8' google-public-dns-a.google.com."
   }
   ```
+
+# Ansible 加密
+
+ansible 在执行任务时会接触到各种敏感数据，可能是管理员密码、ssh 私钥等。可以使用 ansible 自带的 vault 加密功能，将经过加密的密码和敏感数据同 playbook 存储在一起。
+
+ansible vault 采用 AES-256 加密算法。
+
+```
+ansible-vault
+  create          创建新的加密文件
+  encrypt         加密一个yaml文件
+  encrypt_string  加密一个字符串
+  decrypt         解密一个文件
+  rekey           修改加密文件的密码
+  view            查看加密文件
+  edit            编辑加密文件
+```
+
+加密一个 yaml 文件：
+
+```
+$ ansible-vault encrypt play.yml
+New Vault password:
+Confirm New Vault password:
+Encryption successful
+
+打开该文件
+$ cat play.yml
+$ANSIBLE_VAULT;1.1;AES256
+37393032623566373034343462656135616137346437653830333730353931396165346462656331
+6530393866663037343237303130363265666463336536350a303465613835653334316161616166
+62656238376332376138303132653337636330396437343964343730613338353237383963356136
+3363373032306636310a653438303832393932626436626631356339613932663936623464323138
+30383561633435353833323766306637613165306530373139643839623838346265626133393866
+......
+```
+
+加密之后若要查看修改文件，就只能通过`ansible-vault edit`和`view`进行。
+
+ansible 还提供密码文件形式进行解密的认证方式，类似 ssh 密钥认证。ansible-vault 将密码文件放在`~/.ansible`中，该目录的权限为 600，该目录下创建文件`vault_pass.txt`，写入密码。就可以通过参数运行加密后的 playbook
+
+```
+$ ansible-playbook play.yml --vault-password-file ~/.ansible/vault_pass.txt
+```
+
+可通过安装 python 的 cryptography 模块加速 vault 速度
+
+```
+pip install cryptography
+```
 
 # Jinja2 过滤器
 
@@ -1760,7 +1688,9 @@ Jinja2 继承。若 Jinja2 仅用于配置文件，则基本用不到继承功�
 
 # Ansible-Tower
 
-Ansible Tower 是中心化的 ansible 管理节点，管理员通过登录 Tower 来运行 Playbook，无须与每台主机都建立 ssh 连接。
+中心化的 Ansible 管理节点，向管理员提供 web 接口。实现：1. 管理员在 Ansible Tower 上使用分享主机的 SSH 密钥，但不能查看和复制私钥 2. Ansible 的 web 上的所有管理员都可共享 Playbook 脚本 3. Ansible Tower 可收集展示所有主机的 Playbook 执行情况。
+
+Ansible Tower 提供了一个数据库来存储 inventory 配置信息，这个数据库可以通过 web 访问，或通过 REST 访问。Tower 与所有使用的 Ansible 动态 inventory 源保持同步，并提供了一个图形化的 inventory 编辑器。
 
 {% asset_img 1.png %}
 
@@ -1786,6 +1716,303 @@ rabbitmq_username=tower
 rabbitmq_password=''
 rabbitmq_cookie=cookiemonster
 ```
+
+# Ansible 常见模块
+
+## cron
+
+```
+cron 计划任务模块
+	month         # 指定月份
+	minute        # 指定分钟
+	job           # 指定任务（需要state=present）
+	day           # 指定小时
+	hour          # 指定小时
+	weekday       # 周几
+	name          # 指定名称（默认为*）
+	user          # 使用的用户身份去执行
+	special_time  # 指定执行的时间
+	reboot        # 重启时
+	yearly        # 每年
+	# 还有annually  monthly  weekly  daily  hourly
+	state         # 添加或删除
+	present       # 安装
+	absent        # 移除
+	backup        # 对远程主机上原有任务计划做备份
+	cron_file     # 使用指定文件替换远程主机上/etc/cron.d/中的任务计划
+
+	例：ansible webserver -m cron -a ' minute="*/10" job="/bin/echo hello" name="test" state=present '
+```
+
+## user
+
+```
+user 用户账号管理
+	name         # 用户名
+	uid          # UID
+	state        # 状态
+		present      # 添加
+		absent       # 移除
+	password     # 设置密码
+	group        # 所属组
+	groups       # 附加组（用逗号分隔）
+	home         # 家目录
+	createhome   # 是否创建家目录
+	comment      # 注释
+	system       # 是否设为系统用户
+	generate_ssh_key=yes        # 是否加密密码
+	ssh_key_bits=2048           # 加密密钥长度
+	ssh_key_file=.ssh/id_rsa    # 密码文件
+	注：指定password参数时，不能使用后面这一串密码会被直接传送到被管理主机的/etc/shadow文件中，所以需要先将密码字符串进行加密处理。然后将得到的字符串放到password中即可。
+	默认加密方式是根据/etc/login.defs的ENCRYPT_METHOD指定，默认为SHA512
+```
+
+## group
+
+```
+group 组管理
+	gid      # GID
+	name     # 组名
+	state    # 状态
+	system   # 是否是系统组
+```
+
+## copy
+
+```
+copy 复制文件，类似scp，需要关闭所有机器的selinux，否则会报错
+	src      # 本地源路径
+	dest     # 远程主机目标路径
+	owner    # 指定拥有者
+	group    # 指定所属组
+	mode     # 设置权限
+	content  # 取代src=，表示直接用此处信息生成文件内容
+	backup   # 在覆盖前备份原文件，两个选项（yes | no）
+	directory_mode    # 递归设置目录权限，默认为系统默认权限
+	force  # 用于设置当目标主机包含该文件，但内容不同时的操作
+	       # 若设置为yes，则强制覆盖，若为no，则只有当目标主机的目标位置不存在该文件时，才复制。
+	       # 默认为yes
+# 所有的file模块里的选项都可以在这里使用
+# 若出现了有关selinux的报错，可在被控机上安装libselinux-python解决
+# ansible all -m yum
+```
+
+## template
+
+用法和 copy 模块用法基本一致，主要用于复制模板。
+
+```
+template
+    backup    # 拷贝的同时也创建一个包含时间戳信息的备份文件，默认为no
+    dest=     # 目标路径
+    force     # 设置为yes (默认)时，将覆盖远程同名文件。设置为no时，忽略同名文件的拷贝
+    group     # 设置远程文件的所属组
+    owner     # 设置远程文件的所有者
+    mode      # 设置远程文件的权限。使用数值表示时不能省略第一位，如0644。
+              # 也可以使用'u+rwx'或'u=rw,g=r,o=r'等方式设置
+    src=      # ansible控制器上Jinja2格式的模板所在位置，可以是相对或绝对路径
+    validate  # 在复制到目标主机后但放到目标位置之前，执行此选项指定的命令。
+              # 一般用于检查配置文件语法，语法正确则保存到目标位置。
+              # 如果要引用目标文件名，则使用%s，下面的示例中的s%即表示目标机器上的/etc/nginx/nginx.conf。
+```
+
+## file
+
+```
+file 设置文件属性
+	path         # 设置文件路径（必填）
+	dest         # 设置目的路径
+	name         # 设置文件名
+	owner        # 指定拥有者
+	group        # 指定所属组
+	mode         # 设置权限
+	recurse      # 递归设置目录属性
+	state        # 文件状态
+		file         # 文件不存在就不会被创建
+		dictionary   # 若目录不存在，就自动创建
+		link         # 创建软连接
+		hard         # 创建硬链接
+		touch        # 若不存在就自动创建
+		absent       # 删除文件或目录
+	src          # 指定源文件，只应用于state=link的情况
+	force        # 强制创建软链接。
+	             # 两种情况：1.当源文件不存在，但之后会建立
+	                        2.要先取消已创建的软链接，再重新创
+```
+
+## service
+
+```
+service 管理服务运行状态
+	enabled      # 是否开机自启（yes| no）
+	name         # 指定服务名（必填）
+	state        # 指定服务状态
+		started      # 启动
+		stoped       # 停止
+		restarted    # 重启
+		reloaded     # 重新加载
+	arguments    # 服务参数
+	pattern      # 设置模式
+	# 通过status指令来查看服务的状态时
+	# 若没有响应，就会通过ps指令在进程中根据该模式进行查找
+	# 如果匹配到，则认为该服务依然在运行
+	runlevel     # 运行级别
+	sleep        # 若执行restarted，则在stop和start键沉睡几秒
+```
+
+## command
+
+若不指定模块，则默认使用 command 模块。command 模块不能解析变量(如\$HOME)和某些操作符("<", ">", "\|", ";"以及"&")，若需要使用以上符号，就要用 shell 模块。
+
+```
+command
+    chdir        # 在执行定义的命令前进入指定目录
+    creates      # 创建文件，参数为一个文件或一个glob表达式，若已经存在就不会执行
+    removes:     # 删除文件，参数为一个文件或一个glob表达式，若不存在就不会执行
+    stdin:       # 可要求输入读取指定值
+```
+
+## shell
+
+```
+shell 在远程主机上运行命令，一般要使用管道符语法时，会使用shell模块。与raw模块类似
+	例：ansible all -m shell -a 'echo hello'
+```
+
+## script
+
+```
+script 将本地脚本复制到远程主机并运行
+	例：ansible  all -m script -a '/tmp/a.sh'
+```
+
+## yum
+
+```
+yum 安装程序包
+    config_file         # yum的配置文件
+    disable_gpg_check   # 关闭gpg_check
+    disablerepo         # 不启用某个源
+    enablerepo          # 启用某个源
+    name                # 程序包名
+    state               # 设置状态
+        present         # 安装
+        latest          # 安装
+        absent          # 卸载
+```
+
+注：yum 模块是基于 python2，若要基于 python3 安装，需要模块 dnf。否则会以下报错：
+
+```
+    192.168.163.103 | FAILED! => {
+    "changed": false,
+    "msg": "The Python 2 bindings for rpm are needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.. The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead."
+	}
+```
+
+也可通过 command 模块直接安装：`ansible 主机 -m command -a 'yum -y install 软件'`
+
+## dnf
+
+类似 yum，但由于 yum 基于 python2，若有依赖于 python3 的软件包则会报错，因此可用 dnf 代替，并且 dnf 的安装速度都有提升。常用参数与 yum 一致。
+
+## setup
+
+```
+setup 收集远程主机的facts，获取主机信息
+    # 每个被管理节点在接受并运行管理命令前，会将自己主机相关信息（如操作系统信息，IP地址等报告给ansible）
+    filter     # 过滤器（正则表达式）
+    例：ansible 192.168.163.103 -m setup -a 'filter=ansible_eth[0-2]'
+```
+
+```
+---
+- hosts: group1
+  remote_user: root
+  tasks:
+    - name: get system info
+      debug: msg="system = {{ ansible_os_family }} kernel = {{ ansible_kernel }} ip_addr = {{ ansible_all_ipv4_addresses }}"
+# 用ansible XXX -m setup就能看到所有变量名
+```
+
+收集 Facts 会消耗额外的时间，若不需要，可以在 playbook 中关闭
+
+```
+- hosts: group1
+  gather_facts: no
+```
+
+## synchronize
+
+```
+synchronize 使用rsync同步文件
+    archive       # 归档，相当于同时开启recursive(递归)、links、perms、times、owner、group、-D选项都为yes ，默认该项为开启
+    checksum      # 跳过检测sum值，默认关闭
+    compress      # 是否开启压缩，默认yes
+    copy_links    # 复制链接文件，默认为no ，注意后面还有一个links参数
+    delete        # 删除不存在的文件，默认no
+    dest          # 目录路径
+    dest_port     # 默认目录主机上的端口 ，默认是22，走的ssh协议
+    dirs          # 传速目录不进行递归，默认为no，即进行目录递归
+    rsync_opts    # rsync参数部分
+    set_remote_user    # 主要用于/etc/ansible/hosts中定义或默认使用的用户-与rsync使用的用户不同的情况
+    mode          # push或pull 模块
+        # push模式一般用于从本机向远程主机上传文件
+        # pull 模式用于从远程主机上取文件
+```
+
+## mount
+
+```
+mount 设置挂载点
+    dump
+    fstype     # 必选项，挂载文件的类型
+    name       # 必选项，挂载点
+    opts       # 传递给mount命令的参数
+    src        # 必选项，要挂载的文件
+    state      # 必选项present：只处理fstab中的配置
+    present    # 只处理fstab中的配置
+    absent     # 删除挂载点
+    mounted    # 自动创建挂载点并挂载
+    umounted   # 卸载
+```
+
+## get_url
+
+```
+get_url    用于从http、ftp、https服务器上下载文件（类似于wget）
+	sha256sum   # 下载完成后进行sha256 check；
+	timeout     # 下载超时时间，默认10s
+	url         # 下载的URL
+	dest        # 本地存放路径
+	url_password/url_username    # 主要用于需要用户名密码进行验证的情况
+	use_proxy   # 使用代理，代理需事先在环境变更中定义
+```
+
+## lineinfile
+
+修改文件。主要用于修改量小的情况。
+
+示例：用来配置环境变量
+
+```yaml
+---
+- hosts: test
+  tasks:
+    - name: 修改环境变量
+      lineinfile: dest=~/.bash_profile regexp=^TEST_ENV= line=TEST_ENV=hello
+    - name: 刷新配置文件并获取该环境变量
+      shell: 'source ~/.bash_profile && echo $TEST_ENV'
+      register: test_env
+    - name: 打印该环境变量
+      debug: msg="TEST_ENV {{ test_env.stdout }}"
+
+执行后，到目标主机上查看
+# tail -n1 .bash_profile
+TEST_ENV=hello
+```
+
+**查看模块用法信息`ansible-doc 模块名`**
 
 > 参考资料
 >
