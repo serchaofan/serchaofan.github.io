@@ -111,6 +111,19 @@ Connector 接收的请求会传给最上层的 EnginePipeline，依次执行最�
 此时 StandardWrapperValve 会创建 Filterchain，调用其 doFilter 方法处理请求，Filterchain 包含配置的与请求匹配的 Filter 和 Servlet，doFilter 会依次调用所有的 Filter 的 doFilter 和 Servlet 的 service 方法，请求即被处理。
 所有的 PipelineValve 执行完成后，将结果返回给 Connector，Connector 再通过 socket 将结果返回给客户端。
 
+### Tomcat 连接器
+
+Tomcat 连接器分为两类：
+
+1. HTTP 连接器
+2. Web 服务器连接器
+
+HTTP 连接器有三种：
+
+- 基于 java 的 HTTP/1.1 连接器：Tomcat 默认使用的连接器，即 Coyote；它是 Tomcat 作为 standalone 模式工作时所用到的连接器，可直接响应来自用户浏览器的关于 JSP、servlet 和 HTML 的请求；此连接器是一个 Java 类，定义在 server.xml 当中，默认使用 8080 端口
+- 高性能 NIO HTTP/1.1 连接器（java 开发）：支持非阻塞式 IO 和 Comnet，在基于库向 tomcat 发起请求时，此连接器表现不俗
+- native APR HTTP/1.1 连接器（C++开发）：在负载较大的场景中，此连接器可以提供非常好的性能
+
 # Tomcat 环境搭建
 
 搭建 Tomcat，首先要配置 JAVA 环境，下载 jdk，解压`/usr/local/jdk8`。
@@ -118,10 +131,14 @@ Connector 接收的请求会传给最上层的 EnginePipeline，依次执行最�
 
 ```
 debian/ubuntu：
-apt-get install openjdk-8-jre
+apt-get install openjdk-8-jre openjdk-8-jdk
+
+设置JAVA_HOME为/usr/lib/jvm/java-8-openjdk-amd64/
 
 centos/redhat/fedora：
 yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
+
+设置JAVA_HOME为/usr/lib/jvm/java-1.8.0-openjdk/
 ```
 
 然后在`/etc/profile`配置环境变量
@@ -191,28 +208,89 @@ Tomcat 以面向对象的方式运行，它可以在运行时动态加载配置�
 
 ### server.xml
 
-常见组件
+配置层次：
 
-- Server
+```
+<server>
+  <service>
+    <connector />
+    <engine>
+      <host>
+        <context>
+        </context>
+      </host>
+      <host>
+      .....
+      </host>
+    </engine>
+  </service>
+</server>
+```
+
+组件类别：
+
+- 顶级组件：位于配置顶层
+  - server
+- 容器类组件：可包含其他组件
+  - service：
+  - engine：
+  - host：
+  - context：
+  - webapp：
+- 连接器组件：连接用户请求到 tomcat
+  - connector
+- 嵌套类组件：位于容器中，不包含其他组件
+  - valve：
+  - access log valve：
+  - remote address filter valve：
+  - logger：
+
+* Server
   示例：
   ```
     <Server port="8005" shutdown="SHUTDOWN">
         <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
-        <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
-        <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
-        <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
-        <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+        ......
     </Server>
   ```
   相关属性：
   `className`: 用于实现此 Server 容器的完全限定类的名称；
   `port`: 接收 shutdown 指令的端口，默认仅允许通过本机访问，默认为 8005；
   `shutdown`: 发往此 Server 用于实现关闭 tomcat 实例的命令字符串，默认为 SHUTDOWN；
-- Service
+* Service
   示例：
   ```
     <Service name="Catalina">
   ```
+
+### webapp 结构
+
+webapp 有特定的组织格式，是一种层次型目录结构；通常包含了 servlet 代码文件、jsp 页面文件、类文件、部署描述符文件等等，一般会打包成归档格式
+
+示例：
+
+```
+examples/
+|-- WEB-INF
+|   |-- classes
+|   |-- jsp
+|   |-- jsp2
+|   |-- lib
+|   |-- tags
+|   `-- web.xml
+|-- index.html
+|-- jsp
+|   |--......
+|   |-- images
+|   |-- include
+|   |-- index.html
+......
+```
+
+- `/`：web 应用的根目录，ROOT 为根目录内容
+- `/WEB-INF`：包含当前 webapp 的 deploy 描述符，如所有的 servlets 和 JSP 等动态文件的详细信息，会话超时时间和数据源等；通常用于定义当前 webapp 特有的资源，通常 web.xml 和 context.xml 均放置于此目录
+- `/WEB-INF/classes`：包含所有服务器端类及当前应用程序相关的其它第三方类等
+- `/WEB-INF/lib`：包含 JSP 所用到的 JAR 文件，此 webapp 自有能够被打包为 jar 格式的类
 
 ## 配置 WEB 应用
 
@@ -225,5 +303,4 @@ Tomcat 以面向对象的方式运行，它可以在运行时动态加载配置�
 - 在`conf`目录下`server.xml`中在`<Host>`中添加上下文（就是 web 应用路径）
 
 > 参考文章
-> [四张图带你了解 Tomcat 系统架构](https://dbaplus.cn/news-134-1930-1.html)
-> [Tomcat 安装及配置详解](http://www.ttlsa.com/tomcat/tomcat-install-and-configure/)
+> [四张图带你了解 Tomcat 系统架构](https://dbaplus.cn/news-134-1930-1.html) > [Tomcat 安装及配置详解](http://www.ttlsa.com/tomcat/tomcat-install-and-configure/)

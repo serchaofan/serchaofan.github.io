@@ -5,19 +5,9 @@ tags: [ansible, 运维, 监控, 自动化]
 categories: [应用运维]
 ---
 
-本篇包含以下内容
-
-- [Ansible 结构](#Ansible结构)
-- [Ansible 安装](#Ansible安装)
-- [Inventory](#Inventory)
-- [Ansible 常见模块](#Ansible常见模块)
-- [Playbook](#Playbook)
-  <!-- more -->
-- [Ansible 变量](#Ansible变量)
-- [Jinja2 过滤器](#Jinja2过滤器)
-- [Ansible-Tower](#Ansible-Tower)
-
 Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节点和远程节点间的通信，实现批量自动化操作。
+
+  <!-- more -->
 
 {% asset_img 0.png %}
 
@@ -480,80 +470,6 @@ PHP composer安装依赖项
 
 某些任务在运行中会报出错误，但是不会影响运行，而此时报错却会导致 playbook 执行中断。需要在会出现这类报错的任务中添加`ignore_errors`来屏蔽所有错误消息，但是屏蔽错误消息也会影响排错。
 
-### 任务间流程控制
-
-默认情况下，任务是在指定的机器上执行的，但有时一些任务需要在特定的机器上执行（例如向某台服务器发送通知），所以需要 ansible 的任务委托功能。
-`delegate_to`可指定某项任务在特定服务器上运行，其他任务照旧。
-
-示例：
-
-```yaml
-操作对象全体为webservers，但添加监控对象需要在监控服务的主机上运行
----
-- hosts: webservers
-  gather_facts: no
-  tasks:
-    - command: monitor-server webservers {{ inventory_hostname }}
-      delegate_to: "{{ monitoring_master }}"
-```
-
-若需要一个任务在 ansible 服务器本机运行，有两种方法
-
-- 将该任务委托给 127.0.0.1
-- 使用模块`local_action`
-  ```yaml
-  tasks:
-    - local_action: xxxx
-  ```
-
-某些情况下，需要等待主机上的某个条件达成或某个状态的恢复（如等待主机上的服务重启或端口打开），此时需要暂停 playbook 的执行，知道该主机状态达到要求。
-
-示例：
-
-```yaml
-- name: 等待webserver启动
-    local_action:
-      module: wait_for
-      host: webserver-1
-      port: 80
-      delay: 10
-      timeout: 300
-      state: started
-  # 会每10s检查一次是否webserver-1的80端口开启，若超过300s仍未开启则返回错误
-```
-
-wait_for 模块常用于：
-
-- 使用 host、port、timeout 来判断一段时间内主机的端口是否可用
-- 使用 path 和 timeout 判断某个路径下文件是否存在
-- 使用 host、port、stat 判断活动连接数是否被耗尽
-- 使用 delay 指定 timeout 时间内检查的间隔
-
-### 交互式提示
-
-在执行过程中若需要用户输入数据，则可用到`vars_prompt`实现交互。
-
-示例：
-
-```yaml
----
-- hosts: all
-  vars_prompt:
-    - name: share_user
-      prompt: "Input your network username?"
-    - name: share_pass
-      prompt: "Inpur your network password?"
-      private: yes
-```
-
-vars_prompt 常用选项：
-
-- default：默认值
-- private：若为 yes 则输入不可见
-- confirm：要求输入两次，常用于密码
-
-**尽量避免使用交互式，会降低运维的自动化。**
-
 ### 迭代（循环）
 
 重复同类的 task 时使用。item 定义迭代，with_items 定义循环列表。
@@ -669,6 +585,80 @@ ok: [172.16.246.133] => {
 }
 ```
 
+### 任务间流程控制
+
+默认情况下，任务是在指定的机器上执行的，但有时一些任务需要在特定的机器上执行（例如向某台服务器发送通知），所以需要 ansible 的任务委托功能。
+`delegate_to`可指定某项任务在特定服务器上运行，其他任务照旧。
+
+示例：
+
+```yaml
+操作对象全体为webservers，但添加监控对象需要在监控服务的主机上运行
+---
+- hosts: webservers
+  gather_facts: no
+  tasks:
+    - command: monitor-server webservers {{ inventory_hostname }}
+      delegate_to: "{{ monitoring_master }}"
+```
+
+若需要一个任务在 ansible 服务器本机运行，有两种方法
+
+- 将该任务委托给 127.0.0.1
+- 使用模块`local_action`
+  ```yaml
+  tasks:
+    - local_action: xxxx
+  ```
+
+某些情况下，需要等待主机上的某个条件达成或某个状态的恢复（如等待主机上的服务重启或端口打开），此时需要暂停 playbook 的执行，知道该主机状态达到要求。
+
+示例：
+
+```yaml
+- name: 等待webserver启动
+    local_action:
+      module: wait_for
+      host: webserver-1
+      port: 80
+      delay: 10
+      timeout: 300
+      state: started
+  # 会每10s检查一次是否webserver-1的80端口开启，若超过300s仍未开启则返回错误
+```
+
+wait_for 模块常用于：
+
+- 使用 host、port、timeout 来判断一段时间内主机的端口是否可用
+- 使用 path 和 timeout 判断某个路径下文件是否存在
+- 使用 host、port、stat 判断活动连接数是否被耗尽
+- 使用 delay 指定 timeout 时间内检查的间隔
+
+### 交互式提示
+
+在执行过程中若需要用户输入数据，则可用到`vars_prompt`实现交互。
+
+示例：
+
+```yaml
+---
+- hosts: all
+  vars_prompt:
+    - name: share_user
+      prompt: "Input your network username?"
+    - name: share_pass
+      prompt: "Inpur your network password?"
+      private: yes
+```
+
+vars_prompt 常用选项：
+
+- default：默认值
+- private：若为 yes 则输入不可见
+- confirm：要求输入两次，常用于密码
+
+**尽量避免使用交互式，会降低运维的自动化。**
+
 ### 模板
 
 通过配置模板，可将配置文件中的参数按照 inventory 文件中变量以及 ansible facts 中变量动态赋值，使得每个指定的主机的配置都是定制的。
@@ -735,11 +725,11 @@ ansible-playbook test.yml --skip-tags="apache"则会跳过执行apache标签的t
 --tags all       # 执行所有任务，无论是否打标签
 ```
 
-### include 和 roles
+## includes 和 roles
 
 如果把所有 play 都写在一个 playbook 中，会导致文件不易阅读。ansible 可以将多个不同任务分别写在不同的 playbook 中，然后使用 include 将其包含进去，实现 Playbook 的重用。roles 也是一种整合 playbook 的方式。include 的维护成本较高，重用能力有限，而 role 更加灵活，且可以重用一组文件。
 
-#### include
+### includes
 
 使用 include 语句引用 task 文件的方法，可允许你将一个配置策略分解到更小的文件中，将 tasks 从其他文件拉取过来（handlers 也是 tasks）。即 include 可以导入两种文件：导入 task、导入 playbook。
 
@@ -775,10 +765,22 @@ ansible-playbook test.yml --skip-tags="apache"则会跳过执行apache标签的t
   tags: [aaa, bbb]
 ```
 
-#### roles
+可在 includes 下添加 when 语句，实现动态的 includes，仅在满足条件的时候导入 tasks。
+
+```yaml
+- name: 检查文件是否存在
+    stat: path=extra/extra-tasks.yml    # 检查文件是否存在
+    register: extra_file            # 状态返回值
+- include: tasks/extra-tasks.yml
+    when: extra_file.stat.exists    # 当上面的文件存在时再导入task文件
+```
+
+### roles
 
 角色，封装 playbook，实现复用性，能够根据层次型结构自动加载变量文件、tasks 以及 handlers 等。
 roles 就是通过分别将变量、文件、任务、模板以及处理器放置于单独的目录中，然后通过 include 调用的一种机制。roles 一般用于基于主机构建服务的场景中，也可以使用于构建守护进程的场景中。
+
+相较于 includes，**roles 更适用于大项目 playbook 的编排。**
 
 创建 role 的步骤：
 
@@ -793,14 +795,14 @@ role 有默认的存放目录`/etc/ansible/roles`，若既没有定义环境变�
 
 roles 中各目录：
 
-- `tasks`目录：至少包含一个 main.yml，其定义了此角色的任务列表，此文件可用 include 包含其他 task 目录
+- `tasks`目录：**至少包含一个 main.yml**，其定义了此角色的任务列表，此文件可用 include 包含其他 task 目录。`main.yml`是所有任务的入口
 - `files`目录：存放有 copy 或 script 等模块调用的文件
 - `templates`目录：template 模块会自动在此文件中寻找 jinja2 模板
-- `handlers`目录：此目录中应包含一个 main.yml，定义此角色用到的 handler
+- `handlers`目录：此目录中**应包含一个 main.yml**，定义此角色用到的 handler
 - `yml`文件：用于定义此角色用到的个 handler，
-- `vars`目录：应包含一个 main.yml，定义此角色用到的变量
-- `meta`目录：应包含一个 main.yml，定义此角色的特殊设定和依赖关系
-- `defaults`目录：应包含一个 main.yml，为当前角色设定默认变量时使用此目录
+- `vars`目录：**应包含一个 main.yml**，定义此角色用到的变量
+- `meta`目录：**应包含一个 main.yml**，定义此角色的特殊设定和依赖关系
+- `defaults`目录：**应包含一个 main.yml**，为当前角色设定默认变量时使用此目录
 
 可使用命令`ansible-galaxy init role-name`在当前目录中自动生成指定的 role 目录
 
@@ -954,6 +956,52 @@ role 和 tasks 的执行顺序
 2. roles：roles 会在 tasks 前执行
 3. tasks
 4. post_tasks：最后执行的 task
+
+### ansible-galaxy
+
+- init：创建空的 roles
+- info：显示 roles 的版本号、作者等信息
+- install：安装 roles
+- list：列出本地的 roles
+- remove：移除指定 roles
+
+galaxy 上的 roles 命名规范遵循 username.rolename
+
+若要一次安装多个 roles，可以通过设置 txt 文件或 yml 文件指定，类似 pip 的 requirement 文件。并且 ansible 支持从多个源下载，除了官方的 galaxy 网站，也支持 github、web 服务器、bitbucket 网站等。
+
+```
+# roles.txt
+
+userA.role1,v1.0.0
+userB.role2
+
+# roles.yml
+
+# 从galaxy下载
+- src: user1.role1
+
+# 从github下载
+- src: https://github.com/user1/nginx
+
+# 从github下载到本地相对路径
+- src: https://github.com/user1/nginx
+    path: lnmp/roles/
+
+# github上指定源码版本
+- src: https://github.com/user1/nginx
+    version: master
+    name: nginx_role
+
+# 从web服务器下载打包好的源码
+- src: https://files.example.com/ansible/master.tar.gz
+    name: http_role
+```
+
+然后通过 install 的`-r`指定文件
+
+```
+ansible-galaxy install -r roles.yml
+```
 
 ## 常用技巧
 
@@ -2016,10 +2064,22 @@ TEST_ENV=hello
 
 > 参考资料
 >
-> [Ansible 中文权威指南](http://www.ansible.com.cn/index.html) > [Ansible ：一个配置管理和 IT 自动化工具](https://linux.cn/article-4215-3.html) > [Ansible 系列](http://www.cnblogs.com/f-ck-need-u/p/7576137.html#ansible) > [大神带你 20 分钟学会 Ansible！](https://mp.weixin.qq.com/s?__biz=MzAxNTcyNzAyOQ==&mid=2650960643&idx=1&sn=ba6a46d24f181eeb1308087830648cd8&chksm=800973d9b77efacf2e0cc0ad2a4c015b7c67b511f1cb1786f4c74f2243e69e97da2955dce681&mpshare=1&scene=23&srcid=0626IdjKI6mMzTfKSPwq6Dua#rd) > [Ansible 详解（一）](https://www.cnblogs.com/ilurker/p/6421624.html) > [Ansible 详解（二）](https://www.cnblogs.com/ilurker/p/6421637.html)
+> [Ansible 中文权威指南](http://www.ansible.com.cn/index.html)
+>
+> [Ansible ：一个配置管理和 IT 自动化工具](https://linux.cn/article-4215-3.html)
+>
+> [Ansible 系列](http://www.cnblogs.com/f-ck-need-u/p/7576137.html#ansible)
+>
+> [大神带你 20 分钟学会 Ansible！](https://mp.weixin.qq.com/s?__biz=MzAxNTcyNzAyOQ==&mid=2650960643&idx=1&sn=ba6a46d24f181eeb1308087830648cd8&chksm=800973d9b77efacf2e0cc0ad2a4c015b7c67b511f1cb1786f4c74f2243e69e97da2955dce681&mpshare=1&scene=23&srcid=0626IdjKI6mMzTfKSPwq6Dua#rd)
+>
+> [Ansible 详解（一）](https://www.cnblogs.com/ilurker/p/6421624.html)
+>
+> [Ansible 详解（二）](https://www.cnblogs.com/ilurker/p/6421637.html)
 >
 > [朱双印个人日志-Ansible](http://www.zsythink.net/archives/category/%E8%BF%90%E7%BB%B4%E7%9B%B8%E5%85%B3/ansible)
 >
 > Linux 集群与自动化运维
 >
 > Ansible 快速入门技术原理与实战
+>
+> Ansible 权威指南
