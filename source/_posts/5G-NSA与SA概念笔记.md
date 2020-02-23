@@ -5,6 +5,13 @@ categories: [网络]
 date: 2019-12-13 11:46:36
 ---
 
+- [5G 组网方案](#5g-%e7%bb%84%e7%bd%91%e6%96%b9%e6%a1%88)
+  - [SA 组网](#sa-%e7%bb%84%e7%bd%91)
+  - [NSA 组网](#nsa-%e7%bb%84%e7%bd%91)
+    - [3 系组网](#3-%e7%b3%bb%e7%bb%84%e7%bd%91)
+    - [7 系组网](#7-%e7%b3%bb%e7%bb%84%e7%bd%91)
+    - [4 系组网](#4-%e7%b3%bb%e7%bb%84%e7%bd%91)
+
 第五代移动通信技术（5th generation mobile networks 或 5th generation wireless systems，简称 5G）是最新一代蜂窝移动通信技术，5G 的性能目标是高数据速率、减少延迟、节省能源、降低成本、提高系统容量和大规模设备连接。ITU IMT-2020 规范要求速度高达 20 Gbit/s，可以实现宽信道带宽和大容量 MIMO。第三代合作伙伴计划（3GPP）将提交 5G NR（新无线电）作为其 5G 通信标准提案。5G NR 可包括低频（FR1），低于 6 GHz 和更高频率（FR2），高于 2.4 GHz 和毫米波范围。
 
 <!--more-->

@@ -7,6 +7,14 @@ date: 2018-12-30 14:42:04
 
 学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》
 
+- [简介](#%e7%ae%80%e4%bb%8b)
+- [UTS](#uts)
+- [IPC](#ipc)
+- [PID](#pid)
+- [Mount](#mount)
+- [Network](#network)
+- [User](#user)
+
 <!--more-->
 
 # 简介
@@ -101,12 +109,13 @@ child process id: 33009
 
 以下是 6 种隔离的具体实现，以下为学习顺序
 
-- [UTS](#UTS)
-- [IPC](#IPC)
-- [PID](#PID)
-- [Mount](#Mount)
-- [Network](#Network)
-- [User](#User)
+- [简介](#%e7%ae%80%e4%bb%8b)
+- [UTS](#uts)
+- [IPC](#ipc)
+- [PID](#pid)
+- [Mount](#mount)
+- [Network](#network)
+- [User](#user)
 
 # UTS
 

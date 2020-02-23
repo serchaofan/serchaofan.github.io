@@ -5,8 +5,11 @@ tags: [DRBD, 同步, 集群, 高可用]
 categories: [应用运维]
 ---
 
-- [DRBD 概述](#DRBD概述)
-- [DRBD 基础搭建](#DRBD基础搭建)
+- [DRBD 概述](#drbd-%e6%a6%82%e8%bf%b0)
+  - [DRBD 功能](#drbd-%e5%8a%9f%e8%83%bd)
+- [DRBD 基础搭建](#drbd-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
+  - [准备](#%e5%87%86%e5%a4%87)
+  - [搭建](#%e6%90%ad%e5%bb%ba)
 
 <!--more-->
 

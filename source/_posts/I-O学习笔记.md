@@ -5,18 +5,16 @@ tags: [网络, I/O]
 categories: [网络]
 ---
 
-## I/O
-
 本篇包含以下知识点：
 
-- 同、异步概念
-- 五种 Unix I/O 模型
-  - 同步模型
-  - 异步模型
+- [同、异步](#%e5%90%8c%e5%bc%82%e6%ad%a5)
+- [五种 Unix I/O 模型](#%e4%ba%94%e7%a7%8d-unix-io-%e6%a8%a1%e5%9e%8b)
+- [同步 I/O 模型](#%e5%90%8c%e6%ad%a5-io-%e6%a8%a1%e5%9e%8b)
+- [异步 I/O 模型](#%e5%bc%82%e6%ad%a5-io-%e6%a8%a1%e5%9e%8b)
 
 <!-- more -->
 
-### 同、异步
+# 同、异步
 
 **同步：** 指的是在两个或多个数据库、文件、模块、线程之间用来保持数据内容一致性的机制。<br>
 同步处理过程：提交请求->等待服务器处理（期间客户端浏览器不能干任何事）->处理完毕返回<br>
@@ -40,14 +38,14 @@ categories: [网络]
     1.等待流数据准备，即等待网络上的数据分组到达，然后被复制到内核的某个缓冲区
     2.从内核向进程复制数据，把数据从内核缓冲区复制到应用进程缓冲区
 
-### 五种 Unix I/O 模型
+# 五种 Unix I/O 模型
 
 **I/O 模型：**
 进程是无法直接操作 I/O 设备的，其必须通过系统调用请求内核来协助完成 I/O 动作，而内核会为每个 I/O 设备维护一个 buffer。 用户进程发起请求，内核接受到请求后，从 I/O 设备中获取数据到 buffer 中，再将 buffer 中的数据 copy 到用户进程的地址空间，该用户进程获取到数据后再响应客户端。
 如下图中，真正称为 I/O 的就是**内核内存与与进程内存间的过程**<br>
 {% asset_img iomoxing.bmp iomoxing %}
 
-#### 同步 I/O 模型
+# 同步 I/O 模型
 
 **阻塞 I/O（Blocking I/O）：** 当用户进程进行系统调用 read()时，进程发起 recvform 系统调用，内核就开始了 I/O 的第一个阶段，准备数据到缓冲区中，当数据都准备完成后，则将数据从内核缓冲区中拷贝到用户进程的内存中，这时用户进程才解除 block 的状态重新运行。整个过程中用户进程都是阻塞的。不会消耗 CPU 时间，执行效率高。<br>
 {% asset_img zuseio.jpg zuseio %}
@@ -72,7 +70,7 @@ categories: [网络]
 
 {% asset_img xinxiqudongio.jpg xinxiqudongio %}
 
-#### 异步 I/O 模型
+# 异步 I/O 模型
 
 **异步 I/O（Asynchrnous I/O）：** 当用户进程发起系统调用后，立刻就可以开始去做其它的事情，然后直到 I/O 执行的两个阶段都完成之后，内核会给用户进程发送通知，告诉用户进程操作已经完成了。由于在调用后进程会立刻返回，所以在整个输入操作的等待和复制期间，进程都不会阻塞。
 
@@ -80,10 +78,11 @@ categories: [网络]
 
 {% asset_img yibuio.jpg yibuio %}
 
-<br><br><br>
-
 > 参考文章：
-> 简明网络 I/O 模型---同步异步阻塞非阻塞之惑 https://www.jianshu.com/p/55eb83d60ab1
-> 浅谈 Linux 下的五种 I/O 模型 https://www.cnblogs.com/chy2055/p/5220793.html
-> Linux 网络 I/O 模型简介（图文） https://blog.csdn.net/anxpp/article/details/51503329
-> socket 和 网络 I/O 模型 https://www.jianshu.com/p/7ac69db65a0e
+> [简明网络 I/O 模型---同步异步阻塞非阻塞之惑](https://www.jianshu.com/p/55eb83d60ab1)
+>
+> [浅谈 Linux 下的五种 I/O 模型](https://www.cnblogs.com/chy2055/p/5220793.html)
+>
+> [Linux 网络 I/O 模型简介（图文）](https://blog.csdn.net/anxpp/article/details/51503329)
+>
+> [socket 和 网络 I/O 模型](https://www.jianshu.com/p/7ac69db65a0e)

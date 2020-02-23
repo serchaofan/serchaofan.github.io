@@ -7,12 +7,13 @@ categories: [应用运维]
 
 本篇包含以下内容
 
-- [DHCP 原理](#DHCP原理)
-- [DHCP 服务器配置](#DHCP服务器配置)
-  - [服务器端](#服务器端)
-  - [客户端](#客户端)
-- [DHCP 中继](#DHCP中继)
-  <!-- more -->
+- [DHCP 原理](#dhcp-%e5%8e%9f%e7%90%86)
+- [DHCP 服务器配置](#dhcp-%e6%9c%8d%e5%8a%a1%e5%99%a8%e9%85%8d%e7%bd%ae)
+  - [服务器端](#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af)
+  - [客户端](#%e5%ae%a2%e6%88%b7%e7%ab%af)
+- [DHCP 中继](#dhcp-%e4%b8%ad%e7%bb%a7)
+
+<!-- more -->
 
 ## DHCP 原理
 

@@ -4,53 +4,45 @@ date: 2019-02-03 12:56:22
 tags: [Python, lang]
 ---
 
-* [函数式编程](#函数式编程)
-* [面向对象编程](#面向对象编程)
-* [测试](#测试)
-* [文件操作]()
-* [进程与线程]()
-* [正则表达式]()
-* [网络编程]()
-* [MySQL编程]()
+- [函数式编程](#%e5%87%bd%e6%95%b0%e5%bc%8f%e7%bc%96%e7%a8%8b)
+  - [高阶函数](#%e9%ab%98%e9%98%b6%e5%87%bd%e6%95%b0)
+    - [map 与 reduce](#map-%e4%b8%8e-reduce)
+    - [filter](#filter)
+    - [sorted](#sorted)
+  - [装饰器](#%e8%a3%85%e9%a5%b0%e5%99%a8)
+  - [偏函数](#%e5%81%8f%e5%87%bd%e6%95%b0)
+- [面向对象编程](#%e9%9d%a2%e5%90%91%e5%af%b9%e8%b1%a1%e7%bc%96%e7%a8%8b)
+  - [特殊方法与特殊变量](#%e7%89%b9%e6%ae%8a%e6%96%b9%e6%b3%95%e4%b8%8e%e7%89%b9%e6%ae%8a%e5%8f%98%e9%87%8f)
+  - [静态方法、类方法与继承](#%e9%9d%99%e6%80%81%e6%96%b9%e6%b3%95%e7%b1%bb%e6%96%b9%e6%b3%95%e4%b8%8e%e7%bb%a7%e6%89%bf)
+  - [\_\_new\_\_和 metaclass](#new%e5%92%8c-metaclass)
+  - [反射](#%e5%8f%8d%e5%b0%84)
+- [测试](#%e6%b5%8b%e8%af%95)
+- [进程与线程](#%e8%bf%9b%e7%a8%8b%e4%b8%8e%e7%ba%bf%e7%a8%8b)
+- [正则表达式](#%e6%ad%a3%e5%88%99%e8%a1%a8%e8%be%be%e5%bc%8f)
+- [网络编程](#%e7%bd%91%e7%bb%9c%e7%bc%96%e7%a8%8b)
+- [数据库编程](#%e6%95%b0%e6%8d%ae%e5%ba%93%e7%bc%96%e7%a8%8b)
+- [文本处理](#%e6%96%87%e6%9c%ac%e5%a4%84%e7%90%86)
+- [协程与异步 IO](#%e5%8d%8f%e7%a8%8b%e4%b8%8e%e5%bc%82%e6%ad%a5-io)
+- [Redis 编程](#redis-%e7%bc%96%e7%a8%8b)
+- [RabbitMQ 编程](#rabbitmq-%e7%bc%96%e7%a8%8b)
+- [Web 编程](#web-%e7%bc%96%e7%a8%8b)
+- [常见内建模块](#%e5%b8%b8%e8%a7%81%e5%86%85%e5%bb%ba%e6%a8%a1%e5%9d%97)
 
 <!--more-->
-
-* [文本处理]()
-* [XML]()
-* [类库打包]()
-* [协程与异步IO]()
-* [Redis编程]()
-* [RabbitMQ队列]()
-* [Web编程]()
-* [常用内建模块]()
-
-
 
 # 函数式编程
 
 ## 高阶函数
 
-### map与reduce
-
-
+### map 与 reduce
 
 ### filter
 
-
-
 ### sorted
-
-
 
 ## 装饰器
 
-
-
 ## 偏函数
-
-
-
-
 
 # 面向对象编程
 
@@ -58,7 +50,7 @@ tags: [Python, lang]
 
 所有保留属性：
 
-* `Class.__doc__`：类的帮助信息，显示类的帮助信息
+- `Class.__doc__`：类的帮助信息，显示类的帮助信息
 
   ```
   >>> class Person():
@@ -70,32 +62,32 @@ tags: [Python, lang]
   ...
   >>> peter = Person("peter")
   >>> Person.__doc__
-  
+
       Person 类
   ```
 
-* `Class.__name__`：类名
+- `Class.__name__`：类名
 
   ```
   >>> Person.__name__
   Person
   ```
 
-* `Class.__module__`：类所在模块
+- `Class.__module__`：类所在模块
 
   ```
   >>> Person.__module__
   __main__
   ```
 
-* `Class.__bases__`：类所继承的基类
+- `Class.__bases__`：类所继承的基类
 
   ```
   >>> Person.__base__
   <class 'object'>
   ```
 
-* `Class.__dict__`：类型字典，存储所有类的成员信息（类属性）
+- `Class.__dict__`：类型字典，存储所有类的成员信息（类属性）
 
   ```
   >>> Person.__dict__
@@ -103,28 +95,28 @@ tags: [Python, lang]
   <attribute '__weakref__' of 'Person' objects>}
   ```
 
-* `Class().__class__`：对象的类
+- `Class().__class__`：对象的类
 
   ```
   >>> peter.__class__
   <class '__main__.Person'>
   ```
 
-* `Class().__module__`：对象的实例类所在模块
+- `Class().__module__`：对象的实例类所在模块
 
   ```
   >>> peter.__module__
   '__main__'
   ```
 
-* `Class().__dict__`：对象字典，存储所有实例成员信息（实例属性，不包括类属性）
+- `Class().__dict__`：对象字典，存储所有实例成员信息（实例属性，不包括类属性）
 
   ```
   >>> peter.__dict__
   {'name': 'peter'}
   ```
 
-* `Class().__call__`：当对象后加了`()`，则会触发执行
+- `Class().__call__`：当对象后加了`()`，则会触发执行
 
   ```
   在类中添加方法__call__
@@ -139,7 +131,7 @@ tags: [Python, lang]
   person ('peter', 1, 2, 3) {'name': 'peter'}
   ```
 
-* `Class().__str__`：在打印对象时再同时打印`__str__`定义的默认输出值
+- `Class().__str__`：在打印对象时再同时打印`__str__`定义的默认输出值
 
   ```
   在类中添加__str__方法
@@ -149,7 +141,7 @@ tags: [Python, lang]
   <obj: peter>
   ```
 
-* `Class.__getitem__`、`class.__setitem__`、`class.__delitem__`：将对象当作字典，但可以进行调用权限控制
+- `Class.__getitem__`、`class.__setitem__`、`class.__delitem__`：将对象当作字典，但可以进行调用权限控制
 
   ```python
   class Dog():
@@ -163,7 +155,7 @@ tags: [Python, lang]
           self.data[key] = value
       def __delitem__(self, key):
           print("__delitem__", "key: %s" % key)
-        
+
   >>> d = Dog()
   >>> d['name'] = 'tom'
   __setitem__ key: name, value: tom
@@ -174,8 +166,6 @@ tags: [Python, lang]
   __delitem__ key: name
   ```
 
-
-
 ## 静态方法、类方法与继承
 
 静态方法虽然定义在类中，但与类没有实际关系。需要在定义时，添加`@staticmethod`，而调用时，仍然是通过类的对象或类调用。
@@ -184,14 +174,14 @@ tags: [Python, lang]
 class Person(object):
     def __init__(self, name="AAA"):
         self.name = name
-    
+
     def eat(self):
         print("{} is eating".format(self.name))
 
     @staticmethod
     def drink(self):
         print("{} is drinking".format(self.name))
-    
+
 p = Person()
 # 普通方法可不需要参数
 p.eat()
@@ -214,8 +204,6 @@ AAA is drinking
 
 静态方法只是名义上归类管理，实际上静态方法中无法访问类或实例中的任何属性。
 
-
-
 类方法只能访问类变量，不能访问实例变量。在定义方法前加上`@classmethod`标记，可通过类的对象或类直接调用。
 
 ```python
@@ -228,7 +216,7 @@ class Person(object):
     @classmethod
     def drink(self):
         print("{} is drinking".format(self.name))
-    
+
 p = Person()
 p.drink()
 Person.drink()
@@ -237,8 +225,6 @@ Person.drink()
 BBB is drinking
 BBB is drinking
 ```
-
-
 
 属性方法会把一个方法变为一个静态属性，即不能作为一个函数（有括号的）。只能通过对象调用，不能直接类名调用。
 
@@ -250,7 +236,7 @@ class Person(object):
     @property
     def drink(self):
         print("{} is drinking".format(self.name))
-    
+
 p = Person()
 p.drink
 
@@ -258,16 +244,16 @@ p.drink
     @property
     def drink(self, something):
         print("{} is drinking {}".format(self.name, self.something))
-        
+
 ```
 
-解决方法：设置一个专门的设置属性值的函数setter，而原来的属性方法就不需要带参数了，而让setter方法进行设置参数值。setter方法就是类似java的setter方法
+解决方法：设置一个专门的设置属性值的函数 setter，而原来的属性方法就不需要带参数了，而让 setter 方法进行设置参数值。setter 方法就是类似 java 的 setter 方法
 
 ```python
     @property
     def drink(self):
         print("{} is drinking {}".format(self.name, self.something))
-    
+
     @drink.setter
     def setDrink(self, something):
       self.something = something
@@ -283,7 +269,7 @@ set drink to : coffee
 AAA is drinking coffee
 ```
 
-同理，删除对象属性的方法deleter也可定义。
+同理，删除对象属性的方法 deleter 也可定义。
 
 ```python
     @drink.deleter
@@ -298,16 +284,14 @@ try:
   print(p.something)
 except:
   print("p.something属性已被删除")
-  
+
 # 执行结果
 set drink to : coffee
 delete drink coffee
 p.something属性已被删除
 ```
 
-
-
-## \_\_new\_\_和metaclass
+## \_\_new\_\_和 metaclass
 
 ```
 >>> class Foo(object):
@@ -327,7 +311,7 @@ p.something属性已被删除
 >>> Foo = type('Foo', (), {'func_1': func})
 >>> print(type(Foo))
 <class 'type'>
->>> f = Foo   
+>>> f = Foo
 >>> f.func_1()  # Foo对象调用方法func
 func_1
 
@@ -347,21 +331,19 @@ __init__ tom
 func_1 tom
 ```
 
-因此可知，**类是由`type`类实例化产生的。**那么type类又是如何创建类的呢、如何创建对象的？
+因此可知，**类是由`type`类实例化产生的。**那么 type 类又是如何创建类的呢、如何创建对象的？
 
-**类中有一个属性`__metaclass__`，用来表示该类由谁来实例化创建，通过`__metaclass__`设置一个type类的派生类**
-
-
+**类中有一个属性`__metaclass__`，用来表示该类由谁来实例化创建，通过`__metaclass__`设置一个 type 类的派生类**
 
 ```
 class Foo(object):
     def __init__(self, name):
         self.name = name
         print("Foo __init__")
-    
+
     def __new__(cls, *args, **kwargs):
         print("Foo __new__")
-   
+
 先创建一个对象
 >>> foo = Foo("tom")
 Foo __new__
@@ -375,16 +357,14 @@ Foo __new__
     def __new__(cls, *args, **kwargs):
         print("Foo __new__")
         # 返回类的实例，cls即为Foo类本身，继承父类的__new__方法
-        return object.__new__(cls) 
+        return object.__new__(cls)
 ```
-
-
 
 ## 反射
 
 反射就是**通过字符串映射或修改程序运行时的状态、属性、方法。**
 
-* `hasattr(object, func)`：判断对象是否有指定方法、属性、状态，若有则返回True，否则返回False
+- `hasattr(object, func)`：判断对象是否有指定方法、属性、状态，若有则返回 True，否则返回 False
 
   ```
   >>> class Dog(object):
@@ -393,7 +373,7 @@ Foo __new__
   ...     def eat(self):
   ...         print("%s is eating" % self.name)
   ...
-  
+
   >>> dog = Dog("tom")  # 创建对象
   >>>
   >>> choice = input("input func name: ")
@@ -406,7 +386,7 @@ Foo __new__
   False
   ```
 
-* `getattr(obj, func)`：获取该状态、属性、方法
+- `getattr(obj, func)`：获取该状态、属性、方法
 
   ```
   >>> choice = input("input func name: ")
@@ -415,7 +395,7 @@ Foo __new__
   <bound method Dog.eat of <__main__.Dog object at 0x00000201A8B0A3C8>>
   >>> getattr(dog, choice)()  # 执行方法
   tom is eating
-  
+
   # 因此可以这样写
   >>> if hasattr(dog, choice):
   ...     getattr(dog, choice)()
@@ -423,7 +403,7 @@ Foo __new__
   tom is eating
   ```
 
-* `setattr(obj, name, value)`：设置状态、属性、方法
+- `setattr(obj, name, value)`：设置状态、属性、方法
 
   ```
   >>> def inputError():
@@ -437,7 +417,7 @@ Foo __new__
   input wrong func name
   ```
 
-* `delattr(obj, name)`：删除指定的属性或方法
+- `delattr(obj, name)`：删除指定的属性或方法
 
   ```
   >>> choice = input("input func name: ")
@@ -452,40 +432,27 @@ Foo __new__
   AttributeError: eat   # 报错，已没有choice
   ```
 
-
-
-
 # 测试
-
-
 
 # 进程与线程
 
-
-
 # 正则表达式
-
-
 
 # 网络编程
 
-套接字socket是计算机网络数据结构，在任何类型的通信开始之前，网络应用程序必须创建套接字。 
+套接字 socket 是计算机网络数据结构，在任何类型的通信开始之前，网络应用程序必须创建套接字。
 
 Socket API 的调用顺序和 TCP 的数据流：
 
 {% asset_img 1.png %}
 
+python 网络编程需要使用 socket 库。
 
+socket 具有很多的地址簇，其中常见的有：
 
-python网络编程需要使用socket库。
-
-socket具有很多的地址簇，其中常见的有：
-
-* `AF_UNIX`：被绑定到一个文件系统的节点。会返回Linux的抽象命名空间中的地址的字节对象，此命名空间中的套接字可以与普通文件系统套接字通信，因此打算在Linux上运行的程序可能需要处理这两种类型的地址。
-* `AF_INET`：IPv4的地址信息，是一对`(host, port)`，host可以是IP地址或是域名
-* `AF_INET6`：IPv6的地址信息，是一对`(host, port, flowinfo, scopeid)`
-
-
+- `AF_UNIX`：被绑定到一个文件系统的节点。会返回 Linux 的抽象命名空间中的地址的字节对象，此命名空间中的套接字可以与普通文件系统套接字通信，因此打算在 Linux 上运行的程序可能需要处理这两种类型的地址。
+- `AF_INET`：IPv4 的地址信息，是一对`(host, port)`，host 可以是 IP 地址或是域名
+- `AF_INET6`：IPv6 的地址信息，是一对`(host, port, flowinfo, scopeid)`
 
 客户端简单实现：
 
@@ -523,7 +490,7 @@ conn.send(client_data)
 server.close()
 ```
 
-先开启server程序，之后执行client程序
+先开启 server 程序，之后执行 client 程序
 
 ```
 # 开启server端
@@ -579,33 +546,16 @@ while True:
     print("recv: ", client_data.decode())
 ```
 
-
-
-
-
 # 数据库编程
-
-
 
 # 文本处理
 
+# 协程与异步 IO
 
+# Redis 编程
 
-# 协程与异步IO
+# RabbitMQ 编程
 
-
-
-# Redis编程
-
-
-
-# RabbitMQ编程
-
-
-
-# Web编程
-
-
+# Web 编程
 
 # 常见内建模块
-

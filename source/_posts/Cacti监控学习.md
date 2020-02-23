@@ -7,8 +7,9 @@ categories: [系统运维]
 
 本篇笔记包含以下内容：
 
-- [Cacti 原理与安装](#Cacti原理与安装)
-- [Cacti 常用操作](#Cacti常用操作)
+- [Cacti 原理与安装](#cacti-%e5%8e%9f%e7%90%86%e4%b8%8e%e5%ae%89%e8%a3%85)
+  - [Cacti 安装](#cacti-%e5%ae%89%e8%a3%85)
+- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
 
 <!-- more -->
 

@@ -5,8 +5,10 @@ tags: [Centreon, Ganglia]
 categories: [系统运维]
 ---
 
-- [Ganglia 与 Centreon 概述](#Ganglia与Centreon概述)
-- [Centreon 与 Ganglia 监控部署](#Centreon与Ganglia监控部署)
+- [Ganglia 与 Centreon 概述](#ganglia-%e4%b8%8e-centreon-%e6%a6%82%e8%bf%b0)
+  - [统一运维监控平台设计](#%e7%bb%9f%e4%b8%80%e8%bf%90%e7%bb%b4%e7%9b%91%e6%8e%a7%e5%b9%b3%e5%8f%b0%e8%ae%be%e8%ae%a1)
+- [Centreon 与 Ganglia 监控部署](#centreon-%e4%b8%8e-ganglia-%e7%9b%91%e6%8e%a7%e9%83%a8%e7%bd%b2)
+- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
 
 <!--more-->
 

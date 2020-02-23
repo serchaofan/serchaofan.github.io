@@ -6,10 +6,10 @@ tags: [server, Samba]
 
 本篇笔记包含以下内容：
 
-- [Samba 原理](#Samba原理)
-- [Samba 基础配置](#Samba基础配置)
-  - [服务器端](#服务器端)
-  - [客户端](#客户端)
+- [Samba 原理](#samba-%e5%8e%9f%e7%90%86)
+- [Samba 基础配置](#samba-%e5%9f%ba%e7%a1%80%e9%85%8d%e7%bd%ae)
+  - [服务器端](#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af)
+  - [客户端](#%e5%ae%a2%e6%88%b7%e7%ab%af)
 
 <!-- more -->
 

@@ -7,9 +7,61 @@ categories: [应用运维]
 
 Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节点和远程节点间的通信，实现批量自动化操作。
 
-  <!-- more -->
+<!-- more -->
 
 {% asset_img 0.png %}
+
+- [Ansible 结构](#ansible-%e7%bb%93%e6%9e%84)
+- [Ansible 安装](#ansible-%e5%ae%89%e8%a3%85)
+- [Inventory](#inventory)
+- [Playbook](#playbook)
+  - [命令解析](#%e5%91%bd%e4%bb%a4%e8%a7%a3%e6%9e%90)
+  - [变量引用](#%e5%8f%98%e9%87%8f%e5%bc%95%e7%94%a8)
+  - [register](#register)
+  - [命令行传参](#%e5%91%bd%e4%bb%a4%e8%a1%8c%e4%bc%a0%e5%8f%82)
+  - [notify 与 handler](#notify-%e4%b8%8e-handler)
+  - [逻辑控制](#%e9%80%bb%e8%be%91%e6%8e%a7%e5%88%b6)
+    - [条件判断](#%e6%9d%a1%e4%bb%b6%e5%88%a4%e6%96%ad)
+      - [when](#when)
+      - [changed_when、failed_when](#changedwhenfailedwhen)
+      - [ignore_errors](#ignoreerrors)
+    - [迭代（循环）](#%e8%bf%ad%e4%bb%a3%e5%be%aa%e7%8e%af)
+    - [Block 块](#block-%e5%9d%97)
+    - [任务间流程控制](#%e4%bb%bb%e5%8a%a1%e9%97%b4%e6%b5%81%e7%a8%8b%e6%8e%a7%e5%88%b6)
+    - [交互式提示](#%e4%ba%a4%e4%ba%92%e5%bc%8f%e6%8f%90%e7%a4%ba)
+    - [模板](#%e6%a8%a1%e6%9d%bf)
+    - [tags 标签](#tags-%e6%a0%87%e7%ad%be)
+  - [includes 和 roles](#includes-%e5%92%8c-roles)
+    - [includes](#includes)
+    - [roles](#roles)
+    - [ansible-galaxy](#ansible-galaxy)
+  - [常用技巧](#%e5%b8%b8%e7%94%a8%e6%8a%80%e5%b7%a7)
+- [Ansible 插件类型](#ansible-%e6%8f%92%e4%bb%b6%e7%b1%bb%e5%9e%8b)
+- [Ansible 变量](#ansible-%e5%8f%98%e9%87%8f)
+- [Lookup](#lookup)
+- [Ansible 加密](#ansible-%e5%8a%a0%e5%af%86)
+- [Jinja2 过滤器](#jinja2-%e8%bf%87%e6%bb%a4%e5%99%a8)
+  - [Jinja 语法](#jinja-%e8%af%ad%e6%b3%95)
+  - [过滤器](#%e8%bf%87%e6%bb%a4%e5%99%a8)
+- [Ansible-Tower](#ansible-tower)
+- [Ansible 常见模块](#ansible-%e5%b8%b8%e8%a7%81%e6%a8%a1%e5%9d%97)
+  - [cron](#cron)
+  - [user](#user)
+  - [group](#group)
+  - [copy](#copy)
+  - [template](#template)
+  - [file](#file)
+  - [service](#service)
+  - [command](#command)
+  - [shell](#shell)
+  - [script](#script)
+  - [yum](#yum)
+  - [dnf](#dnf)
+  - [setup](#setup)
+  - [synchronize](#synchronize)
+  - [mount](#mount)
+  - [get_url](#geturl)
+  - [lineinfile](#lineinfile)
 
 # Ansible 结构
 

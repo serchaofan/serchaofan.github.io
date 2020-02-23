@@ -9,6 +9,28 @@ Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具
 
 <!--more-->
 
+- [Prometheus 基本概念](#prometheus-%e5%9f%ba%e6%9c%ac%e6%a6%82%e5%bf%b5)
+  - [特点](#%e7%89%b9%e7%82%b9)
+  - [组成](#%e7%bb%84%e6%88%90)
+  - [工作流程](#%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b)
+  - [数据模型](#%e6%95%b0%e6%8d%ae%e6%a8%a1%e5%9e%8b)
+  - [四种 Metric 类型](#%e5%9b%9b%e7%a7%8d-metric-%e7%b1%bb%e5%9e%8b)
+  - [instance 和 jobs](#instance-%e5%92%8c-jobs)
+  - [Node exporter](#node-exporter)
+  - [Prometheus Server](#prometheus-server)
+  - [使用 PromQL 查询监控数据](#%e4%bd%bf%e7%94%a8-promql-%e6%9f%a5%e8%af%a2%e7%9b%91%e6%8e%a7%e6%95%b0%e6%8d%ae)
+    - [常用函数](#%e5%b8%b8%e7%94%a8%e5%87%bd%e6%95%b0)
+  - [AlertManager 报警](#alertmanager-%e6%8a%a5%e8%ad%a6)
+  - [Prometheus Server 配置文件详细说明](#prometheus-server-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e8%af%a6%e7%bb%86%e8%af%b4%e6%98%8e)
+  - [HTTP API](#http-api)
+    - [表达式请求](#%e8%a1%a8%e8%be%be%e5%bc%8f%e8%af%b7%e6%b1%82)
+    - [请求元数据](#%e8%af%b7%e6%b1%82%e5%85%83%e6%95%b0%e6%8d%ae)
+    - [targets](#targets)
+    - [rules](#rules)
+    - [alerts](#alerts)
+    - [alertmanager](#alertmanager)
+    - [status](#status)
+
 # Prometheus 基本概念
 
 ## 特点

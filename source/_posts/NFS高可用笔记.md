@@ -5,9 +5,8 @@ tags: [nfs, 高可用]
 categories: [应用运维]
 ---
 
-- [NFS 高可用概述](#NFS高可用概述)
-- [NFS+Keepalived+DRBD 搭建](#NFS+Keepalived+DRBD搭建)
-- []()
+- [NFS 高可用概述](#nfs-%e9%ab%98%e5%8f%af%e7%94%a8%e6%a6%82%e8%bf%b0)
+- [NFS+Keepalived+DRBD 搭建](#nfskeepaliveddrbd-%e6%90%ad%e5%bb%ba)
 
 <!--more-->
 

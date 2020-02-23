@@ -7,10 +7,10 @@ categories: [应用运维]
 
 基于 MongoDB 4.0.3
 
-- [MongoDB 概述](#MongoDB概述)
-- [CRUD](#CRUD)
-- [索引](#索引)
-- [权限](#权限)
+- [MongoDB 概述](#mongodb-%e6%a6%82%e8%bf%b0)
+- [CRUD](#crud)
+- [索引](#%e7%b4%a2%e5%bc%95)
+- [权限](#%e6%9d%83%e9%99%90)
 
 <!-- more -->
 

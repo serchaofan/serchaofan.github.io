@@ -10,7 +10,33 @@ InfluxDB 是一个开源时间序列平台，包括用于存储和查询数据�
 
 <!--more-->
 
-## 安装与启动
+- [安装与启动](#%e5%ae%89%e8%a3%85%e4%b8%8e%e5%90%af%e5%8a%a8)
+- [概念](#%e6%a6%82%e5%bf%b5)
+- [特性](#%e7%89%b9%e6%80%a7)
+- [设计见解与权衡](#%e8%ae%be%e8%ae%a1%e8%a7%81%e8%a7%a3%e4%b8%8e%e6%9d%83%e8%a1%a1)
+- [influx 命令行](#influx-%e5%91%bd%e4%bb%a4%e8%a1%8c)
+- [配置管理](#%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86)
+  - [全局配置](#%e5%85%a8%e5%b1%80%e9%85%8d%e7%bd%ae)
+  - [元存储](#%e5%85%83%e5%ad%98%e5%82%a8)
+  - [数据](#%e6%95%b0%e6%8d%ae)
+  - [请求管理](#%e8%af%b7%e6%b1%82%e7%ae%a1%e7%90%86)
+  - [保留策略](#%e4%bf%9d%e7%95%99%e7%ad%96%e7%95%a5)
+  - [碎片预创建](#%e7%a2%8e%e7%89%87%e9%a2%84%e5%88%9b%e5%bb%ba)
+  - [监控](#%e7%9b%91%e6%8e%a7)
+  - [HTTP 端点](#http-%e7%ab%af%e7%82%b9)
+  - [日志](#%e6%97%a5%e5%bf%97)
+- [InfluxQL 要点整理](#influxql-%e8%a6%81%e7%82%b9%e6%95%b4%e7%90%86)
+  - [数据库监控](#%e6%95%b0%e6%8d%ae%e5%ba%93%e7%9b%91%e6%8e%a7)
+- [HTTP_API 查询](#httpapi-%e6%9f%a5%e8%af%a2)
+  - [debug](#debug)
+  - [ping](#ping)
+  - [query](#query)
+  - [write](#write)
+- [认证授权](#%e8%ae%a4%e8%af%81%e6%8e%88%e6%9d%83)
+- [日志追踪](#%e6%97%a5%e5%bf%97%e8%bf%bd%e8%b8%aa)
+- [备份与恢复](#%e5%a4%87%e4%bb%bd%e4%b8%8e%e6%81%a2%e5%a4%8d)
+
+# 安装与启动
 
 首先，安装 influxdb 需要 root 权限，TCP 8086 和 8088 端口需要开启且空闲。
 
@@ -60,7 +86,7 @@ EOF
 
 确保存储数据和预写日志（WAL）的目录对于运行 Influxd 服务的用户是可写的。如果 data 和 WAL 目录不可写，那么 influxd 服务将不会启动。
 
-## 概念
+# 概念
 
 在 influxdb 中所有数据都会有一列 time，用于存储时间戳，时间戳以`RFC3339 UTC`的形式显示。
 
@@ -80,7 +106,7 @@ InfluxDB 自动创建保留策略，它具有无限的持续时间，并且复�
 
 点（point）代表具有四个组成部分的单个数据记录：测量，标签集，字段集和时间戳。点由其序列和时间戳唯一标识。
 
-## 特性
+# 特性
 
 数据库可以具有多个用户，连续查询，保留策略和度量。InfluxDB 是无模式（schemaless）的数据库，这意味着可以随时轻松添加新的度量，标签和字段。
 
@@ -117,7 +143,7 @@ InfluxQL 还支持正则表达式，表达式中的算术，`SHOW`语句和`GROU
 - 还不能更新或重命名标签，要修改一点序列的标签，先找到带有问题的标签值的点，将值更改为所需的点，将点写回，然后删除具有旧标签值的序列
 - 无法通过标签键（而不是值）删除标签
 
-## 设计见解与权衡
+# 设计见解与权衡
 
 InfluxDB 是一个时间序列数据库。为此用例进行优化需要权衡取舍，主要是以功能为代价来提高性能。
 
@@ -153,7 +179,7 @@ InfluxDB 是一个时间序列数据库。为此用例进行优化需要权衡�
    优点：InfluxDB 具有非常强大的工具来处理聚合数据和大型数据集。
    缺点：点没有传统意义上的 ID，它们通过时间戳和序列来区分。
 
-## influx 命令行
+# influx 命令行
 
 `influx`是 influxDB 的 shell API，在启动了`influxd`后，通过`influx`进入 influx shell。
 
@@ -213,14 +239,14 @@ chunk <size>  # 设置块响应的大小。 默认大小为10000，设置为0会
 clear [database| db| retention policy| rp]   # 清除数据库或保留策略的当前上下文。
 ```
 
-## 配置管理
+# 配置管理
 
-### 全局配置
+## 全局配置
 
 - `reporting-disabled = false` 把数据报告给 influxData，默认关
 - `bind-address = "127.0.0.1:8088"` 用于备份和恢复的端口，也可通过环境变量`INFLUXDB_BIND_ADDRESS`设置
 
-### 元存储
+## 元存储
 
 `[meta]`本部分控制 InfluxDB 元存储的参数，该元存储存储有关用户，数据库，保留策略，分片和连续查询的信息。
 
@@ -231,7 +257,7 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 - `logging-enabled = true`
   启用元服务消息的日志记录。环境变量`INFLUXDB_META_LOGGING_ENABLED`
 
-### 数据
+## 数据
 
 `[data]`设置控制 InfluxDB 的实际分片数据在何处以及如何从预写日志（WAL）中清除。 `dir`可能需要更改为适合系统的位置，但是 WAL 设置是高级配置。默认值适用于大多数系统。
 
@@ -242,7 +268,7 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 - `query-log-enabled = true`
   在执行之前启用已解析查询的日志记录。查询日志对于故障排除很有用，但会记录查询中包含的所有敏感数据。环境变量`INFLUXDB_DATA_QUERY_LOG_ENABLED`
 
-### 请求管理
+## 请求管理
 
 `[coordinator]`
 
@@ -253,14 +279,14 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 - `max-select-series = 0` SELECT 语句可以处理的最大序列数。默认设置 0，允许 SELECT 语句处理无限数量的序列。环境变量：`INFLUXDB_COORDINATOR_MAX_SELECT_SERIES`
 - `max-select-buckets = 0` 查询可以处理的 GROUP BY time()存储桶的最大数量。默认设置 0，允许查询处理无限数量的存储桶。环境变量：`INFLUXDB_COORDINATOR_MAX_SELECT_BUCKETS`
 
-### 保留策略
+## 保留策略
 
 `[retention]`设置控制用于收回旧数据的保留策略的实施。
 
 - `enabled = true` 设置为 false 可以防止 InfluxDB 强制执行保留策略。环境变量：`INFLUXDB_RETENTION_ENABLED`
 - `check-interval = "30m0s"` InfluxDB 检查以强制执行保留策略的时间间隔。环境变量：`INFLUXDB_RETENTION_CHECK_INTERVAL`
 
-### 碎片预创建
+## 碎片预创建
 
 `[shard-precreation]`设置控制分片的增量，以便在数据到达之前可以使用分片。只有在创建后将在未来具有开始时间和结束时间的分片才会被创建。永远不会预先创建全部或部分过去的碎片。
 
@@ -268,7 +294,7 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 - `check-interval = "10m"` 运行检查以预创建新分片的时间间隔。环境变量：`INFLUXDB_SHARD_PRECREATION_CHECK_INTERVAL`
 - `advance-period = "30m"` 预先为其创建碎片的最长期限。 默认的 30m 应该适用于大多数系统。 将来将此设置增加太多会导致效率低下。环境变量：`INFLUXDB_SHARD_PRECREATION_ADVANCE_PERIOD`
 
-### 监控
+## 监控
 
 `[monitor]`
 默认情况下，InfluxDB 将数据写入`_internal`数据库。如果该数据库不存在，InfluxDB 会自动创建它。 `_internal`数据库上的 DEFAULT 保留策略为 7 天。如果要使用 7 天保留策略以外的保留策略，则必须创建它。
@@ -280,7 +306,7 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 - `store-interval = "10s"`
   InfluxDB 记录统计信息的时间间隔。 默认值为每十秒钟（10 秒）。环境变量：`INFLUXDB_MONITOR_STORE_INTERVAL`
 
-### HTTP 端点
+## HTTP 端点
 
 `[http]`控制 InfluxDB 如何配置 HTTP 端点。
 
@@ -291,14 +317,14 @@ clear [database| db| retention policy| rp]   # 清除数据库或保留策略的
 - `access-log-path = ""` 访问日志的路径。 如果未指定或无法访问指定的路径，将退回到 stderr，这会将 HTTP 日志与内部 InfluxDB 日志混合在一起。
 - `max-connection-limit = 0` 一次可打开的最大连接数。超出限制的新连接将被删除。默认值 0 将禁用该限制。
 
-### 日志
+## 日志
 
 `[logging]`控制记录器如何将日志发送到输出。
 
 - `format = "auto"` 确定要用于日志的日志编码器。 可选 auto（默认），logfmt 和 json。 使用默认的自动选项，如果输出是输出到 TTY 设备（例如终端），则使用更加用户友好的控制台编码。 如果输出是文件，则 auto 选项使用 logfmt 编码。 logfmt 和 json 选项对于与外部工具集成很有用。环境变量：`INFLUXDB_LOGGING_FORMAT`
 - `level = "info"` 要发出的日志级别。 可选为 error、warn、info(默认值)和 debug。等于或高于指定级别的日志将被发出。环境变量：`INFLUXDB_LOGGING_LEVEL`
 
-## InfluxQL 要点整理
+# InfluxQL 要点整理
 
 ## 数据库监控
 
@@ -361,9 +387,9 @@ InfluxDB 可以显示有关每个节点的统计和诊断信息。
 
 - 可通过 HTTP API 访问 8086 端口`/metrics`，获取当前信息
 
-## HTTP_API 查询
+# HTTP_API 查询
 
-### debug
+## debug
 
 `/debug/pprof`：运行时的一些参数信息。包含以下参数：
 
@@ -414,7 +440,7 @@ curl http://localhost:8086/debug/vars
 }
 ```
 
-### ping
+## ping
 
 `/ping`可获取当前 Influxdb 的实例信息，默认情况下，`/ping`返回一个简单的 HTTP 204 状态响应，以使客户端知道服务器正在运行。
 当 verbose 选项设置为 true 时（`/ping？verbose=true`）（默认 erbose 为 false），返回 HTTP 200 状态。
@@ -425,7 +451,7 @@ curl http://localhost:8086/ping?verbose=true
 {"version":"1.7.9"}
 ```
 
-### query
+## query
 
 `/query`可用于查询数据和管理数据库、保留策略和用户。支持 GET 和 POST
 
@@ -471,7 +497,7 @@ curl -G http://localhost:8086/query\?db\=test
 
 若要读取文件中的查询语句，可加上参数`-F "q=@<path_to_file>" -F "async=true"`，文件中的语句必须以`;`分隔。
 
-### write
+## write
 
 `/write`写入数据库，支持 POST
 建议在写入时，将时间的精度降低，例如设为`precision=s`，这会在压缩方面有所改善。
@@ -491,8 +517,8 @@ curl -XPOST "http://localhost:8086/write?db=mydb&rp=myrp" --data-binary 'mymeas,
 其余参数与 query 类似，可参照 query 的参数
 从文件读入指令需要用参数`--data-binary @data.txt`，要注意文件中的指令间要用换行分隔
 
-## 认证授权
+# 认证授权
 
-## 日志追踪
+# 日志追踪
 
-## 备份与恢复
+# 备份与恢复

@@ -7,14 +7,17 @@ categories: [应用运维]
 
 本篇笔记包含以下内容
 
-- [FTP 原理](#FTP原理)
-- [VSFTP 搭建](#VSFTP搭建)
-  - [服务器端](#服务器端)
-  - [常用客户端软件](#常用客户端软件)
-- [TFTP 原理](#TFTP原理)
-  - [服务器端](#服务器端)
-  - [客户端](#客户端)
-    <!-- more -->
+- [FTP 原理](#ftp-%e5%8e%9f%e7%90%86)
+- [VSFTP 搭建](#vsftp-%e6%90%ad%e5%bb%ba)
+  - [服务器端](#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af)
+    - [配置文件`/etc/vsftpd/vsftpd.conf`简单解析](#%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6etcvsftpdvsftpdconf%e7%ae%80%e5%8d%95%e8%a7%a3%e6%9e%90)
+    - [认证访问控制](#%e8%ae%a4%e8%af%81%e8%ae%bf%e9%97%ae%e6%8e%a7%e5%88%b6)
+    - [使用本地用户认证](#%e4%bd%bf%e7%94%a8%e6%9c%ac%e5%9c%b0%e7%94%a8%e6%88%b7%e8%ae%a4%e8%af%81)
+    - [使用虚拟账户](#%e4%bd%bf%e7%94%a8%e8%99%9a%e6%8b%9f%e8%b4%a6%e6%88%b7)
+  - [常用客户端软件](#%e5%b8%b8%e7%94%a8%e5%ae%a2%e6%88%b7%e7%ab%af%e8%bd%af%e4%bb%b6)
+- [TFTP 原理](#tftp-%e5%8e%9f%e7%90%86)
+
+<!-- more -->
 
 ## FTP 原理
 

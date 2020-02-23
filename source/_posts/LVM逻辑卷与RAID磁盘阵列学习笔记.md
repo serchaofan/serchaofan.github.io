@@ -7,14 +7,17 @@ categories: [系统运维]
 
 本篇包含以下内容
 
-- [LVM 逻辑卷](#LVM逻辑卷)
-  - [LVM 概述](#LVM概述)
-  - [LVM 创建与调整](#LVM创建与调整)
-  - [LVM 快照](#LVM快照)
-- [RAID 磁盘阵列](#RAID磁盘阵列)
-  - [RAID 概述](#RAID概述)
-  - [RAID 基础搭建](#RAID基础搭建)
-    <!-- more -->
+- [LVM 逻辑卷](#lvm-%e9%80%bb%e8%be%91%e5%8d%b7)
+  - [LVM 概述](#lvm-%e6%a6%82%e8%bf%b0)
+  - [LVM 创建与调整](#lvm-%e5%88%9b%e5%bb%ba%e4%b8%8e%e8%b0%83%e6%95%b4)
+  - [LVM 快照](#lvm-%e5%bf%ab%e7%85%a7)
+- [RAID 磁盘阵列](#raid-%e7%a3%81%e7%9b%98%e9%98%b5%e5%88%97)
+  - [RAID 概述](#raid-%e6%a6%82%e8%bf%b0)
+  - [RAID 基础搭建](#raid-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
+    - [使用`RAID 5`进行备份](#%e4%bd%bf%e7%94%a8raid-5%e8%bf%9b%e8%a1%8c%e5%a4%87%e4%bb%bd)
+- [参考资料](#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99)
+
+<!-- more -->
 
 # LVM 逻辑卷
 
@@ -490,9 +493,5 @@ Consistency Policy : resync
 
 # 参考资料
 
-> [百度百科--RAID 磁盘阵列](https://baike.baidu.com/item/RAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97/10588130?fr=aladdin)
-> [RAID 基础，RAID10 与 RAID01 比较，RAID10 与 RAID5 比较](http://blog.itpub.net/787018/viewspace-666280/)
-> [骏马金龙--RAID](http://www.cnblogs.com/f-ck-need-u/p/7049501.html)
-> [骏马金龙--LVM](http://www.cnblogs.com/f-ck-need-u/p/7049233.html)
-> [图文并茂 RAID 技术全解](http://www.hack520.com/169.html)
+> [百度百科--RAID 磁盘阵列](https://baike.baidu.com/item/RAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97/10588130?fr=aladdin) > [RAID 基础，RAID10 与 RAID01 比较，RAID10 与 RAID5 比较](http://blog.itpub.net/787018/viewspace-666280/) > [骏马金龙--RAID](http://www.cnblogs.com/f-ck-need-u/p/7049501.html) > [骏马金龙--LVM](http://www.cnblogs.com/f-ck-need-u/p/7049233.html) > [图文并茂 RAID 技术全解](http://www.hack520.com/169.html)
 > Linux 就该这么学

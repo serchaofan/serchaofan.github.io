@@ -5,8 +5,12 @@ tags: [LDAP, 验证]
 categories: [应用运维]
 ---
 
-- [LDAP 概述](#LDAP概述)
-- [LDAP 简单部署](#LDAP简单部署)
+- [LDAP 概述](#ldap-%e6%a6%82%e8%bf%b0)
+  - [目录服务](#%e7%9b%ae%e5%bd%95%e6%9c%8d%e5%8a%a1)
+  - [X.500](#x500)
+  - [LDAP](#ldap)
+    - [LDAP 的配置模式](#ldap-%e7%9a%84%e9%85%8d%e7%bd%ae%e6%a8%a1%e5%bc%8f)
+- [LDAP 简单部署](#ldap-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2)
 
 <!--more-->
 

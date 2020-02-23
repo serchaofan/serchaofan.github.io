@@ -6,6 +6,18 @@ tags: [Tomcat, server, web, java]
 
 tomcat9.0.13，jdk1.8
 
+- [Tomcat 概述](#tomcat-%e6%a6%82%e8%bf%b0)
+  - [Tomcat 结构](#tomcat-%e7%bb%93%e6%9e%84)
+    - [Tomcat 与 HTTP 的通信方式](#tomcat-%e4%b8%8e-http-%e7%9a%84%e9%80%9a%e4%bf%a1%e6%96%b9%e5%bc%8f)
+    - [Connector](#connector)
+    - [Container](#container)
+    - [Tomcat 连接器](#tomcat-%e8%bf%9e%e6%8e%a5%e5%99%a8)
+- [Tomcat 环境搭建](#tomcat-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba)
+  - [Tomcat 目录结构](#tomcat-%e7%9b%ae%e5%bd%95%e7%bb%93%e6%9e%84)
+    - [server.xml](#serverxml)
+    - [webapp 结构](#webapp-%e7%bb%93%e6%9e%84)
+  - [配置 WEB 应用](#%e9%85%8d%e7%bd%ae-web-%e5%ba%94%e7%94%a8)
+
 <!--more-->
 
 # Tomcat 概述

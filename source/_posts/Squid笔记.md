@@ -4,16 +4,23 @@ date: 2018-05-31 12:00:16
 tags: [squid, 缓存, server, 代理]
 ---
 
-- [Squid 介绍](#Squid介绍)
-- [代理服务器概念](#代理服务器概念)
-- [Squid 安装](#Squid安装)
-- [Squid 常规配置](#Squid常规配置)
-- [Squid 访问控制](#Squid访问控制)
-- [Squid 多级代理配置](#Squid多级代理配置)
-- [Squid 实验](#Squid实验)
-- [cachemgr.cgi 管理 Squid](#cachemgr.cgi管理Squid)
-- [Squid 日志](#Squid日志)
-- [Squid 调优](#Squid调优)
+- [Squid 介绍](#squid-%e4%bb%8b%e7%bb%8d)
+- [代理服务器概念](#%e4%bb%a3%e7%90%86%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%a6%82%e5%bf%b5)
+- [Squid 安装](#squid-%e5%ae%89%e8%a3%85)
+- [Squid 常规配置](#squid-%e5%b8%b8%e8%a7%84%e9%85%8d%e7%bd%ae)
+- [Squid 访问控制](#squid-%e8%ae%bf%e9%97%ae%e6%8e%a7%e5%88%b6)
+- [Squid 多级代理配置](#squid-%e5%a4%9a%e7%ba%a7%e4%bb%a3%e7%90%86%e9%85%8d%e7%bd%ae)
+- [Squid 实验](#squid-%e5%ae%9e%e9%aa%8c)
+  - [透明二级代理](#%e9%80%8f%e6%98%8e%e4%ba%8c%e7%ba%a7%e4%bb%a3%e7%90%86)
+  - [反向二级代理](#%e5%8f%8d%e5%90%91%e4%ba%8c%e7%ba%a7%e4%bb%a3%e7%90%86)
+- [cachemgr.cgi 管理 Squid](#cachemgrcgi-%e7%ae%a1%e7%90%86-squid)
+- [Squid 日志](#squid-%e6%97%a5%e5%bf%97)
+  - [日志轮询](#%e6%97%a5%e5%bf%97%e8%bd%ae%e8%af%a2)
+  - [Sarg 工具分析日志](#sarg-%e5%b7%a5%e5%85%b7%e5%88%86%e6%9e%90%e6%97%a5%e5%bf%97)
+- [Squid 调优](#squid-%e8%b0%83%e4%bc%98)
+  - [调整文件描述符](#%e8%b0%83%e6%95%b4%e6%96%87%e4%bb%b6%e6%8f%8f%e8%bf%b0%e7%ac%a6)
+  - [调整临时端口范围](#%e8%b0%83%e6%95%b4%e4%b8%b4%e6%97%b6%e7%ab%af%e5%8f%a3%e8%8c%83%e5%9b%b4)
+- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
 
 <!--more-->
 

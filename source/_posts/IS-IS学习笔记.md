@@ -9,11 +9,17 @@ categories: [网络]
 
 本篇主要包含以下内容：
 
-- [OSI 地址](OSI地址)
-- [IS-IS 概述](IS-IS概述)
-- [IS-IS 实现](#IS-IS实现)
+- [OSI 地址](#osi-%e5%9c%b0%e5%9d%80)
+- [IS-IS 概述](#is-is-%e6%a6%82%e8%bf%b0)
+  - [IS-IS 常见术语：](#is-is-%e5%b8%b8%e8%a7%81%e6%9c%af%e8%af%ad)
+  - [IS-IS 协议报文](#is-is-%e5%8d%8f%e8%ae%ae%e6%8a%a5%e6%96%87)
+  - [IS-IS 网络类型](#is-is-%e7%bd%91%e7%bb%9c%e7%b1%bb%e5%9e%8b)
+- [IS-IS 实现](#is-is-%e5%ae%9e%e7%8e%b0)
+  - [邻接关系](#%e9%82%bb%e6%8e%a5%e5%85%b3%e7%b3%bb)
+  - [LSDB 同步](#lsdb-%e5%90%8c%e6%ad%a5)
+- [参考资料](#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99)
 
-<!-- more -->
+<!--more-->
 
 ## OSI 地址
 

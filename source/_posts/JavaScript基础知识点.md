@@ -7,8 +7,19 @@ categories: [后端开发]
 
 本篇包含以下内容：
 
-- [处理事件](#处理事件)
-- [表单与正则表达式](#表单与正则表达式)
+- [处理事件](#%e5%a4%84%e7%90%86%e4%ba%8b%e4%bb%b6)
+  - [窗口事件](#%e7%aa%97%e5%8f%a3%e4%ba%8b%e4%bb%b6)
+    - [onload](#onload)
+    - [onunload](#onunload)
+    - [onbeforeunload](#onbeforeunload)
+    - [onresize](#onresize)
+    - [onmove](#onmove)
+    - [onabort](#onabort)
+    - [onerror](#onerror)
+    - [onscroll](#onscroll)
+  - [鼠标事件](#%e9%bc%a0%e6%a0%87%e4%ba%8b%e4%bb%b6)
+    - [onmousedown](#onmousedown)
+- [表单与正则表达式](#%e8%a1%a8%e5%8d%95%e4%b8%8e%e6%ad%a3%e5%88%99%e8%a1%a8%e8%be%be%e5%bc%8f)
 
 <!-- more -->
 

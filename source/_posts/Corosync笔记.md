@@ -5,9 +5,7 @@ tags: [Corosync, 集群, 高可用]
 categories: [应用运维]
 ---
 
-- [OpenAIS 概述](#OpenAIS概述)
-- [Corosync 概述](#Corosync概述)
-- []()
+- [OpenAIS 概述](#openais-%e6%a6%82%e8%bf%b0)
 
 <!--more-->
 

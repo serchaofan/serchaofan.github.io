@@ -5,10 +5,22 @@ tags: [MFS, 文件系统, 分布式, 存储]
 categories: [应用运维]
 ---
 
-- [分布式文件系统](#分布式文件系统)
-- [MFS 概述](#MFS概述)
-- [MFS 简单部署](#MFS简单部署)
-- [MFS 高可用](#MFS高可用)
+- [分布式文件系统](#%e5%88%86%e5%b8%83%e5%bc%8f%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f)
+- [MFS 概述](#mfs-%e6%a6%82%e8%bf%b0)
+  - [MFS 读过程](#mfs-%e8%af%bb%e8%bf%87%e7%a8%8b)
+  - [MFS 写过程](#mfs-%e5%86%99%e8%bf%87%e7%a8%8b)
+- [MFS 简单部署](#mfs-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2)
+  - [启动 master](#%e5%90%af%e5%8a%a8-master)
+    - [mfsmaster.cfg](#mfsmastercfg)
+    - [mfsexports.cfg](#mfsexportscfg)
+    - [启动操作](#%e5%90%af%e5%8a%a8%e6%93%8d%e4%bd%9c)
+  - [启动 metalogger](#%e5%90%af%e5%8a%a8-metalogger)
+  - [启动 chunkserver](#%e5%90%af%e5%8a%a8-chunkserver)
+  - [启动 client](#%e5%90%af%e5%8a%a8-client)
+  - [master 宕机切换](#master-%e5%ae%95%e6%9c%ba%e5%88%87%e6%8d%a2)
+  - [MFS 集群内各角色的启动与停止](#mfs-%e9%9b%86%e7%be%a4%e5%86%85%e5%90%84%e8%a7%92%e8%89%b2%e7%9a%84%e5%90%af%e5%8a%a8%e4%b8%8e%e5%81%9c%e6%ad%a2)
+- [MFS 高可用](#mfs-%e9%ab%98%e5%8f%af%e7%94%a8)
+  - [keepalived+DRBD 实现高可用](#keepaliveddrbd-%e5%ae%9e%e7%8e%b0%e9%ab%98%e5%8f%af%e7%94%a8)
 
 <!--more-->
 

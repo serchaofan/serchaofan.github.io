@@ -1,34 +1,36 @@
 ---
 title: Wireshark学习笔记
 date: 2018-05-18 21:21:35
-tags: [网络,wireshark]
+tags: [网络, wireshark]
 ---
+
 {% asset_img wireshark_logo.png wireshark_logo %}
-**基于wireshark v2.4.5**
+**基于 wireshark v2.4.5**
 本篇包含以下内容
 
-* [基本操作](#基本操作)
-  * [抓包过滤器](#抓包过滤器)
-* [高级功能](#高级功能)
-* [tshark命令使用](#tshark命令使用)
-  * [常用操作](#常用操作)
-
-
+- [基本操作](#基本操作)
+  - [抓包过滤器](#抓包过滤器)
+- [高级功能](#高级功能)
+- [tshark 命令使用](#tshark命令使用)
+  - [常用操作](#常用操作)
 
 <!--more-->
 
 # 基本操作
+
 两种过滤器：
-* 捕获过滤器 Capture Filter：也称抓包过滤器，使用伯克利包过滤语言（BPF），依赖于BPF的库（libpcap，Winpcap），用于限制抓的包，即抓包前的设定
-* 显示过滤器 Display Capture：用于限制已经抓的包的显示，即抓包后的设定
+
+- 捕获过滤器 Capture Filter：也称抓包过滤器，使用伯克利包过滤语言（BPF），依赖于 BPF 的库（libpcap，Winpcap），用于限制抓的包，即抓包前的设定
+- 显示过滤器 Display Capture：用于限制已经抓的包的显示，即抓包后的设定
 
 ## 捕获过滤器
+
 1. type（类型）限定词
-	host、net、port、portrange
+   host、net、port、portrange
 2. dir（方向）限定词
-	src、dst
+   src、dst
 3. proto（协议）限定词
-	ether、arp、icmp、ip、tcp、udp、http、ftp
+   ether、arp、icmp、ip、tcp、udp、http、ftp
 
 逻辑运算：`&&`或`and`（与）、`||`或`or`（或）、`!`或`not`（非）
 过滤器基本语法
@@ -38,21 +40,13 @@ tags: [网络,wireshark]
 {% asset_img buhuo1.PNG buhuo1 %}
 
 常用过滤表达式举例：
-`ether `
+`ether`
 
+# tshark 命令使用
 
+tshark 是一个网络协议分析器。 它允许从实时网络捕获数据包数据，或从先前保存的捕获文件中读取数据包，将这些数据包的解码形式打印到标准输出或将数据包写入文件。TShark 的本机捕获文件格式是 pcapng 格式，也是 wireshark 和各种其他工具使用的格式。
 
-
-
-
-
-# tshark命令使用
-
-tshark是一个网络协议分析器。 它允许从实时网络捕获数据包数据，或从先前保存的捕获文件中读取数据包，将这些数据包的解码形式打印到标准输出或将数据包写入文件。TShark的本机捕获文件格式是pcapng格式，也是wireshark和各种其他工具使用的格式。
-
-
-
-tshark参数选项：
+tshark 参数选项：
 
 ```
 捕获接口:
@@ -116,14 +110,12 @@ RPCAP选项:
 　　-z：统计选项，具体的参考文档;tshark -z help,可以列出，-z选项支持的统计方式。
 ```
 
-
-
 ## 常用操作
 
 若不使用任何选项，会抓取第一个非回环网卡的所有网络包。若指定`-i`网卡，则只监听该网卡的流量
 
 ```
-root@kali:~# tshark -i eth0 
+root@kali:~# tshark -i eth0
 Capturing on 'eth0'
     1 0.000000000 192.168.80.139 → 192.168.80.2 DNS 69 Standard query 0xfe4e A baidu.com
     2 0.000103735 192.168.80.139 → 192.168.80.2 DNS 69 Standard query 0x7c57 AAAA baidu.com
@@ -136,14 +128,6 @@ Capturing on 'eth0'
 抓包开始时间  源IP  目的IP  协议  包长度  包信息
 ```
 
-
-
-
-
-
-
-
-
 # 参考文章
 
-> [[Wireshark命令行工具tshark详解(含例子)-01](https://www.cnblogs.com/liun1994/p/6142505.html)]
+> [[Wireshark 命令行工具 tshark 详解(含例子)-01](https://www.cnblogs.com/liun1994/p/6142505.html)]
