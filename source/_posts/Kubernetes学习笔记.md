@@ -11,8 +11,18 @@ categories: [云计算]
     - [Pod](#pod)
     - [Label](#label)
     - [Replication Controller](#replication-controller)
+    - [Deployment](#deployment)
+    - [HPA](#hpa)
+    - [StatefulSet](#statefulset)
+    - [Service](#service)
+    - [Job](#job)
+    - [Volume](#volume)
+    - [Persistent Volume](#persistent-volume)
+    - [Namespace](#namespace)
+    - [Autonation](#autonation)
+    - [ConfigMap](#configmap)
   - [k8s 如何进行版本升级](#k8s-%e5%a6%82%e4%bd%95%e8%bf%9b%e8%a1%8c%e7%89%88%e6%9c%ac%e5%8d%87%e7%ba%a7)
-- [Kubernetes 简单部署](#kubernetes-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2)
+- [Kubernetes 安装配置](#kubernetes-%e5%ae%89%e8%a3%85%e9%85%8d%e7%bd%ae)
   - [k8s 部署要点](#k8s-%e9%83%a8%e7%bd%b2%e8%a6%81%e7%82%b9)
   - [开始安装部署](#%e5%bc%80%e5%a7%8b%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2)
   - [Kube 初始化过程](#kube-%e5%88%9d%e5%a7%8b%e5%8c%96%e8%bf%87%e7%a8%8b)
@@ -218,6 +228,250 @@ label selector 的常见使用场景：
 
 ### Replication Controller
 
+用于声明某种 pod 的副本个数在任何时刻都符合某个预期值。RC 包含以下部分：
+
+- Pod 的期望数量
+- 筛选 Pod 的 Label Selector
+- 当 Pod 副本数量小于预期时，用于创建新 Pod 的 Pod 模板
+
+```yaml
+例：
+......
+spec:
+  replicas: 2
+  selector:
+    version: v2
+  ......
+```
+
+当定义一个 RC 并提交到 K8s 集群后，Master 上的 Controller Manager 就会得到通知，定期巡检系统中存活的目标 Pod，确保目标 Pod 实例数量刚好等于 RC 的期望值，若超出则停掉些 Pod，若不足则新建些 Pod。可通过修改 RC 的期望值，实现 Pod 的动态缩放（Scaling）。
+删除 RC 不会影响该 RC 已创建的 Pod，若要删除所有指定 Pod，可以将`replicas`设为 0 并更新即可。
+
+滚动升级（Rolling Update）：旧版本的 Pod 每停止一个，就同时创建一个新版本的 Pod，通过 RC 就很容易实现。
+
+RC 的升级版 Replica Set，支持两种 Label Selector，但目前很少单独使用，主要是被 Deployment 调用，从而形成一套 Pod 创建、删除、更新的编排机制。RepliaSet 和 Deployment 逐渐替代了 RC。
+
+### Deployment
+
+Deployment 用于更好解决 Pod 的编排问题，为此，Deployment 在内部使用了 ReplicaSet 来实现。Deployment 能让我们随时知道 Pod 的部署进程。
+
+Deployment 的典型应用场景：
+
+- 创建一个 Deployment 对象来生成对应的 ReplicaSet 并完成 Pod 副本创建
+- 检查 Deployment 状态来查看部署是否完成（Pod 是否达到指定数量）
+- 更新 Deployment 创建新 Pod
+- 若当前 Deployment 不稳定，则回滚到上一个 Deployment 版本
+- 暂停 Deployment 以便一次性修改多个 PodTemplateSpec 配置项，之后再恢复 Deployment 进行新发布
+- 扩展 Deployment 应对高负载
+- 查看 Deployment 状态，了解发布是否成功
+- 清除不再需要的旧版本 ReplicaSet
+
+### HPA
+
+Horizontal Pod Autoscaler（Pod 横向自动扩容），也是一种资源对象。通过追踪分析指定 RC 控制的所有目标 Pod 的负载情况，来确定是否需要针对性调整目标 Pod 的副本数量。
+HPA 有两种方法作为 Pod 负载的度量指标：
+
+- CPUUtilizationPercentage，是目标 Pod 所有副本自身 CPU 利用率的算数平均值（`Pod自身CPU利用率=Pod当前CPU使用量/Pod Request`）。
+  - 若某一时刻该值超过 80%，则意味着当前 Pod 副本数量不足以支撑更多请求，需要动态扩容，而当请求高峰过去，CPU 利用率又降下来，则副本数也自动减少到一个合理值。
+  - 通常是 1min 的平均值
+  - K8s 通过基础性能数据手机监控框架 Kubernetes Monitoring Architecture 支持 HPA。该框架中 K8s 定义了标准化 API 接口 Resource Metrics API，方便客户端（如 HPA）获取性能数据
+- 应用自定义的度量指标（如 TPS、QPS）
+
+```yaml
+例：
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache
+  namespace: default
+spec:
+  maxReplicas: 10
+  minReplicas: 1
+  scaleTargetRef:   # HPA控制一个叫php-apache的Deployment中的Pod副本
+    kind: Deployment
+    name: php-apache
+  targetCPUUtilizationPercentage: 90    # 该值超过90%则触发自动扩容
+```
+
+### StatefulSet
+
+很多服务，尤其是中间件集群，如 Mysql、MongoDB、Akka、Zookeeper 等，都是有状态的。这些集群有以下共同点：
+
+- 每个节点都有固定的身份 ID，通过 ID 集群中成员可互相发现并通信
+- 集群规模是比较固定的，集群规模不能随意变动
+- 集群中的每个节点都是有状态的，通常会持久化数据到永久存储中
+- 若磁盘损坏，则集群中某个节点无法正常运行，集群功能受损
+
+StatefulSet 可以看作 Deployment/RC 的一个特殊变种，有以下特性：
+
+- StatefulSet 中每个 Pod 都有稳定、唯一的网络标识，可用于发现集群中其他成员
+- StatefulSet 控制的 Pod 副本的启停顺序是受控的，操作第 n 个 pod 时，前 n-1 个 Pod 已经运行且准备好
+- StatefulSet 中 pod 采用稳定的之旧话存储卷，通过 PV 或 PVC 实现，删除 Pod 默认不会删除与 StatefulSet 相关的存储卷
+
+StatefulSet 除了与 PV 卷捆绑使用存储 pod 状态数据，还要与 Headless Service 配合使用，每个 StatefulSet 定义都要声明属于哪个 Headless Service。
+
+> Headless Service 和普通 Service 的区别在于：Headless Service 没有 ClusterIP。若解析 Headless Service 的 DNS 域名，则返回的是该 Service 对应所有的 Pod 的 Endpoint 列表
+
+StatefulSet 在 Headless Service 基础上又为 Headless Service 控制的每个 Pod 实例创建一个 DNS 域名，格式为：
+
+```
+$(podname).$(Headless Service name)
+```
+
+### Service
+
+每个 Service 就算是一个微服务。Service 定义一个服务的访问入口，前端的应用 pod 通过该入口地址访问其背后的一组 pod 副本组成的集群，而 Service 通过 Label Selector 与后端 pod 对接。最终系统由多个提供不同业务能力又相互独立的微服务单元组成，服务间通过 TCP/IP 网络通信，形成强大的弹性网络。
+
+{% asset_img 3.png %}
+
+**客户端如何访问由多个 Pod 副本组成的集群？**通过 node 上的 **kube-proxy** 进程，kube-proxy 是一个智能的负载均衡器，负责把对 Service 的请求转发到后端的某个 Pod 实例上，并在内部实现服务的负载均衡和会话保持，且 Service 没有共用一个负载均衡器的 IP，**每个 Service 都被分配一个全局唯一虚拟 IP，称为 Cluster IP，导致每个服务变成具备唯一 IP 地址的节点，服务调用变成了 TCP 网络通信**。
+Service 一旦创建，k8s 就自动为它分配一个可用 Cluster IP，且**在 Service 的整个生命周期中，Cluster IP 不会发生改变。所以服务发现只要用 Service 的 Name 和 Cluster IP 做 DNS 映射即可。**
+
+```yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: Service Name
+spec:
+  selector:
+    app: Selector Label
+  type: LoadBalancer | ClusterIP | NodePort
+  ports:
+    - name: name-of-the-port
+      port: 80
+      targetPort: 8080 # 提供服务的容器内暴露的端口。若不指定targetPort，则默认targetPort和Port相同
+```
+
+k8s 服务支持多个 Endpoint，并要求每个 Endpoint 都定义一个名称来区分。
+
+```yaml
+ports:
+  - name: name-of-the-port
+    port: 80
+    targetPort: 80
+  - name: name-of-the-port
+    port: 808
+    targetPort: 8080
+```
+
+Cluster IP 是一种虚拟 IP，但更像一个伪造的 IP，原因如下：
+
+- Cluster IP 仅作用于 Service 对象，并由 K8s 管理分配 IP 地址（来自 Cluster IP 地址池）
+- Cluster IP 无法被 ping，因为没有一个实体网络对象来响应
+- Cluster IP 只能结合 Service Port 组成一个具体的通信端口，单独的 Cluster IP 不具备 TCP/IP 通信基础，并且属于 k8s 集群这个封闭的空间，外部若要访问该端口，需要做额外工作
+- k8s 集群内，Node IP 网、Pod IP 网与 Cluster IP 网之间通信采用 k8s 自己的特殊路由规则，不同于传统 IP 路由。
+
+因为 Cluster IP 是集群内部的地址，外界无法直接访问该地址，所以若有要提供给外界的服务，需要用添加 NodePort 参数
+
+```yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: tomcat-service
+spec:
+  selector:
+    tier: frontend
+  type: NodePort
+  ports:
+    - port: 8080
+      nodePort: 8888 # 定义了NodePort，则外界可通过Node IP:nodePort 访问tomcat服务
+```
+
+NodePort 实现方式：在 K8s 集群的每个 Node 上都为需要外部访问的 Service 开启一个对应的 TCP 监听端口（kube-proxy 进程开的），外部系统只要用任意一个 Node IP+NodePort 即可访问该服务。
+
+若集群中有多个 Node，则需要借助负载均衡器，外部请求访问负载均衡器 IP，由负载均衡器转发流量到某个 Node 的 Nodeport 上。对于每个 Service，通常要配置一个对应的 Load Balancer，k8s 提供了自动化创建方案，只要将 spec.type 的值设为 LoadBalancer，k8s 就会自动创建一个对应的负载均衡器，并返回它的 IP 地址供外部访问。
+
+### Job
+
+批处理任务通常并行启动多个计算进程处理一批工作项，处理完成后整个批处理任务结束。可通过 k8s Job 启动一个批处理任务。Job 也是一种特殊的 pod 副本自动控制器，但与 RC 的区别如下：
+
+- job 控制的 pod 副本是短暂运行的，且不能自动重启（RestartPolicy 都被设为了 Never）。k8s 也提供 CronJob，能够反复定时执行某批处理任务。
+- job 控制的 pod 副本的工作模式能够多实例并行计算
+
+### Volume
+
+volume 是 Pod 中能被多个容器访问的共享目录，被定义在 pod 上，被该 pod 的容器挂载到各自的具体目录，Volume 的生命周期也与 Pod 一致，与容器不相关，即 pod 中容器重启停止不影响 volume，K8s 也支持多种类型 Volume。
+
+```yaml
+  volumes:
+    - name:  name of the volume
+    mountPath:  Path to mount
+  containers:
+    - image:  image
+    name:  my-name
+    volumeMounts:
+      - name:  Name of the Volume
+      mountPath:  Path to mount
+```
+
+k8s 提供的 volume 类型：
+
+- emptyDir：在 Pod 分配到 Node 时创建的，初始内容为空，无须指定宿主机上的目录文件。可用作临时空间、中间过程 CheckPoint 的临时保存目录、一个容器需从另一容器中获取数据的目录
+- hostPath：在 Pod 上挂载宿主机上的文件或目录。可用于容器的应用日志文件永久保存、定义 hostPath 为宿主机的`/var/lib/docker`使容器内应用能访问 docker 文件系统。
+  - 需要注意：不同 node 上相同配置的 Pod 可能因为宿主机目录和文件不同而对 volume 的目录文件访问结果不一致。若使用资源配额管理，则 k8s 无法将 hostPath 在宿主机上的资源纳入管理
+  ```yaml
+  volumes:
+    - name: Volume Name
+    hostPath:
+      path: Path to mount
+  ```
+- gcePersistentDisk：使用谷歌公有云的永久磁盘(PersistentDisk，PD)，PD 上的内容会被永久保存。Pod 被删除也只是 PD 卸载，而不是删除。
+- awsElasticBlockStore：使用亚马逊公有云的 EBS Volume
+- NFS
+  ```yaml
+  例：
+  volumes:
+    - name: nfs
+      nfs:
+        server: nfs-server.localhost
+        path: "/"
+  ```
+- iSCSI：iSCSI 的目录挂载到 Pod 中
+- flocker：用 Flocker 管理存储卷
+- GlusterFS：用 GlusterFS 的目录挂载到 Pod 中
+- RBD：用 Ceph 块设备共享存储（Rados Block Device）挂载到 Pod 中
+- gitRepo：挂载一个空目录，从 git 库中 clone 一个仓库供 pod 使用
+- secret：一个 Secret Volume 为 Pod 提供加密信息
+
+### Persistent Volume
+
+Persistent Volume（简称 PV）可被理解为 k8s 集群中某个网络存储对应的一块存储
+
+- PV 只能是网络存储，不属于任何 Node，但可在 Node 上访问
+- PV 不是被定义在 Pod 上的，而是独立于 Pod 定义的
+- PV 比 Volume 支持更多的存储类型
+
+### Namespace
+
+命名空间多用于实现多租户资源隔离，将集群内部的资源对象分配到不同的 Namespace 中，逻辑上形成分组的不同项目、小组、用户组等，不同组共享集群资源同时还能被分别管理。
+
+集群启动后会自动创建一个叫 default 的 Namespace，若不指明 namespace，则创建的 Pod 等资源就使用该 namespace。
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: name
+```
+
+### Autonation
+
+Autonation 注解，是用户任意定义的附加信息，以便外部工具查找。
+
+通常 Annotation 记录：
+
+- build 信息、release 信息、Docker 镜像信息等
+- 日志库、监控库、分析库等资源库的地址信息
+- 程序调试工具信息
+- 团队联系信息
+
+### ConfigMap
+
+问题：如何在运行时修改配置文件中的内容？
+常规想法：通过 Docker Volume 将主机上的配置文件映射到容器中
+引出问题：这种方法必须在主机上先创建配置文件，才能映射到容器。若是在分布式环境下，配置文件的管理与一致性很难控制。
+K8S 解决方案：所有配置项都当作 key-value 字符串，作为 Map 表中的一个项，整个 Map 的数据可被持久化存储在 k8s 的 Etcd 中，然后提供 API 方便 k8s 组件或应用操作这些数据，这个 Map 就是 ConfigMap 资源对象。接着，K8S 提供一种内建机制，将存储在 etcd 中的 ConfigMap 通过 Volume 映射变成 Pod 内的配置文件，不论 Pod 调度到哪个主机，都能自动完成映射。若 ConfigMap 中的键值对改变，则 Pod 上的配置文件也会更新。
+
 ## k8s 如何进行版本升级
 
 k8s 在声明资源对象时，有个关键属性放在最开头，`apiVersion: v1`。
@@ -259,7 +513,7 @@ spec:
     ...
 ```
 
-# Kubernetes 简单部署
+# Kubernetes 安装配置
 
 ## k8s 部署要点
 
@@ -283,83 +537,102 @@ spec:
 实验环境：
 
 - 3 台虚拟机 CentOS7
-- Kubernetes 版本 1.12
-- Docker 版本 18.06（k8s1.12 最高支持 docker18.06）
+- Kubernetes 版本 1.17
+- Docker 版本 19.03
   > 如果版本过高需要重新下载安装`yum install docker-ce-<VERSION STRING>`，如`yum install docker-ce-18.06.0.ce`
 - Node1：Master，192.168.60.130
 - Node2：Node，192.168.60.131
 - Node3：Node，192.168.60.132
 
-Master 节点上不需要安装 docker，但需要安装 etcd、kubectl、kubeadm
+每个节点上配置 k8s 的 repo，最好用 aliyun 的源
 
-Node 节点上要安装 docker、kubelet
+```
+[kubernetes]
+name=Kubernetes
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+```
+
+Master 节点上不需要安装 docker，但需要安装 etcd、kubectl、kubeadm
+Node 节点上要安装 docker、kubelet、kubeadm
+
+```
+# Master
+yum install -y kubectl kubelet kubeadm etcd
+
+# Node
+yum install -y kubelet docker-ce kubeadm
+```
 
 所有节点都要关闭 selinux，确保时间都同步了，并在`/etc/hosts`中设置主机名
 
 ```
-192.168.60.130  kubenode1
-192.168.60.131  kubenode2
-192.168.60.132  kubenode3
+192.168.60.131  kubenode1
+192.168.60.132  kubenode2
+192.168.60.133  kubenode3
 ```
 
-在 Master 上先开启 API Server 代理端口 8080 `kubectl proxy --port=8080 &`，并且关闭防火墙，关闭 selinux，否则可能会报错：
+Master 上使用`kubeadm`安装 K8s
+
+由于`kubectl`和`kubeadm`暂时无法使用命令补全，所以需要启用自动补全。
 
 ```
-The connection to the server localhost:8080 was refused - did you specify the right host or port?
+echo "source <(kubectl completion bash)" >> ~/.bashrc
+echo "source <(kubeadm completion bash)" >> ~/.bashrc
+source ~/.bashrc
 ```
 
-通过`curl localhost:8080/api`查看是否能访问
+先生成默认配置文件
 
 ```
-# curl localhost:8080/api
-I1126 00:30:27.335378   37820 log.go:172] http: Accept error: accept tcp 127.0.0.1:8080: accept4: too many open files; retrying in 5ms
-I1126 00:30:27.335676   37820 log.go:172] http: proxy error: dial tcp 127.0.0.1:8080: socket: too many open files
+kubeadm config print init-defaults > init-default.yml
 ```
 
-能够访问了，但可能会出现报错，`too many open files`，可以设置`ulimit -n`增大即可，然后需要重新开启 proxy。
+修改配置文件的 k8s 镜像源以及 Pod 的 IP 地址范围
 
-然后初始化 Master，仍可能出现报错
-还需要做以下操作：
+```yaml
+imageRepository: registry.aliyuncs.com/google_containers
 
-```
-sysctl -w net.bridge.bridge-nf-call-iptables=1
-swapoff -a    # 关闭swap
-```
-
-然后初始化:
-
-```
-# kubeadm init --apiserver-advertise-address 192.168.60.130 --pod-network-cidr=10.1.1.0/24
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: "192.168.1.0/24"
 ```
 
-期间会拉取`k8s.gcr.io`的镜像，但是国内无法拉取。有以下三种方法：
+可以删掉大部分内容，只保留
 
-**方法一：**
-可以先在 docker 上拉取镜像后再启动。**注：一定要加上版本号（Master 初始化失败会提示镜像的版本）**
-
-```
-docker pull mirrorgooglecontainers/kube-apiserver-amd64:v1.12.2
-docker pull mirrorgooglecontainers/kube-controller-manager-amd64:v1.12.2
-docker pull mirrorgooglecontainers/kube-scheduler-amd64:v1.12.2
-docker pull mirrorgooglecontainers/kube-proxy-amd64:v1.12.2
-docker pull mirrorgooglecontainers/pause-amd64:3.1
-docker pull mirrorgooglecontainers/etcd-amd64:3.2.24
-docker pull coredns/coredns:1.2.2
+```yaml
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+imageRepository: registry.aliyuncs.com/google_containers
+kubernetesVersion: v1.17.0
+networking:
+  serviceSubnet: "10.1.0.0/16"
 ```
 
-然后一定要打上标签，因为初始化命令始终是查找`k8s.gcr.io`的镜像的。
+之后查看所需的镜像列表
 
 ```
-docker tag coredns/coredns k8s.gcr.io/coredns:1.2.2
-docker tag mirrorgooglecontainers/kube-proxy-amd64:v1.12.2 k8s.gcr.io/kube-proxy:v1.12.2
-docker tag mirrorgooglecontainers/kube-apiserver-amd64:v1.12.2 k8s.gcr.io/kube-apiserver:v1.12.2
-docker tag mirrorgooglecontainers/kube-controller-manager-amd64:v1.12.2 k8s.gcr.io/kube-controller-manager:v1.12.2
-docker tag mirrorgooglecontainers/kube-scheduler-amd64:v1.12.2 k8s.gcr.io/kube-scheduler:v1.12.2
-docker tag mirrorgooglecontainers/etcd-amd64:3.2.24 k8s.gcr.io/etcd:3.2.24
-docker tag mirrorgooglecontainers/pause-amd64:3.1 k8s.gcr.io/pause:3.1
+# kubeadm config images list --config init-default.yml
+W0222 23:58:01.371880   92156 validation.go:28] Cannot validate kube-proxy config - no validator is available
+W0222 23:58:01.371937   92156 validation.go:28] Cannot validate kubelet config - no validator is available
+registry.aliyuncs.com/google_containers/kube-apiserver:v1.17.0
+registry.aliyuncs.com/google_containers/kube-controller-manager:v1.17.0
+registry.aliyuncs.com/google_containers/kube-scheduler:v1.17.0
+registry.aliyuncs.com/google_containers/kube-proxy:v1.17.0
+registry.aliyuncs.com/google_containers/pause:3.1
+registry.aliyuncs.com/google_containers/etcd:3.4.3-0
+registry.aliyuncs.com/google_containers/coredns:1.6.5
 ```
 
-**方法二：**
+拉取镜像
+
+```
+# kubeadm config images pull --config init-default.yml
+```
+
 也可使用开源脚本[xuxinkun/littleTools](https://github.com/xuxinkun/littleTools)
 
 ```
@@ -382,44 +655,20 @@ azk8spull k8s.gcr.io/etcd:3.4.3-0
 azk8spull k8s.gcr.io/coredns:1.6.5
 ```
 
-**方法三：**
-修改配置文件。首先通过 kubeadm 导出默认配置文件
+开始安装 Master
+**注意：kubeadm 安装过程中不涉及网络插件（CNI）的初始化，因此 kubeadm 初步安装完成的集群是没有网络功能的，任何 Pod 包括自带的 CoreDNS 都无法正常工作**
+
+确认关闭 swap，并将`/proc/sys/net/bridge/bridge-nf-call-iptables`设为 1。在 Node 上也要这样设置
 
 ```
-kubeadm config print init-defaults --kubeconfig ClusterConfiguration > kubeadm.yml
+swapoff -a
+sysctl -w net.bridge.bridge-nf-call-iptables=1
 ```
 
-修改配置文件的 k8s 镜像源
+初始化集群的控制面（Control Panel）
 
 ```
-imageRepository: registry.aliyuncs.com/google_containers
-```
-
-之后查看所需的镜像列表
-
-```
-# kubeadm config images list --config kubeadm.yml
-W0222 23:58:01.371880   92156 validation.go:28] Cannot validate kube-proxy config - no validator is available
-W0222 23:58:01.371937   92156 validation.go:28] Cannot validate kubelet config - no validator is available
-registry.aliyuncs.com/google_containers/kube-apiserver:v1.17.0
-registry.aliyuncs.com/google_containers/kube-controller-manager:v1.17.0
-registry.aliyuncs.com/google_containers/kube-scheduler:v1.17.0
-registry.aliyuncs.com/google_containers/kube-proxy:v1.17.0
-registry.aliyuncs.com/google_containers/pause:3.1
-registry.aliyuncs.com/google_containers/etcd:3.4.3-0
-registry.aliyuncs.com/google_containers/coredns:1.6.5
-```
-
-拉取镜像
-
-```
-# kubeadm config images pull --config kubeadm.yml
-```
-
-进行试运行，通过参数`--dry-run`
-
-```
-# kubeadm init --kubernetes-version=v1.17.0 --pod-network-cidr="10.1.0.0/8" --dry-run
+kubeadm init --config init-default.yml
 ```
 
 会提示以下信息：
@@ -430,7 +679,7 @@ Your Kubernetes control-plane has initialized successfully!
 To start using your cluster, you need to run the following as a regular user:
 
   mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/tmp/kubeadm-init-dryrun843006477/admin.conf $HOME/.kube/config
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
   sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 You should now deploy a pod network to the cluster.
@@ -439,34 +688,121 @@ Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
 
 Then you can join any number of worker nodes by running the following on each as root:
 
-kubeadm join 192.168.0.110:6443 --token ndqvtf.wvr5sxx39cot7qx0 \
-    --discovery-token-ca-cert-hash sha256:d485e071c7521df2e957a87239855212d2399c737a3f718f378d30a09b0b631e
+kubeadm join 192.168.60.131:6443 --token zxzy3d.r12iq7oa9mn86tst \
+    --discovery-token-ca-cert-hash sha256:9bdc86f162f15c3eab5fc647f68b2009a3985626d8272dac6587f648767ea592
+
 ```
+
+若安装失败，可使用命令`kubeadm reset`使主机恢复原状
 
 按照提示，最好使用普通用户执行操作 k8s
 
 ```
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/tmp/kubeadm-init-dryrun843006477/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-在两个 node 上也进行设置：
+此时可查看 ConfigMap
 
 ```
-systemctl enable kubelet
-systemctl stop firewalld && systemctl disable firewalld
-swapoff -a
-sysctl -w net.bridge.bridge-nf-call-iptables=1
+# kubectl get -n kube-system configmaps
+NAME                                 DATA   AGE
+coredns                              1      9m51s
+extension-apiserver-authentication   6      9m54s
+kube-proxy                           2      9m50s
+kubeadm-config                       2      9m52s
+kubelet-config-1.17                  1      9m52s
 ```
 
-将 Master 提供的加入指令在 node 上执行，便可加入集群。
+Node 上可以直接通过 Init 信息的最后一行的命令加入集群，也可通过创建配置文件`join-config.yml`加入
 
-由于`kubectl`暂时无法使用命令补全，所以需要启用自动补全。
+```yaml
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: JoinConfiguration
+discovery:
+  bootstrapToken:
+    apiServerEndpoint: 192.168.60.131:6443 # 对应命令join后的Master地址
+    token: zxzy3d.r12iq7oa9mn86tst # 对应命令的token
+    unsafeSkipCAVerification: ture
+  tlsBootstrapToken: zxzy3d.r12iq7oa9mn86tst # 与token一致
+```
+
+然后执行
 
 ```
-echo "source <(kubectl completion bash)" >> ~/.bashrc
+kubeadm join --config join-config.yml
 ```
+
+两个 Node 都加入集群后，在 master 上先查看下 node 状态
+
+```
+# kubectl get nodes
+NAME                STATUS     ROLES    AGE    VERSION
+node1.example.com   NotReady   master   30m    v1.17.3
+node2.example.com   NotReady   <none>   3m7s   v1.17.3
+node3.example.com   NotReady   <none>   13s    v1.17.3
+```
+
+可以看出三个节点的状态都为`NotReady`，是因为没有安装 CNI 网络插件。网络插件安装一个即可。
+
+- 安装 Weave
+  可到 kubernetes.io 中找到 weave 的 addon 安装[weave 插件安装](https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#install)
+
+  ```
+  kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+  ```
+
+- 安装 Flannel
+  可到 github 的 flannel 文档中找到配置，直接通过 kubectl 安装即可
+  ```
+  kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  ```
+
+再查看节点状态，已变为 Ready
+
+```
+# kubectl get nodes
+NAME                STATUS   ROLES    AGE   VERSION
+node1.example.com   Ready    master   49m   v1.17.3
+node2.example.com   Ready    <none>   22m   v1.17.3
+node3.example.com   Ready    <none>   19m   v1.17.3
+```
+
+查看所有集群相关 pod 是否正常创建并运行
+
+```
+# kubectl get pods --all-namespaces
+NAMESPACE     NAME                                        READY   STATUS             RESTARTS   AGE
+kube-system   coredns-9d85f5447-dp87m                     0/1     Pending            0          53m
+kube-system   coredns-9d85f5447-kpjnz                     0/1     Pending            0          53m
+kube-system   etcd-node1.example.com                      1/1     Running            0          53m
+kube-system   kube-apiserver-node1.example.com            1/1     Running            0          53m
+kube-system   kube-controller-manager-node1.example.com   0/1     CrashLoopBackOff   5          53m
+kube-system   kube-proxy-5gbnp                            1/1     Running            0          53m
+kube-system   kube-proxy-ckddl                            1/1     Running            0          23m
+kube-system   kube-proxy-qmksv                            1/1     Running            0          26m
+kube-system   kube-scheduler-node1.example.com            1/1     Running            4          53m
+kube-system   weave-net-9547h                             2/2     Running            0          8m31s
+kube-system   weave-net-tgc56                             2/2     Running            0          8m31s
+kube-system   weave-net-tr5g2                             2/2     Running            0          8m31s
+```
+
+在 Master 上先开启 API Server 代理端口 8080 `kubectl proxy --port=8080 &`，并且关闭防火墙，关闭 selinux，否则可能会报错：
+
+```
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+```
+
+通过`curl localhost:8080/api`查看是否能访问
+
+```
+# curl localhost:8080/api
+I1126 00:30:27.335378   37820 log.go:172] http: Accept error: accept tcp 127.0.0.1:8080: accept4: too many open files; retrying in 5ms
+I1126 00:30:27.335676   37820 log.go:172] http: proxy error: dial tcp 127.0.0.1:8080: socket: too many open files
+```
+
+能够访问了，但可能会出现报错，`too many open files`，可以设置`ulimit -n`增大即可，然后需要重新开启 proxy。
 
 ## Kube 初始化过程
 

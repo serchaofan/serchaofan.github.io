@@ -43,6 +43,9 @@ Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节�
 - [Jinja2 过滤器](#jinja2-%e8%bf%87%e6%bb%a4%e5%99%a8)
   - [Jinja 语法](#jinja-%e8%af%ad%e6%b3%95)
   - [过滤器](#%e8%bf%87%e6%bb%a4%e5%99%a8)
+- [Ansible 实战](#ansible-%e5%ae%9e%e6%88%98)
+  - [为新系统添加 SSHkey](#%e4%b8%ba%e6%96%b0%e7%b3%bb%e7%bb%9f%e6%b7%bb%e5%8a%a0-sshkey)
+  - [部署 LAMP+Varnish+Memcached](#%e9%83%a8%e7%bd%b2-lampvarnishmemcached)
 - [Ansible-Tower](#ansible-tower)
 - [Ansible 常见模块](#ansible-%e5%b8%b8%e8%a7%81%e6%a8%a1%e5%9d%97)
   - [cron](#cron)
@@ -1450,7 +1453,7 @@ Jinja2 的三种语法：
 
 ## Jinja 语法
 
-Jinja2 控制结构：
+Jinja2 **控制结构**：
 
 ```jinja2
 {% if ... %}
@@ -1459,7 +1462,7 @@ Jinja2 控制结构：
 {% endif %}
 ```
 
-Jinja2 的 for 循环：
+Jinja2 的 **for 循环**：
 
 ```jinja2
 {% for .. in .. %}
@@ -1479,7 +1482,7 @@ for 循环中的特殊变量：
 | loop.length    | 序列中的项目数                    |
 | loop.cycle     | 在一串序列间取值的辅助函数        |
 
-Jinja2 的宏。类似函数，将行为抽象成可重复调用的代码块
+Jinja2 的**宏**。类似函数，将行为抽象成可重复调用的代码块
 
 ```jinja2
 {% macro input(name, type='text', value='') %}
@@ -1487,7 +1490,7 @@ Jinja2 的宏。类似函数，将行为抽象成可重复调用的代码块
 {% endmacro %}
 ```
 
-宏的调用：
+**宏的调用：**
 
 ```jinja2
 <p>{{ input('username', value='user') }}</p>
@@ -1785,6 +1788,206 @@ Jinja2 继承。若 Jinja2 仅用于配置文件，则基本用不到继承功�
       "msg": "execute success? True"
       "msg": "execute skipped? False"
   ```
+
+# Ansible 实战
+
+## 为新系统添加 SSHkey
+
+先通过在 inventory 中配置`ansible_ssh_user`和`ansible_ssh_pass`，然后使用 ansible adhoc 命令测试是否能成功执行。
+接着调用 authorized_key 模块，添加认证到远端。
+
+```
+ansible xxx -m authorized_key -a "user=远端用户 key='{{ lookup('file', '/本端用户家目录/.ssh/id_rsa.pub') }}' path=/远端用户家目录/.ssh/authorized_keys manage_dir=no"
+```
+
+## 部署 LAMP+Varnish+Memcached
+
+- 一台 Varnish 作为前端接入，做负载均衡
+- 两台 Apache 做 web 服务器，上面部署 php
+- 两台 Mysql 做主从
+- 一台 Memcached，做 Mysql 的缓存
+
+创建 ansible 项目目录`lamp`，包含以下目录或文件：
+
+- inventory:
+- playbooks
+  - db
+  - memcached
+  - varnish
+  - www
+- provisioners
+- configure.yml
+- provision.yml
+- requirement.yml
+
+编辑`playbooks/varnish/main.yml`
+
+```yaml
+---
+- hosts: lamp-varnish
+  become: yes
+  vars_files:
+    - vars.yml
+  roles:
+    - geerlingguy.firewall
+    - geerlingguy.repo-epel
+    - geerlingguy.varnish
+  tasks:
+    - name: 生成varnish配置模板，并传到远端
+      template:
+        src: "templates/defaults.vcl.j2"
+        dest: "/etc/varnish/default.vcl"
+      notify: restart varnish
+```
+
+编辑`playbooks/varnish/vars.yml`
+
+```yaml
+---
+firwall_allowed_tcp_ports:
+  - "22"
+  - "80"
+varnish_use_default_vcl: false
+```
+
+编辑 varnish 模板`playbooks/varnish/templates/default.vcl.j2`
+
+```
+vcl  4.0;
+import directors;
+
+{% for host in groups['lamp-www'] %}
+backend www{{ loop.index }} {
+  .back = "{{ host }}";
+  .port = "80";
+}
+{% endfor %}
+
+sub vcl_init { # 初始化
+  # 采用random负载策略
+  new vdir = directors.random();
+  {% for host in groups['lamp-www'] %}
+  vdir.add_backend(www{{ loop.index }}, 1);
+  {% endfor %}
+}
+
+sub vcl_recv { # 将请求发给vdir定义的后端
+  set req.backend_hint = vdir.backend();
+  return (pass);
+}
+```
+
+添加 apache 和 php 的 playbook`playbooks/www/main.yml`
+
+```yaml
+---
+- hosts: lamp-www
+  become: yes
+  vars_files:
+    - vars.yml
+  roles:
+    - geerlingguy.firewall
+    - geerlingguy.repo-epel
+    - geerlingguy.apache
+    - geerlingguy.php
+    - geerlingguy.php-mysql
+    - geerlingguy.php-memcached
+  tasks:
+    - name: 去除apache的测试页
+      file:
+        path: /var/www/html/index.html
+        state: absent
+    - name: 复制index模板
+      template:
+        src: templates/index.php.j2
+        dest: /var/www/html/index.php
+```
+
+添加变量文件`playbooks/www/vars.yml`
+
+```yaml
+---
+firewall_allowed_tcp_ports:
+  - "22"
+  - "80"
+```
+
+创建 memcached 的 playbook，`playbooks/memcached/main.yml`
+
+```yaml
+---
+- host: lamp-memcached
+  become: yes
+  vars_files:
+    - vars.yml
+  roles:
+    - geerlingguy.firewall
+    - geerlingguy.memcached
+```
+
+创建变量文件`playbooks/memcached/vars.yml`
+
+```yaml
+---
+firewall_allowed_tcp_ports:
+  - "22"
+firewall_additional_rules:
+  - "iptables -A INPUT -p tcp --dport 11211 -s {{ groups['lamp-www'][0] }} -j ACCEPT"
+  - "iptables -A INPUT -p tcp --dport 11211 -s {{ groups['lamp-www'][1] }} -j ACCEPT"
+memcached_listen_ip: "{{ groups['lamp-memcached'][0] }}"
+```
+
+配置 mysql 的 playbook `playbooks/db/main.yml`
+
+```yaml
+---
+- hosts: lamp-db
+  become: yes
+  vars_files:
+    - vars.yml
+  pre_tasks:
+    - name: Mysql变量
+      set_fact:
+        mysql_user:
+          - name: test
+            host: "{{ groups['lamp-www'][0] }}"
+            password: secret
+            priv: "*.*:SELECT"
+          - name: test
+            host: "{{ groups['lamp-www'][1] }}"
+            password: secret
+            priv: "*.*:SELECT"
+        mysql_replication_master: "{{ groups['a4d.lamp.db.1'][0] }}"
+  roles:
+    - geerlingguy.firewall
+    - geerlingguy.mysql
+```
+
+配置 mysql 的变量文件`playbooks/db/vars.yml`
+
+```yaml
+---
+firewall_allowed_tcp_ports:
+  - "22"
+  - "3306"
+mysql_replication_user: (name: 'replication', password: 'secret')
+mysql_databases:
+  - name: mydatabase
+    collection: utf8_general_ci
+    encoding: utf8
+```
+
+配置最后的`configure.yml`，该文件位于 playbooks 的同级目录
+
+```yaml
+---
+- include: playbooks/varnish/main.yml
+- include: playbooks/db/main.yml
+- include: playbooks/www/main.yml
+- include: playbooks/memcached/main.yml
+```
+
+部署时执行`ansible-playbook configure.yml`
 
 # Ansible-Tower
 
