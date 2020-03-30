@@ -26,6 +26,8 @@ categories: [云计算]
   - [k8s 部署要点](#k8s-%e9%83%a8%e7%bd%b2%e8%a6%81%e7%82%b9)
   - [开始安装部署](#%e5%bc%80%e5%a7%8b%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2)
   - [Kube 初始化过程](#kube-%e5%88%9d%e5%a7%8b%e5%8c%96%e8%bf%87%e7%a8%8b)
+  - [Kubectl 常用操作](#kubectl-%e5%b8%b8%e7%94%a8%e6%93%8d%e4%bd%9c)
+- [深入理解 Pod](#%e6%b7%b1%e5%85%a5%e7%90%86%e8%a7%a3-pod)
 
 <!--more-->
 
@@ -213,11 +215,11 @@ spec:
 
 ```yaml
 selector:
-  matchLabels:
-    app: myweb
-  matchExpressions:
-    - { key: tier, operator: In, values: [frontend] }
-    - { key: environment, operator: NotIn, values: [dev] }
+matchLabels:
+app: myweb
+matchExpressions:
+- { key: tier, operator: In, values: [frontend] }
+- { key: environment, operator: NotIn, values: [dev] }
 ```
 
 label selector 的常见使用场景：
@@ -331,27 +333,27 @@ Service 一旦创建，k8s 就自动为它分配一个可用 Cluster IP，且**�
 kind: Service
 apiVersion: v1
 metadata:
-  name: Service Name
+name: Service Name
 spec:
-  selector:
-    app: Selector Label
-  type: LoadBalancer | ClusterIP | NodePort
-  ports:
-    - name: name-of-the-port
-      port: 80
-      targetPort: 8080 # 提供服务的容器内暴露的端口。若不指定targetPort，则默认targetPort和Port相同
+selector:
+app: Selector Label
+type: LoadBalancer | ClusterIP | NodePort
+ports:
+- name: name-of-the-port
+  port: 80
+  targetPort: 8080 # 提供服务的容器内暴露的端口。若不指定targetPort，则默认targetPort和Port相同
 ```
 
 k8s 服务支持多个 Endpoint，并要求每个 Endpoint 都定义一个名称来区分。
 
 ```yaml
 ports:
-  - name: name-of-the-port
-    port: 80
-    targetPort: 80
-  - name: name-of-the-port
-    port: 808
-    targetPort: 8080
+- name: name-of-the-port
+  port: 80
+  targetPort: 80
+- name: name-of-the-port
+  port: 808
+  targetPort: 8080
 ```
 
 Cluster IP 是一种虚拟 IP，但更像一个伪造的 IP，原因如下：
@@ -367,14 +369,14 @@ Cluster IP 是一种虚拟 IP，但更像一个伪造的 IP，原因如下：
 kind: Service
 apiVersion: v1
 metadata:
-  name: tomcat-service
+name: tomcat-service
 spec:
-  selector:
-    tier: frontend
-  type: NodePort
-  ports:
-    - port: 8080
-      nodePort: 8888 # 定义了NodePort，则外界可通过Node IP:nodePort 访问tomcat服务
+selector:
+tier: frontend
+type: NodePort
+ports:
+- port: 8080
+  nodePort: 8888 # 定义了NodePort，则外界可通过Node IP:nodePort 访问tomcat服务
 ```
 
 NodePort 实现方式：在 K8s 集群的每个 Node 上都为需要外部访问的 Service 开启一个对应的 TCP 监听端口（kube-proxy 进程开的），外部系统只要用任意一个 Node IP+NodePort 即可访问该服务。
@@ -451,7 +453,7 @@ Persistent Volume（简称 PV）可被理解为 k8s 集群中某个网络存储�
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: name
+name: name
 ```
 
 ### Autonation
@@ -597,8 +599,8 @@ kubeadm config print init-defaults > init-default.yml
 imageRepository: registry.aliyuncs.com/google_containers
 
 networking:
-  dnsDomain: cluster.local
-  serviceSubnet: "192.168.1.0/24"
+dnsDomain: cluster.local
+serviceSubnet: "192.168.1.0/24"
 ```
 
 可以删掉大部分内容，只保留
@@ -609,7 +611,7 @@ kind: ClusterConfiguration
 imageRepository: registry.aliyuncs.com/google_containers
 kubernetesVersion: v1.17.0
 networking:
-  serviceSubnet: "10.1.0.0/16"
+serviceSubnet: "10.1.0.0/16"
 ```
 
 之后查看所需的镜像列表
@@ -721,11 +723,11 @@ Node 上可以直接通过 Init 信息的最后一行的命令加入集群，也
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: JoinConfiguration
 discovery:
-  bootstrapToken:
-    apiServerEndpoint: 192.168.60.131:6443 # 对应命令join后的Master地址
-    token: zxzy3d.r12iq7oa9mn86tst # 对应命令的token
-    unsafeSkipCAVerification: ture
-  tlsBootstrapToken: zxzy3d.r12iq7oa9mn86tst # 与token一致
+bootstrapToken:
+apiServerEndpoint: 192.168.60.131:6443 # 对应命令join后的Master地址
+token: zxzy3d.r12iq7oa9mn86tst # 对应命令的token
+unsafeSkipCAVerification: ture
+tlsBootstrapToken: zxzy3d.r12iq7oa9mn86tst # 与token一致
 ```
 
 然后执行
@@ -859,6 +861,70 @@ I1126 00:30:27.335676   37820 log.go:172] http: proxy error: dial tcp 127.0.0.1:
 
 Your Kubernetes master has initialized successfully!
 ```
+
+## Kubectl 常用操作
+
+- 创建资源对象
+  ```
+  kubectl create -f xxx.yml    # 可同时指定多个-f进行一次性创建
+  kubectl create -f <目录>     # 创建目录下所有.yml、.json文件定义的对象
+  ```
+- 查看资源对象
+  ```
+  kubectl get pods    # 查看所有Pod列表
+  kubectl get rc,service  # 查看RC和Service列表
+  ```
+- 描述资源对象
+  ```
+  kubectl describe nodes <node name>    # 显示node的详细信息
+  kubectl describe pods/<pod name>      # 显示pod的详细信息
+  kubectl describe pods <rc name>       # 显示由RC管理的pod的信息
+  ```
+- 删除资源对象
+  ```
+  kubectl delete -f pod.yml     # 删除指定pod文件定义的pod
+  kubectl delete pods,services -l name=<label name>   # 删除指定label的Pod
+  kubectl delete pods --all     # 删除所有pods
+  ```
+- 执行容器命令
+  ```
+  kubectl exec <pod name> <command>   # 在pod的容器中执行命令，默认为第一个容器
+  kubectl exec <pod name> -c <container name> <command>   # 指定pod中的某个容器执行
+  kubectl exec -ti <pod name> -c <container name> /bin/bash  # 登录某个容器
+  ```
+- 查看容器日志
+  ```
+  kubectl logs <pod name>    # 查看pod容器输出到stdout的日志
+  kubectl logs -f <pod name> -c <container name>    # 跟踪查看pod容器的日志，相当于tail -f
+  ```
+- 创建或更新资源对象
+  ```
+  kubectl apply -f app.yml    # 类似create， 若对象不存在则创建，存在则更新
+  ```
+- 在线编辑运行中的资源对象
+  ```
+  kubectl edit deploy nginx    # 编辑运行中的资源对象
+  ```
+- 将 pod 开放端口映射到本地
+  ```
+  kubectl port-forward --address 0.0.0.0 pod/nginx 8888:80   # 将pod的80端口映射到本地的8888端口
+  ```
+- 在 pod 和本地之间复制文件
+  ```
+  kubectl cp nginx:<文件> <路径>
+  ```
+- 资源对象的标签设置
+  ```
+  kubectl label namespaces default <labalname=xxx>   # 为default namespace设置标签
+  ```
+- 检查可用 API 资源类型列表
+  ```
+  kubectl api-resources   # 检查特定类型资源是否已经定义，列出所有资源对象类型
+  ```
+- 使用命令行插件
+  自定义插件，先编写一个可执行文件，文件名必须为`kubectl-<plugin name>`，复制到`$PATH`环境变量指定的目录中，就可通过`kubectl <plugin name>`执行该自定义插件了。
+
+# 深入理解 Pod
 
 > 参考文章
 >

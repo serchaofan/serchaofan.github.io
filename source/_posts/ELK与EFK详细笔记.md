@@ -32,11 +32,11 @@ categories: [大数据]
   - [Logstash 常用插件](#logstash-%e5%b8%b8%e7%94%a8%e6%8f%92%e4%bb%b6)
 - [Kibana](#kibana)
   - [Kibana 安装](#kibana-%e5%ae%89%e8%a3%85)
-  - [启动时 Kibana 信息处理](#%e5%90%af%e5%8a%a8%e6%97%b6-kibana-%e4%bf%a1%e6%81%af%e5%a4%84%e7%90%86)
-    - [warning 消息](#warning-%e6%b6%88%e6%81%af)
+  - [Kibana 配置](#kibana-%e9%85%8d%e7%bd%ae)
+  - [Kibana 基本功能](#kibana-%e5%9f%ba%e6%9c%ac%e5%8a%9f%e8%83%bd)
+    - [添加 index 的管理](#%e6%b7%bb%e5%8a%a0-index-%e7%9a%84%e7%ae%a1%e7%90%86)
     - [使用 kibana 提供的数据进行分析](#%e4%bd%bf%e7%94%a8-kibana-%e6%8f%90%e4%be%9b%e7%9a%84%e6%95%b0%e6%8d%ae%e8%bf%9b%e8%a1%8c%e5%88%86%e6%9e%90)
 - [ELK 架构](#elk-%e6%9e%b6%e6%9e%84)
-- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
 
 <!--more-->
 
@@ -861,24 +861,6 @@ Kibana 的文件结构：除了`bin`、`config`、`data`、`plugins`，kibana �
 
 可在浏览器访问`localhost:5601/status`查看 kibana 是否启动正常，插件是否加载正常，以及 kibana 的当前信息。
 
-## 启动时 Kibana 信息处理
-
-### warning 消息
-
-1.
-
-```
-[warning][security] Generating a random key for xpack.security.encryptionKey.
-To prevent sessions from being invalidated on restart,
-please set xpack.security.encryptionKey in kibana.yml
-```
-
-2. ```
-   [warning][security] Session cookies will be transmitted over insecure connections. This is not recommended.
-   ```
-
-3.
-
 ## Kibana 配置
 
 Kibana 只有一个配置文件`KIBANA_HOME/config/kibana.yml`。默认运行在 localhost 的 5601 端口。
@@ -936,7 +918,12 @@ curl -X PUT -H "Content-Type: application/json" localhost:9200/tech/employee/1 -
 
 ### 使用 kibana 提供的数据进行分析
 
-从[kibana 文档](https://www.elastic.co/guide/en/kibana/current/tutorial-load-dataset.html)中下载数据，可选择银行账户数据 account.json，下载以后使用`curl -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/bank/account/_bulk?pretty' --data-binary @accounts.json`导入 elasticsearch。开启 kibana，进入 Management 添加 index pattern，然后进入 Discover 菜单，选择 bank，添加要看的字段。
+从[kibana 文档](https://www.elastic.co/guide/en/kibana/current/tutorial-load-dataset.html)中下载数据，可选择银行账户数据 account.json，
+下载后通过以下操作导入 elasticsearch。开启 kibana，进入 Management 添加 index pattern，然后进入 Discover 菜单，选择 bank，添加要看的字段。
+
+```
+curl -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/bank/account/_bulk?pretty' --data-binary @accounts.json
+```
 
 {% asset_img 10.png %}
 
@@ -960,13 +947,20 @@ bootstrap.memory_lock: false 为避免内存与磁盘间的 swap，会损耗大�
 
 bootstrap.system_call_filter: false
 
-# 参考文章
-
-- [全文搜索引擎 Elasticsearch 入门教程](http://www.ruanyifeng.com/blog/2017/08/elasticsearch.html)
-- 每天 5 分中玩转 docker 容器技术
-- [Elasticsearch: 权威指南](https://elasticsearch.cn/book/elasticsearch_definitive_guide_2.x/index.html)
-- [Elasticsearch 官方文档](https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html)
-- [Logstash 简单介绍](https://blog.csdn.net/chenleiking/article/details/73563930)
-- [ELK 之 Logstash](https://blog.csdn.net/iguyue/article/details/77006201)
-- [Logstash 官方文档](https://www.elastic.co/guide/en/logstash/current/index.html)
-- [ES 之五：ElasticSearch 聚合](https://www.cnblogs.com/duanxz/p/6528161.html)
+> 参考文章
+>
+> [全文搜索引擎 Elasticsearch 入门教程](http://www.ruanyifeng.com/blog/2017/08/elasticsearch.html)
+>
+> 每天 5 分中玩转 docker 容器技术
+>
+> [Elasticsearch: 权威指南](https://elasticsearch.cn/book/elasticsearch_definitive_guide_2.x/index.html)
+>
+> [Elasticsearch 官方文档](https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html)
+>
+> [Logstash 简单介绍](https://blog.csdn.net/chenleiking/article/details/73563930)
+>
+> [ELK 之 Logstash](https://blog.csdn.net/iguyue/article/details/77006201)
+>
+> [Logstash 官方文档](https://www.elastic.co/guide/en/logstash/current/index.html)
+>
+> [ES 之五：ElasticSearch 聚合](https://www.cnblogs.com/duanxz/p/6528161.html)

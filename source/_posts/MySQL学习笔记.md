@@ -61,7 +61,7 @@ categories: [应用运维]
   - [常见查看命令显示解析](#%e5%b8%b8%e8%a7%81%e6%9f%a5%e7%9c%8b%e5%91%bd%e4%bb%a4%e6%98%be%e7%a4%ba%e8%a7%a3%e6%9e%90)
     - [SHOW TABLE STATUS](#show-table-status)
 
-{% asset_img mysql.jpg mysql %}
+{% asset_img mysql.jpg %}
 
 # MySQL 体系
 
@@ -179,8 +179,9 @@ mysql> select * from my_float;
 | abcde    | 错误    | 错误       | 超出长度      | 超出长度         |
 
 如何选择定长或变长字符串？
-_ 定长字符串：磁盘空间浪费，但效率高，若数据确定长度一样，就选定长（如身份证，电话号）
-_ 变长字符串：磁盘空间节省，但效率低，若数据长度不确定，就选变长（如住址，姓名）
+
+- 定长字符串：磁盘空间浪费，但效率高，若数据确定长度一样，就选定长（如身份证，电话号）
+- 变长字符串：磁盘空间节省，但效率低，若数据长度不确定，就选变长（如住址，姓名）
 
 枚举字符串举例
 
@@ -358,15 +359,17 @@ Mysql 函数分为：
 
 ### 特殊功能函数
 
-|password(str)|对 str 加密|
-|format(x,n)|对 x 格式化，保留 n 位小数|
-|inet_aton(ip)|将 IP 地址转换为数字|
-|inet_ntoa(x)|将数字转换为 IP 地址|
-|get_loct(name,time)|创建一个持续时间 time 的名为 name 的锁|
-|release_loct(name)|对名字为 name 的锁解锁|
-|benchmark(count,expr)|将表达式 expr 执行 count 次|
-|convert(s USING cs)|将字符串 s 的字符集变为 cs|
-|convert(x,type)|将 x 转为 type 类型|
+| 函数                  | 功能                                   |
+| --------------------- | -------------------------------------- |
+| password(str)         | 对 str 加密                            |
+| format(x,n)           | 对 x 格式化，保留 n 位小数             |
+| inet_aton(ip)         | 将 IP 地址转换为数字                   |
+| inet_ntoa(x)          | 将数字转换为 IP 地址                   |
+| get_loct(name,time)   | 创建一个持续时间 time 的名为 name 的锁 |
+| release_loct(name)    | 对名字为 name 的锁解锁                 |
+| benchmark(count,expr) | 将表达式 expr 执行 count 次            |
+| convert(s USING cs)   | 将字符串 s 的字符集变为 cs             |
+| convert(x,type)       | 将 x 转为 type 类型                    |
 
 # 表操作
 
@@ -424,7 +427,8 @@ drop 字段名; # 删除字段
 - 列描述 comment：无实际含义，描述字段
 - 默认值 default：可在字段设置时添加 default ，在插入字段时不赋初值就会使用默认值
 - 主键 primary key：一张表只有一个字段可以使用对应键，用来唯一的约束该字段里的数据，不能重复，一张表最多只有一个主键，主键默认不为空（not null）。
-  增加主键：
+
+增加主键：
 
 ```
 	法一：在创建字段时就添加primary key 关键字
@@ -451,22 +455,31 @@ drop 字段名; # 删除字段
 	# 前提：字段对应数据是独立的（不重复）
 ```
 
-    主键约束：主键字段数据不允许相同，若相同则数据操作失败
-    主键删除：无法更新主键，只有删除了以后才能再添加
-    `alter table 表名 drop primary key;`
+主键约束：主键字段数据不允许相同，若相同则数据操作失败
+主键删除：无法更新主键，只有删除了以后才能再添加
 
-    分类
+```
+alter table 表名 drop primary key;
+```
 
-    	逻辑主键：字段无业务含义（如id），一般以此类字段做主键
-    	业务主键：字段存放业务数据
+分类
+
+- 逻辑主键：字段无业务含义（如 id），一般以此类字段做主键
+- 业务主键：字段存放业务数据
 
 - 自增长 auto-increment：若该字段未赋值或仅有默认值，会自动触发，会给字段值不断+1（当前字段中最大值），形成新字段，常与主键搭配。
   **注：** 字段做自增长的前提：本身是一个索引（key 属性有值），字段值必须是整型数字。一张表最多只有一个字段自增长。
   修改自增长：修改的值必须比该字段当前最大值大(小的话不生效)
-  `alter table 表 auto_increment = x;`
+  ```
+  alter table 表 auto_increment = x;
+  ```
   查看自增长变量
-  `show variables like 'auto_increment%';`
-  `mysql> show variables like 'auto_increment%'; +--------------------------+-------+ | Variable_name | Value | +--------------------------+-------+ | auto_increment_increment | 1 | | auto_increment_offset | 1 | +--------------------------+-------+ increment为自增长步数 offset为自增长起始值 修改：set auto_increment_increment = x; # 修改是对整个数据库，且仅是会话级 alter table 表 modify即可修改`
+  ```
+  mysql> show variables like 'auto_increment%';
+  +--------------------------+-------+ | Variable_name | Value | +--------------------------+-------+ | auto_increment_increment | 1 | | auto_increment_offset | 1 | +--------------------------+-------+
+  ```
+  increment 为自增长步数 offset 为自增长起始值
+  修改：`set auto_increment_increment = x;` ,修改是对整个数据库，且仅是会话级，通过 `alter table 表 modify`即可修改
 - 唯一键 unique key：数据不能重复，允许为空，也可多个为空，空字段不参与唯一键比较。
 
 # 数据操作
@@ -538,20 +551,20 @@ select [选项] 字段[别名] from 表名 [where][group by][having][order by][l
 - `group by`：根据某字段分组，用于按组统计数据
   常用统计函数：
 
-```
-count()：统计分组后的记录数
-max()：每组中最大值
-min()：每组中最小值
-avg()：求平均值
-sum()：求和
-```
+  ```
+  count()：统计分组后的记录数
+  max()：每组中最大值
+  min()：每组中最小值
+  avg()：求平均值
+  sum()：求和
+  ```
 
-可在`group by`后加上`asc`或`desc`，分别表示升序或降序。
-若只是分类，并不会显示所有数据，仅仅是分组，列出有哪些组。
+  可在`group by`后加上`asc`或`desc`，分别表示升序或降序。
+  若只是分类，并不会显示所有数据，仅仅是分组，列出有哪些组。
 
-可以设置多个字段进行排序，会按照字段的书写顺序进行先后排序。
-例如，`group by age,score`会先对 age 进行排序，然后对结果再进行 score 的排序。
-函数`group_concat(字段名)`可对分组结果中的某个字段进行字符串的连接。
+  可以设置多个字段进行排序，会按照字段的书写顺序进行先后排序。
+  例如，`group by age,score`会先对 age 进行排序，然后对结果再进行 score 的排序。
+  函数`group_concat(字段名)`可对分组结果中的某个字段进行字符串的连接。
 
 - `with rollup`：回溯统计，根据当前分组字段向上级分组汇报
   多字段回溯：考虑第一层分组会有回溯，第二层要看第一层分组的组数，组数是多少就回溯几次
@@ -559,50 +572,50 @@ sum()：求和
 - `having`：进行条件判断
   在 where 判断后，由于数据已进入内存，所以不能再用 where 判断了，要对 where 判断的结果再次判断，就要用 having。having 能做 where 做到几乎所有事情，而 where 不能做 having 能做的很多事情。
 
-分组统计的结果只能 having 使用
+  分组统计的结果只能 having 使用
 
-```
-mysql> select id,score,count(*),group_concat(name)
-       from user
-       group by score
-       having count(*)>=1;
-+-------+-------+----------+--------------------+
-| id    | score | count(*) | group_concat(name) |
-+-------+-------+----------+--------------------+
-| 10002 |    68 |        2 | mike,jessie        |
-| 10001 |    78 |        3 | jack,kate,lisi     |
-| 10006 |    86 |        2 | zhangsan,wangwu    |
-| 10005 |    97 |        1 | jason              |
-+-------+-------+----------+--------------------+
-```
+  ```
+  mysql> select id,score,count(*),group_concat(name)
+        from user
+        group by score
+        having count(*)>=1;
+  +-------+-------+----------+--------------------+
+  | id    | score | count(*) | group_concat(name) |
+  +-------+-------+----------+--------------------+
+  | 10002 |    68 |        2 | mike,jessie        |
+  | 10001 |    78 |        3 | jack,kate,lisi     |
+  | 10006 |    86 |        2 | zhangsan,wangwu    |
+  | 10005 |    97 |        1 | jason              |
+  +-------+-------+----------+--------------------+
+  ```
 
-- `order by`：排序，依赖校对集，显示所有记录，认升序排序。
+- `order by`：排序，依赖校对集，显示所有记录，默认升序排序。
   多字段排序：根据某个字段排序，然后对排序好的结果再按某字段排序
 
 - `limit`：限制数量
 
-```
-用法1：limit 长度   限制记录数（排名前N个）
-mysql> select * from user order by score desc limit 3;
-+-------+----------+------+------+-------+
-| id    | name     | sex  | age  | score |
-+-------+----------+------+------+-------+
-| 10005 | jason    | m    |   22 |    97 |
-| 10008 | wangwu   | m    |   20 |    86 |
-| 10006 | zhangsan | m    |   21 |    86 |
-+-------+----------+------+------+-------+
+  ```
+  用法1：limit 长度   限制记录数（排名前N个）
+  mysql> select * from user order by score desc limit 3;
+  +-------+----------+------+------+-------+
+  | id    | name     | sex  | age  | score |
+  +-------+----------+------+------+-------+
+  | 10005 | jason    | m    |   22 |    97 |
+  | 10008 | wangwu   | m    |   20 |    86 |
+  | 10006 | zhangsan | m    |   21 |    86 |
+  +-------+----------+------+------+-------+
 
-用法2：limit 起始,长度      从某起始位置（最小为0）开始限制（实现分页）
-mysql> select * from user order by score desc limit 4,8;
-+-------+--------+------+------+-------+
-| id    | name   | sex  | age  | score |
-+-------+--------+------+------+-------+
-| 10003 | kate   | f    |   19 |    78 |
-| 10007 | lisi   | f    |   19 |    78 |
-| 10002 | mike   | m    |   21 |    68 |
-| 10004 | jessie | f    |   20 |    68 |
-+-------+--------+------+------+-------+
-```
+  用法2：limit 起始,长度      从某起始位置（最小为0）开始限制（实现分页）
+  mysql> select * from user order by score desc limit 4,8;
+  +-------+--------+------+------+-------+
+  | id    | name   | sex  | age  | score |
+  +-------+--------+------+------+-------+
+  | 10003 | kate   | f    |   19 |    78 |
+  | 10007 | lisi   | f    |   19 |    78 |
+  | 10002 | mike   | m    |   21 |    68 |
+  | 10004 | jessie | f    |   20 |    68 |
+  +-------+--------+------+------+-------+
+  ```
 
 ## 多表查询
 
@@ -824,8 +837,8 @@ mysql> select * from stu
 # 索引
 
 系统通过算法将已有的数据单独建立一个文件，文件能实现快速查找匹配数据
-**作用：**1.提高查询数据效率 2.约束数据的有效性
-**增加索引的前提条件：**因为索引本身会产生文件（较大），所以若某个数据经常使用时就可使用索引。
+**作用：** 1.提高查询数据效率 2.约束数据的有效性
+**增加索引的前提条件：** 因为索引本身会产生文件（较大），所以若某个数据经常使用时就可使用索引。
 
 根据存储类型，可将索引分为：B 树索引（默认索引）和哈希索引。
 InnoDB 和 MyISAM 引擎都支持 B 树索引，Memory 引擎支持哈希索引

@@ -95,12 +95,19 @@ gitlab_rails['smtp_tls'] = false
 
 # 常用命令
 
-参考文章：
+# Gitlab 实现 CI 持续集成
 
+Gitlab 自带持续集成方案即 Gitlab CI，因此无需额外配置或搭建额外的 CI 系统。
+Gitlab CI 的触发为 Git 提交检索`.gitlab-ci.yaml`文件触发。
+
+> 参考文章：
+>
 > [从零开始搭建 Gitlab 服务器](https://www.jianshu.com/p/43860be68b52)
-
+>
 > [搭建 GitLab 服务器 ( CTO 必会)](https://learnku.com/articles/2568/build-gitlab-server-cto-will)
-
+>
 > [GitLab 的安装及使用教程](https://yq.aliyun.com/articles/74395)
-
+>
 > [GitLab Architecture Overview](https://docs.gitlab.com/ce/development/architecture.html)
+
+> [敏捷无敌之 Gitlab CI 持续集成](https://blog.51cto.com/cloumn/detail/94)

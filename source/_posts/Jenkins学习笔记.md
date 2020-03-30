@@ -26,7 +26,7 @@ tags:
 
 jenkins 是一个基于 java 开发的在自动化服务器，是一款开源 CI&CD 软件，用于自动化各种任务，包括构建、测试和部署软件。
 
-CI 系统内容可参考[DevOps 概念整理](/2020/02/14/DevOps概念整理)
+CI 系统内容可参考[DevOps 概念整理](/2020/DevOps概念整理)
 
 特性：
 
@@ -133,7 +133,5 @@ Jenkins URL 改为`域名/jenkins`，Email 改成 jenkins 要发送报告到的�
 ## 插件设置
 
 # 项目构建设置
-
-##
 
 # Pipeline
