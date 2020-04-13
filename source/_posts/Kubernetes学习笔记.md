@@ -53,10 +53,28 @@ categories: [云计算]
   - [初始化容器Init Container](#%e5%88%9d%e5%a7%8b%e5%8c%96%e5%ae%b9%e5%99%a8init-container)
   - [Pod升级与回滚](#pod%e5%8d%87%e7%ba%a7%e4%b8%8e%e5%9b%9e%e6%bb%9a)
     - [Deployment升级](#deployment%e5%8d%87%e7%ba%a7)
+      - [更新策略](#%e6%9b%b4%e6%96%b0%e7%ad%96%e7%95%a5)
     - [Deployment回滚](#deployment%e5%9b%9e%e6%bb%9a)
+      - [RC滚动升级](#rc%e6%bb%9a%e5%8a%a8%e5%8d%87%e7%ba%a7)
   - [Pod扩缩容](#pod%e6%89%a9%e7%bc%a9%e5%ae%b9)
+    - [手动扩缩容](#%e6%89%8b%e5%8a%a8%e6%89%a9%e7%bc%a9%e5%ae%b9)
 - [深入理解Service](#%e6%b7%b1%e5%85%a5%e7%90%86%e8%a7%a3service)
+  - [外部服务Service](#%e5%a4%96%e9%83%a8%e6%9c%8d%e5%8a%a1service)
+  - [Headless Service](#headless-service)
+    - [Apache Cassandra简介](#apache-cassandra%e7%ae%80%e4%bb%8b)
+    - [通过Service动态查找Pod](#%e9%80%9a%e8%bf%87service%e5%8a%a8%e6%80%81%e6%9f%a5%e6%89%bepod)
+  - [从集群外部访问Pod和Service](#%e4%bb%8e%e9%9b%86%e7%be%a4%e5%a4%96%e9%83%a8%e8%ae%bf%e9%97%aepod%e5%92%8cservice)
 - [核心组件运行机制](#%e6%a0%b8%e5%bf%83%e7%bb%84%e4%bb%b6%e8%bf%90%e8%a1%8c%e6%9c%ba%e5%88%b6)
+  - [API-Server](#api-server)
+  - [Controller Manager](#controller-manager)
+    - [Replication Controller](#replication-controller-1)
+    - [Node Controller](#node-controller)
+    - [ResourceQuota Controller](#resourcequota-controller)
+    - [Namespace Controller](#namespace-controller)
+    - [Service Controller和Endpoints Controller](#service-controller%e5%92%8cendpoints-controller)
+  - [Scheduler](#scheduler)
+  - [kubelet](#kubelet)
+  - [kubeproxy](#kubeproxy)
 
 <!--more-->
 
@@ -1892,7 +1910,6 @@ k8s通过两类探针检查pod健康状态：LivenessProbe、ReadinessProbe。ku
 
 ## Pod调度
 
-
 ### Deployment与RC
 Deployment和RC的主要功能就是自动部署一个容器应用的多个副本并持续监控副本数量，在集群中始终维持指定的副本数量
 
@@ -1927,6 +1944,12 @@ nginx-deploy   3/3     3            3           49s
 NAME                     DESIRED   CURRENT   READY   AGE
 nginx-deploy-d46f5678b   3         3         3       115s
 ```
+
+Deployment配置文件spec重点参数：
+- replicas：副本数量
+- tempalte：Pod模板
+  - template.metadata：Pod元数据，至少要一个Label
+  - tamplate.spec：Pod规格，定义Pod中每个容器的属性
 
 ### NodeSelector
 若在实际情况中需要将Pod调度到指定的Node上，则可以通过Node的标签Label和Pod的nodeSelector相匹配来实现。
@@ -2118,13 +2141,99 @@ spec:
 
 
 ### Taints与Tolerations
+与亲和性相反，Taint（污点）让Node拒绝Pod的运行。
+
+Taint需要配合Toleration（容忍）使用，让Pod避开那些不适合的Node，在node设置了taint后，除非node声明能容忍这些污点，否则无法在这些node上运行。Toleration是Pod属性，让Pod能运行在标注了Taint的Node上。
+
+例：给node添加污点，键为key，值为value，效果为NoSchedule，除非Pod容忍，否则不调度到该Node
+```
+# kubectl taint node kubenode2 key=value:NoSchedule
+node/kubenode2 tainted
+```
+此时创建deployment等资源对象时，不会部署到污点node上。
+```
+# kubectl get pods -o wide
+NAME                                           READY   STATUS    RESTARTS   AGE   IP          NODE        NOMINATED NODE   READINESS GATES
+nginx-toleration-deployment-5f6d8b47d6-8kk8q   1/1     Running   0          45s   10.32.0.2   kubenode3   <none>           <none>
+nginx-toleration-deployment-5f6d8b47d6-fbqkm   1/1     Running   0          45s   10.32.0.3   kubenode3   <none>           <none>
+nginx-toleration-deployment-5f6d8b47d6-vm7vx   1/1     Running   0          45s   10.32.0.4   kubenode3   <none>           <none>
+```
+然后在Deployment中声明Toleration，表示允许调度到该污点Node
+```yaml
+......
+    spec:
+      containers:
+      - name: nginx-toleration-deployment
+        image: nginx
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 80
+      tolerations:
+      - key: "key"
+        operator: "Equal"
+        value: "value"
+        effect: "NoSchedule"
+或者
+      tolerations:
+      - key: "key"
+        operator: "Exists"
+        effect: "NoSchedule"
+```
+其中键值和effect需要和污点设置一致，并满足：
+- operator值为Exists，这样无需指定value
+- operator值为Equal，需要指定value并一致
+- 若不指定operator，则默认值为Equal
+- 空的key配合Exists能匹配所有键值
+- 空的effect能匹配所有的effect
+
+除了NoSchedule，还有另外两个effect
+- PreferNoSchedule：NoSchedule的软限制版本，只是尽量不调度到污点node，不强制
+- NoExecute：在该node上正在运行的所有无对应Toleration配置的Pod立刻被驱逐，且具有相应Toleration的Pod永远不被驱逐
+
+同个Node可配置多个污点，pod也可设置多个容忍，处理多个污点和容忍的顺序为：
+1. 先列出节点的所有污点
+2. 忽略Pod的容忍能匹配的部分
+3. 剩下的没有忽略的污点就是对Pod不会调度到的节点
+
+特殊情况：
+1. 若剩余污点中存在NoSchedule，则调度器不会把该Pod调度到这个节点
+2. 若剩余污点中没有NoSchedule，但有PreferNoSchedule，则调度器尽量不把Pod调度到这个节点
+3. 若剩余污点中有NoExecute，且Pod已经在该节点上运行，则会被驱逐，若还没有在该节点上运行，则不再会被调度到该节点
+
+对于NoExecute，若需要让已经在运行的Pod被逐出前还能运行一段时间，而不是立刻被逐出，则可以添加参数
+```yaml
+tolerationSeconds: 3600
+```
+
+若要将一些节点专门给特定应用使用，则可以通过添加污点
+```
+kubectl taint nodes <node_name> dedicated=<group_name>:NoSchedule
+```
+然后给这些应用Pod加入相应Toleration，带有合适Toleration的Pod就能使用这样的Node。
+
+若集群中有特殊硬件设备如GPU，希望只有相关特定Pod使用这些设备，可设置污点
+```
+kubectl taint nodes <node_name> special=true:NoSchedule或PreferNoSchedule
+```
+
+出于安全考虑，默认k8s不会将Pod调度到Master，若希望master也当做Node使用，则可以使用污点
+```
+kubectl taint node <master_name> node-role.kubernetes.io/master-
+```
+若要恢复Master Only状态，则使用
+```
+kubectl taint mode <master_name> mode-role.kubernetes.io/master="":NoSchedule
+```
 
 ### Pod Priority Preemption
 
 ### DaemonSet
 DaemonSet用于**管理在集群中每个Node上仅运行一份Pod的副本实例**。DaemonSet的Pod调度策略和RC类似，除了使用系统内置算法在每个Node上进行调度，也可以在Pod的定义中使用NodeSelector或NodeAffinity进行调度。
 
-例：集群的每个Node都创建一个fluentd-elasticsearch，并挂载两个主机目录
+例：集群的每个Node都创建一个fluentd-elasticsearch，并挂载两个主机目录。DaemonSet的配置与Deployment几乎一致
 ```yaml
 apiVersion: apps/v1
 kind: DaemonSet
@@ -2185,6 +2294,19 @@ updateStrategy:
   type: RollingUpdate
 ```
 
+DaemonSet的常见应用场景：
+- 节点上运行存储，如Glusterd或Ceph
+- 节点上运行日志收集，如Flunentd或Logstash
+- 节点上运行监控，如Prometheus Exporter或Collectd
+
+K8s也在运行自己的DaemonSet组件
+```
+# kubectl get daemonsets.apps --namespace=kube-system
+NAME         DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR            AGE
+kube-proxy   3         3         3       3            3           kubernetes.io/os=linux   8d
+weave-net    3         3         3       3            3           <none>                   8d
+```
+
 ### Job
 
 ### Cronjob
@@ -2192,17 +2314,482 @@ updateStrategy:
 ## 初始化容器Init Container
 
 ## Pod升级与回滚
+只要对Deployment的Pod定义进行修改并应用到Deployment对象上，即可完成Deployment的自动更新操作。若更新中发生错误，则可以通过回滚恢复Pod版本。
 
 ### Deployment升级
+例：创建nginx的Deployment，版本为1.7.9
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deploy
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.7.9
+        ports:
+        - containerPort: 80
+```
+然后需要升级到1.17.9版本，先通过`set`命令设置参数
+```
+# kubectl set image deployment/nginx-deploy nginx=nginx:1.17.9
+deployment.apps/nginx-deploy image updated
+```
+此时已经开始滚动升级了，立刻查看更新过程
+```
+# kubectl rollout status deployment nginx-deploy
+Waiting for deployment "nginx-deploy" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "nginx-deploy" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "nginx-deploy" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "nginx-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "nginx-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "nginx-deploy" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "nginx-deploy" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "nginx-deploy" rollout to finish: 1 old replicas are pending termination...
+deployment "nginx-deploy" successfully rolled out
+```
+再次查看Pod列表，能看到pod名称都已经更新了，可通过`describe`查看具体Pod情况，能看到Pod镜像已经更新。
+
+滚动升级的流程
+{% asset_img 8.png %}
+
+```
+Events:
+  Type    Reason             Age                From                   Message
+  ----    ------             ----               ----                   -------
+  Normal  ScalingReplicaSet  14s (x2 over 87m)  deployment-controller  Scaled up replica set nginx-deploy-5bf87f5f59 to 1
+  Normal  ScalingReplicaSet  11s (x2 over 87m)  deployment-controller  Scaled down replica set nginx-deploy-5df494d57d to 2
+  Normal  ScalingReplicaSet  11s                deployment-controller  Scaled up replica set nginx-deploy-5bf87f5f59 to 2
+  Normal  ScalingReplicaSet  8s (x2 over 93m)   deployment-controller  Scaled up replica set nginx-deploy-5bf87f5f59 to 3
+  Normal  ScalingReplicaSet  8s                 deployment-controller  Scaled down replica set nginx-deploy-5df494d57d to 1
+  Normal  ScalingReplicaSet  6s                 deployment-controller  Scaled down replica set nginx-deploy-5df494d57d to 0
+
+查看RS情况
+# kubectl get rs
+NAME                      DESIRED   CURRENT   READY   AGE
+nginx-deploy-5bf87f5f59   3         3         3       94m
+nginx-deploy-5df494d57d   0         0         0       90m
+```
+
+在整个升级过程中，系统会保证至少有两个Pod有用，并最多同时运行4个Pod。默认情况下，Deployment确保Pod总数至少为所需副本数量（DESIRED）-1，即最多一个不可用，Pod总数最多比所需Pod数多一个，即最多一个浪涌值（maxSurge=1）。这样，升级过程中Deployment就能保证服务不中断，且副本数量始终维持为用户指定数量。
+
+#### 更新策略
+在Deployment定义中，可通过`spec.strategy`指定Pod更新的策略，目前支持两种策略：
+- Recreate重建：设置`spec.strategy.type=Recreate`Deployment在更新Pod时，会先杀掉所有正在运行的Pod，然后重新创建Pod
+- RollingUpdate滚动更新：默认，设置`spec.strategy.type=RollingUpdate`，Deployment会以滚动更新方式逐个更新Pod，并可通过参数`maxUnavailable`和`maxSurge`控制滚动更新的过程
+  - `maxUnavailable`：指定Deployment在更新过程中不可用Pod的数量上限，可以是数字，或Pod期望副本数的百分比（会向下取整），默认为25%
+  - `maxSurge`：指定在Deployment更新过程中Pod总数超过Pod期望副本数部分的最大值，值类型同上，默认为25%
+
+多重更新（Rollover）：若在更新时再次发起更新，则会立刻将之前正在更新的RS停止扩容，且将其加入到旧版本RS列表中，并开始缩容至0。对于Pod，Deployment会立刻杀死创建的中间版本的Pod，并开始创建最后指定版本的Pod。
 
 ### Deployment回滚
+默认情况所有Deployment的发布历史记录都被保留在系统中，以便随时进行回滚。
+
+可通过以下命令查看Deployment更新状态
+```
+# kubectl rollout status deployment nginx-deploy
+deployment "nginx-deploy" successfully rolled out
+
+若更新出现问题，则会卡住
+# kubectl rollout status deployment nginx-deploy
+Waiting for deployment "nginx-deploy" rollout to finish: 1 out of 3 new replicas have been updated...
+
+# kubectl get rs
+NAME                      DESIRED   CURRENT   READY   AGE
+nginx-deploy-57574fd9dd   1         1         0       3m48s
+nginx-deploy-5bf87f5f59   0         0         0       6m44s
+nginx-deploy-5d85b5fb59   3         3         3       4m9s
+
+# kubectl get pods
+NAME                            READY   STATUS             RESTARTS   AGE
+nginx-deploy-57574fd9dd-k9hk2   0/1     ImagePullBackOff   0          73s  # 镜像拉取出错
+nginx-deploy-5d85b5fb59-gl2ch   1/1     Running            0          88s
+nginx-deploy-5d85b5fb59-lg79f   1/1     Running            0          91s
+nginx-deploy-5d85b5fb59-vtlt2   1/1     Running            0          86s
+```
+此时需要先查询之前的稳定版本的Deployment，注意REVISION版本
+```
+# kubectl rollout history deployment nginx-deploy
+deployment.apps/nginx-deploy
+REVISION  CHANGE-CAUSE
+1         kubectl create --filename=nginx-deploy.yml --record=true
+2         kubectl create --filename=nginx-deploy.yml --record=true
+9         kubectl create --filename=nginx-deploy.yml --record=true
+10        kubectl create --filename=nginx-deploy.yml --record=true
+```
+可通过`--revision`查看指定版本的详细信息
+```
+# kubectl rollout history deployment nginx-deploy --revision 2
+deployment.apps/nginx-deploy with revision #2
+Pod Template:
+  Labels:       app=nginx
+        pod-template-hash=7b45d69949
+  Annotations:  kubernetes.io/change-cause: kubectl create --filename=nginx-deploy.yml --record=true
+  Containers:
+   nginx:
+    Image:      nginx:1.16.1
+    Port:       80/TCP
+    Host Port:  0/TCP
+    Environment:        <none>
+    Mounts:     <none>
+  Volumes:      <none>
+```
+此时要退回到revision 2，则可以指定版本回滚
+```
+# kubectl rollout undo deployment nginx-deploy --to-revision=2
+deployment.apps/nginx-deploy rolled back
+```
+
+对于复杂的Deployment配置修改，为避免频繁触发Deployment的更新操作，可先暂停Deployment的更新操作，然后进行配置修改，再恢复Deployment，一次性触发完整的更新操作。
+
+暂停Deployment的更新
+```
+# kubectl rollout pause deployment nginx-deploy
+deployment.apps/nginx-deploy paused
+```
+修改完成后恢复Deployment的部署
+```
+# kubectl rollout resume deployment nginx-deploy
+deployment.apps/nginx-deploy resumed
+```
+**注：暂停Deployment期间是不能进行回滚的**
+
+#### RC滚动升级
+K8s通过配置文件进行
+
+例：RC redis-master的v1版本升级到v2版本
+```yaml
+# RC的v1版本的配置
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: redis-master
+  labels:
+    name: redis-master
+    version: v1
+......
+    spec:
+      containers:
+        - name: redis-master
+          image: kubeguide/redis-master:1.0
+          ports:
+            - containerPort: 6379
+
+# kubectl get rc -o wide
+NAME              DESIRED   CURRENT   READY   AGE     CONTAINERS        IMAGES                       SELECTOR
+redis-master-v1   3         3         0       3m18s   redis-master-v1   kubeguide/redis-master:1.0   name=redis-master,version=v1
+
+# RC的v2版本的配置，是修改的v1的配置文件
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: redis-master-v2
+  labels:
+    name: redis-master
+    version: v2
+......
+    spec:
+      containers:
+      - name: redis-master-v2
+        image: kubeguide/redis-master:2.0
+        ports:
+        - containerPort: 6379
+      minReadySeconds: 5
+      strategy:
+        type: RollingUpdate
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 1
+```
 
 
 ## Pod扩缩容
+### 手动扩缩容
+```
+kubectl scale deployment <deployment-name> --replicas=<replicas-number>
+```
+若设置为比当前副本数量更小的数字，则会杀死一些正在运行的pod
+
+```
+# kubectl get deployments
+NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deploy   3/3     3            3           5h42m
+
+[root@kubenode1 ~]# kubectl scale deployment nginx-deploy --replicas=5
+deployment.apps/nginx-deploy scaled
+
+# kubectl get deployments
+NAME           READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deploy   5/5     5            5           5h43m
+```
 
 # 深入理解Service
+通过创建Service可为一组具有相同功能的容器应用提供一个统一的入口地址，并且将请求负载分发到后端的各个容器应用上。
+
+两种方法创建Service：
+- 先创建RC或Deployment，然后执行
+  ```
+  kubectl expose rc|deployment <rc-name|deployment-name>
+  ```
+  然后查看服务
+  ```
+  # kubectl get svc
+  NAME                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+  kubernetes                 ClusterIP   192.168.10.1     <none>        443/TCP    4d1h
+  webapp-tomcat              ClusterIP   192.168.10.144   <none>        8080/TCP   5m47s
+  webapp-tomcat-deployment   ClusterIP   192.168.10.67    <none>        8080/TCP   5m40s
+  ```
+  就可通过ClusterIP加上端口访问该服务了
+- 直接YAML创建Service
+  ```yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: webapp-tomcat-service
+  spec:
+    selector:
+      app: webapp-tomcat-service
+    ports:
+    - port: 808
+      targetPort: 8080
+  ```
+  Service的关键字段为ports和selector。posts为提供给外部访问的端口，selector为后端pod的label。
+
+Service的Pod被k8s进行负载负载均衡，具体有两种分发策略：
+- RoundRobin：轮询（默认）
+- SessionAffinity：基于客户端IP进行会话保持。相同客户端IP的请求分到同一个Pod上。若要修改为此模式，则需要在配置中spec下添加
+  ```yaml
+  sessionAffinity: ClientIP
+  ```
+
+**若服务开放多个端口，则需要在每个端口定义内加上`name`定义。且端口定义中可指定传输层协议，通过添加`protocol`定义。**
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-dns
+spec:
+  selector:
+    app: app-dns
+  clusterIP: 192.168.10.200
+  ports:
+  - port: 53
+    protocol: TCP
+    name: dns-tcp
+  - port: 53
+    protocol: UDP
+    name: dns-udp
+```
+
+## 外部服务Service
+若应用需要连接一个外部数据库，或将另一个集群或Namespace中服务作为服务的后端，这时需要创建一个无Label Selector的Service。
+
+例：一个无标签http服务，开放端口80，但指向另一个http服务，目的IP为10.1.1.2
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nolabel-http-service
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: nolabel-http-service
+subsets: 
+- addresses:
+  - ip: 10.1.1.2
+  ports:
+  - port: 80
+```
+分别创建一个无标签Service和一个Endpoint，因为**系统不会自动创建Endpoint，且该Endpoint需要和Service同名**，指向实际后端访问IP。
+
+## Headless Service
+若需要自己控制负载均衡策略，而不使用Service默认负载策略，则可使用Headless Service，**不为Service设置ClusterIP，仅通过Label Selector将后端Pod列表返回给调用的客户端。**不指定特定的ClusterIP，访问该service将会返回所有标签为app=nginx的Pod列表，然后客户端自定义策略如何处理该列表。StatefulSet就是使用Headless Service为客户端返回多个服务地址的。Headless Service主要应用在**去中心化的应用集群**。
+
+例：创建Headless nginx服务
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-nginx
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+  clusterIP: None
+```
+查看该服务
+```
+# kubectl get service headless-nginx
+NAME             TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+headless-nginx   ClusterIP   None         <none>        80/TCP    49m
+```
+
+### Apache Cassandra简介
+Apache Cassandra是一套开源分布式NoSQL数据库，并不是单个数据库，而是由一组数据库节点共同构成的一个分布式的集群数据库。由于Cassandra使用的是去中心化模式，所以在集群中的一个节点启动后，需要获知集群中新节点的加入，对此Cassandra使用Seed完成节点之间发现和通信。
+
+Cassandra使用了Google 设计的 BigTable的数据模型，与关系型数据库或key-value数据库不同，Cassandra使用的是*宽列存储模型(Wide Column Stores)*，每行数据由*row key*唯一标识之后，可以有最多20亿个列，每个列有一个*column key*标识，每个*column key*下对应若干*value*。这种模型可以理解为是一个二维的key-value存储，即整个数据模型被定义成一个类似`map<key1, map<key2,value>>`的类型。
+Cassandra的数据并不存储在分布式文件系统如GFS或HDFS中，而是直接存于本地。与BigTable一样，Cassandra也是日志型数据库，即把新写入的数据存储在内存的Memtable中并通过磁盘中的CommitLog来做持久化，这种系统的特点是写入比读取更快，因为写入一条数据是顺序计入commit log中，不需要随机读取磁盘以及搜索。
+
+Cassandra结合Headless Service可实现Cassandra节点之间互相查找和集群的自动搭建。
+
+### 通过Service动态查找Pod
+由于pod的创建和销毁都会实时更新Service的Endpoint数据，所以可动态对Service的后端Pod进行查询，因此一个Cassandra节点只需要查询到其他节点就能自动组成一个集群。
+
+Cassandra节点加入集群的过程
+{% asset_img 5.png %}
+
+1. 新节点出现会更新Service的Endpoint
+2. Master获取Service的后端Endpoint，将新Pod加入集群
+
+创建服务cassandra，并打上标签app=cassandra，且selector也选择app=cassandra。
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra
+  labels: 
+    app: cassandra
+spec:
+  selector:
+    app: cassandra
+  ports:
+  - port: 9042
+```
+创建RC
+```yaml
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: cassandra
+spec:
+  replicas: 2
+  selector:
+    app: cassandra
+  template:
+    metadata:
+      name: cassandra
+      labels:
+        app: cassandra
+    spec:
+      containers:
+      - name: cassandra
+        image: cassandra
+        ports:
+        - containerPort: 9042
+          name: cql
+        - containerPort: 9160
+          name: thrift
+        volumeMounts:
+        - mountPath: /cassandra_data
+          name: data
+        command: 
+        - /run.sh
+        res
+      volumes:
+      - name: data
+        emptyDir: {}
+```
+
+
+## 从集群外部访问Pod和Service
+
 
 # 核心组件运行机制
+## API-Server
+APIserver的功能：
+- 提供K8s各资源对象的增删改查及Watch等REST接口，是整个系统的数据总线和数据中心
+- 是集群管理的API入口
+- 是资源配额控制的入口
+- 提供完备的集群安全机制
+
+默认kube-apiserver在master上8080端口提供服务，也可启动HTTPS安全端口启动安全机制。
+
+常见REST API：
+- apiserver支持的资源对象列表：`localhost:8080/api/v1`
+- pod列表：`localhost:8080/api/pods`
+- service列表：`localhost:8080/api/services`
+- RC列表：`localhost:8080/api/replicationcontrollers`
+- 等
+
+若只要对外暴露部分REST，则需要在Master或其他节点运行proxy，在8001端口启动代理拒绝客户端访问RC的API
+```
+kubectl proxy --reject-paths="^/api/v1/replicationcontrollers" --port=8001 --v=2
+```
+然后访问该REST查看
+```
+# curl localhost:8001/api/v1/replicationcontrollers
+Forbidden
+```
+
+K8s apiserver本身就是一个Service，名叫kubernetes，且ClusterIP就是地址池的第一个地址，端口是HTTPS/443
+```
+# kubectl get service
+NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+kubernetes   ClusterIP   192.168.10.1   <none>        443/TCP   6d2h
+```
+
+K8s设计通过以下方式最大程度保证API server的性能：
+- API server的底层代码性能高，使用了协程和队列的并发代码
+- 普通List接口结合异步Watch接口，解决了资源对象高性能同步问题并提高了响应事件的灵敏度
+- 采用etcd解决了数据可靠性问题，提升了APIserver数据访问层的性能
+
+API Server架构：
+- API层：以REST提供各种API
+- 访问控制层：当客户端访问API时负责对用户身份的鉴权，进行访问控制（许可逻辑Admission Controll）
+- 注册表层：K8s将所有资源对象都保存在注册表（Registry）中，包含了资源对象类型、如何创建资源对象、如何转换资源版本、如何将资源编码和解码为Json或ProtoBuf格式
+- etcd数据库
+
+{% asset_img 6.png %}
+
+完整Pod的调度机制List-Watch
+1. API server通过etcd提供的Watch API监听etcd上发生的数据操作，如Pod创建更新等，etcd会及时通知APIserver。当一个ReplicaSet对象被创建并保存到etcd后，etcd立刻发送一个Create事件给API Server。
+2. API Server通过自身的Watch接口获取它们感兴趣的任务资源对象的相关事件。
+3. K8s List-Watch实现数据同步，客户端先调用API server的List接口获取相关资源对象的全量数据并缓存到内存中，然后启动对应资源对象的Watch协程，接收到Watch事件后根据事件类型对内存的全量资源对象列表同步修改，能达到近乎实时的数据同步
+
+{% asset_img 7.png %}
+
+所有K8s内建的资源对象实现都包含以下功能：
+- 元数据（Schema）定义：定义了资源对象的数据结构
+- 校验逻辑：确保用户提交的资源对象属性的合法性
+- CRUD代码
+- 自动控制器：确保对应资源对象的数量、状态、行为始终符合用户期望
+
+## Controller Manager
+在K8s中，每个Controller都是一个功能系统，通过APIServer提供的List-Watch接口实时监控集群中特定资源的状态变化，当发生各种故障导致资源对象状态变化时，Controller会尝试将其状态调整为期望的状态。Controller Manager是K8s各种Controller的管理者，是集群内的管理控制中心和自动化的核心。
+
+### Replication Controller
+
+### Node Controller
+
+### ResourceQuota Controller
+
+### Namespace Controller
+
+### Service Controller和Endpoints Controller
+
+## Scheduler
+
+## kubelet
+
+## kubeproxy
+
+
 
 > 参考文章
 >
@@ -2219,11 +2806,11 @@ updateStrategy:
 > Docker 高级应用实战——李振良——视频课程
 >
 > Kubernetes 权威指南（第四版）
+>
+> 每天5分钟玩转Kubernetes
 > 
 > [Kubernetes 1.12.2 版，使用 docker 镜像安装](http://blog.51cto.com/12331508/2315352?source=dra)
 >
 > [Kubernetes：如何解决从 k8s.gcr.io 拉取镜像失败问题](https://blog.csdn.net/jinguangliu/article/details/82792617)
 >
 > [Kubernetes: 21 天完美通关](https://blog.51cto.com/cloumn/detail/87)
->
-> [Etcd 集群搭建](https://mritd.me/2016/09/01/Etcd-%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/)
