@@ -2628,6 +2628,7 @@ nginx-deploy-5df494d57d   0         0         0       90m
 - RollingUpdate 滚动更新：默认，设置`spec.strategy.type=RollingUpdate`，Deployment 会以滚动更新方式逐个更新 Pod，并可通过参数`maxUnavailable`和`maxSurge`控制滚动更新的过程
   - `maxUnavailable`：指定 Deployment 在更新过程中不可用 Pod 的数量上限，可以是数字，或 Pod 期望副本数的百分比（会向下取整），默认为 25%
   - `maxSurge`：指定在 Deployment 更新过程中 Pod 总数超过 Pod 期望副本数部分的最大值，值类型同上，默认为 25%
+  - `maxSurge`越大，初始创建的新副本数量越多。`maxUnavailable`越大，初始销毁的旧副本数量越多。
 
 多重更新（Rollover）：若在更新时再次发起更新，则会立刻将之前正在更新的 RS 停止扩容，且将其加入到旧版本 RS 列表中，并开始缩容至 0。对于 Pod，Deployment 会立刻杀死创建的中间版本的 Pod，并开始创建最后指定版本的 Pod。
 
