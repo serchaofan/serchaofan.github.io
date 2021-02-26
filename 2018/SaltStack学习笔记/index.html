@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta property="og:type" content="article">
+<meta property="og:title" content="SaltStack学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/logo.svg">
+<meta property="og:image" content="https://github.com/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+<meta property="article:published_time" content="2018-11-16T08:09:09.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.604Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="运维">
+<meta property="article:tag" content="自动化">
+<meta property="article:tag" content="SaltStack">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/logo.svg">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>SaltStack学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SaltStack学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-11-16 16:09:09" itemprop="dateCreated datePublished" datetime="2018-11-16T16:09:09+08:00">2018-11-16</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <img src="/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/logo.svg" class="">
+<span id="more"></span>
+<ul>
+<li><a href="#salt-%e6%a6%82%e8%bf%b0">Salt 概述</a>
+<ul>
+<li><a href="#saltstack-%e6%9e%b6%e6%9e%84">SaltStack 架构</a></li>
+</ul>
+</li>
+<li><a href="#saltstack-%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2">SaltStack 安装部署</a>
+<ul>
+<li><a href="#master-%e8%bf%81%e7%a7%bb">Master 迁移</a></li>
+<li><a href="#returner">returner</a>
+<ul>
+<li><a href="#syslog">syslog</a></li>
+<li><a href="#mysql">mysql</a></li>
+</ul>
+</li>
+<li><a href="#event">event</a></li>
+<li><a href="#%e5%88%86%e7%bb%84">分组</a></li>
+<li><a href="#%e5%b8%b8%e7%94%a8%e6%a8%a1%e5%9d%97">常用模块</a>
+<ul>
+<li><a href="#archive">archive</a></li>
+<li><a href="#cmd">cmd</a></li>
+<li><a href="#cp">cp</a></li>
+<li><a href="#cron">cron</a></li>
+<li><a href="#dnsutil">dnsutil</a></li>
+<li><a href="#file">file</a></li>
+<li><a href="#network">network</a></li>
+<li><a href="#pkg">pkg</a></li>
+<li><a href="#service">service</a></li>
+<li><a href="#status">status</a></li>
+<li><a href="#saltutil">saltutil</a></li>
+<li><a href="#state">state</a></li>
+<li><a href="#user">user</a></li>
+<li><a href="#group">group</a></li>
+<li><a href="#partition">partition</a></li>
+<li><a href="#system">system</a></li>
+<li><a href="#pillar">pillar</a></li>
+<li><a href="#nginx">nginx</a></li>
+<li><a href="#test">test</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86">配置管理</a>
+<ul>
+<li><a href="#%e4%bd%bf%e7%94%a8%e6%a8%a1%e6%9d%bf">使用模板</a></li>
+<li><a href="#grains">grains</a></li>
+<li><a href="#pillar-1">pillar</a></li>
+<li><a href="#syndic">syndic</a></li>
+<li><a href="#job">Job</a></li>
+<li><a href="#schedule">Schedule</a></li>
+</ul>
+</li>
+<li><a href="#salt-ssh">Salt SSH</a></li>
+</ul>
+<h1 id="salt-概述"><a class="markdownIt-Anchor" href="#salt-概述"></a> Salt 概述</h1>
+<p>Salt 是一个配置管理系统，能够维护预定义状态的远程节点，是一个分布式远程执行系统，用来在远程节点上执行命令和查询数据。Salt 基于 Python 开发，提供大量 python 接口。底层使用 ZeroMQ 消息队列 pub/sub 方式通信。采用 RSA key 认证身份。</p>
+<p>Salt 的核心功能</p>
+<ul>
+<li>使命令发送到远程系统是<strong>并行</strong>的而不是串行的</li>
+<li>使用安全加密的协议</li>
+<li>使用最小最快的网络载荷</li>
+<li>提供简单的编程接口</li>
+</ul>
+<p>Salt 同样引入了更加细致化的领域控制系统来远程执行，使得系统成为目标不止可以通过主机名，还可以通过系统属性。</p>
+<p>SaltStack 是围绕 Salt 开发的一系列技术栈，具有三大功能：</p>
+<ul>
+<li>远程管理（Remote Execution）</li>
+<li>配置管理（Config Management）</li>
+<li>云管理（Cloud Management）</li>
+</ul>
+<h2 id="saltstack-架构"><a class="markdownIt-Anchor" href="#saltstack-架构"></a> SaltStack 架构</h2>
+<p>SaltStack 基于 C/S 架构，服务器端称为 Master，客户端称为 Minion。中间件使用的是 ZeroMQ。</p>
+<p>Salt 的三种运行方式：1. Local 本地 2. Master/Minion（C/S 架构） 3. Salt SSH（无客户端）</p>
+<h1 id="saltstack-安装部署"><a class="markdownIt-Anchor" href="#saltstack-安装部署"></a> SaltStack 安装部署</h1>
+<p>先去<a target="_blank" rel="noopener" href="https://repo.saltstack.com/">saltstack 官网下载源</a>，选系统以及 python 版本对应的源，安装后再安装 salt 的所有部件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">salt                # salt主程序</span><br><span class="line">salt-api            # salt的REST API</span><br><span class="line">salt-cloud          # salt云配置器</span><br><span class="line">salt-minion         # salt的客户端部件</span><br><span class="line">salt-master         # salt的管理部件</span><br><span class="line">salt-ssh            # salt的无客户端版本，使用的是ssh通信</span><br><span class="line">salt-syndic         # salt的master-of-master组件</span><br></pre></td></tr></table></figure>
+<p>安装完成后，使用<code>systemctl start salt-master</code>启动 salt 服务器端，同时会自动开启两个端口<code>4505</code>和<code>4506</code>。</p>
+<ul>
+<li>4505：salt 的消息发布专用端口</li>
+<li>4506：服务器与客户端通信的端口</li>
+</ul>
+<p>可以通过<code>salt-master</code>命令管理 salt-master。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">-c           # 指定配置文件</span><br><span class="line">--saltfile   # 指定saltfile路径，若不指定，会在当前目录查找</span><br><span class="line">-u           # 指定运行用户</span><br><span class="line">-d           # 后台运行</span><br><span class="line">--pid-file   # 指定pid文件</span><br><span class="line">--log-level  # 指定日志等级（控制台）</span><br><span class="line">--log-file   # 指定日志文件</span><br><span class="line">--log-file-level  # 指定日志等级（日志文件）</span><br></pre></td></tr></table></figure>
+<p>在客户端上，只要安装<code>salt-minion</code>即可。安装完成后启动<code>systemctl start salt-minion</code>即可。</p>
+<p>启动进程后，无论是 salt 的哪个部件，都会在<code>/var/log/salt/</code>中创建一个日志文件，名字就是组件名，如<code>master</code>、<code>minion</code>。</p>
+<p>日志的默认级别为 warning，可通过 master 配置文件的<code>log_level</code>参数配置</p>
+<p>在客户端配置文件中，找到参数<code>master</code>，配置的是服务器端的主机标识，默认叫<code>salt</code>，于是修改<code>/etc/hosts</code>，添加服务器端 IP 和标识 salt。</p>
+<p>注意：客户端和服务器的防火墙一定要方形 4505 和 4506 端口，否则公钥无法传递。</p>
+<p>在服务端查看日志，说明已经开始进行认证了，但此时认证没有通过。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[salt.transport.mixins.auth][INFO    ][32699] Authentication request from s4</span><br><span class="line">[salt.transport.mixins.auth][INFO    ][32699] New public key for s4 placed in pending</span><br><span class="line">[salt.transport.mixins.auth][INFO    ][32708] Authentication request from s3</span><br><span class="line">[salt.transport.mixins.auth][INFO    ][32708] New public key for s3 placed in pending</span><br></pre></td></tr></table></figure>
+<p>在服务端上<code>salt-key -L</code>查看公钥</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># salt-key -L</span><br><span class="line">Accepted Keys:</span><br><span class="line">Denied Keys:</span><br><span class="line">Unaccepted Keys:</span><br><span class="line">s3</span><br><span class="line">s4</span><br><span class="line">Rejected Keys:</span><br></pre></td></tr></table></figure>
+<p>添加这两个密钥即可<code>salt-key -a s3</code>和<code>salt-key -a s4</code>即可</p>
+<p>在添加前，两个未认证的密钥是存放在<code>/etc/salt/pki/master/minions_pre</code>目录下的，在认证后，就会转移到<code>minions</code>目录下，并且客户端的<code>/etc/salt/pki/minion</code>目录中会生成 master 公钥<code>minion_master.pub</code>。</p>
+<p><code>salt-key</code>命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">-L     # 列出所有公钥</span><br><span class="line">-a     # 允许指定的公钥</span><br><span class="line">-A     # 允许所有公钥</span><br><span class="line">-r     # 拒绝指定公钥</span><br><span class="line">-R     # 拒绝所有公钥</span><br><span class="line">-d     # 删除指定公钥</span><br><span class="line">-D     # 删除所有公钥</span><br></pre></td></tr></table></figure>
+<p>注：当客户端启动 salt-minion 时，会自动将主机名写入到<code>/etc/salt/minion_id</code>中，并且还会生成<code>/etc/salt/pki/</code>中的密钥等参数，如果修改了主机名，一定要将该<code>minion_id</code>和<code>pki</code>目录都删除，然后重启 salt-minion。而且还要在 master 上删除该主机原来的 key，重新接受新的 key，再重启服务。一旦服务端与客户端的 key 不一致，客户端会自动停止 minion 进程。</p>
+<p>测试是否与客户端正常通信</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># salt &quot;*&quot; test.ping            # &#39;*&#39;是正则表达式，匹配所有通过认证的客户端</span><br><span class="line">s4:</span><br><span class="line">    True</span><br><span class="line">s3:</span><br><span class="line">    True</span><br></pre></td></tr></table></figure>
+<p>可以通过<code>salt '*' sys.doc</code>查看可用函数，或通过<a target="_blank" rel="noopener" href="http://docs.saltstack.cn/ref/modules/all/index.html">网页</a>查看</p>
+<p>salt 命令匹配主机的常用参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">-E        # 正则匹配</span><br><span class="line">-L        # 以主机id为列表匹配</span><br><span class="line">-G        # 根据主机的grains信息匹配</span><br><span class="line">-I        # 根据主机的pillar信息匹配</span><br><span class="line">-N        # 根据master的配置文件中分组匹配</span><br><span class="line">-C        # 根据条件运算符or\not\and匹配</span><br><span class="line">-S        # 根据主机IP或子网匹配</span><br><span class="line">-b        # 设置操作的minion的个数，可设置数字，或百分比（对于所有minion）</span><br></pre></td></tr></table></figure>
+<p>master 配置文件常用配置参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">interface: 0.0.0.0            # 网卡绑定的地址，一般保持默认即可</span><br><span class="line">publish_port: 4505            # 发布端口，默认4505</span><br><span class="line">user: root                    # 启动用户</span><br><span class="line">ret_port: 4506                # 接收消息的端口，默认4506</span><br><span class="line">max_open_files: 100000        # 最大同时打开文件数，尽量设大些</span><br><span class="line">worker_threads: 5             # 启动的线程数，不得小于3</span><br><span class="line">cachedir: &#x2F;var&#x2F;cache&#x2F;salt&#x2F;master  # 存储任务和缓存的目录</span><br><span class="line">keep_jobs: 24                 # 执行命令结果的缓存时间</span><br><span class="line">timeout: 5                    # salt命令或API的连接超时时间</span><br><span class="line">job_cache: True               # master是否缓存任务执行结果，若管理主机超过5000台，最好换其他方式存储。</span><br></pre></td></tr></table></figure>
+<p>minion 配置文件常用配置参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">master: salt         # 设置master，可以是fqdn，或IP地址</span><br><span class="line">retry_dns: 30        # 使用dns解析域名前等待的时间</span><br><span class="line">master_port: 4506    # 向master发送结果信息的端口</span><br><span class="line">cache_jobs: False    # 是否在本地缓存执行结果，默认不缓存，因为结果都发往master</span><br><span class="line">backup_mode: minion  # 当文件改变时会对该文件备份</span><br></pre></td></tr></table></figure>
+<h2 id="master-迁移"><a class="markdownIt-Anchor" href="#master-迁移"></a> Master 迁移</h2>
+<p>首先在原先的 Master 上将<code>/etc/salt/pki</code>目录打包<code>tar -cf pki.tar /etc/salt/pki</code></p>
+<p>将该 tar 包传到新的 Master 上的<code>/etc/salt/</code>中，然后解压。</p>
+<p>在原 Master 上执行操作，更改 minion 客户端上的 hosts 文件。先查看一下客户端上原配置，然后修改为新的 MasterIP 地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"># salt &quot;*&quot; cmd.run &#39;grep salt &#x2F;etc&#x2F;hosts&#39;</span><br><span class="line">s3:</span><br><span class="line">    172.16.246.131    salt</span><br><span class="line">s4:</span><br><span class="line">    172.16.246.131   salt</span><br><span class="line"></span><br><span class="line"># salt &#39;*&#39; cmd.run &quot;sed -i &#39;s&#x2F;172.16.246.131&#x2F;172.16.246.133&#x2F;g&#39; &#x2F;etc&#x2F;hosts&quot;</span><br><span class="line">s4:</span><br><span class="line">s3:</span><br><span class="line"></span><br><span class="line"># salt &#39;*&#39; cmd.run &quot;grep salt &#x2F;etc&#x2F;hosts&quot;</span><br><span class="line">s4:</span><br><span class="line">    172.16.246.133   salt</span><br><span class="line">s3:</span><br><span class="line">    172.16.246.133    salt</span><br></pre></td></tr></table></figure>
+<p>然后仍在原 master 上执行命令，重启客户端的 salt-minion</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># salt &#39;*&#39; service.restart salt-minion</span><br><span class="line">s3:</span><br><span class="line">    True</span><br><span class="line">s4:</span><br><span class="line">    True</span><br></pre></td></tr></table></figure>
+<p>执行完成后，原 Master 已经无法对客户端操作了，在新的 Master 上测试。确保新 Master 上将两台主机的密钥接受了。使用<code>salt '*' test.ping</code>，操作成功，Master 迁移完成。</p>
+<h2 id="returner"><a class="markdownIt-Anchor" href="#returner"></a> returner</h2>
+<p>salt 客户端通过 returner 接口，向服务器端返回数据。在服务器端的 salt 命令可以添加参数<code>--return</code>决定将返回的数据存储在哪。<a target="_blank" rel="noopener" href="http://docs.saltstack.cn/ref/returners/all/index.html#all-salt-returners">returner 列表</a></p>
+<h3 id="syslog"><a class="markdownIt-Anchor" href="#syslog"></a> syslog</h3>
+<p>将数据返回到主机操作系统的 syslog 工具。必需的 python 模块：syslog，json</p>
+<p>syslog returner 只是重用操作系统的 syslog 工具来记录返回数据。</p>
+<p><code>salt '*' network.interfaces --return syslog</code></p>
+<p>在客户端上查看<code>/var/log/messages</code>，可看到信息返回为 json 格式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">s4 &#x2F;salt-minion: &#123;&quot;return&quot;: &#123;&quot;ens33&quot;: &#123;&quot;up&quot;: true, &quot;hwaddr&quot;: &quot;00:0c:29:15:5f:47&quot;, &quot;inet6&quot;: [&#123;&quot;scope&quot;: &quot;link&quot;, &quot;address&quot;: &quot;fe80::905f:45b9:8486:c538&quot;, &quot;prefixlen&quot;: &quot;64&quot;&#125;], &quot;inet&quot;: [&#123;&quot;label&quot;: &quot;ens33&quot;, &quot;netmask&quot;: &quot;255.255.255.0&quot;, &quot;address&quot;: &quot;172.16.246.136&quot;, &quot;broadcast&quot;: &quot;172.16.246.255&quot;&#125;]&#125;, &quot;lo&quot;: &#123;&quot;up&quot;: true, &quot;hwaddr&quot;: &quot;00:00:00:00:00:00&quot;, &quot;inet6&quot;: [&#123;&quot;scope&quot;: &quot;host&quot;, &quot;address&quot;: &quot;::1&quot;, &quot;prefixlen&quot;: &quot;128&quot;&#125;], &quot;inet&quot;: [&#123;&quot;label&quot;: &quot;lo&quot;, &quot;netmask&quot;: &quot;255.0.0.0&quot;, &quot;address&quot;: &quot;127.0.0.1&quot;, &quot;broadcast&quot;: null&#125;]&#125;&#125;, &quot;jid&quot;: &quot;20181117111540048278&quot;, &quot;success&quot;: true, &quot;id&quot;: &quot;s4&quot;, &quot;fun&quot;: &quot;network.interfaces&quot;, &quot;retcode&quot;: 0, &quot;fun_args&quot;: []&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="mysql"><a class="markdownIt-Anchor" href="#mysql"></a> mysql</h3>
+<p>将数据返回到 mysql 中。需要服务器端有<code>pymysql</code>模块，客户端有 python 的 mysql 客户端模块。</p>
+<p>master 和 minion 中有关于 returner 的配置，默认包含 mysql，但要启用仍然要配置。在 minion 的配置文件取消<code>return: mysql</code>注释，并添加以下参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql.host: &#39;172.16.246.133&#39;</span><br><span class="line">mysql.user: &#39;salt&#39;</span><br><span class="line">mysql.pass: &#39;salt&#39;</span><br><span class="line">mysql.db: &#39;salt&#39;</span><br><span class="line">mysql.port: &#39;3306&#39;</span><br></pre></td></tr></table></figure>
+<p>由于每台服务器都要和 mysql 连接，会使得 mysql 服务器的压力很大，在实际环境中不会这样调用。</p>
+<h2 id="event"><a class="markdownIt-Anchor" href="#event"></a> event</h2>
+<p>Salt Event System 是一个本地的 ZeroMQ pub interface，用于触发事件，使第三方应用程序或外部进程能够对 Salt 内的行为做出反应，发送信息通知 salt 或其他操作系统。</p>
+<p>事件系统由两个主要组件组成：</p>
+<ul>
+<li>发布事件的事件套接字（event sockets）。</li>
+<li>事件库（event library）可以监听事件并将事件发送到 salt 系统。</li>
+</ul>
+<p>每个 event 都有一个标签，事件标签允许快速置顶过滤事件，且每个 event 都有一个数据结构，是一个 dict 类型，包含事件的信息。</p>
+<h2 id="分组"><a class="markdownIt-Anchor" href="#分组"></a> 分组</h2>
+<p>master 配置文件中<code>nodegroups</code>块用于设置分组。也可以在<code>master.d/</code>中创建独立的 nodegroups 配置文件。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#nodegroups:</span></span><br><span class="line"><span class="comment">#  group1: &#x27;L@foo.domain.com,bar.domain.com,baz.domain.com or bl*.domain.com&#x27;</span></span><br><span class="line"><span class="comment">#  group2: &#x27;G@os:Debian and foo.domain.com&#x27;</span></span><br><span class="line"><span class="comment">#  group3: &#x27;G@os:Debian and N@group1&#x27;</span></span><br><span class="line"><span class="comment">#  group4:        # 列表写法，等同于 G@foo:bar or G@foo: baz</span></span><br><span class="line"><span class="comment">#    - &#x27;G@foo:bar&#x27;</span></span><br><span class="line"><span class="comment">#    - &#x27;or&#x27;</span></span><br><span class="line"><span class="comment">#    - &#x27;G@foo:baz&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>分组可设置的匹配规则</p>
+<table>
+<thead>
+<tr>
+<th>Letter</th>
+<th>含义</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G</td>
+<td>Grains glob 匹配</td>
+<td><code>G@os: Ubuntu</code></td>
+</tr>
+<tr>
+<td>E</td>
+<td>PCRE minion id 匹配</td>
+<td><code>E@web\d+\.(dev|qa|prod)\.loc</code></td>
+</tr>
+<tr>
+<td>P</td>
+<td>Grains PCRE 匹配</td>
+<td><code>P@os: (RedHat | Fedora | CentOS)</code></td>
+</tr>
+<tr>
+<td>L</td>
+<td>minions 列表</td>
+<td><code>L@minion1, minion2</code></td>
+</tr>
+<tr>
+<td>I</td>
+<td>Pillar glob 匹配</td>
+<td><code>I@pdata: foobar</code></td>
+</tr>
+<tr>
+<td>S</td>
+<td>子网/IP 匹配</td>
+<td><code>S@192.168.1.0/24 or S@192.168.1.100</code></td>
+</tr>
+<tr>
+<td>R</td>
+<td>Range Cluster 匹配</td>
+<td><code>R@foo.bar</code></td>
+</tr>
+<tr>
+<td>D</td>
+<td>Minion Data 匹配</td>
+<td><code>D@key: value</code></td>
+</tr>
+<tr>
+<td>C</td>
+<td>Compound 匹配（可匹配多种上面的匹配规则，称为混搭匹配）</td>
+<td><code>G@os: Ubuntu and I@pdata: foobar or web*</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="常用模块"><a class="markdownIt-Anchor" href="#常用模块"></a> 常用模块</h2>
+<p>可使用<code>sys.list_modules</code>列出所有可用模块，可使用<code>sys.doc</code>查看指定模块的用法</p>
+<h3 id="archive"><a class="markdownIt-Anchor" href="#archive"></a> archive</h3>
+<ul>
+<li><code>gunzip</code>：解压 gzip</li>
+<li><code>gzip</code>：gzip 压缩</li>
+<li><code>rar</code>：rar 压缩</li>
+<li><code>unrar</code>：rar 解压</li>
+<li><code>unzip</code>：zip 解压</li>
+<li><code>zip</code>：zip 压缩</li>
+<li><code>tar</code>：打包</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">salt &#39;*&#39; archive.gzip &#x2F;tmp&#x2F;file.gz &#x2F;root&#x2F;a.yml</span><br><span class="line">salt &#39;*&#39; archive.gunzip &#x2F;tmp&#x2F;file.gz &#x2F;root&#x2F;</span><br></pre></td></tr></table></figure>
+<h3 id="cmd"><a class="markdownIt-Anchor" href="#cmd"></a> cmd</h3>
+<ul>
+<li><code>run</code>：运行命令</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">salt &#39;*&#39; cmd.run &#39;free -m&#39;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>script</code>：执行脚本</li>
+</ul>
+<h3 id="cp"><a class="markdownIt-Anchor" href="#cp"></a> cp</h3>
+<ul>
+<li><code>get_dir</code>：</li>
+<li><code>cache_file</code>：</li>
+<li><code>cache_files</code>：</li>
+<li><code>cache_local_file</code>：</li>
+<li><code>cache_master</code>：</li>
+<li><code>get_file</code>：</li>
+<li><code>get_file_str</code>：</li>
+<li><code>get_url</code>：</li>
+</ul>
+<h3 id="cron"><a class="markdownIt-Anchor" href="#cron"></a> cron</h3>
+<h3 id="dnsutil"><a class="markdownIt-Anchor" href="#dnsutil"></a> dnsutil</h3>
+<h3 id="file"><a class="markdownIt-Anchor" href="#file"></a> file</h3>
+<h3 id="network"><a class="markdownIt-Anchor" href="#network"></a> network</h3>
+<h3 id="pkg"><a class="markdownIt-Anchor" href="#pkg"></a> pkg</h3>
+<p>主机程序安装管理，能根据主机的系统使用不同的包管理工具。</p>
+<ul>
+<li><code>install</code>：安装软件</li>
+<li><code>remove</code>：卸载软件</li>
+<li><code>upgrade</code>：升级软件</li>
+<li><code>refresh_db</code>：检查 repos</li>
+</ul>
+<h3 id="service"><a class="markdownIt-Anchor" href="#service"></a> service</h3>
+<p>主机服务管理</p>
+<ul>
+<li><code>enable</code>：开机自启</li>
+<li><code>disable</code>：开机不自启</li>
+<li><code>reload</code>：重载配置</li>
+<li><code>restart</code>：重启</li>
+<li><code>start</code>：启动</li>
+<li><code>stop</code>：停止</li>
+<li><code>status</code>：状态</li>
+</ul>
+<h3 id="status"><a class="markdownIt-Anchor" href="#status"></a> status</h3>
+<h3 id="saltutil"><a class="markdownIt-Anchor" href="#saltutil"></a> saltutil</h3>
+<h3 id="state"><a class="markdownIt-Anchor" href="#state"></a> state</h3>
+<h3 id="user"><a class="markdownIt-Anchor" href="#user"></a> user</h3>
+<ul>
+<li>``</li>
+</ul>
+<h3 id="group"><a class="markdownIt-Anchor" href="#group"></a> group</h3>
+<h3 id="partition"><a class="markdownIt-Anchor" href="#partition"></a> partition</h3>
+<h3 id="system"><a class="markdownIt-Anchor" href="#system"></a> system</h3>
+<h3 id="pillar"><a class="markdownIt-Anchor" href="#pillar"></a> pillar</h3>
+<h3 id="nginx"><a class="markdownIt-Anchor" href="#nginx"></a> nginx</h3>
+<h3 id="test"><a class="markdownIt-Anchor" href="#test"></a> test</h3>
+<h1 id="配置管理"><a class="markdownIt-Anchor" href="#配置管理"></a> 配置管理</h1>
+<p><strong>配置管理（Configuration Management）</strong>，也称组态管理，是一个建立系统工程的过程，用来建立和维持一个产品，使该产品的效能、功能及物理特性在生命周期中都保持稳定和一致性。Salt 的配置描述文件称为 sls 文件（<strong>S</strong>a<strong>l</strong>t <strong>S</strong>tate）。</p>
+<p>State 结构：</p>
+<ul>
+<li>
+<p>Top 文件，配置管理的入口文件，默认为<code>top.sls</code>。</p>
+</li>
+<li>
+<p>sls 的模块使用点分割。如<code>salt://apache/install.sls</code>或<code>salt://apache/install/init.sls</code>都可用<code>apache.install</code>表示。</p>
+<p>在 top.sls 中若指定了 apache，则在执行时会查找 state 根目录下 apache 目录中的<code>init.sls</code>，若找不到则找根目录下的<code>apache.sls</code></p>
+</li>
+<li>
+<p>sls 文件间可用<code>include</code>或<code>extend</code>引用或扩展。</p>
+</li>
+<li>
+<p>sls 中 ID 必须唯一，ID 为 state 的名称。</p>
+</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="http://docs.saltstack.cn/ref/states/all/index.html">states 模块列表</a></p>
+<p>在 master 上查看配置文件<code>/etc/salt/master</code>中<code>file_roots</code>参数配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">file_roots:</span><br><span class="line">  base:              # 基础版，一般只要base版就行</span><br><span class="line">    - &#x2F;srv&#x2F;salt&#x2F;     # 指定salt文件的根目录，需要先手动创建</span><br><span class="line">  dev:               # 开发版</span><br><span class="line">    - &#x2F;srv&#x2F;salt&#x2F;dev&#x2F;services</span><br><span class="line">    - &#x2F;srv&#x2F;salt&#x2F;dev&#x2F;states</span><br><span class="line">  prod:              # 生产版</span><br><span class="line">    - &#x2F;srv&#x2F;salt&#x2F;prod&#x2F;services</span><br><span class="line">    - &#x2F;srv&#x2F;salt&#x2F;prod&#x2F;states</span><br></pre></td></tr></table></figure>
+<p>在配置中还有一个<code>state_top</code>参数，Salt 在执行自定义 sls 配置时会根据该参数指定的 sls 文件（默认为<code>top.sls</code>）中的定义查找要执行的文件</p>
+<p>首先在<code>/srv/salt/</code>中创建一个 sls 文件<code>top.sls</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">base:     # 使用base版</span><br><span class="line">  &#39;*&#39;:    # 目标所有主机</span><br><span class="line">    - apache   # 执行的sls文件名</span><br></pre></td></tr></table></figure>
+<p>然后创建<code>apache.sls</code>文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">apache-service:        # 功能块ID</span><br><span class="line">  service.running:     # states模块</span><br><span class="line">    - name: httpd      # 指定服务</span><br><span class="line">    - enable: True     # 设置服务开机自启</span><br><span class="line">    - reload: True     # 设置服务重载</span><br></pre></td></tr></table></figure>
+<p>执行<code>salt -L 's3' state.highstate</code>或<code>salt -L 's3' state.highstate salt://apache</code>或<code>salt -L 's3' state.highstate apache</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"># salt -L &#39;s3&#39; state.highstate</span><br><span class="line">s3:</span><br><span class="line">----------</span><br><span class="line">          ID: apache-service</span><br><span class="line">    Function: service.running</span><br><span class="line">        Name: httpd</span><br><span class="line">      Result: True</span><br><span class="line">     Comment: Service httpd is already enabled, and is running</span><br><span class="line">     Started: 09:36:45.596459</span><br><span class="line">    Duration: 143.647 ms</span><br><span class="line">     Changes:</span><br><span class="line">              ----------</span><br><span class="line">              httpd:</span><br><span class="line">                  True</span><br><span class="line"></span><br><span class="line">Summary for s3</span><br><span class="line">------------</span><br><span class="line">Succeeded: 1 (changed&#x3D;1)</span><br><span class="line">Failed:    0</span><br><span class="line">------------</span><br><span class="line">Total states run:     1</span><br><span class="line">Total run time: 143.647 ms</span><br></pre></td></tr></table></figure>
+<p>如果 sls 文件中的操作有依赖或先后关系，还可以在 sls 文件中指定以下参数：</p>
+<ul>
+<li><code>require</code>：本 state 执行前需要先执行哪些 state</li>
+<li><code>require_in</code>：</li>
+<li><code>watch</code>：除了 require 外，也监测依赖的 state 状态，若状态发生变化，则做出反应</li>
+<li><code>watch_in</code>：</li>
+<li><code>prereq</code>：通过<code>test=True</code>检查所依赖的 state 状态，若状态发生变化，则执行</li>
+<li><code>prereq_in</code>：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">apache:       # statesID</span><br><span class="line">  pkg.installed:</span><br><span class="line">    - name: httpd</span><br><span class="line">  file.managed:</span><br><span class="line">    - name: &#x2F;etc&#x2F;httpd&#x2F;conf&#x2F;httpd.conf    # 目标文件</span><br><span class="line">    - source: salt:&#x2F;&#x2F;httpd.conf           # 源文件</span><br><span class="line">    - require:</span><br><span class="line">      - pkg: apache         # 需要httpd已安装，apache为statesID</span><br><span class="line">  service.running:</span><br><span class="line">    - name: httpd</span><br><span class="line">    - enable: True</span><br><span class="line">    - reload: True</span><br><span class="line">    - watch:                # 需要file和pkg同时满足要求</span><br><span class="line">      - pkg: apache</span><br><span class="line">      - file: apache</span><br></pre></td></tr></table></figure>
+<h2 id="使用模板"><a class="markdownIt-Anchor" href="#使用模板"></a> 使用模板</h2>
+<p>修改<code>/srv/salt/</code>的配置文件<code>httpd.conf</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Listen &#123;&#123; http_port &#125;&#125;</span><br><span class="line">ServerName &#123;&#123; server_name &#125;&#125;</span><br></pre></td></tr></table></figure>
+<p>修改<code>apache.sls</code>的<code>file.managed</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">file.managed:</span><br><span class="line">  - name: &#x2F;etc&#x2F;httpd&#x2F;conf&#x2F;httpd.conf</span><br><span class="line">  - source: salt:&#x2F;&#x2F;httpd.conf</span><br><span class="line">  - require:</span><br><span class="line">    - pkg: apache</span><br><span class="line">  - template: jinja        # 指定模板的格式</span><br><span class="line">  - context:</span><br><span class="line">      http_port: 8080</span><br><span class="line">      server_name: s3.example.com</span><br></pre></td></tr></table></figure>
+<p>然后执行，可看到修改信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">Changes:</span><br><span class="line">         ----------</span><br><span class="line">         diff:</span><br><span class="line">             ---</span><br><span class="line">             +++</span><br><span class="line">             @@ -1,10 +1,10 @@</span><br><span class="line">              ServerRoot &quot;&#x2F;etc&#x2F;httpd&quot;</span><br><span class="line">             -Listen 81</span><br><span class="line">             +Listen 8080        # 替换了端口号</span><br><span class="line">              Include conf.modules.d&#x2F;*.conf</span><br><span class="line">              User apache</span><br><span class="line">              Group apache</span><br><span class="line">              ServerAdmin root@localhost</span><br><span class="line">             -ServerName www.example.com:80</span><br><span class="line">             +ServerName s3.example.com       # 替换了主机域名</span><br><span class="line">              &lt;Directory &#x2F;&gt;</span><br><span class="line">                  AllowOverride none</span><br><span class="line">                  Require all denied</span><br></pre></td></tr></table></figure>
+<p>若有多台主机需要配置，则可以使用 Jinja 的 if 判断结合 grains</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">- context:</span><br><span class="line">    &#123;% if grains[&#39;id&#39;] &#x3D;&#x3D; &#39;s3&#39; %&#125;</span><br><span class="line">    http_port: 81</span><br><span class="line">    server_name: s3.example.com</span><br><span class="line">    &#123;% elif grains[&#39;id&#39;] &#x3D;&#x3D; &#39;s4&#39; %&#125;</span><br><span class="line">    http_port: 82</span><br><span class="line">    server_name: s4.example.com</span><br><span class="line">    &#123;% endif %&#125;</span><br></pre></td></tr></table></figure>
+<p>或者结合 pillar。先在<code>/srv/pillar/httpd.sls</code>中配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">apache:</span><br><span class="line">  &#123;% if grains.id &#x3D;&#x3D; &#39;s3&#39; %&#125;</span><br><span class="line">  http_port: 81</span><br><span class="line">  server_name: s3.example.com</span><br><span class="line">  &#123;% elif grains.id &#x3D;&#x3D; &#39;s4&#39; %&#125;</span><br><span class="line">  http_port: 82</span><br><span class="line">  server_name: s4.example.com</span><br><span class="line">  &#123;% endif %&#125;</span><br></pre></td></tr></table></figure>
+<p>然后刷新<code>salt '*' saltutil.refresh_pillar</code>，并查看是否能获取</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># salt &#39;*&#39; pillar.get apache</span><br><span class="line">s4:</span><br><span class="line">    ----------</span><br><span class="line">    http_port:</span><br><span class="line">        82</span><br><span class="line">    server_name:</span><br><span class="line">        s4.example.com</span><br><span class="line">s3:</span><br><span class="line">    ----------</span><br><span class="line">    http_port:</span><br><span class="line">        81</span><br><span class="line">    server_name:</span><br><span class="line">        s3.example.com</span><br></pre></td></tr></table></figure>
+<p>然后修改<code>/srv/salt/apache.sls</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">- context:</span><br><span class="line">  http_port: &#123;&#123; salt[&#39;pillar.get&#39;](&#39;apache:http_port&#39;, 80) &#125;&#125;</span><br><span class="line">  # 若该项存在就使用该项的值，否则就用括号中另一个值</span><br><span class="line">  server_name: &#123;&#123; salt[&#39;pillar.get&#39;](&#39;apache:server_name&#39;, &#39;www.example.com&#39;) &#125;&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="grains"><a class="markdownIt-Anchor" href="#grains"></a> grains</h2>
+<p>grains 是 Salt 的重要组件之一，用于收集客户端的信息，包括 CPU、内核、系统等。在 minion 上配置 Grains。</p>
+<p>可在 master 上通过 grains 获取 minion 的信息。可用<code>salt '*' grains.ls</code>查看可选项</p>
+<p><code>grains.items</code>查看所有项与对应值，<code>grains.item ITEM</code>查看指定项的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># salt -L &#39;s3&#39; grains.item os</span><br><span class="line">s3:</span><br><span class="line">    ----------</span><br><span class="line">    os:</span><br><span class="line">        CentOS</span><br></pre></td></tr></table></figure>
+<p>客户端自定义项与值，可以在 minion 的<code>/etc/salt/minion</code>配置文件中添加，也可以在<code>/etc/salt/minion.d/</code>中创建独立文件。修改完需要重启 minion 服务。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">grains:</span><br><span class="line">  roles:       # 自定义项</span><br><span class="line">    - web      # 项的值</span><br><span class="line">    - proxy</span><br></pre></td></tr></table></figure>
+<p>然后在 master 上查看<code>roles</code>项的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># salt -L &#39;s3&#39; grains.item roles</span><br><span class="line">s3:</span><br><span class="line">    ----------</span><br><span class="line">    roles:</span><br><span class="line">        - web</span><br><span class="line">        - proxy</span><br></pre></td></tr></table></figure>
+<p>还可以通过<code>grains.get</code>直接获取指定项的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># salt -L &#39;s3&#39; grains.get roles</span><br><span class="line">s3:</span><br><span class="line">    - web</span><br><span class="line">    - proxy</span><br></pre></td></tr></table></figure>
+<h2 id="pillar-2"><a class="markdownIt-Anchor" href="#pillar-2"></a> pillar</h2>
+<p>Pillar 在 Master 上定义，功能类似 Grains，但比 Grains 更加灵活，能给特定的 minion 定义需要的数据。在 master 配置文件中的<code>pillar_roots</code>块。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#pillar_roots:        # pillar的根目录</span><br><span class="line">#  base:</span><br><span class="line">#    - &#x2F;srv&#x2F;pillar      # 需要手动创建</span><br></pre></td></tr></table></figure>
+<p>在<code>/srv/pillar</code>中创建<code>top.sls</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">base:</span><br><span class="line">  &#39;*&#39;:</span><br><span class="line">    - httpd</span><br></pre></td></tr></table></figure>
+<p>然后创建<code>httpd.sls</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">httpd:</span><br><span class="line">  function: state.sls</span><br><span class="line">  args:</span><br><span class="line">    - &#39;httpd&#39;</span><br></pre></td></tr></table></figure>
+<p>使用命令<code>salt '*' saltutil.refresh_pillar</code>刷新 pillar，无须重启服务。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># salt -L &#39;s3&#39; pillar.data</span><br><span class="line">s3:</span><br><span class="line">    ----------</span><br><span class="line">    httpd:</span><br><span class="line">        ----------</span><br><span class="line">        args:</span><br><span class="line">            - httpd</span><br><span class="line">        function:</span><br><span class="line">            state.sls</span><br></pre></td></tr></table></figure>
+<p><strong>Grains 和 Pillar 的区别：</strong></p>
+<ul>
+<li>用途不同：Grains 用于存储 Minion 的基本数据信息，Pillar 用于存储 Master 分配给 Minion 的数据信息</li>
+<li>存储区域不同：Grains 元数据存储在 Minion 端，Pillar 元数据存储在 Master 端</li>
+<li>更新方式不同：Grains 在 Minion 启动时更新或通过<code>saltutil.sync_grains</code>刷新，Pillar 元数据存储在 Master 端，可用<code>saltutil.refresh_pillar</code>刷新，更加灵活。</li>
+</ul>
+<h2 id="syndic"><a class="markdownIt-Anchor" href="#syndic"></a> syndic</h2>
+<p>syndic 是一个允许建立 salt 命令拓扑结构的工具，当两台 master 上都运行了 syndic，则高一级的 master 可以管理到另一台下的所有 minion，Master 的 Master 也称为<strong>Master of Master</strong>，syndic 常用于代理 proxy。</p>
+<img src="/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>加入一台新的 salt 主机，IP 地址为<code>172.16.246.134</code>，安装<code>salt-syndic</code>，然后在现 master（<code>172.16.246.158</code>）的 master 配置文件中找到<code>syndic_master</code>参数并修改。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">syndic_master: 172.16.246.134       # 更高一级的Master的IP地址</span><br><span class="line">syndic_log_file: &#x2F;var&#x2F;log&#x2F;salt&#x2F;syndic  # 日志文件路径，可不改</span><br><span class="line">order_masters: True                # 更高一级的master能管理低等级的master的syndic接口，默认为False</span><br></pre></td></tr></table></figure>
+<p>master 和更高级别的 master 都要开启<code>salt-syndic</code>服务。在新 salt 主机上添加 master 的密钥，重启服务，然后测试。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># salt &#39;*&#39; service.restart httpd    # &#39;*&#39;能包含master所管理的minion和master本身。</span><br><span class="line">sys1.example.com:</span><br><span class="line">    True</span><br><span class="line">s4:</span><br><span class="line">    True</span><br><span class="line">s3:</span><br><span class="line">    True</span><br></pre></td></tr></table></figure>
+<h2 id="job"><a class="markdownIt-Anchor" href="#job"></a> Job</h2>
+<p>Salt 的任务管理 job。当 Master 下发指令时，会附带产生的 jid（job id，格式<code>%Y%m%d%H%M%S%f</code>），Minion 在接收到指令后开始执行时，会在本地 cachedir（默认<code>/var/cache/salt/minion</code>下的<code>proc</code>目录）产生以该 jid 命名的文件，用于在执行完毕将结果传给 Master，并删除该临时文件。Master 会将结果存放在<code>/var/cache/salt/master/jobs</code>目录，默认缓存 24 小时，可通过 master 配置的<code>keep_jobs</code>修改。</p>
+<p>可在<code>salt</code>命令后添加<code>-v</code>显示当前命令的 jid。在 master 上通过命令<code>salt-run jobs.list_jobs</code>查看已缓存的 job</p>
+<p><code>saltutil</code>中 job 的管理方法</p>
+<ul>
+<li><code>running</code>：查看 minion 正在运行的 Jobs</li>
+<li><code>find_job &lt;jid&gt;</code>：查看指定 jid 的 job</li>
+<li><code>signal_job &lt;jid&gt; &lt;signal&gt;</code>：给指定 jid 进程发送信号</li>
+<li><code>term_job &lt;jid&gt;</code>：终止指定 jid 进程，信号为 15</li>
+<li><code>kill_job &lt;jid&gt;</code>：终止指定 jid 进程，信号为 9</li>
+</ul>
+<p>也可通过命令<code>salt-run</code>查看 job</p>
+<p><code>salt-run jobs.active</code>：查看所有 Minion 当前正在运行的 jobs，即在所有 Minion 上运行<code>saltutil.running</code></p>
+<p><code>salt-run jobs.lookup_jid &lt;jid&gt;</code>：查看指定 jid 进程的运行结果</p>
+<p><code>salt-run jobs.list_jobs</code>：列出当前 master 的 jobs cache 中的所有 jobs</p>
+<h2 id="schedule"><a class="markdownIt-Anchor" href="#schedule"></a> Schedule</h2>
+<p>用于在 Master 或 Minion 定期执行 Schedule 中配置的任务。Master 配置 Schedule 运行 runner，Minion 端配置 Schedule 为远程执行。可以在配置文件中或 pillar 中配置 Schedule。</p>
+<p>在<code>/srv/pillar/</code>中创建 schedule 文件<code>schedule.sls</code>，并在<code>top.sls</code>中添加该文件，然后编写 Schedule。然后刷新 pillar。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">schedule:</span></span><br><span class="line">  <span class="attr">job1:</span></span><br><span class="line">    <span class="attr">function:</span> <span class="string">cmd.run</span></span><br><span class="line">    <span class="attr">args:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;date &gt;&gt; /tmp/test.log&quot;</span></span><br><span class="line">    <span class="attr">minutes:</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>可通过<code>salt-run jobs.list_jobs</code>查看所有 jobs。</p>
+<h1 id="salt-ssh"><a class="markdownIt-Anchor" href="#salt-ssh"></a> Salt SSH</h1>
+<p>Salt ssh 基于 ssh，无需 Zeromq 和 agent。salt 也为 ssh 构建了一个系统结构 Roster，为 salt ssh 提供需要连接的主机及权限信息。</p>
+<p>Roster 的配置文件：<code>/etc/salt/roster</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">salt ID:        # 配置target的ID</span><br><span class="line">  host:         # 目标主机IP地址或域名</span><br><span class="line">  user:         # 登录用户</span><br><span class="line">  passwd:       # 用户密码</span><br><span class="line">  sudo:         # 是否通过sudo执行，可选</span><br><span class="line">  port:         # 连接目标的ssh端口</span><br><span class="line">  priv:         # ssh私钥</span><br><span class="line">  timeout:      # 等待回应的超时时间</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>参考文章</p>
+<p><a target="_blank" rel="noopener" href="http://blog.51cto.com/13558754/2063243">Saltstack 自动化运维工具详细介绍</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/624b9cf51c64">SaltStack 学习</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/wanghui1991/p/6285182.html">saltstack 快速入门</a></p>
+<p><a target="_blank" rel="noopener" href="http://blog.51cto.com/jungiewolf/2096616">Saltstack-部署</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag"><i class="fa fa-tag"></i> 运维</a>
+              <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" rel="tag"><i class="fa fa-tag"></i> 自动化</a>
+              <a href="/tags/SaltStack/" rel="tag"><i class="fa fa-tag"></i> SaltStack</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Docker-Swarm%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Docker-Swarm学习笔记">
+      <i class="fa fa-chevron-left"></i> Docker-Swarm学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="LDAP学习笔记">
+      LDAP学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#salt-%E6%A6%82%E8%BF%B0"><span class="nav-text"> Salt 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#saltstack-%E6%9E%B6%E6%9E%84"><span class="nav-text"> SaltStack 架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#saltstack-%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2"><span class="nav-text"> SaltStack 安装部署</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#master-%E8%BF%81%E7%A7%BB"><span class="nav-text"> Master 迁移</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#returner"><span class="nav-text"> returner</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#syslog"><span class="nav-text"> syslog</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mysql"><span class="nav-text"> mysql</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#event"><span class="nav-text"> event</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E7%BB%84"><span class="nav-text"> 分组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E6%A8%A1%E5%9D%97"><span class="nav-text"> 常用模块</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#archive"><span class="nav-text"> archive</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cmd"><span class="nav-text"> cmd</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cp"><span class="nav-text"> cp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cron"><span class="nav-text"> cron</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dnsutil"><span class="nav-text"> dnsutil</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#file"><span class="nav-text"> file</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#network"><span class="nav-text"> network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pkg"><span class="nav-text"> pkg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#service"><span class="nav-text"> service</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#status"><span class="nav-text"> status</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#saltutil"><span class="nav-text"> saltutil</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#state"><span class="nav-text"> state</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#user"><span class="nav-text"> user</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#group"><span class="nav-text"> group</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#partition"><span class="nav-text"> partition</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#system"><span class="nav-text"> system</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pillar"><span class="nav-text"> pillar</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#nginx"><span class="nav-text"> nginx</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#test"><span class="nav-text"> test</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86"><span class="nav-text"> 配置管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%A8%A1%E6%9D%BF"><span class="nav-text"> 使用模板</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#grains"><span class="nav-text"> grains</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pillar-2"><span class="nav-text"> pillar</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#syndic"><span class="nav-text"> syndic</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#job"><span class="nav-text"> Job</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#schedule"><span class="nav-text"> Schedule</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#salt-ssh"><span class="nav-text"> Salt SSH</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

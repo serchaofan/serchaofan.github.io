@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="SSL&#x2F;TLS 概念  SSL 协议架构   OpenSSL 概念 SSH 协议  sshd 服务  sshd_config 配置 密钥分发命令     参考文章">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SSH与SSL协议学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="SSL&#x2F;TLS 概念  SSL 协议架构   OpenSSL 概念 SSH 协议  sshd 服务  sshd_config 配置 密钥分发命令     参考文章">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="article:published_time" content="2018-08-01T13:02:56.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.599Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="OpenSSL">
+<meta property="article:tag" content="SSL">
+<meta property="article:tag" content="SSH">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>SSH与SSL协议学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SSH与SSL协议学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-01 21:02:56" itemprop="dateCreated datePublished" datetime="2018-08-01T21:02:56+08:00">2018-08-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#ssltls-%e6%a6%82%e5%bf%b5">SSL/TLS 概念</a>
+<ul>
+<li><a href="#ssl-%e5%8d%8f%e8%ae%ae%e6%9e%b6%e6%9e%84">SSL 协议架构</a></li>
+</ul>
+</li>
+<li><a href="#openssl-%e6%a6%82%e5%bf%b5">OpenSSL 概念</a></li>
+<li><a href="#ssh-%e5%8d%8f%e8%ae%ae">SSH 协议</a>
+<ul>
+<li><a href="#sshd-%e6%9c%8d%e5%8a%a1">sshd 服务</a>
+<ul>
+<li><a href="#sshdconfig-%e9%85%8d%e7%bd%ae">sshd_config 配置</a></li>
+<li><a href="#%e5%af%86%e9%92%a5%e5%88%86%e5%8f%91%e5%91%bd%e4%bb%a4">密钥分发命令</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="ssltls-概念"><a class="markdownIt-Anchor" href="#ssltls-概念"></a> SSL/TLS 概念</h1>
+<p>SSL（Secure Socket Layer，安全套接字层）是一种标准安全协议，由美国网景（Netscape）开发，用于在在线通信中建立 Web 服务器和浏览器之间的加密链接。SSL 技术的使用确保了 Web 服务器和浏览器之间传输的所有数据都保持加密状态。TLS（transport Layer Security，安全传输层协议）是 SSL 标准化后的版本，与 SSL 基本没有区别。</p>
+<p>SSL/TLS 的主要功能：</p>
+<ul>
+<li>认证用户与服务器，确保数据发送到正确的客户端和服务器，即可靠性</li>
+<li>加密数据，即机密性</li>
+<li>维护数据的完整性</li>
+</ul>
+<h2 id="ssl-协议架构"><a class="markdownIt-Anchor" href="#ssl-协议架构"></a> SSL 协议架构</h2>
+<p>SSL 基于 TCP，且分为两个子层：<strong>握手层</strong>和<strong>记录层</strong>，其中<strong>握手层负责建立 SSL 连接，记录层负责对报文的加解密</strong>。</p>
+<img src="/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<ul>
+<li>
+<p>握手层：</p>
+<ul>
+<li>协商加密能力</li>
+<li>协商密钥参数</li>
+<li>验证对方身份</li>
+<li>建立并维护 SSL 会话</li>
+</ul>
+<p>握手层协议报文格式：</p>
+<ul>
+<li>消息类型 Type</li>
+<li>消息长度 Length</li>
+<li>消息相关参数 Content</li>
+</ul>
+<p>SSL 提供三种握手过程，分别为：</p>
+<ul>
+<li>
+<p>无客户端身份认证的全握手</p>
+<ol>
+<li>客户端向服务器发送以下信息：支持的 SSL 最高版本、加密套件列表、压缩算法列表、客户端随机数（32 位）、会话 ID</li>
+<li>服务器端回应客户端以下信息：服务器同意的 SSL 版本、加密套件、压缩算法、会话 ID、服务器端随机数。并且还会发送服务器的证书、服务器端密钥交换的信息，最后通知对端握手信息已发完</li>
+<li>客户端再向服务器端发送密钥参数和握手过程的验证报文，并通知对端开始启用加密参数</li>
+<li>服务器再向客户端发送自己的握手过程验证报文，并通知对端开始启用加密参数</li>
+</ol>
+
+</li>
+<li>
+<p>有客户端身份认证的全握手</p>
+<p>与上面类似，但在第 2 步后，服务器端还会向客户端请求客户端的证书，然后客户端回应自己的证书，并会附加上数字签名</p>
+</li>
+<li>
+<p>会话恢复</p>
+<p>当 SSL 连接因某些原因不正常断开后，可在超时时间内进行会话恢复。</p>
+<p>客户端向服务器发送的消息与第 1 条一致，其中会话 ID 为上一次 SSL 连接的会话 ID。其余过程也基本一致。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>记录层：</p>
+<ul>
+<li>保护传输数据的<strong>机密性</strong>，对数据进行加密和解密</li>
+<li>验证传输数据的<strong>完整性</strong>，计算报文摘要</li>
+<li>对报文<strong>压缩</strong></li>
+<li>保证数据传输的<strong>可靠有序</strong></li>
+</ul>
+<p><strong>记录层对数据包的三个操作：分片、压缩、加密</strong></p>
+<p>记录层协议报文格式：</p>
+<ul>
+<li>报文类型：1 个字节，密钥改变协议（20）、告警协议（21）、握手协议（22）、应用层数据（23）</li>
+<li>版本：2 字节，TLS1.0（3,1）、SSL3.0（3,0）</li>
+<li>长度：2 字节记录层报文的长度，包括加密数据和 MAC 值</li>
+<li>MAC：消息验证码</li>
+</ul>
+
+</li>
+</ul>
+<p><strong>SSL 会话与连接</strong></p>
+<p>SSL 会话是指客户端与服务器间的关联关系，通过握手协议创建。而 SSL 连接是用于点对点数据的传输，连接的维持时间比较短暂，且一定与一个会话关联。</p>
+<p>一次会话过程通常会发起多个 SSL 连接来完成任务，这些连接共享会话定义的安全参数，这样可以避免为每个 SSL 连接单独进行安全参数的协商，而只需在会话建立时进行一次协商，提高了效率。</p>
+<p>HTTPS 与 HTTP 连接的建立耗时也因为 SSL 层而出现 3 倍的差距。可通过<code>curl -w &quot;TCP handshake: %&#123;time_connect&#125;, SSL handshake: %&#123;time_appconnect&#125;&quot; -so /dev/null 网址</code>测试。</p>
+<h1 id="openssl-概念"><a class="markdownIt-Anchor" href="#openssl-概念"></a> OpenSSL 概念</h1>
+<p>OpenSSL 是一个 SSL 的密码库，是对 SSL 协议的实现，包含了主要的密码算法，常用的密钥和证书封装管理功能。</p>
+<p>OpenSSL 提供八种对称加密算法（DES、AES、Blowfish、CAST、IDEA、RC2、RC5），支持四种非对称加密算法（DH、RSA、DSA、椭圆曲线 EC），实现五种信息摘要算法（MD2、MD5、MDC2、SHA（SHA+SHA1）、RIPEMD）</p>
+<p><strong>Heartblood 漏洞简介</strong></p>
+<p>心脏出血漏洞，于 2014 年被公开。受害者的内存内容就会以每次 64KB 的速度进行泄露，通过读取网络服务器内存，攻击者可以访问敏感数据，从而危及服务器及用户的安全。</p>
+<h1 id="ssh-协议"><a class="markdownIt-Anchor" href="#ssh-协议"></a> SSH 协议</h1>
+<p>Secure Shell 安全壳协议，是建立在 TCP 上的安全协议，端口号 22。可以防止中间人攻击、DNS 和 IP 欺骗，并可加快数据的传输速度，且通过 ssh 传输的数据都是经过压缩的。</p>
+<p>目前 SSH 有两个版本 SSH1 和 SSH2，这两个版本互不兼容。SSH 有以下特点：</p>
+<ul>
+<li>支持 DES、3DES 加密</li>
+<li>支持公钥（密钥）验证方式、密码（口令）验证方式、不验证</li>
+<li>支持 RSA 认证</li>
+</ul>
+<p>SSH 连接建立过程：</p>
+<ol>
+<li>版本号协商：客户端与服务器协商出双方使用的 SSH 版本</li>
+<li>密钥与算法协商：客户端与服务器交换算法协商报文，协商出使用的算法，并且生成会话密钥和 ID</li>
+<li>认证：客户端向服务器发送认证请求，服务器端对客户端认证</li>
+<li>会话请求：客户端向服务器发送会话请求，服务器等待并处理客户端请求</li>
+<li>交互会话：数据加密传输</li>
+</ol>
+<h2 id="sshd-服务"><a class="markdownIt-Anchor" href="#sshd-服务"></a> sshd 服务</h2>
+<p>通过 openssh 软件实现 sshd 服务，sshd 正是使用 ssh 协议进行远程访问或传输文件的服务。</p>
+<p>sshd 主要要有三个软件：</p>
+<ul>
+<li>openssh：包含 openssh 服务器与客户端需要的核心文件</li>
+<li>openssh-clients：openssh 客户端软件</li>
+<li>openssh-server：openssh 服务器软件</li>
+</ul>
+<p>Openssh 的配置文件</p>
+<ul>
+<li><code>/etc/ssh/ssh_config</code>：客户端配置文件</li>
+<li><code>/etc/ssh/sshd_config</code>：服务器端配置文件</li>
+</ul>
+<p>ssh 命令常见选项：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ssh [username@]host [options] [command]</span><br><span class="line">  -p 指定连接的远程主机端口，默认22</span><br><span class="line">  -v 显示详细信息，一般用于拍错</span><br><span class="line">  -C 压缩所有数据</span><br><span class="line">  可直接通过ssh在远端执行命令</span><br><span class="line">  -l 指定登录用户名</span><br></pre></td></tr></table></figure>
+<h3 id="sshd_config-配置"><a class="markdownIt-Anchor" href="#sshd_config-配置"></a> sshd_config 配置</h3>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">Port  22              #端口号</span><br><span class="line">#为安全起见，在实际生产环境中，最好将端口改为非22，减小ssh暴露的危险</span><br><span class="line">Protocol 2            #SSH版本，默认2，SSH1已淘汰</span><br><span class="line">AddressFamily         #</span><br><span class="line">ListenAddress 0.0.0.0 #设置sshd服务器监听的本地IP地址。0.0.0.0表示监听本地所有IP地址（如果有多个）</span><br><span class="line">HostKey &#x2F;etc&#x2F;ssh&#x2F;ssh_host_rsa_key  #服务器秘钥文件的路径（还有dsa等密钥）</span><br><span class="line">Compression yes       #是否可使用压缩指令</span><br><span class="line">KeyRegenerationInterval 1h  #服务器重新生成密钥的周期</span><br><span class="line">ServerKeyBits 1024    #服务器密钥的长度</span><br><span class="line">LogLevel INFO         #日志等级</span><br><span class="line">LoginGraceTime 2m     #输入密码后，若2分钟内未连接成功，则断开</span><br><span class="line">PermitRootLogin yes   #是否允许使用root登录远程主机，若为生产环境需要设为no</span><br><span class="line">StrictModes yes       #ssh在接收登录请求之前是否检查用户根目录和rhosts文件的权限和所有权，默认开启</span><br><span class="line">SyslogFacility AUTHPRIV  #日志类型</span><br><span class="line">PubkeyAuthentication yes #是否开启公钥验证，如果使用公钥验证的方式登录时，则设置为yes</span><br><span class="line">AuthorizedKeysFile  .ssh&#x2F;authorized_keys #公钥验证文件的路径</span><br><span class="line">PasswordAuthentication yes  #是否开启密码验证</span><br><span class="line">PermitEmptyPasswords no  #是否允许空密码登录</span><br><span class="line">PrintMotd yes         #登录后是否打印信息（上次登录时间和地点等），信息内容可在&#x2F;etc&#x2F;motd中编辑</span><br><span class="line">PrintLastLog yes      #显示上次登录的信息，默认允许</span><br><span class="line">UsePrivilegeSeparation sandbox  #是否允许权限较低的程序一共用户操作，会让sshd在远程用户登入后产生一个属于该用户的sshd程序，使系统较安全</span><br><span class="line">UseDNS yes  #为了判断客户端是否合法，会使用DNS反查客户端主机名。</span><br><span class="line">            #若是内网，则no可以让连接更快。</span><br><span class="line">MaxAuthTries 6        #最多密码尝试次数</span><br><span class="line">MaxSessions 10        #最多终端数</span><br><span class="line">ClientAliveInterval 0 #向客户端发送keepalive报文的间隔</span><br><span class="line">ClientAliveCountMax 3 #若三次收不到keepalive消息，则认为连接断开</span><br><span class="line">TCPKeepAlive          #是否持续连接，设置yes可以防止死连接</span><br><span class="line">#SSH Server会传送KeepAlive的讯息给Client端，以确保两者的联机正常</span><br></pre></td></tr></table></figure>
+<p>最好将 ssh 的日志文件<code>/var/log/secure</code>的路径改掉，减小入侵后 ssh 日志文件被删除的风险。可修改<code>/etc/rsyslog.conf</code>的<code>authpriv</code>参数，包括特权信息如用户名在内的认证活动。</p>
+<p>默认：<code>authpriv.* /var/log/secure</code> ，修改此项即可改变 ssh 日志路径</p>
+<h3 id="密钥分发命令"><a class="markdownIt-Anchor" href="#密钥分发命令"></a> 密钥分发命令</h3>
+<p><code>ssh-keygen</code>用于生成密钥对。</p>
+<h1 id="参考文章"><a class="markdownIt-Anchor" href="#参考文章"></a> 参考文章</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://baike.baidu.com/item/ssl">百度百科-ssl</a></li>
+<li><a target="_blank" rel="noopener" href="https://baike.baidu.com/item/ssh/10407">百度百科-ssh</a></li>
+<li></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/OpenSSL/" rel="tag"><i class="fa fa-tag"></i> OpenSSL</a>
+              <a href="/tags/SSL/" rel="tag"><i class="fa fa-tag"></i> SSL</a>
+              <a href="/tags/SSH/" rel="tag"><i class="fa fa-tag"></i> SSH</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Xinted%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Xinted学习笔记">
+      <i class="fa fa-chevron-left"></i> Xinted学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Tomcat学习笔记">
+      Tomcat学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ssltls-%E6%A6%82%E5%BF%B5"><span class="nav-text"> SSL&#x2F;TLS 概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ssl-%E5%8D%8F%E8%AE%AE%E6%9E%B6%E6%9E%84"><span class="nav-text"> SSL 协议架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#openssl-%E6%A6%82%E5%BF%B5"><span class="nav-text"> OpenSSL 概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ssh-%E5%8D%8F%E8%AE%AE"><span class="nav-text"> SSH 协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#sshd-%E6%9C%8D%E5%8A%A1"><span class="nav-text"> sshd 服务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#sshd_config-%E9%85%8D%E7%BD%AE"><span class="nav-text"> sshd_config 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%86%E9%92%A5%E5%88%86%E5%8F%91%E5%91%BD%E4%BB%A4"><span class="nav-text"> 密钥分发命令</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-text"> 参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

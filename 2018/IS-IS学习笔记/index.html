@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="基于华三网络学习笔记 本篇主要包含以下内容：  OSI 地址 IS-IS 概述  IS-IS 常见术语： IS-IS 协议报文 IS-IS 网络类型   IS-IS 实现  邻接关系 LSDB 同步   参考资料">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IS-IS学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="基于华三网络学习笔记 本篇主要包含以下内容：  OSI 地址 IS-IS 概述  IS-IS 常见术语： IS-IS 协议报文 IS-IS 网络类型   IS-IS 实现  邻接关系 LSDB 同步   参考资料">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+<meta property="article:published_time" content="2018-08-05T07:18:10.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.453Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="IS-IS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>IS-IS学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          IS-IS学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-05 15:18:10" itemprop="dateCreated datePublished" datetime="2018-08-05T15:18:10+08:00">2018-08-05</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>基于华三网络学习笔记</strong></p>
+<p>本篇主要包含以下内容：</p>
+<ul>
+<li><a href="#osi-%e5%9c%b0%e5%9d%80">OSI 地址</a></li>
+<li><a href="#is-is-%e6%a6%82%e8%bf%b0">IS-IS 概述</a>
+<ul>
+<li><a href="#is-is-%e5%b8%b8%e8%a7%81%e6%9c%af%e8%af%ad">IS-IS 常见术语：</a></li>
+<li><a href="#is-is-%e5%8d%8f%e8%ae%ae%e6%8a%a5%e6%96%87">IS-IS 协议报文</a></li>
+<li><a href="#is-is-%e7%bd%91%e7%bb%9c%e7%b1%bb%e5%9e%8b">IS-IS 网络类型</a></li>
+</ul>
+</li>
+<li><a href="#is-is-%e5%ae%9e%e7%8e%b0">IS-IS 实现</a>
+<ul>
+<li><a href="#%e9%82%bb%e6%8e%a5%e5%85%b3%e7%b3%bb">邻接关系</a></li>
+<li><a href="#lsdb-%e5%90%8c%e6%ad%a5">LSDB 同步</a></li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99">参考资料</a></li>
+</ul>
+<span id="more"></span>
+<h2 id="osi-地址"><a class="markdownIt-Anchor" href="#osi-地址"></a> OSI 地址</h2>
+<p>在 OSI 协议体系中，OSI 地址标识了一台支持 OSI 协议的设备。IS-IS 的报文封装在数据链路层，采用 OSI 报文格式，包含 OSI 地址。IS-IS 协议将 ISO 网络层地址称 NSAP。IS-IS 用 OSI 地址标识不同 IS，并构建网络拓扑数据库，计算到达各节点的最短路径树。</p>
+<p>OSI 地址使用的是 NASP（Network Service Access Point 网络服务接入点）地址格式，是 IP 地址和上层协议号的组合，用于标识设备和设备启用的服务。</p>
+<p>NASP 由 IDP（Initial Domian Part 初始域部分）和 DSP（Domain Specific Part 域指定部分），IDP 表示 IP 地址的主网络号，DSP 表示 IP 地址的子网号和主机地址。IDP 和 DSP 长度是可变的，但 NASP 的总长最多为 20 字节，最少 8 字节。</p>
+<p>在 IS-IS 中，NASP 地址被分为 3 部分：可变长区域地址，System ID，NSEL。</p>
+<img src="/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>System ID 用于在区域中唯一表示主机或服务器，一般会由 Router ID 转换得出。</p>
+<blockquote>
+<p>转换方法：Router ID 的每部分都扩展为 3 位数字，不足则在前补零，将扩展后的地址重新划分为 3 部分，每部分 4 个数字，得到 System ID</p>
+</blockquote>
+<p>NSEL 类似于协议标识符，当协议为 IP 时，NSEL 均为 00。</p>
+<p>路由器只需配置一个区域地址，但最多可以配置 3 个，同一区域中所有节点的区域地址都相同。</p>
+<p>NET（Network Entity Title 网络实体名称）指示的是 IS 本身的网络层信息，不包括传输层信息，可看做 NSEL 为 0 的特殊的 NASP。一台路由器只需配置一个 NET，最多 3 个，若配置多个 NET，则必须保证 System ID 相同。NET 除了可以通过 Router ID 转换变得，也可通过 MAC 地址转换变得，但 MAC 地址由于具有全局性，一个区域内的路由器的 MAC 没有规律，管理不方便，所以一般还是用 Router ID 映射。</p>
+<h2 id="is-is-概述"><a class="markdownIt-Anchor" href="#is-is-概述"></a> IS-IS 概述</h2>
+<p>IS-IS（Intermediate System-to-Intermediate System，中间系统到中间系统）是 ISO 为 CLNP（Connection Less Network Protocol，无连接网络协议）设计的一种动态路由协议。IS-IS 能够同时应用在 TCP/IP 和 OSI 环境中，形成了集成化 IS-IS。采用 TLV 架构，易于扩展。</p>
+<p>IS-IS 属于内部网关路由协议，用于自治系统内部。IS-IS 是一种链路状态协议，与 TCP/IP 网络中的 OSPF 协议非常相似，使用最短路径优先算法 SPF 进行路由计算。</p>
+<h3 id="is-is-常见术语"><a class="markdownIt-Anchor" href="#is-is-常见术语"></a> IS-IS 常见术语：</h3>
+<p>区域（Area）：路由域的细分单元，IS-IS 允许将整个路由域分为多个区域</p>
+<p>路由域（Routing Domain）：较大的区域，可包含多个区域</p>
+<p>中间系统 Intermediate System（IS）：即路由器</p>
+<p>终端系统 End System（ES）：即主机</p>
+<p>ES-IS：主机和路由器之间运行的协议</p>
+<p>IS-IS：路由器与路由器之间运行的协议，就是用来提供路由域内或一个区域内的路由</p>
+<p>IS-IS 路由器有三种角色：</p>
+<ol>
+<li>Level-1：负责区域内的路由，只与属于<strong>同一区域的 Level-1 和 Level-1-2 路由器形成邻居关系</strong>，维护一个 Level-1 的链路状态数据库，该链路状态数据库包含<strong>本区域的路由信息</strong>，到区域外的报文转发给最近的 Level-1-2 路由器。</li>
+<li>Level-2：负责区域间的路由，可以与<strong>同一区域或者其它区域的 Level-2 和 Level-1-2 路由器形成邻居关系</strong>，维护一个 Level-2 的链路状态数据库，该链路状态数据库包含<strong>区域间的路由信息</strong>。所有<strong>Level-2</strong>路由器和<strong>Level-1-2</strong>路由器组成路由域的<strong>骨干网</strong>，负责在不同区域间通信，路由域中的 Level-2 路由器必须是物理连续的，以保证骨干网的连续性。</li>
+<li>Level-1-2：同时属于 Level-1 和 Level-2 的路由器，可以与<strong>同一区域的 Level-1 和 Level-1-2 路由器形成 Level-1 邻居关系</strong>，也可以与<strong>同一区域或者其他区域的 Level-2 和 Level-1-2 路由器形成 Level-2 的邻居关系</strong>。Level-1 路由器必须通过 Level-1-2 路由器才能连接至其他区域。Level-1-2 路由器维护两个链路状态数据库，Level-1 的链路状态数据库用于区域内路由，Level-2 的链路状态数据库用于区域间路由。</li>
+</ol>
+<p>每台路由器只能属于一个区域，区域边界在链路上。</p>
+<h3 id="is-is-协议报文"><a class="markdownIt-Anchor" href="#is-is-协议报文"></a> IS-IS 协议报文</h3>
+<p>IS-IS 使用协议数据单元 PDU 进行通讯。PDU 有以下类型：</p>
+<ul>
+<li>IS-IS Hello PDU：简称 IIH，负责路由间的邻居关系建立和维护</li>
+<li>链路状态 PDU：简称 LSP，描述路由器中的所有链路状态信息</li>
+<li>时序报文 SNP：用于确认邻居间最新接收的 LSP，类似于确认报文。包括两种报文：CSNP 和 PSNP</li>
+<li>全时序报文 CSNP：包含网络中每个 LSP 的摘要信息。当路由器收到一个 CSNP 时，它会将该 CSNP 与其链路状态数据库 LSDB 进行比较，如果该路由器丢失了一个在 CSNP 中存在的 LSP 时， 它会发送一个组播 PSNP，向网络中其它路由器索要其需要的 LSP。</li>
+<li>部分时序报文 PSNP：在点对点链路中用于确认接收的 LSP 和请求最新或者丢失的 LSP；在广播链路中仅用于请求最新或者丢失的 LSP。</li>
+</ul>
+<p>IS-IS 报文直接封装在链路层数据中。报头包含通用报头 Common Header 和专用报头 Specific Header。</p>
+<h3 id="is-is-网络类型"><a class="markdownIt-Anchor" href="#is-is-网络类型"></a> IS-IS 网络类型</h3>
+<p>点对点：主要用于 PPP、HDLC</p>
+<p>广播：主要用于以太网</p>
+<h2 id="is-is-实现"><a class="markdownIt-Anchor" href="#is-is-实现"></a> IS-IS 实现</h2>
+<h3 id="邻接关系"><a class="markdownIt-Anchor" href="#邻接关系"></a> 邻接关系</h3>
+<ol>
+<li>
+<p>邻居关系建立</p>
+<p>若在点对点网络，只要 IS 能接收到对端的 P2P IIH 报文，则邻居能建立，状态变为 UP</p>
+<p>若在广播网络，邻居建立需要三次握手。</p>
+</li>
+<li>
+<p>邻接关系建立</p>
+<p>若在点对点网络：</p>
+<p>若在同一区域 Area，L1 间只建立 L1 邻接关系，L1 和 L1/2 只建立 L1 邻接关系，L1/2 间建立 L1 和 L2 邻接关系。</p>
+<p>若在不同区域，L1 间不建立邻接关系（邻居关系都不是），L2 间建立 L2 邻接关系，L1/2 间建立 L2 邻接关系。</p>
+<p>若在广播网络：会选举 DIS（Desginated IS，指定 IS），类似 DR，相同角色的 IS 间会选举一个，例如 L1 的路由器间选出一个，与 L2 间选出的并不冲突。</p>
+</li>
+</ol>
+<p><strong>DIS 的作用：</strong></p>
+<p><strong>一旦一个设备选举为 DIS 以后，DIS 发送 HELLO 数据包的时间间隔是普通路由器的 1/3，这样可以保证 DIS 失效的时候可以被快速检测到</strong>。</p>
+<p><strong>DIS 的选举是抢占的, 不能不参加选举，IS-IS 中不存在备份 DIS,当一个 DIS 不能工作的时候，直接选举另外一个</strong>。</p>
+<ul>
+<li>在广播子网中创建并向所有的路由器通告伪节点 LSP(Link State Protocol Data unit 链路状态数据单元).</li>
+<li>在 LAN 中通过每 10s 周期性发送 CSNP（完全数据库描述）来泛洪 LSP(Link State Protocol Data unit 链路状态数据单元).</li>
+</ul>
+<p><strong>DIS 的选举过程：</strong></p>
+<ol>
+<li>比较接口优先级，高的优</li>
+<li>具有最大的(SNPA 子网接入点)的路由器将当选 DIS。广播网络中 SNPA 是指 MAC 地址</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>点到点</th>
+<th>广播</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hello 报文</td>
+<td>P2P IIH</td>
+<td>Level-1/2 LAN IIH</td>
+</tr>
+<tr>
+<td>Hello 报文形式</td>
+<td>单播</td>
+<td>组播</td>
+</tr>
+<tr>
+<td>Hello 定时器</td>
+<td>10s</td>
+<td>10s，DIS 为 3.3s</td>
+</tr>
+<tr>
+<td>邻接关系数量</td>
+<td>1</td>
+<td>多个</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lsdb-同步"><a class="markdownIt-Anchor" href="#lsdb-同步"></a> LSDB 同步</h3>
+<p>同步相关报文：</p>
+<ol>
+<li>
+<p>LSP 报文：用于描述链路状态信息</p>
+<p>Level-1 LSP 仅在区域内传播，Level-2 LSP 在骨干网传播</p>
+</li>
+<li>
+<p>SNP 报文：用于描述 LSDB 中 LSP 摘要，并对邻居之间最新接收的 LSP 进行确认</p>
+</li>
+<li>
+<p>CSNP 报文：包含所有 LSP 的摘要信息，在广播网络中周期发送，在点对点网络中只在第一次发送</p>
+</li>
+<li>
+<p>PSNP 报文：列举最近收到的一个或多个 LSP 序号，用于 LSP 确认</p>
+</li>
+</ol>
+<p><strong>在广播网络中：</strong></p>
+<img src="/2018/IS-IS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="">
+<ol>
+<li>所有同类路由器向 DIS 发送自己的所有 LSP</li>
+<li>DIS 周期发送 LSP 摘要信息</li>
+<li>IS 向 DIS 发送 PSNP 响应</li>
+<li>DIS 回复 LSP_K</li>
+</ol>
+<h2 id="参考资料"><a class="markdownIt-Anchor" href="#参考资料"></a> 参考资料</h2>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://baike.baidu.com/item/is-is/930474">百度百科 IS-IS</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag"><i class="fa fa-tag"></i> 网络</a>
+              <a href="/tags/IS-IS/" rel="tag"><i class="fa fa-tag"></i> IS-IS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Postfix%E9%82%AE%E4%BB%B6%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Postfix邮件服务器笔记">
+      <i class="fa fa-chevron-left"></i> Postfix邮件服务器笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Cuda%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/" rel="next" title="Cuda环境搭建">
+      Cuda环境搭建 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#osi-%E5%9C%B0%E5%9D%80"><span class="nav-text"> OSI 地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#is-is-%E6%A6%82%E8%BF%B0"><span class="nav-text"> IS-IS 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#is-is-%E5%B8%B8%E8%A7%81%E6%9C%AF%E8%AF%AD"><span class="nav-text"> IS-IS 常见术语：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#is-is-%E5%8D%8F%E8%AE%AE%E6%8A%A5%E6%96%87"><span class="nav-text"> IS-IS 协议报文</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#is-is-%E7%BD%91%E7%BB%9C%E7%B1%BB%E5%9E%8B"><span class="nav-text"> IS-IS 网络类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#is-is-%E5%AE%9E%E7%8E%B0"><span class="nav-text"> IS-IS 实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%82%BB%E6%8E%A5%E5%85%B3%E7%B3%BB"><span class="nav-text"> 邻接关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lsdb-%E5%90%8C%E6%AD%A5"><span class="nav-text"> LSDB 同步</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text"> 参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="top 与 htop  top htop   uptime,free 和 vmstat  uptime free vmstat   mpstat、 iostat 与 sar  mpstat iostat sar   ps 和 pstree  ps pstree">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux性能监控与优化">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="top 与 htop  top htop   uptime,free 和 vmstat  uptime free vmstat   mpstat、 iostat 与 sar  mpstat iostat sar   ps 和 pstree  ps pstree">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-08-01T12:57:03.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.521Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="运维">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="性能">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Linux性能监控与优化 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux性能监控与优化
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-01 20:57:03" itemprop="dateCreated datePublished" datetime="2018-08-01T20:57:03+08:00">2018-08-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#top-%e4%b8%8e-htop">top 与 htop</a>
+<ul>
+<li><a href="#top">top</a></li>
+<li><a href="#htop">htop</a></li>
+</ul>
+</li>
+<li><a href="#uptimefree-%e5%92%8c-vmstat">uptime,free 和 vmstat</a>
+<ul>
+<li><a href="#uptime">uptime</a></li>
+<li><a href="#free">free</a></li>
+<li><a href="#vmstat">vmstat</a></li>
+</ul>
+</li>
+<li><a href="#mpstat-iostat-%e4%b8%8e-sar">mpstat、 iostat 与 sar</a>
+<ul>
+<li><a href="#mpstat">mpstat</a></li>
+<li><a href="#iostat">iostat</a></li>
+<li><a href="#sar">sar</a></li>
+</ul>
+</li>
+<li><a href="#ps-%e5%92%8c-pstree">ps 和 pstree</a>
+<ul>
+<li><a href="#ps">ps</a></li>
+<li><a href="#pstree">pstree</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<p><strong>所有工具进行系统性能分析的思路都是相同的。</strong></p>
+<h1 id="top-与-htop"><a class="markdownIt-Anchor" href="#top-与-htop"></a> top 与 htop</h1>
+<h2 id="top"><a class="markdownIt-Anchor" href="#top"></a> top</h2>
+<p>查看动态进程状态，默认每 5 秒刷新一次。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">top</span><br><span class="line">  -d：指定top刷新的时间间隔，默认是5 秒</span><br><span class="line">  -b：批处理模式，每次刷新分批显示</span><br><span class="line">  -n：指定top刷新几次就退出，可以配合-b使用</span><br><span class="line">  -p：指定监控的pid，指定方式为-pN1 -pN2 ...或-pN1, N2 [,...]</span><br><span class="line">  -u：指定要监控的用户的进程，可指定UID或用户名</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">top - 02:20:36 up  6:48,  1 user,  load average: 0.00, 0.00, 0.00</span><br><span class="line">Tasks: 145 total,   2 running, 143 sleeping,   0 stopped,   0 zombie</span><br><span class="line">%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">KiB Mem :  2029396 total,  1600964 free,   161512 used,   266920 buff&#x2F;cache</span><br><span class="line">KiB Swap:  2097148 total,  2097148 free,        0 used.  1670652 avail Mem</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Tasks 为进程数</li>
+<li><code>us</code>：用户进程（非优雅进程，即未修改优先级）占用 cpu 百分比</li>
+<li><code>sy</code>：系统进程（内核进程）占用 cpu 百分比</li>
+<li><code>ni</code>：进程空间内改变过优先级的进程占 cpu 百分比</li>
+<li><code>id</code>：空闲 cpu 百分比。如果系统慢但这个值很高，则可以推断不是 CPU 负载的问题</li>
+<li><code>wa</code>：I/O 等待时间比率。若系统慢但这个值低，则也可排除磁盘或网络 I/O 负载问题</li>
+<li><code>hi</code>：不可中断睡眠时间比率</li>
+<li><code>si</code>：可中断睡眠时间比率</li>
+<li><code>st</code>：被偷走时间比率，一般为虚拟机占用</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND</span><br></pre></td></tr></table></figure>
+<ul>
+<li>PR：优先级</li>
+<li>NI：nice 值，负数为高优先级，正数为低优先级</li>
+<li>VIRT：虚拟内存总量</li>
+<li>RES：进程实际使用内存</li>
+<li>SHR：共享内存</li>
+<li>S：进程状态。有五种状态：D-不可中断的睡眠态 R-运行态 S-睡眠态 T-停止 Z-僵尸态</li>
+<li>TIME+：进程使用 CPU 的时间总计（单位 1/100 秒）</li>
+</ul>
+<p>进入 top 视图后的操作</p>
+<ul>
+<li>1：查看每个逻辑 CPU 的状况</li>
+<li>P：按 cpu 使用率排序（默认）</li>
+<li>M：按内存使用率排序</li>
+<li>N：按 PID 排序</li>
+<li>T：根据 TIME+进行排序</li>
+<li>H：切换为线程</li>
+<li>l：切换负载信息</li>
+<li>m：切换显示内存信息（只是将数字改为类似进度条）</li>
+<li>t：切换显示进程和 CPU 状态信息（只是将数字改为类似进度条）</li>
+<li>k：指定要杀死的进程号</li>
+<li>A：切换显示模式。有四个窗口，在左上角显示，按 a（后一个）或 w（前一个）进行窗口切换<br />
+Def：默认字段组 Job：任务字段组 Mem：内存字段组 Usr：用户字段组</li>
+<li>d 或 s：修改刷新间隔</li>
+<li>f：选择要添加显示的字段，标上*为已选的</li>
+<li>R：反向排序</li>
+<li>c：显示进程的完整命令路径名</li>
+<li>V：树视图，命令会按进程的父子关系显示</li>
+<li>u：显示指定用户的进程</li>
+<li>n 或#：设置最多显示的进程量</li>
+<li>r：设置指定进程的 nice 优先级</li>
+<li>F: 选择要排序的字段</li>
+</ul>
+<h2 id="htop"><a class="markdownIt-Anchor" href="#htop"></a> htop</h2>
+<p>默认没有安装，需要<code>dnf install htop</code></p>
+<p>可通过鼠标点击操作，<code>h</code>查看帮助</p>
+<h1 id="uptimefree-和-vmstat"><a class="markdownIt-Anchor" href="#uptimefree-和-vmstat"></a> uptime,free 和 vmstat</h1>
+<h2 id="uptime"><a class="markdownIt-Anchor" href="#uptime"></a> uptime</h2>
+<p>获取主机运行时间，查询系统负载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">09:05:53 up 12 days,13:33,2 users,load average: 0.01,0.02,0.05</span><br></pre></td></tr></table></figure>
+<ul>
+<li>09:05:53–当前时间</li>
+<li>up 12 days, 13:33–系统启动时长</li>
+<li>2 users–当前登录系统的用户数</li>
+<li>load average: 0.01,0.02,0.05–系统在最近的 1,5,15 分钟的平均负载</li>
+</ul>
+<blockquote>
+<p>负载率(load)，即特定时间长度内，cpu 运行队列中的平均进程数(包括线程)，一般平均每分钟每核的进程数小于 3 都认为正常，大于 5 时负载已经非常高。Linux 运行队列包括正在运行的、在等待的、处于可中断睡眠态（IO 等待）的进程。若为多核 CPU，还需要除以核数。</p>
+<p>平均负载最佳值为 1，意味着每个进程都能立刻访问 CPU，并且没有丢失 CPU 周期</p>
+</blockquote>
+<p>平均负载为 1 表示，单 CPU 系统处于恒定负载，若为 4 则表示系统处于它可承受负载能力的 4 倍。明确负载是：CPU 密集型（等待 CPU 资源的进程）、RAM 密集型（频繁使用的 RAM 被移入交换区）和 I/O 密集型（争夺磁盘或网络 I/O 的进程）非常重要。</p>
+<p>CPU 密集型系统比 I/O 密集型和 RAM 密集型相应度更高，因为磁盘 I/O 或 RAM 资源耗尽时，进程会逐渐变慢直至停止，而 CPU 密集型仍能快速执行命令。</p>
+<h2 id="free"><a class="markdownIt-Anchor" href="#free"></a> free</h2>
+<p>查看内存与 swap 分区使用状况，实际是从<code>/proc/meminfo</code>中读取数据的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">free</span><br><span class="line"> -b         单位b</span><br><span class="line"> -k         单位kb（默认）</span><br><span class="line"> -m         单位mb</span><br><span class="line"> -g         单位gb</span><br><span class="line"> -h         自动选择单位</span><br><span class="line"> -l         显示高内存、低内存详细统计数据</span><br><span class="line"> -t         显示内存与swap的总和</span><br><span class="line"> -s N       设置刷新周期（单位秒），ctrl+C退出</span><br><span class="line"> -c N       设置刷新次数</span><br><span class="line"> -w         分开显示buffers和cache</span><br><span class="line"></span><br><span class="line">total  used  free  shared  buff&#x2F;cache  available</span><br><span class="line"># cache为缓存：把读取的数据放在内存中，再次读的话就直接从内存中读了，加快读取</span><br><span class="line"># buffer为缓冲：写入数据时，把分散的写入操作保存到内存中，然后集中写入硬盘，减少磁盘碎片与硬盘反复寻道，加快写入</span><br></pre></td></tr></table></figure>
+<h2 id="vmstat"><a class="markdownIt-Anchor" href="#vmstat"></a> vmstat</h2>
+<p>报告进程、内存、分页、块 IO、中断、CPU 活动信息，能够显示平均数据和实时样本。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">vmstat [options] [delay [count]]</span><br><span class="line"> -a      显示内存信息</span><br><span class="line"> -f      显示自从系统启动以来产生的子进程数量</span><br><span class="line"> -m      显示slab信息</span><br><span class="line"> -n      与-a类似</span><br><span class="line"> -s      事件计数器和内存状态</span><br><span class="line"> -d      磁盘状态</span><br><span class="line"> -D      磁盘状态概述</span><br><span class="line"> -p 分区  磁盘分区统计信息</span><br><span class="line"> -S 单位  输出与-n一致，但可指定单位</span><br><span class="line"> -t      显示时间戳，输出比-n增加了一项CST时间戳</span><br><span class="line"> 刷新间隔 [次数]  设置持续刷新间隔及刷新次数</span><br></pre></td></tr></table></figure>
+<ul>
+<li>
+<p>虚拟内存模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">vmstat</span><br><span class="line">procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----</span><br><span class="line">r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st</span><br><span class="line">Proc：</span><br><span class="line">  r：可运行进程的数量（正在运行+等待运行）</span><br><span class="line">  b：不可中断睡眠进程的数量</span><br><span class="line">memory：</span><br><span class="line">  swpd：虚拟内存使用量</span><br><span class="line">  free：空闲内存</span><br><span class="line">  buff：缓冲区内存</span><br><span class="line">  cache：用作缓存的内存</span><br><span class="line">swap：</span><br><span class="line">  si：swap in,从磁盘换入的内存数量&#x2F;s</span><br><span class="line">  so：swap out,交换到磁盘的内存数量&#x2F;s</span><br><span class="line">io：</span><br><span class="line">  bi：block in,从块设备收到的块数&#x2F;s</span><br><span class="line">  bo：block out,发送到块设备的块数&#x2F;s</span><br><span class="line">system：</span><br><span class="line">  in：interrupt,每秒中断数量</span><br><span class="line">  cs：context switch,每秒上下文切换数量</span><br><span class="line">cpu：</span><br><span class="line">  us：非内核代码运行时间</span><br><span class="line">  sy：内核代码运行时间</span><br><span class="line">  id：idle,空闲花费时间，包含IOwait时间</span><br><span class="line">  wa：wait,IO等待花费时间</span><br><span class="line">  st：steal,虚拟软件花费时间</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>磁盘模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">vmstat -d</span><br><span class="line">disk- ------------reads------------ ------------writes----------- -----IO------</span><br><span class="line">      total merged sectors      ms  total merged sectors      ms    cur    sec</span><br><span class="line">disk：磁盘名</span><br><span class="line">reads：</span><br><span class="line">  total：成功读取的总量</span><br><span class="line">  merged：合并后分组的读</span><br><span class="line">  sectors：成功读取的扇区</span><br><span class="line">  ms：读取花费时间（单位毫秒）</span><br><span class="line">writes：</span><br><span class="line">  total：成功写入的总量</span><br><span class="line">  merged：合并后分组的写</span><br><span class="line">  sectors：成功写入的扇区</span><br><span class="line">  ms：写入花费时间（单位毫秒）</span><br><span class="line">IO：</span><br><span class="line">  cur：正在进行的IO</span><br><span class="line">  sec：IO花费时间（单位秒）</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>一旦 Linux 将一个文件载入到 RAM 中，当程序使用完这个文件，并不会将它从 RAM 中删除，而是缓存在 RAM 中，如果还有程序要访问这个文件，会大大提高读取速度。若系统需要为活动进程提供 RAM，则经过一段时间，系统的可用 RAM 就会越来越少。</p>
+<p>想要知道进程确切使用了多少内存，需要将总消耗内存减去缓存文件大小。若一个进程转为空闲状态，则 Linux 会将占用的内存释放。</p>
+<h1 id="mpstat-iostat-与-sar"><a class="markdownIt-Anchor" href="#mpstat-iostat-与-sar"></a> mpstat、 iostat 与 sar</h1>
+<p><code>mpstat</code>与<code>iostat</code>都在<code>sysstat</code>包中，若没有这两个命令，则需要安装<code>sysstat</code><br />
+sysstat 包包含以下命令：</p>
+<ul>
+<li>iostat</li>
+<li>mpstat</li>
+<li>pidstat</li>
+<li>sar</li>
+<li>tapestat</li>
+</ul>
+<p>若要进行长时间的负载记录和统计，需要启动 sysstat 服务。<code>systemctl start sysstat.service</code>，启用 sysstat 后，会每 10 分钟收集一次系统状态，并存储到<code>/var/log/sa</code>或<code>/var/log/sysstat</code>中<br />
+若是 debian 系的系统，还需要修改配置<code>/etc/sysconfig/sysstat</code>，将<code>ENABLED</code>修改为 true，开启收集系统动态数据。</p>
+<h2 id="mpstat"><a class="markdownIt-Anchor" href="#mpstat"></a> mpstat</h2>
+<p>用于报告在多处理器服务器上每个可用 CPU 的统计数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">mpstat [ 选项 ] [ &lt;时间间隔&gt; [ &lt;次数&gt; ] ]</span><br><span class="line">  -A     相当于-u -I ALL -P ALL</span><br><span class="line">  -I &#123;SUM|CPU|SCPU|ALL&#125;  报告中断统计数据</span><br><span class="line">    SUM  报告每个处理器中断的总数量，显示CPU编号和intr&#x2F;s一个或多个CPU每秒接收每个独特中断的个数</span><br><span class="line">    CPU  显示intr&#x2F;s，但排列难以阅读</span><br><span class="line">    SCPU 显示intr&#x2F;s，排版容易阅读</span><br><span class="line">    ALL  显示所有中断统计信息</span><br><span class="line">  -P &#123;cpu编号|ON|ALL&#125;</span><br><span class="line">    cpu  指明统计的cpu编号（0开始）</span><br><span class="line">    ON   每个在线CPU的统计数据</span><br><span class="line">    ALL  所有CPU的统计数据</span><br><span class="line">  -u  统计CPU使用率，输出与-P一致</span><br><span class="line">  时间间隔interval [次数times]   指定报告时间间隔及次数，最后会生成平均值</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mpstat -u</span><br><span class="line">CPU  %usr  %nice  %sys  %iowait  %irq  %soft  %steal  %guest  %gnice  %idle</span><br></pre></td></tr></table></figure>
+<ul>
+<li>CPU：CPU 编号</li>
+<li><code>%usr</code>：用户级别（应用）执行时 CPU 使用率</li>
+<li><code>%nice</code>：用户级别使用 nice 优先级执行时 CPU 使用率</li>
+<li><code>%sys</code>：系统级别（内核）执行时 CPU 使用率（不包括硬件软件中断服务的时间）</li>
+<li><code>%iowait</code>：系统未完成磁盘 I/O 请求期间，CPU 空闲时间百分比</li>
+<li><code>%irq</code>：CPU 硬件中断时间百分比</li>
+<li><code>%soft</code>：CPU 软件中断时间百分比</li>
+<li><code>%steal</code>：虚拟化软件为其他虚拟 CPU 服务时，虚拟 CPU 非主动等待时间百分比</li>
+<li><code>%guest</code>：CPU 运行虚拟处理器花费时间百分比</li>
+<li><code>%idle</code>：CPU 空闲时间百分比</li>
+</ul>
+<h2 id="iostat"><a class="markdownIt-Anchor" href="#iostat"></a> iostat</h2>
+<p>当 I/O 等待时间占 CPU 时间比例很高时，首先要检查系统是否正在大量使用交换空间，若还有大量可用 RAM，则查看哪个进程占用了大量 I/O。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">avg-cpu:  %user   %nice %system %iowait  %steal   %idle</span><br><span class="line">           9.71    0.01    4.89    0.09    0.00   85.30</span><br><span class="line"></span><br><span class="line">Device             tps    kB_read&#x2F;s    kB_wrtn&#x2F;s    kB_read    kB_wrtn</span><br><span class="line">loop0             0.00         0.00         0.00        147          0</span><br><span class="line">......</span><br><span class="line">sda               7.57        96.06       114.12   39466421   46888861</span><br><span class="line">......</span><br><span class="line">sdb               0.00         0.01         0.00       3562        144</span><br><span class="line">loop13            0.00         0.00         0.00       1419          0</span><br><span class="line">sdc               0.09         9.42         0.01    3869460       3816</span><br></pre></td></tr></table></figure>
+<ul>
+<li>tps：设备每秒传输量（I/O 请求）</li>
+<li>kB_read/s：每秒从设备读取的数据量</li>
+<li>kB_wrtn/s：每秒向设备写入的数据量</li>
+<li>kB_read：从设备读取的总数据量</li>
+<li>kB_wrtn：向设备写入的总数据量</li>
+</ul>
+<p>当系统处于 I/O 高负载时，首先观察每个分区的负载，并确定分区中存放的是什么服务的数据，然后确定高负载 I/O 操作是写入还是读取，从而分析是什么服务占用了大量 I/O。</p>
+<h2 id="sar"><a class="markdownIt-Anchor" href="#sar"></a> sar</h2>
+<p>sar 用于收集系统的各种负载信息。数据存在<code>/var/log/sa/</code>下的<code>saX</code>文件中，X 为当天是本月的几号，如当月 19 号，则会生成日志<code>/var/log/sa/sa19</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">-B	             分页状况</span><br><span class="line">-b	             I&#x2F;O 和传输速率信息状况</span><br><span class="line">-d	             块设备状况</span><br><span class="line">-F [ MOUNT ]     文件系统统计信息</span><br><span class="line">-H	             交换空间利用率</span><br><span class="line">-I &#123; &lt;int_list&gt; | SUM | ALL &#125; 中断统计</span><br><span class="line">-n &#123; &lt;keyword&gt; [,...] | ALL &#125; 网络统计</span><br><span class="line">	DEV	    网络接口</span><br><span class="line">	NFS	    NFS客户端</span><br><span class="line">	NFSD	  NFS服务器端</span><br><span class="line">	SOCK	  Sockets	(v4)</span><br><span class="line">	IP	    IP负载(v4)</span><br><span class="line">	TCP	    TCP负载(v4)</span><br><span class="line">-q	             队列长度和平均负载</span><br><span class="line">-r [ ALL ]       内存利用率信息</span><br><span class="line">-S	             交换空间利用率信息</span><br><span class="line">-u [ ALL ]       CPU 利用率信息</span><br><span class="line">-v	             内核表统计信息</span><br><span class="line">-W	             交换信息</span><br><span class="line">-w	             任务创建与系统转换信息</span><br><span class="line">-y	             TTY 设备信息</span><br></pre></td></tr></table></figure>
+<p><code>sar</code>直接输出当天的 CPU 统计信息。默认 10 分钟收集一次。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">12:25:14     LINUX RESTART	(4 CPU)</span><br><span class="line"></span><br><span class="line">12时35分01秒     CPU     %user     %nice   %system   %iowait    %steal     %idle</span><br><span class="line">12时45分01秒     all      5.67      0.00      4.74      0.11      0.00     89.47</span><br><span class="line">12时55分01秒     all      5.67      0.00      4.60      0.06      0.00     89.67</span><br><span class="line">......</span><br><span class="line">14时25分01秒     all      5.58      0.00      4.74      0.03      0.00     89.65</span><br><span class="line">14时35分01秒     all      5.61      0.00      4.72      0.03      0.00     89.63</span><br><span class="line">平均时间:     all      5.65      0.00      4.71      0.05      0.00     89.60</span><br></pre></td></tr></table></figure>
+<p><code>sar -r</code>输出 RAM 统计信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">20:20:03    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty</span><br><span class="line">12:30:02       268208    451380    549032     67.18      3268    275912    312828     10.73    211764    134792         0</span><br><span class="line">12:40:02       268152    451324    549088     67.19      3268    275912    312828     10.73    211764    134792         0</span><br><span class="line">......</span><br><span class="line">14:30:02       265232    448896    552008     67.55      3268    276348    312824     10.73    214348    132792         0</span><br><span class="line">14:40:02       265244    448908    551996     67.54      3268    276348    312824     10.73    214356    132792         0</span><br><span class="line">Average:       265875    449326    551365     67.47      3268    276153    312999     10.74    213254    133725         0</span><br></pre></td></tr></table></figure>
+<p><code>sar -b</code>输出磁盘统计信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">20:20:03          tps      rtps      wtps   bread&#x2F;s   bwrtn&#x2F;s</span><br><span class="line">12:30:02         0.38      0.04      0.34      3.04      9.77</span><br><span class="line">12:40:02         0.02      0.00      0.02      0.00      0.28</span><br><span class="line">12:50:02         0.05      0.00      0.05      0.00      0.78</span><br><span class="line">......</span><br><span class="line">14:40:02         0.03      0.00      0.03      0.00      0.47</span><br><span class="line">Average:         0.10      0.01      0.09      0.31      1.69</span><br></pre></td></tr></table></figure>
+<p>tps 为每秒总传输的数据量，是 rtps 和 wtps 的总和。bread/s 为平均每秒读取的数据量。</p>
+<p><code>sar -s</code>和<code>-e</code>通常组合使用，指定要查看的项在某段时间内的统计</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># sar -s 12:33:00 -e 13:21:00</span><br><span class="line"></span><br><span class="line">12:40:02        CPU     %user     %nice   %system   %iowait    %steal     %idle</span><br><span class="line">12:50:02        all      0.16      0.00      0.47      0.01      0.00     99.36</span><br><span class="line">13:00:02        all      0.12      0.00      0.48      0.01      0.00     99.40</span><br><span class="line">13:10:02        all      0.11      0.00      0.46      0.01      0.00     99.42</span><br><span class="line">13:20:02        all      0.12      0.00      0.45      0.01      0.00     99.42</span><br><span class="line">Average:        all      0.13      0.00      0.47      0.01      0.00     99.40</span><br></pre></td></tr></table></figure>
+<p>若要查看本月指定几号的记录，则用<code>-f</code>指定统计日志文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># sar -r -f &#x2F;var&#x2F;log&#x2F;sa&#x2F;sa19 -s 13:00:00 -e 13:30:00</span><br><span class="line"></span><br><span class="line">13:00:02    kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty</span><br><span class="line">13:10:02       265584    448928    551656     67.50      3268    276048    313296     10.75    212760    134228         0</span><br><span class="line">13:20:02       265520    448888    551720     67.51      3268    276052    313296     10.75    212776    134232         0</span><br><span class="line">Average:       265552    448908    551688     67.51      3268    276050    313296     10.75    212768    134230         0</span><br></pre></td></tr></table></figure>
+<h1 id="ps-和-pstree"><a class="markdownIt-Anchor" href="#ps-和-pstree"></a> ps 和 pstree</h1>
+<h2 id="ps"><a class="markdownIt-Anchor" href="#ps"></a> ps</h2>
+<p>ps 命令有两种风格：BSD 和 Unix。BSD 格式的参数前不加<code>-</code>，Unix 格式会在参数前加<code>-</code></p>
+<ul>
+<li>
+<p>查看所有进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">ps ax    # a表示此tty下的所有程序（不区分用户），x表示所有程序（不区分tty终端机），若增加u参数，可以用户为主的格式来显示程序状况</span><br><span class="line">ps -ef   # -e显示所有程序，只显示PID、TTY、TIME、CMD，-f增加显示UID、PPID、C、STIME</span><br><span class="line"></span><br><span class="line">ps aux</span><br><span class="line">USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND</span><br><span class="line">USER：进程发起用户</span><br><span class="line">PID：进程号</span><br><span class="line">%CPU，%MEM：CPU，内存占用率</span><br><span class="line">VSZ：虚拟内存（单位kb）</span><br><span class="line">RSS：常驻内存（实际物理内存）（单位kb）</span><br><span class="line">TTY：该进程在哪个终端运行</span><br><span class="line">STAT：进程状态</span><br><span class="line">  S：可中断睡眠</span><br><span class="line">  &lt;：高优先级</span><br><span class="line">  s：子进程</span><br><span class="line">  +：位于后台</span><br><span class="line">  R：运行（Running）</span><br><span class="line">  T：停止状态（Terminate）</span><br><span class="line">  Z：僵尸进程（Zombie）</span><br><span class="line">START————进程开启时间</span><br><span class="line">TIME：进程已启动时间</span><br><span class="line">COMMAND：产生进程的命令名</span><br><span class="line"></span><br><span class="line">ps -ef中不同的几个</span><br><span class="line">PPID：父进程ID</span><br><span class="line">C：CPU占用率</span><br><span class="line">STIME：进程启动时间</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>显示用户进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -f -u [用户名1,用户名2...]   #-u指定用户，可指定多个，不能加-e，不然等于没指定</span><br><span class="line">例：ps -f -u apache</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>显示指定进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ps -f -C [进程]    # -C指定进程名，进程名必须是精确的，不能用通配符。同样不能指定-e</span><br><span class="line">例：ps -f -C httpd</span><br><span class="line">ps -f -p [进程号]  # -p指定进程号</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>通过 cpu 或内存占用对进程排序</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ps -ef --sort&#x3D;[+|-]pcpu,[+|-]pmem</span><br><span class="line">--sort用于指定多个字段，pcpu为按CPU排序，pmem为按内存排序，+为升序，-为降序</span><br><span class="line">例：ps -ef --sort&#x3D;-pcpu | head -6 显示CPU占用排名前五的进程</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>以树显示进程层级关系</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -f --forest</span><br><span class="line">例：ps -f --forest -C httpd</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>查看指定父进程下的所有子进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ps --ppid [PPID]</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>显示进程的线程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -f -L -C [进程]或-p [进程号]   #显示指定进程的线程</span><br><span class="line">例：ps -f -L -C httpd</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>指定要显示的列</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ps -o pid,uname,pcpu,pmem,comm,etime</span><br><span class="line">其中：uname为用户名，etime为进程已运行时间</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>通过<code>watch</code>命令将 ps 变为实时查看器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">watch</span><br><span class="line">  -n 指定指令执行间隔</span><br><span class="line">  -d 高亮显示指令输出信息不同之处</span><br><span class="line">例：watch -n 1 &#39;ps -e -o pid,uname,cmd,pmem,pcpu --sort&#x3D;-pcpu,-pmem | head -11&#39;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="pstree"><a class="markdownIt-Anchor" href="#pstree"></a> pstree</h2>
+<p>查看进程树，常用选项</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">-p          显示进程PID</span><br><span class="line">-g          显示进程组ID，即PGID</span><br><span class="line">-u          显示进程所属用户</span><br><span class="line">-a          显示进程的命令及参数</span><br><span class="line">-H PID      高亮显示指定进程及它的所有父进程</span><br><span class="line">-T          只显示进程，不显示线程</span><br><span class="line">-t          显示完整的线程名</span><br><span class="line">-s          显示进程的父进程</span><br><span class="line">-n          按PID排序输出</span><br><span class="line">-Z          显示selinux上下文（需要开启selinux）</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>参考文章</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.binarytides.com/linux-ps-command/">10 basic examples of Linux ps command</a></li>
+<li><a target="_blank" rel="noopener" href="https://linux.cn/article-2358-1.html">ps 命令的 10 个例子</a></li>
+<li>Linux 性能优化大师</li>
+<li>DevOps 故障排除 Linux 服务器运维最佳实践</li>
+</ul>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E8%BF%90%E7%BB%B4/" rel="tag"><i class="fa fa-tag"></i> 运维</a>
+              <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+              <a href="/tags/%E6%80%A7%E8%83%BD/" rel="tag"><i class="fa fa-tag"></i> 性能</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="LVM逻辑卷与RAID磁盘阵列学习笔记">
+      <i class="fa fa-chevron-left"></i> LVM逻辑卷与RAID磁盘阵列学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Rsync文件同步服务器学习笔记">
+      Rsync文件同步服务器学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#top-%E4%B8%8E-htop"><span class="nav-text"> top 与 htop</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#top"><span class="nav-text"> top</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#htop"><span class="nav-text"> htop</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#uptimefree-%E5%92%8C-vmstat"><span class="nav-text"> uptime,free 和 vmstat</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#uptime"><span class="nav-text"> uptime</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#free"><span class="nav-text"> free</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#vmstat"><span class="nav-text"> vmstat</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#mpstat-iostat-%E4%B8%8E-sar"><span class="nav-text"> mpstat、 iostat 与 sar</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#mpstat"><span class="nav-text"> mpstat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#iostat"><span class="nav-text"> iostat</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sar"><span class="nav-text"> sar</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ps-%E5%92%8C-pstree"><span class="nav-text"> ps 和 pstree</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ps"><span class="nav-text"> ps</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pstree"><span class="nav-text"> pstree</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

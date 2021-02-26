@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本篇包含以下内容  LVM 逻辑卷  LVM 概述 LVM 创建与调整 LVM 快照   RAID 磁盘阵列  RAID 概述 RAID 基础搭建  使用RAID 5进行备份     参考资料">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LVM逻辑卷与RAID磁盘阵列学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="本篇包含以下内容  LVM 逻辑卷  LVM 概述 LVM 创建与调整 LVM 快照   RAID 磁盘阵列  RAID 概述 RAID 基础搭建  使用RAID 5进行备份     参考资料">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="article:published_time" content="2018-08-01T12:55:08.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.505Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="LVM">
+<meta property="article:tag" content="RAID">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>LVM逻辑卷与RAID磁盘阵列学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LVM逻辑卷与RAID磁盘阵列学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-01 20:55:08" itemprop="dateCreated datePublished" datetime="2018-08-01T20:55:08+08:00">2018-08-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本篇包含以下内容</p>
+<ul>
+<li><a href="#lvm-%e9%80%bb%e8%be%91%e5%8d%b7">LVM 逻辑卷</a>
+<ul>
+<li><a href="#lvm-%e6%a6%82%e8%bf%b0">LVM 概述</a></li>
+<li><a href="#lvm-%e5%88%9b%e5%bb%ba%e4%b8%8e%e8%b0%83%e6%95%b4">LVM 创建与调整</a></li>
+<li><a href="#lvm-%e5%bf%ab%e7%85%a7">LVM 快照</a></li>
+</ul>
+</li>
+<li><a href="#raid-%e7%a3%81%e7%9b%98%e9%98%b5%e5%88%97">RAID 磁盘阵列</a>
+<ul>
+<li><a href="#raid-%e6%a6%82%e8%bf%b0">RAID 概述</a></li>
+<li><a href="#raid-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba">RAID 基础搭建</a>
+<ul>
+<li><a href="#%e4%bd%bf%e7%94%a8raid-5%e8%bf%9b%e8%a1%8c%e5%a4%87%e4%bb%bd">使用<code>RAID 5</code>进行备份</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99">参考资料</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="lvm-逻辑卷"><a class="markdownIt-Anchor" href="#lvm-逻辑卷"></a> LVM 逻辑卷</h1>
+<h2 id="lvm-概述"><a class="markdownIt-Anchor" href="#lvm-概述"></a> LVM 概述</h2>
+<p>LVM(<code>Logical Volume Manager</code>)逻辑卷管理器，可以灵活调整存储空间大小，并不会对现有数据造成任何损坏。红帽系的系统全部默认开启了 LVM。</p>
+<p>几个关键术语：</p>
+<ul>
+<li>PV(<code>Physical Volume</code>，物理卷)：最低层的存储设备（硬盘，分区）</li>
+<li>VG(<code>Volume Group</code>，卷组)：单个或多个 PV 构成的存储资源池，不能直接存放数据</li>
+<li>LV(<code>Logical Volume</code>，逻辑卷)：从 VG 中划分出的存储空间，可直接存放数据</li>
+<li>PE(<code>Physical Extend</code>，物理扩展单元)：逻辑层面上最小的存储单元（类似 block），一个 PE 大小 4MB，是告诉 PV，表明存储单元位于 PV 的哪个位置。PE 大小必须满足 2 的指数幂</li>
+<li>LE(<code>Logical Extend</code>，逻辑扩展单元)：与 PE 类似，默认情况下，PE 与 LE 一样大。LE 告诉 LV，表明存储单元处于 VG 的哪个位置</li>
+</ul>
+<p>LVM 创建流程：</p>
+<ol>
+<li>使用几块硬盘或分区（未创建文件系统）创建物理卷，并将分区的识别号设置为 LVM，即<code>8e</code></li>
+<li>将多个物理卷组合成一个卷组，卷组会根据指定的 PE 大小将空间划分为多个 PE，在 LVM 中存储以 PE 为单元</li>
+<li>在卷组中分出逻辑卷，这些逻辑卷在外界看来就是多个独立的硬盘分区</li>
+<li>对逻辑卷制作文件系统，并挂载</li>
+</ol>
+<img src="/2018/LVM%E9%80%BB%E8%BE%91%E5%8D%B7%E4%B8%8ERAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>LVM 写入机制：<br />
+LV 是从 VG 中划分出来的，LV 中的 PE 很可能来自于多个 PV。在向 LV 存储数据时，有多种存储机制，其中两种是：</p>
+<ul>
+<li>线性模式(<code>linear</code>)：先写完来自于同一个 PV 的 PE，再写来自于下一个 PV 的 PE。</li>
+<li>条带模式(<code>striped</code>)：一份数据拆分成多份，分别写入该 LV 对应的每个 PV 中，所以读写性能较好，类似于 RAID 0。</li>
+</ul>
+<p>尽管<code>striped</code>读写性能较好也不建议使用该模式，因为 lvm 的着重点在于弹性容量扩展而非性能，要实现性能应该使用 RAID 来实现，而且使用<code>striped</code>模式时要进行容量的扩展和收缩将比较麻烦。默认的是使用线性模式。</p>
+<blockquote>
+<p>引用自<a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7049233.html#auto_id_1">骏马金龙的 LVM 详解</a></p>
+</blockquote>
+<h2 id="lvm-创建与调整"><a class="markdownIt-Anchor" href="#lvm-创建与调整"></a> LVM 创建与调整</h2>
+<p>实验环境：</p>
+<ul>
+<li>CentOS7</li>
+<li><code>/dev/sdb</code>　大小 20G</li>
+<li>将<code>/dev/sdb</code>分为 4 个分区，每个分区 5G，并将磁盘标识号设为<code>8e</code>，表示 LVM</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># fdisk -l &#x2F;dev&#x2F;sdb</span><br><span class="line"></span><br><span class="line">Disk &#x2F;dev&#x2F;sdb: 21.5 GB, 21474836480 bytes, 41943040 sectors</span><br><span class="line">Units &#x3D; sectors of 1 * 512 &#x3D; 512 bytes</span><br><span class="line">Sector size (logical&#x2F;physical): 512 bytes &#x2F; 512 bytes</span><br><span class="line">I&#x2F;O size (minimum&#x2F;optimal): 512 bytes &#x2F; 512 bytes</span><br><span class="line">Disk label type: dos</span><br><span class="line">Disk identifier: 0xde948938</span><br><span class="line"></span><br><span class="line">   Device Boot      Start         End      Blocks   Id  System</span><br><span class="line">&#x2F;dev&#x2F;sdb1            2048    10487807     5242880   8e  Linux LVM</span><br><span class="line">&#x2F;dev&#x2F;sdb2        10487808    20973567     5242880   8e  Linux LVM</span><br><span class="line">&#x2F;dev&#x2F;sdb3        20973568    31459327     5242880   8e  Linux LVM</span><br><span class="line">&#x2F;dev&#x2F;sdb4        31459328    41943039     5241856   8e  Linux LVM</span><br></pre></td></tr></table></figure>
+<ol>
+<li>准备裸磁盘与裸分区，制作 PV<br />
+使用<code>pvcreate [裸磁盘/裸分区]</code>创建 PV</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># pvcreate &#x2F;dev&#x2F;sdb1 &#x2F;dev&#x2F;sdb2 &#x2F;dev&#x2F;sdb3 &#x2F;dev&#x2F;sdb4</span><br><span class="line">  Physical volume &quot;&#x2F;dev&#x2F;sdb1&quot; successfully created.</span><br><span class="line">  Physical volume &quot;&#x2F;dev&#x2F;sdb2&quot; successfully created.</span><br><span class="line">  Physical volume &quot;&#x2F;dev&#x2F;sdb3&quot; successfully created.</span><br><span class="line">  Physical volume &quot;&#x2F;dev&#x2F;sdb4&quot; successfully created.</span><br></pre></td></tr></table></figure>
+<p>可使用<code>pvdisplay [磁盘/分区]</code>查看 pv 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">pvdisplay选项列表</span><br><span class="line">  若不指定磁盘或分区，就是查看所有PV</span><br><span class="line">  -m    # 查看该设备中PE的使用分布图</span><br><span class="line">  -s    # 查看pv简短信息</span><br></pre></td></tr></table></figure>
+<p><code>pvs</code>或<code>pvscan</code>也可查看所有 PV 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># pvscan</span><br><span class="line">  PV &#x2F;dev&#x2F;sda2   VG centos          lvm2 [&lt;19.00 GiB &#x2F; 0    free]</span><br><span class="line">  PV &#x2F;dev&#x2F;sdb4                      lvm2 [&lt;5.00 GiB]</span><br><span class="line">  PV &#x2F;dev&#x2F;sdb2                      lvm2 [5.00 GiB]</span><br><span class="line">  PV &#x2F;dev&#x2F;sdb1                      lvm2 [5.00 GiB]</span><br><span class="line">  PV &#x2F;dev&#x2F;sdb3                      lvm2 [5.00 GiB]</span><br><span class="line">  Total: 5 [&lt;39.00 GiB] &#x2F; in use: 1 [&lt;19.00 GiB] &#x2F; in no VG: 4 [&lt;20.00 GiB]</span><br><span class="line">  最后一行显示的是&quot;pv的总容量&#x2F;已使用的pv容量&#x2F;空闲的pv容量&quot;</span><br></pre></td></tr></table></figure>
+<p><code>pvremove [分区]</code>删除 PV<br />
+<code>pvmove [分区]</code>删除 PV 中的所有数据</p>
+<ol start="2">
+<li>制作 VG<br />
+<code>vgcreate [VG名][多个裸磁盘]</code>制作卷组</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">vgcreate选项列表</span><br><span class="line">  -s    # 指定PE大小。不指定默认大小4M</span><br><span class="line">  -l    # 卷组上允许创建的最大逻辑卷数</span><br><span class="line">  -p    # 卷组中允许添加的最大物理卷数</span><br><span class="line">  在创建VG后，只有VG没有数据时才能修改属性，如PE大小</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># vgcreate -s 8M my_vg1 &#x2F;dev&#x2F;sdb1 &#x2F;dev&#x2F;sdb2</span><br><span class="line">  Volume group &quot;my_vg1&quot; successfully created</span><br><span class="line"># vgcreate -s 8M my_vg2 &#x2F;dev&#x2F;sdb3 &#x2F;dev&#x2F;sdb4</span><br><span class="line">  Volume group &quot;my_vg2&quot; successfully created</span><br></pre></td></tr></table></figure>
+<p><code>vgdisplay [VG名]</code>查看 VG 信息<br />
+<code>vgs</code>和<code>vgscan</code>也可显示所有 VG 信息</p>
+<p><code>vgreduce [VG名] [PV名]</code>从 VG 中删除指定 PV<br />
+<code>vgextend [VG名] [PV名]</code>添加 PV 到 VG 中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># vgreduce my_vg1 &#x2F;dev&#x2F;sdb2</span><br><span class="line">  Removed &quot;&#x2F;dev&#x2F;sdb2&quot; from volume group &quot;my_vg1&quot;</span><br><span class="line"># vgextend my_vg1 &#x2F;dev&#x2F;sdb2</span><br><span class="line">  Volume group &quot;my_vg1&quot; successfully extended</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">vgchange [选项] [VG名]  修改卷组的属性</span><br><span class="line">经常被用来设置卷组是处于活动状态或非活动状态。</span><br><span class="line">处于活动状态的卷组无法被删除，必须使用vgchange命令将卷组设置为非活动状态后才能删除。</span><br><span class="line">  -a y|n 设置卷组的活跃|非活跃状态</span><br></pre></td></tr></table></figure>
+<p><code>vgremove [VG名]</code>删除 VG</p>
+<ol start="3">
+<li>创建逻辑卷 LV<br />
+<code>lvcreate -L N -n [LV名][VG名]</code>创建逻辑卷</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">lvcreate选项列表</span><br><span class="line">  -L N    # 指定逻辑卷大小N，若N不是PE的整数倍，系统会自动将LV大小变大为PE整数倍</span><br><span class="line">  -n      # 指定LV名</span><br><span class="line">  -l n    # 指定PE个数，即通过PE个数指定逻辑卷大小</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># lvcreate -L 6G -n my_lv1 my_vg1</span><br><span class="line">  Logical volume &quot;my_lv1&quot; created.</span><br><span class="line"># lvcreate -l 1000 -n my_lv2 my_vg2</span><br><span class="line">  Logical volume &quot;my_lv2&quot; created.</span><br><span class="line"></span><br><span class="line"># lvscan</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;centos&#x2F;swap&#39; [2.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;centos&#x2F;root&#39; [&lt;17.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;my_vg2&#x2F;my_lv2&#39; [7.81 GiB] inherit</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;my_vg1&#x2F;my_lv1&#39; [6.00 GiB] inherit</span><br></pre></td></tr></table></figure>
+<p><code>lvdisplay [LV名]</code>查看指定或所有 LV 详细信息<br />
+<code>lvs</code>和<code>lvscan</code>可查看全部 LV 信息</p>
+<p><code>lvextend [选项] +[扩容大小] [LV]</code>用于扩展逻辑卷的空间大小，而不中断应用程序对逻辑卷的访问</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">lvextend选项</span><br><span class="line">  -L 指定逻辑卷的大小</span><br><span class="line">  -l 指定逻辑卷的大小（LE数）</span><br><span class="line">  若不添加加号，则要指定扩容后的大小（一定要比增容前大）</span><br><span class="line">  若添加加号，则要指定要扩容的大小</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># lvextend -L +100M &#x2F;dev&#x2F;my_vg1&#x2F;my_lv1</span><br><span class="line">  Rounding size to boundary between physical extents: 104.00 MiB.</span><br><span class="line">  Size of logical volume my_vg1&#x2F;my_lv1 changed from 6.00 GiB (768 extents) to 6.10 GiB (781 extents).</span><br><span class="line">  Logical volume my_vg1&#x2F;my_lv1 successfully resized.</span><br><span class="line"></span><br><span class="line"># lvextend -l +10 &#x2F;dev&#x2F;my_vg2&#x2F;my_lv2</span><br><span class="line">  Size of logical volume my_vg2&#x2F;my_lv2 changed from 7.81 GiB (1000 extents) to 7.89 GiB (1010 extents).</span><br><span class="line">  Logical volume my_vg2&#x2F;my_lv2 successfully resized.</span><br></pre></td></tr></table></figure>
+<p><code>lvreduce [选项] -[缩小大小] [LV]</code>减少 LVM 逻辑卷占用的空间大小。有可能会删除逻辑卷上已有的数据<br />
+参数与用法与<code>lvextend</code>一致<br />
+<code>lvresize [选项] [+|-][扩大或缩小大小] [LV]</code>调整 LVM 逻辑卷的空间大小，可以增大空间和缩小空间，可能会使逻辑卷上已有的数据丢失<br />
+参数与用法与<code>lvextend</code>与<code>lvreduce</code>一致。</p>
+<p>若该 LV 已制作完文件系统并挂载完成，而要对该 LV 进行容量的改变操作，首先需要<code>umount</code>将挂载取消，然后使用上述命令进行容量改变操作，然后再制作文件系统并挂载。<br />
+<strong>然而，通过任何查看命令都会发现 LV 大小并没有改变。因此，在改变大小后，还要继续以下操作。</strong></p>
+<ul>
+<li>若文件系统为<code>ext4</code>，则需要执行<code>resize2fs [LV路径]</code></li>
+<li>若文件系统为<code>xfs</code>，则需要执行<code>xfs_growfs [LV路径]</code><br />
+<strong>xfs 文件系统只支持增大分区空间的情况，不支持减小的情况</strong>。硬要减小的话，只能在减小后将逻辑分区重新通过 mkfs.xfs 命令重新格式化才能挂载上，这样的话这个逻辑分区上原来的数据就丢失了。<br />
+<code>xfs</code>是不支持裁剪的，<code>ext</code>是支持裁剪的，所以<code>xfs</code>尽量不要缩小 LV</li>
+</ul>
+<p>建议在修改容量后执行<code>e2fsck -f [LV路径]</code>检查是否修改后的大小会影响数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># e2fsck -f &#x2F;dev&#x2F;my_vg1&#x2F;my_lv1</span><br><span class="line">e2fsck 1.42.9 (28-Dec-2013)</span><br><span class="line">Pass 1: Checking inodes, blocks, and sizes</span><br><span class="line">Pass 2: Checking directory structure</span><br><span class="line">Pass 3: Checking directory connectivity</span><br><span class="line">Pass 4: Checking reference counts</span><br><span class="line">Pass 5: Checking group summary information</span><br><span class="line">&#x2F;dev&#x2F;my_vg1&#x2F;my_lv1: 11&#x2F;400624 files (0.0% non-contiguous), 64167&#x2F;1599488 blocks</span><br></pre></td></tr></table></figure>
+<p><code>lvremove [LV名]</code>删除指定 LV</p>
+<h2 id="lvm-快照"><a class="markdownIt-Anchor" href="#lvm-快照"></a> LVM 快照</h2>
+<p>LVM 提供快照功能，可将逻辑卷的数据进行备份，并可快速恢复</p>
+<p>实验选用<code>/dev/my_vg1/my_lv1</code>，并将该 LV 挂载在<code>/my_lv1</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># lvdisplay &#x2F;dev&#x2F;my_vg1&#x2F;my_lv1</span><br><span class="line">  --- Logical volume ---</span><br><span class="line">  LV Path                &#x2F;dev&#x2F;my_vg1&#x2F;my_lv1</span><br><span class="line">  LV Name                my_lv1</span><br><span class="line">  VG Name                my_vg1</span><br><span class="line">......</span><br><span class="line">  LV Size                6.10 GiB</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p><code>lvcreate -s -n [快照名] -L [快照大小] [LV路径]</code>创建快照</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">-s 创建快照</span><br><span class="line">-n 指定快照名</span><br><span class="line">-L 快照大小</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># lvcreate -s -L 1G -n my_snapshot &#x2F;dev&#x2F;my_vg1&#x2F;my_lv1</span><br><span class="line">  Using default stripesize 64.00 KiB.</span><br><span class="line">  Logical volume &quot;my_snapshot&quot; created.</span><br><span class="line"></span><br><span class="line">可通过lvscan查看，最后多了一条快照信息</span><br><span class="line"># lvscan</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;centos&#x2F;swap&#39; [2.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;centos&#x2F;root&#39; [&lt;17.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#39;&#x2F;dev&#x2F;my_vg2&#x2F;my_lv2&#39; [7.89 GiB] inherit</span><br><span class="line">  ACTIVE   Original &#39;&#x2F;dev&#x2F;my_vg1&#x2F;my_lv1&#39; [6.10 GiB] inherit</span><br><span class="line">  ACTIVE   Snapshot &#39;&#x2F;dev&#x2F;my_vg1&#x2F;my_snapshot&#39; [1.00 GiB] inherit</span><br></pre></td></tr></table></figure>
+<p>在<code>/my_lv1</code>中创建文件<code>dd if=/dev/zero of=/my_lv1/files count=1 bs=100M</code><br />
+然后将该 LV 卸载<code>umount /my_lv1</code><br />
+最后将快照恢复<code>lvconvert --merge /dev/my_vg1/my_snapshot</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># lvconvert --merge &#x2F;dev&#x2F;my_vg1&#x2F;my_snapshot</span><br><span class="line">  Merging of volume my_vg1&#x2F;my_snapshot started.</span><br><span class="line">  my_lv1: Merged: 69.90%</span><br><span class="line">  my_lv1: Merged: 100.00%</span><br><span class="line">快照恢复过后会自动删除</span><br></pre></td></tr></table></figure>
+<p>将 LV 重新挂载到<code>/my_lv1</code>，发现文件夹中已经没有任何文件了，说明快照恢复成功。</p>
+<h1 id="raid-磁盘阵列"><a class="markdownIt-Anchor" href="#raid-磁盘阵列"></a> RAID 磁盘阵列</h1>
+<h2 id="raid-概述"><a class="markdownIt-Anchor" href="#raid-概述"></a> RAID 概述</h2>
+<p>Redundant Array of Independent Disks 独立硬盘组，作用是防止硬盘物理损坏以及增加存储设备的吞吐量。<br />
+常见的 RAID 形式有：<code>RAID 0</code>、<code>RAID 1</code>、<code>RAID 3</code>、<code>RAID 5</code>、<code>RAID 6</code>、<code>RAID 10</code>、<code>RAID 01</code>、<code>RAID 50</code>。</p>
+<ul>
+<li><code>RAID 0</code>：将多个磁盘合并为 1 个大磁盘，读写速度极大提高，但不具冗余，因为通过硬件或软件串联，数据是依次被写入各个硬盘，所以任何一块损坏都会导致数据丢失。</li>
+<li><code>RAID 1</code>：两组以上的 N 个硬盘相互做镜像，让数据被多块硬盘同时写入。一块损坏可立刻通过热交换恢复数据。由于做备份，硬盘空间只有 50%。</li>
+<li><code>RAID 3</code>：将数据条块化分布于不同的硬盘上，使用简单的奇偶校验，并用单块磁盘存放奇偶校验信息。如果一块磁盘失效，奇偶盘及其他数据盘可以重新产生数据;如果奇偶盘失效则不影响数据使用。RAID 3 对于大量的连续数据可提供很好的传输率，但对于随机数据来说，奇偶盘会成为写操作的瓶颈。</li>
+<li><code>RAID 5</code>：使用硬盘分割技术，至少需 3 块硬盘。既提高传输速度，也可实现镜像备份。但采用奇偶校验信息，写速度相当慢，读速度与 RAID0 相近，且镜像保障程度也不及 RAID1。空间利用率高。是在所有磁盘上交叉存储数据与奇偶校验信息，并不是单独保存在某块内存中，而是分别互相保存在每一块硬盘，raid5 并不是备份实际硬盘数据，而是在硬盘出现故障后通过奇偶校验信息尝试恢复数据。<br />
+<code>RAID5</code>的利用率为总可用盘容量的<code>(n-1)/n</code></li>
+<li><code>RAID 6</code>：相较 RAID5 增加第二个独立的奇偶校验信息块，数据可靠性非常高，需要四个以上硬盘</li>
+<li><code>RAID 7</code>：全称是最优化的异步高 I/O 速率和高数据传输率，不仅仅是一种技术，它还是一个独立存储计算机，自身带的操作系统和管理工具，完全可以独立运行。采用了非同步访问，极大地减轻了数据写瓶颈，提高了 I/O 速度，存储计算机操作系统可使主机 I/O 传递性能达到最佳，能够自动执行恢复操作，并可管理备份磁盘的重建过程。该技术已被 raid7 公司垄断。</li>
+<li><code>RAID 10（企业主要用）/01</code>：
+<ul>
+<li>10 为 1+0 先镜射再分割数据，两个两个组成 raid1，再两组两组组成 raid0，拥有较高速度与较高数据保护性，但需要 4 块以上且数量为偶数的硬盘数，因为使用 raid1，所以利用率也是 50%。安全性比 01 强，速度也比 01 强，恢复速度快于 5</li>
+<li>01 为 0+1 先分割再镜射，两个两个组 raid0，再两组两组组 raid1</li>
+</ul>
+</li>
+<li><code>RAID 50</code>：至少需要 6 块硬盘，将数据分为条带同时存入多个磁盘，以数据校验位保证数据安全，目的在于提高 RAID5 的读写性能</li>
+</ul>
+<h2 id="raid-基础搭建"><a class="markdownIt-Anchor" href="#raid-基础搭建"></a> RAID 基础搭建</h2>
+<p>RAID 的创建管理由<code>mdadm</code>命令实现</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">mdadm [模式] [RAID设备名] [选项] [成员设备]</span><br><span class="line">  -a    # 检测设备名</span><br><span class="line">  -As   # 激活raid（停止的时候）</span><br><span class="line">  -n    # 指定设备数量</span><br><span class="line">  -c    # 指定数据块大小</span><br><span class="line">  -l    # 指定raid级别</span><br><span class="line">  -C    # 创建</span><br><span class="line">  -v    # 显示过程</span><br><span class="line">  -G    # 修改raid</span><br><span class="line">  -f    # 模拟设备损坏</span><br><span class="line">  -r    # 移除设备</span><br><span class="line">  [raid] -a [磁盘] 将磁盘添加到raid阵列</span><br><span class="line">  [raid] -r [磁盘] 将磁盘移出raid阵列</span><br><span class="line">  -Q    # 查看摘要信息</span><br><span class="line">  -D    # 查看详细信息（cat &#x2F;proc&#x2F;mdstat查看阵列状态）</span><br><span class="line">  -S    # 停止阵列</span><br><span class="line">  -x    # 备份盘个数</span><br><span class="line">  --detail   # 查看RAID阵列</span><br></pre></td></tr></table></figure>
+<p>实验目的：搭建<code>RAID 10</code><br />
+实验环境</p>
+<ul>
+<li>CentOS7</li>
+<li><code>/dev/sdb</code>分出 4 分区，每个 5G 大小</li>
+</ul>
+<p><code>mdadm -Cv /dev/md0 -a yes -n 4 -l 10 /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4</code>创建 RAID</p>
+<p>可通过<code>cat /proc/mstat</code>查看简要 RAID 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;mdstat</span><br><span class="line">Personalities : [raid10]</span><br><span class="line">md0 : active raid10 sdb4[3] sdb3[2] sdb2[1] sdb1[0]</span><br><span class="line">      10475520 blocks super 1.2 512K chunks 2 near-copies [4&#x2F;4] [UUUU]</span><br></pre></td></tr></table></figure>
+<p>也可通过<code>mdadm -D /dev/md0</code>查看指定 RAID 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"># mdadm -D &#x2F;dev&#x2F;md0</span><br><span class="line">&#x2F;dev&#x2F;md0:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Thu Aug  2 09:56:25 2018</span><br><span class="line">        Raid Level : raid10</span><br><span class="line">        Array Size : 10475520 (9.99 GiB 10.73 GB)</span><br><span class="line">      # Array Size总共能使用的空间，因为是raid10，所以总可用空间为400M左右，除去元数据，大于370M左右</span><br><span class="line">     Used Dev Size : 5237760 (5.00 GiB 5.36 GB)</span><br><span class="line">   # Used Dev Size每颗raid组或设备上的可用空间，也即每个RAID1组可用大小为190M左右</span><br><span class="line">      Raid Devices : 4   # raid中设备的个数</span><br><span class="line">     Total Devices : 4   # 总设备个数，包括raid中设备个数，备用设备个数等</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Thu Aug  2 09:57:17 2018</span><br><span class="line">             State : clean</span><br><span class="line">      # 当前raid状态，有clean&#x2F;degraded(降级)&#x2F;recovering&#x2F;resyncing</span><br><span class="line">    Active Devices : 4</span><br><span class="line">   Working Devices : 4</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 0</span><br><span class="line"></span><br><span class="line">            Layout : near&#x3D;2</span><br><span class="line">   # RAID10数据分布方式，有near&#x2F;far&#x2F;of set，默认为near，即数据的副本存储在相邻设备的相同偏移上。</span><br><span class="line">   # near&#x3D;2表示要备份2份数据</span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line">              Name : bogon:0  (local to host bogon)</span><br><span class="line">              UUID : 1aa0ce46:4762919a:71542e42:47b8bc7b</span><br><span class="line">            Events : 17</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync set-A   &#x2F;dev&#x2F;sdb1</span><br><span class="line">       1       8       18        1      active sync set-B   &#x2F;dev&#x2F;sdb2</span><br><span class="line">       2       8       19        2      active sync set-A   &#x2F;dev&#x2F;sdb3</span><br><span class="line">       3       8       20        3      active sync set-B   &#x2F;dev&#x2F;sdb4</span><br></pre></td></tr></table></figure>
+<p>制作文件系统并挂载该 RAID<br />
+<code>mkfs.ext4 /dev/md0 &amp;&amp; mount /dev/md0 /mnt/md0</code></p>
+<p>模拟 RAID 损坏，这里模拟损坏<code>/dev/sdb3</code><br />
+<code>mdadm /dev/md0 -f /dev/sdb3</code><br />
+此时查看 RAID 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># mdadm -D &#x2F;dev&#x2F;md0</span><br><span class="line">......</span><br><span class="line">             State : clean, degraded</span><br><span class="line">    Active Devices : 3   # 活跃的设备仅3台</span><br><span class="line">   Working Devices : 3   # 工作中的设备仅3台</span><br><span class="line">    Failed Devices : 1   # 出现故障的设备1台</span><br><span class="line">     Spare Devices : 0</span><br><span class="line">......</span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync set-A   &#x2F;dev&#x2F;sdb1</span><br><span class="line">       1       8       18        1      active sync set-B   &#x2F;dev&#x2F;sdb2</span><br><span class="line">       -       0        0        2      removed</span><br><span class="line">       3       8       20        3      active sync set-B   &#x2F;dev&#x2F;sdb4</span><br><span class="line"></span><br><span class="line">       2       8       19        -      faulty   &#x2F;dev&#x2F;sdb3</span><br><span class="line">　　　　# &#x2F;dev&#x2F;sdb3的状态为faulty</span><br></pre></td></tr></table></figure>
+<p>由于 raid10 允许一组 raid1 存在故障，不会影响使用。</p>
+<p>进行恢复，首先要卸载文件系统<code>umount /mnt/md0</code><br />
+然后移除<code>/dev/sdb3</code>，<code>mdadm /dev/md0 -r /dev/sdb3</code><br />
+最后再次添加进 RAID 组，<code>mdadm /dev/md0 -a /dev/sdb3</code><br />
+立刻查看 RAID 状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"># mdadm -D &#x2F;dev&#x2F;md0</span><br><span class="line">......</span><br><span class="line">   Active Devices : 3</span><br><span class="line">   Working Devices : 4</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 1</span><br><span class="line"></span><br><span class="line">            Layout : near&#x3D;2</span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line">    Rebuild Status : 38% complete</span><br><span class="line"></span><br><span class="line">              Name : bogon:0  (local to host bogon)</span><br><span class="line">              UUID : 1aa0ce46:4762919a:71542e42:47b8bc7b</span><br><span class="line">            Events : 30</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync set-A   &#x2F;dev&#x2F;sdb1</span><br><span class="line">       1       8       18        1      active sync set-B   &#x2F;dev&#x2F;sdb2</span><br><span class="line">       4       8       19        2      spare rebuilding   &#x2F;dev&#x2F;sdb3</span><br><span class="line">       3       8       20        3      active sync set-B   &#x2F;dev&#x2F;sdb4</span><br><span class="line">可以看出此时活跃设备仍为3台，但工作设备已变为4台，空闲设备为1台</span><br><span class="line">Rebuild Status : 38% complete 表示正在重建该设备</span><br><span class="line">在&#x2F;dev&#x2F;sdb3的状态上也可看出正在重建rebuilding</span><br></pre></td></tr></table></figure>
+<p>若要彻底停用该阵列，只需要先卸载文件系统，然后执行<code>mdadm -S /dev/md0</code>即可。</p>
+<h3 id="使用raid-5进行备份"><a class="markdownIt-Anchor" href="#使用raid-5进行备份"></a> 使用<code>RAID 5</code>进行备份</h3>
+<p><code>mdadm -Cv /dev/md0 -n 3 -x 1 -l 5 /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4</code><br />
+其中<code>-n 3</code>表示选择 3 块磁盘做主盘，<code>-x 1</code>表示选 1 张做备份盘，加起来一共 4 张磁盘。<br />
+此时查看 RAID 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"># mdadm -D &#x2F;dev&#x2F;md0</span><br><span class="line">&#x2F;dev&#x2F;md0:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Thu Aug  2 10:35:01 2018</span><br><span class="line">        Raid Level : raid5</span><br><span class="line">        Array Size : 10475520 (9.99 GiB 10.73 GB)</span><br><span class="line">     Used Dev Size : 5237760 (5.00 GiB 5.36 GB)</span><br><span class="line">      Raid Devices : 3</span><br><span class="line">     Total Devices : 4</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Thu Aug  2 10:35:28 2018</span><br><span class="line">             State : clean</span><br><span class="line">    Active Devices : 3</span><br><span class="line">   Working Devices : 4</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 1</span><br><span class="line"></span><br><span class="line">            Layout : left-symmetric</span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line">              Name : bogon:0  (local to host bogon)</span><br><span class="line">              UUID : 9d0e9a0d:38372c14:2ad4666f:feb13f5c</span><br><span class="line">            Events : 18</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync   &#x2F;dev&#x2F;sdb1</span><br><span class="line">       1       8       18        1      active sync   &#x2F;dev&#x2F;sdb2</span><br><span class="line">       4       8       19        2      active sync   &#x2F;dev&#x2F;sdb3</span><br><span class="line"></span><br><span class="line">       3       8       20        -      spare   &#x2F;dev&#x2F;sdb4</span><br><span class="line">可看出&#x2F;dev&#x2F;sdb4做了备份盘，状态为空闲</span><br></pre></td></tr></table></figure>
+<h1 id="参考资料"><a class="markdownIt-Anchor" href="#参考资料"></a> 参考资料</h1>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://baike.baidu.com/item/RAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97/10588130?fr=aladdin">百度百科–RAID 磁盘阵列</a> &gt; <a target="_blank" rel="noopener" href="http://blog.itpub.net/787018/viewspace-666280/">RAID 基础，RAID10 与 RAID01 比较，RAID10 与 RAID5 比较</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7049501.html">骏马金龙–RAID</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7049233.html">骏马金龙–LVM</a> &gt; <a target="_blank" rel="noopener" href="http://www.hack520.com/169.html">图文并茂 RAID 技术全解</a><br />
+Linux 就该这么学</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+              <a href="/tags/LVM/" rel="tag"><i class="fa fa-tag"></i> LVM</a>
+              <a href="/tags/RAID/" rel="tag"><i class="fa fa-tag"></i> RAID</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/STP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="STP学习笔记">
+      <i class="fa fa-chevron-left"></i> STP学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" rel="next" title="Linux性能监控与优化">
+      Linux性能监控与优化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#lvm-%E9%80%BB%E8%BE%91%E5%8D%B7"><span class="nav-text"> LVM 逻辑卷</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#lvm-%E6%A6%82%E8%BF%B0"><span class="nav-text"> LVM 概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lvm-%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4"><span class="nav-text"> LVM 创建与调整</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lvm-%E5%BF%AB%E7%85%A7"><span class="nav-text"> LVM 快照</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#raid-%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97"><span class="nav-text"> RAID 磁盘阵列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#raid-%E6%A6%82%E8%BF%B0"><span class="nav-text"> RAID 概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#raid-%E5%9F%BA%E7%A1%80%E6%90%AD%E5%BB%BA"><span class="nav-text"> RAID 基础搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8raid-5%E8%BF%9B%E8%A1%8C%E5%A4%87%E4%BB%BD"><span class="nav-text"> 使用RAID 5进行备份</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text"> 参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

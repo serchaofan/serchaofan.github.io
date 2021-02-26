@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Squid 介绍 代理服务器概念 Squid 安装 Squid 常规配置 Squid 访问控制 Squid 多级代理配置 Squid 实验  透明二级代理 反向二级代理   cachemgr.cgi 管理 Squid Squid 日志  日志轮询 Sarg 工具分析日志   Squid 调优  调整文件描述符 调整临时端口范围   参考文章">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Squid笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Squid%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Squid 介绍 代理服务器概念 Squid 安装 Squid 常规配置 Squid 访问控制 Squid 多级代理配置 Squid 实验  透明二级代理 反向二级代理   cachemgr.cgi 管理 Squid Squid 日志  日志轮询 Sarg 工具分析日志   Squid 调优  调整文件描述符 调整临时端口范围   参考文章">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Squid%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/Squid%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/Squid%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/Squid%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/Squid%E7%AC%94%E8%AE%B0/5.png">
+<meta property="article:published_time" content="2018-05-31T04:00:16.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.626Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="缓存">
+<meta property="article:tag" content="代理">
+<meta property="article:tag" content="squid">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Squid%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Squid%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Squid笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Squid%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Squid笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-05-31 12:00:16" itemprop="dateCreated datePublished" datetime="2018-05-31T12:00:16+08:00">2018-05-31</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#squid-%e4%bb%8b%e7%bb%8d">Squid 介绍</a></li>
+<li><a href="#%e4%bb%a3%e7%90%86%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%a6%82%e5%bf%b5">代理服务器概念</a></li>
+<li><a href="#squid-%e5%ae%89%e8%a3%85">Squid 安装</a></li>
+<li><a href="#squid-%e5%b8%b8%e8%a7%84%e9%85%8d%e7%bd%ae">Squid 常规配置</a></li>
+<li><a href="#squid-%e8%ae%bf%e9%97%ae%e6%8e%a7%e5%88%b6">Squid 访问控制</a></li>
+<li><a href="#squid-%e5%a4%9a%e7%ba%a7%e4%bb%a3%e7%90%86%e9%85%8d%e7%bd%ae">Squid 多级代理配置</a></li>
+<li><a href="#squid-%e5%ae%9e%e9%aa%8c">Squid 实验</a>
+<ul>
+<li><a href="#%e9%80%8f%e6%98%8e%e4%ba%8c%e7%ba%a7%e4%bb%a3%e7%90%86">透明二级代理</a></li>
+<li><a href="#%e5%8f%8d%e5%90%91%e4%ba%8c%e7%ba%a7%e4%bb%a3%e7%90%86">反向二级代理</a></li>
+</ul>
+</li>
+<li><a href="#cachemgrcgi-%e7%ae%a1%e7%90%86-squid">cachemgr.cgi 管理 Squid</a></li>
+<li><a href="#squid-%e6%97%a5%e5%bf%97">Squid 日志</a>
+<ul>
+<li><a href="#%e6%97%a5%e5%bf%97%e8%bd%ae%e8%af%a2">日志轮询</a></li>
+<li><a href="#sarg-%e5%b7%a5%e5%85%b7%e5%88%86%e6%9e%90%e6%97%a5%e5%bf%97">Sarg 工具分析日志</a></li>
+</ul>
+</li>
+<li><a href="#squid-%e8%b0%83%e4%bc%98">Squid 调优</a>
+<ul>
+<li><a href="#%e8%b0%83%e6%95%b4%e6%96%87%e4%bb%b6%e6%8f%8f%e8%bf%b0%e7%ac%a6">调整文件描述符</a></li>
+<li><a href="#%e8%b0%83%e6%95%b4%e4%b8%b4%e6%97%b6%e7%ab%af%e5%8f%a3%e8%8c%83%e5%9b%b4">调整临时端口范围</a></li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="squid-介绍"><a class="markdownIt-Anchor" href="#squid-介绍"></a> Squid 介绍</h1>
+<p>Squid 是一个支持 HTTP、HTTPS、FTP 等服务的 Web 缓存软件，可通过缓存页面实现降低带宽占用并优化页面相应时间。</p>
+<p><strong>Squid 特点与功能：</strong></p>
+<ul>
+<li>不仅能缓存 Web 页面资源，还能对 DNS 查询结果进行缓存</li>
+<li>强大的访问控制功能</li>
+<li>保护内网，并加速内网对外网的连接</li>
+<li>记录内网用户访问外网行为</li>
+<li>提供用户认证</li>
+<li>减少出口流量</li>
+<li>工作在 TCP/IP 的应用层，TCP 端口 3128</li>
+</ul>
+<p>Squid 支持的网络协议：HTTP、FTP、Gopher（信息查找协议）、WAIS（广域信息查询系统）、SSL</p>
+<p>Squid 支持的内部缓存和管理协议：HTTP、ICP（互联网缓存协议，用于从缓存中查找指定对象）、Cache Digests（用于生成缓存中对象的索引）、SNMP（用于为外部工具提供缓存信息）、HTCP（用于发现 HTTP 缓存区，存储管理 HTTP 数据）</p>
+<p>Squid 请求过程：</p>
+<ul>
+<li>客户端访问 Squid 服务器，由代理服务器代表客户端向 web 服务器（后端 Real Server）请求资源</li>
+<li>Web 服务器将相应数据返回给代理服务器</li>
+<li>代理服务器将数据返回给客户端，并保留一份在本地</li>
+<li>其他客户端向该代理服务器请求相同的资源</li>
+<li>代理服务器直接将本地的该资源缓存返回给客户端</li>
+</ul>
+<img src="/2018/Squid%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>squid 的硬件环境：内存与磁盘是缓存性能的重要体现。所有对象都会尽可能缓存到内存中，更大的磁盘空间实现更多的缓存目标和更高的命中率，最好使用 SAS，尽量不用 SATA。磁盘与内存间也有关联，最好每 G 的磁盘空间有 32M 的内存对应。</p>
+<h1 id="代理服务器概念"><a class="markdownIt-Anchor" href="#代理服务器概念"></a> 代理服务器概念</h1>
+<p>代理服务器一般构建于内网和 Internet 间，负责转发内网对 Internet 的访问，并进行访问控制与记录，可实现安全保护、缓存数据、内容过滤、访问控制等功能。</p>
+<p>Web 代理维护着庞大的缓存数据，因此对内存和硬盘的要求很高，更大的内存和硬盘意味着更多的缓存和更高的缓存命中率。</p>
+<p><strong>Web 缓存类型：</strong></p>
+<ul>
+<li>客户端缓存：一般就存放在浏览器中。有两个缺点：1.缓存容量小，不能存储大的 Web 对象，因此命中率较低。2.缓存在本地，不能共享，因此存在大量重复数据。</li>
+<li>代理服务器缓存：位于网络中间位置。容量大，缓存能与内网所有客户端共享。但若性能达不到要求，反而会造成网络瓶颈。代理缓存应具有健壮性、可扩展性、稳定性、负载均衡的特点</li>
+<li>服务器缓存：是为了减轻 web 服务器的负载，并不是为了提高资源命中率。服务器缓存减少了 web 服务器的流量、并保护了 web 服务器的安全，因为 web 服务器仅向服务器缓存提供数据，并不直接面向客户机。并且提高了网站的可靠性，因为各个服务器缓存间可实现共享。</li>
+</ul>
+<p><strong>三种典型代理方式：</strong></p>
+<ul>
+<li>
+<p>传统代理：在浏览器中设置，指出代理服务器的 IP 地址和网络端口。便于用户对访问管理控制，配置简单。</p>
+</li>
+<li>
+<p>透明代理（正向代理）：为内网提供外网的访问，即普通的代理服务器。但增加了网络设备的负担，并需要做好更详细的配置，会有一定的延时。若程序的一系列请求是相关的并涉及多个目标对象，有可能会出问题。</p>
+</li>
+<li>
+<p>反向代理：能代理外部网络访问内网服务器。主要为本地网站做缓存，加快 web 服务器的响应速度。相当于服务器缓存。反向代理结合智能 DNS 即可实现基本的 CDN</p>
+</li>
+</ul>
+<h1 id="squid-安装"><a class="markdownIt-Anchor" href="#squid-安装"></a> Squid 安装</h1>
+<p>Squid 版本：3.5</p>
+<p>可直接通过<code>yum install squid</code>安装。然后<code>systemctl start squid</code>启动。</p>
+<p>安装时会自动创建用户 squid，并且是系统用户，家目录为/var/spool/squid，且禁止登录。</p>
+<p><strong>注：一定要做到 squid 服务器的时间同步，否则无法进行缓存</strong></p>
+<p>Squid 的相关配置文件：</p>
+<ul>
+<li><code>/etc/httpd/conf.d/squid.conf</code>：用于在 Apache 中添加运行<code>cachemgr.cgi</code>的配置</li>
+<li><code>/etc/logrotate.d/squid</code>：Squid 的日志轮替配置</li>
+<li><code>/etc/squid/squid.conf</code>：Squid 主配置文件</li>
+<li><code>/etc/squid/cachemgr.conf</code>：设置可通过<code>cachemgr.cgi</code>管理的主机</li>
+<li><code>/etc/squid/mime.conf</code>：定义 MIME 类型的文件</li>
+</ul>
+<p>Squid 其他相关文件：</p>
+<ul>
+<li><code>/var/log/squid/</code>：存放 squid 日志的目录</li>
+<li><code>/var/spool/squid/</code>：存放 squid 缓存的目录</li>
+<li><code>/usr/share/squid/errors/</code>：存放给客户端的报错信息 HTML，目录中包含各个语言的子目录</li>
+<li><code>/usr/lib64/squid/cachemgr.cgi</code>：squid cache manager，用于管理主机的动态网页</li>
+</ul>
+<p>squid 提供两个命令：</p>
+<ul>
+<li><code>squid</code>：用于管理 squid 守护进程</li>
+<li><code>squidclinet</code>：用于管理 squid 客户端</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">squid [options]</span><br><span class="line">    -a port   指定HTTP端口，默认3128</span><br><span class="line">    -d level  将指定调试等级的信息发送到标准错误输出</span><br><span class="line">    -f file   指定配置文件启动</span><br><span class="line">    -k        向squid服务器发送指令</span><br><span class="line">        reconfigure 重载配置文件</span><br><span class="line">        rotate      轮替日志文件</span><br><span class="line">        shutdown    安全关闭</span><br><span class="line">        restart     重启服务</span><br><span class="line">        interrupt   中断服务</span><br><span class="line">        kill        杀死服务</span><br><span class="line">        debug       开启debug</span><br><span class="line">        check       检查运行状态</span><br><span class="line">        parse       检查配置文件</span><br><span class="line">    -s       启用syslog</span><br><span class="line">    -u port  指定ICP端口，默认3130，若要关闭，就指定0</span><br><span class="line">    -z        创建缓存目录，即初始化缓存</span><br><span class="line">    -C        不捕获fatal信号</span><br><span class="line">    -D        不进行DNS参数测试</span><br><span class="line">    -F        不响应任何请求直到存储重建</span><br><span class="line">    -N        不使用daemon模式</span><br><span class="line">    -S        在重建期间仔细检查swap分区</span><br><span class="line">    -X        强制进入完全调试模式</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">squidclient [Basic Options] [HTTP Options]</span><br><span class="line">    -s | --quiet    静默模式，不打印输出</span><br><span class="line">    -v | --verbose  显示详细信息，最多-vv</span><br><span class="line">      -v：显示向外发的请求信息</span><br><span class="line">      -vv：显示动作跟踪信息</span><br><span class="line">    -h | --host host     指定将信息发给的主机，默认为localhost</span><br><span class="line">    -l | --local host    指定绑定的本地IP地址，默认为空</span><br><span class="line">    -p | --port port     指定服务端口，默认3128</span><br><span class="line">    -T timeout           指定读写操作的超时时间</span><br><span class="line">    --ping [options]     允许ping模式</span><br><span class="line">    -g count        指定ping包的个数，默认一直ping</span><br><span class="line">    -I interval     指定ping包发送间隔，默认1s</span><br><span class="line"></span><br><span class="line">HTTP Options:</span><br><span class="line">    -a           不包含“accept:header”</span><br><span class="line">    -j hosthdr   Host header content</span><br><span class="line">    -k           保持长连接，默认只接收一个请求就关闭连接</span><br><span class="line">    -m method    指定请求方法，默认GET</span><br><span class="line">    -n           代理协商认证（kerberos）</span><br><span class="line">    -N           www协商认证（kerberos）</span><br><span class="line">    -P file      将指定文件作为请求载荷</span><br><span class="line">    -r           强制缓存重新加载URL</span><br><span class="line">    -t count     跟踪计数缓存跳数</span><br><span class="line">    -u user      代理认证用户名</span><br><span class="line">    -U user      www认证用户名</span><br><span class="line">    -w password  代理认证密码</span><br><span class="line">    -W password  www认证密码</span><br></pre></td></tr></table></figure>
+<h1 id="squid-常规配置"><a class="markdownIt-Anchor" href="#squid-常规配置"></a> Squid 常规配置</h1>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">http_port    3128  [模式] [options]             #Squid监听的端口</span><br><span class="line"># 若要添加多个端口，用空格隔开</span><br><span class="line">    常用模式：</span><br><span class="line">      accel：加速或反向代理模式</span><br><span class="line">      intercept：支持IP层NAT拦截传输到该Squid端口的流量</span><br><span class="line">      从squid3开始就没有transparent透明模式了</span><br><span class="line"></span><br><span class="line">icp_port     3130              #ICP端口</span><br><span class="line"># ICP是专门运行在代理服务器间交换缓存数据的协议。ICP使用UDP端口3130</span><br><span class="line"></span><br><span class="line">cache_effective_user  squid    #运行squid进程的用户</span><br><span class="line">#squid进程是root启动的，但启动后会由指定的普通用户继续运行</span><br><span class="line">cache_effective_group  squid    #运行squid进程的用户组</span><br><span class="line"></span><br><span class="line">pid_filename &#x2F;var&#x2F;run&#x2F;squid.pid #squid的PID文件位置</span><br><span class="line"># 此文件由root在启动squid时创建</span><br><span class="line"></span><br><span class="line">logformat squid %ts.%03tu %6tr %&gt;a %Ss&#x2F;%03&gt;Hs %&lt;st %rm %ru %un %Sh&#x2F;%&lt;A %mt  #指定日志记录格式</span><br><span class="line">access_log &#x2F;var&#x2F;log&#x2F;squid&#x2F;access.log squid  #日志路径，类型为squid</span><br><span class="line"></span><br><span class="line">cache_mem   8 MB       #cache内存</span><br><span class="line">#设定squid能用多少额外的内存来缓存对象的限制值</span><br><span class="line"></span><br><span class="line">cache_dir  ufs &#x2F;var&#x2F;spool&#x2F;squid 100 16 256  #指定缓存类型为ufs，保存在&#x2F;var&#x2F;spool&#x2F;squid，是默认值</span><br><span class="line">#大小限制为100MB，第1层子目录为16个，第2层子目录为256个</span><br><span class="line"></span><br><span class="line">cache_store_log &#x2F;var&#x2F;log&#x2F;squid&#x2F;store.log   #数据缓存的日志，是默认值</span><br><span class="line"></span><br><span class="line">maximum_object_size_in_memory 8 KB   #squid保存在内存中的对象最大为8KB</span><br><span class="line">#内存中的对象访问速度最快，但内存有限，需要根据内存大小设置</span><br><span class="line"></span><br><span class="line">maximum_object_size      4096 KB  #最大的缓存对象的字节数4096KB</span><br><span class="line">#只有小于该值的对象才会被缓存，若硬盘足够大，可适度提高</span><br><span class="line"></span><br><span class="line">cache_swap_low  90     #设置Squid缓存空间的使用策略。</span><br><span class="line">cache_swap_high 95     #当缓存中数据占到整个缓存大小的95%时</span><br><span class="line">                       #就会按算法删除缓存中的数据</span><br><span class="line">                       #直到缓存数据占到整个缓存大小的90%</span><br><span class="line">                       #可以最大限度利用缓存空间，但也不会出现空间溢出</span><br><span class="line"></span><br><span class="line">coredump_dir &#x2F;var&#x2F;spool&#x2F;squid  #放置squid进程运行时coredump文件的目录</span><br><span class="line">cache_mgr   root       #Squid管理员用户的Email</span><br><span class="line">visible_hostname  proxy.example.com   #设置对外可见的主机名，会在错误信息中显示</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://www.squid-cache.org/Doc/config/logformat/">logformat 日志格式设置</a></p>
+</blockquote>
+<p>Squid 会设置在缓存目录下建立多个目录，每个目录又建立多个子目录，在最里层的目录存放缓存文件，缓存文件是通过对客户端请求的 URL 进行哈希运算生成的。Squid 会在内存建立一张哈希表，记录硬盘中缓存文件配置的情形。</p>
+<p>使用<code>squid -k parse</code>检查配置文件语法，确认没有报错后<code>squid -z</code>初始化缓存目录，会显示<code>Making directories in /var/spool/squid/00</code>等信息，发现，第一层的目录数量是 16，第二层目录的数量是 256，目录名都是由十六进制标号，与配置文件<code>cache_dir</code>配置的一致。若无法创建，可能是该目录的权限问题。</p>
+<p>再使用<code>squid -N -d1</code>测试，没有报错，则说明启动完成。</p>
+<p>通过浏览器测试，设置代理服务器</p>
+<img src="/2018/Squid%E7%AC%94%E8%AE%B0/4.png" class="">
+<h1 id="squid-访问控制"><a class="markdownIt-Anchor" href="#squid-访问控制"></a> Squid 访问控制</h1>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">acl name type value1 value2...    #设置ACL名字和对象的值</span><br><span class="line">http_access &lt;allow|deny&gt; [!]ACL对象1 ...  #将客户端请求与http_access的对象匹配，指定allow或deny。!为取反。</span><br><span class="line">#若一个请求与所有http_access都不匹配，则执行与最后一条http_access指定的动作相反的动作</span><br></pre></td></tr></table></figure>
+<p>常见的 ACL 类型：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>src</td>
+<td>源 IP 地址，可以单个 IP 地址，可以是地址范围</td>
+</tr>
+<tr>
+<td>dst</td>
+<td>目的 IP 地址，同上</td>
+</tr>
+<tr>
+<td>myip</td>
+<td>本地网络接口 IP 地址</td>
+</tr>
+<tr>
+<td>srcdomain</td>
+<td>客户所属的域，Squid 会根据客户 IP 地址进行反向 DNS 查询</td>
+</tr>
+<tr>
+<td>dstdomain</td>
+<td>服务器所属的域，与客户请求的 URL 匹配</td>
+</tr>
+<tr>
+<td>time</td>
+<td>时间段</td>
+</tr>
+<tr>
+<td>port</td>
+<td>指向其他计算机的网络端口，即是目标服务器上的端口</td>
+</tr>
+<tr>
+<td>myport</td>
+<td>指向 squid 服务器的端口，是 squid 服务器上的端口</td>
+</tr>
+<tr>
+<td>proto</td>
+<td>客户端请求所使用的协议，如 http、https、ftp、gopher</td>
+</tr>
+<tr>
+<td>method</td>
+<td>HTTP 请求方法</td>
+</tr>
+<tr>
+<td>proxy_auth</td>
+<td>squid 认证的用户名</td>
+</tr>
+<tr>
+<td>url_regex</td>
+<td>关于 URL 的正则表达式（域名）</td>
+</tr>
+<tr>
+<td>urlpath_regex</td>
+<td>关于 URL 资源的正则表达式（资源路径，不带有域名）</td>
+</tr>
+<tr>
+<td>ident</td>
+<td>指定用户</td>
+</tr>
+</tbody>
+</table>
+<p>acl 对象的值间的关系为”或“，只要满足一个就匹配了该 acl 规则。而 http_access 与其他规则的设置使用”与“逻辑。squid 默认配置拒绝每个请求，因此在使用代理前，必须先添加访问控制规则。</p>
+<p>若 value 为文件名，对象的值实际上是文件的内容。</p>
+<p>常见案例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">Squid3已默认定义acl名：all、localhost、manager、to_localhost</span><br><span class="line">    acl all src 0.0.0.0&#x2F;0</span><br><span class="line">    acl localhost src 127.0.0.1&#x2F;32</span><br><span class="line">    acl manager proto cache_object   #cache_object是squid自定义的协议，用于访问squid的缓存管理接口</span><br><span class="line">    acl to_localhost dst 127.0.0.1&#x2F;8</span><br><span class="line">因此以上四个acl名字不能再使用，且可以直接调用，无需再定义</span><br><span class="line"></span><br><span class="line">acl worktime time MTWHF 08:00-17:00</span><br><span class="line">#时间从周一到周五，早上8点到下午5点</span><br><span class="line">  S-Sun M-Mon T-Tue W-Wed H-Thu F-Fri A-Sat</span><br><span class="line"></span><br><span class="line">acl mynet src 10.1.1.1&#x2F;24</span><br><span class="line">#源10.1.1.1&#x2F;24的子网命名为mynet</span><br><span class="line"></span><br><span class="line">acl aim dstdomain .baidu.com .google.com</span><br><span class="line">#匹配指定目的域名</span><br><span class="line"></span><br><span class="line">acl giffile url_regex -i \.gif$</span><br><span class="line">#匹配以.gif结尾的URL</span><br><span class="line"></span><br><span class="line">acl other srcdomain &quot;&#x2F;etc&#x2F;squid&#x2F;other&quot;</span><br><span class="line">#匹配文件中指定的源域名</span><br><span class="line"></span><br><span class="line">acl safe_port port 80</span><br><span class="line">#匹配指定的目标服务器端口</span><br><span class="line"></span><br><span class="line">acl Users ident tom</span><br><span class="line">http_access allow tom</span><br><span class="line">#只允许tom访问</span><br><span class="line"></span><br><span class="line">acl mynet src 10.1.1.1-10.1.1.10</span><br><span class="line">http_access allow mynet</span><br><span class="line">http_access deny all</span><br><span class="line">#仅允许mynet子网访问</span><br><span class="line"></span><br><span class="line">acl user1 src 10.1.1.1</span><br><span class="line">acl user2 src 10.1.1.2</span><br><span class="line">acl user1_time time MTWHT 08:00-12:00</span><br><span class="line">acl user2_time time MTWHT 08:00-13:00</span><br><span class="line">http_access allow user1 user1_time</span><br><span class="line">http_access allow user2 user2_time</span><br><span class="line">#给两个用户分别指定上外网的时间</span><br><span class="line"></span><br><span class="line">acl ftpmp3 url_regex -i &quot;^ftp:&#x2F;&#x2F;.*\.mp3$&quot;</span><br><span class="line">http_access deny ftpmp3</span><br><span class="line">#禁止从任何ftp上下载mp3文件</span><br><span class="line"></span><br><span class="line">acl cgi urlpath_regex -i &quot;^&#x2F;cgi-bin&quot;</span><br><span class="line">http_access deny cgi</span><br><span class="line">#禁止访问cgi网页</span><br><span class="line"></span><br><span class="line">acl limit maxconn 16</span><br><span class="line">http_access deny limit</span><br><span class="line">#限制同一IP客户端的最大连接数</span><br></pre></td></tr></table></figure>
+<p>squid 默认 acl 配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">#所有内网</span><br><span class="line">acl localnet src 10.0.0.0&#x2F;8</span><br><span class="line">acl localnet src 172.16.0.0&#x2F;12</span><br><span class="line">acl localnet src 192.168.0.0&#x2F;16</span><br><span class="line">acl localnet src fc00::&#x2F;7</span><br><span class="line">acl localnet src fe80::&#x2F;10</span><br><span class="line"></span><br><span class="line">acl SSL_ports port 443      #SSL443端口</span><br><span class="line">acl Safe_ports port 80		# 放行http</span><br><span class="line">acl Safe_ports port 21		# 放行ftp</span><br><span class="line">acl Safe_ports port 443		# 放行https</span><br><span class="line">.....                       #放行的其他服务</span><br><span class="line"></span><br><span class="line">acl CONNECT method CONNECT  #connect方法，是HTTP中用于代理的方法</span><br><span class="line"></span><br><span class="line">http_access deny !Safe_ports        ##只允许本机转发客户机对非Safe_ports的请求</span><br><span class="line">http_access deny CONNECT !SSL_ports #拒绝所有非SSL_ports的CONNECT请求，只允许本机用connect连接非SSL_ports</span><br><span class="line">http_access allow localhost manager #允许localhost使用cache_object协议</span><br><span class="line">http_access deny manager      #拒绝所有其他网络使用cache_object</span><br><span class="line">http_access allow localnet    #允许内网访问</span><br><span class="line">http_access allow localhost   #允许本地访问</span><br><span class="line">http_access deny all         #剩下的都不允许</span><br><span class="line">http_port 3128</span><br><span class="line">coredump_dir &#x2F;var&#x2F;spool&#x2F;squid</span><br><span class="line">refresh_pattern ^ftp:		1440	20%	10080</span><br><span class="line">refresh_pattern ^gopher:	1440	0%	1440</span><br><span class="line">refresh_pattern -i (&#x2F;cgi-bin&#x2F;|\?) 0	0%	0</span><br><span class="line">refresh_pattern .		0	20%	4320</span><br></pre></td></tr></table></figure>
+<h1 id="squid-多级代理配置"><a class="markdownIt-Anchor" href="#squid-多级代理配置"></a> Squid 多级代理配置</h1>
+<p>在大型网络中一台 Squid 服务器的性能不能应对巨大的访问量，需要构建多级代理服务器，类似与计算机集群，使用 ICP 交换缓存，形成一个逻辑上的大型 Squid 服务器。</p>
+<p>代理服务器间的结构可分为：同级结构、层次结构、网状结构。最常见是层次结构。</p>
+<p>需要配置参数<code>cache_peer hostname type http_port icp_port options</code></p>
+<ul>
+<li><code>hostname</code>为另一台 Squid 服务器的域名或 IP 地址</li>
+<li><code>type</code>为 ICP 请求的类型：<code>parent</code>或<code>sibling</code></li>
+<li><code>http_port</code>为对端的 Squid 监听请求端口</li>
+<li><code>icp_port</code>为对端 ICP 的端口</li>
+</ul>
+<p>ICP 的两种请求类型 type：</p>
+<ul>
+<li><code>parent</code>：会把客户端的请求发送给对方，对方的缓存中若有请求的数据，则返回，若没有，则对方向 web 服务器读取数据，再返回。（类似 DNS 的递归查询）一般对象处于上一级时使用此类型，因为上一级会更加接近于 web 服务器。</li>
+<li><code>sibling</code>：不会把客户端请求发给对方，仅仅询问有没有缓存。如果没有，则对方仅仅告诉回复没有，并不会向 web 服务器请求数据。一般对象处于同等级别时用此类型。de</li>
+</ul>
+<p>常见的 options 参数：</p>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>proxy-only</td>
+<td>从对方得到的数据不做缓存，默认会做</td>
+</tr>
+<tr>
+<td>weight=n</td>
+<td>指定对方的权重，有多个 cache_peer 时会按权重选择，默认根据网络响应时间自动选择</td>
+</tr>
+<tr>
+<td>no-query</td>
+<td>不向对方发送 ICP 请求，只发送 HTTP 代理请求，一般用于对方不支持 ICP 或不可用的情况</td>
+</tr>
+<tr>
+<td>default</td>
+<td>与 no-query 一起用，当对方都不支持 ICP 时，就用该 peer</td>
+</tr>
+<tr>
+<td>no-digest</td>
+<td>不使用内存摘要表查询，直接 ICP 通信</td>
+</tr>
+<tr>
+<td>login=user:password</td>
+<td>若对方需要认证，就提供用户名和密码</td>
+</tr>
+</tbody>
+</table>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cache_peer system3.example.com parent 3128 3130 proxy-only default</span><br><span class="line">cache_peer system4.example.com sibling 3128 3130 proxy-only</span><br></pre></td></tr></table></figure>
+<p>若要通过规则选择不同的上级代理服务器，达到负载均衡，还需要配置：</p>
+<p><code>cache_peer_domain cache-host domain ...</code></p>
+<p><code>cache_peer_access cache-host allow|deny [!]ACL对象...</code></p>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cache_peer system1.example.com parent 3128 3130</span><br><span class="line">cache_peer system2.example.com sibling 3128 3130 proxy-only</span><br><span class="line">cache_peer_domain system1.example.com example</span><br><span class="line">cache_peer_domain system2.example.com !example</span><br><span class="line">#system1为example域的代理服务器，system2为非example域的代理服务器</span><br></pre></td></tr></table></figure>
+<h1 id="squid-实验"><a class="markdownIt-Anchor" href="#squid-实验"></a> Squid 实验</h1>
+<h2 id="透明二级代理"><a class="markdownIt-Anchor" href="#透明二级代理"></a> 透明二级代理</h2>
+<p>环境：</p>
+<ul>
+<li>client1：192.168.1.128</li>
+<li>server1：192.168.1.129</li>
+<li>server2：192.168.1.130,192.168.205.140</li>
+<li>web1：192.168.205.139</li>
+</ul>
+<img src="/2018/Squid%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>server1 上的配置<code>squid.conf</code>添加或修改以下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">http_port    3128   accel     #配置为透明代理</span><br><span class="line">icp_port     3130</span><br><span class="line">cache_effective_user  squid</span><br><span class="line">pid_filename &#x2F;var&#x2F;run&#x2F;squid.pid</span><br><span class="line">logformat squid %ts.%03tu %6tr %&gt;a %Ss&#x2F;%03&gt;Hs %&lt;st %rm %ru %un %Sh&#x2F;%&lt;A %mt</span><br><span class="line">access_log   &#x2F;var&#x2F;log&#x2F;squid&#x2F;access.log squid</span><br><span class="line">cache_dir  ufs &#x2F;var&#x2F;spool&#x2F;squid 100 16 256</span><br><span class="line">cache_store_log &#x2F;var&#x2F;log&#x2F;squid&#x2F;store.log</span><br><span class="line">hosts_file   &#x2F;etc&#x2F;hosts           #用于解析IP地址</span><br><span class="line">visible_hostname  system1.example.com  #错误信息中显示的主机名</span><br><span class="line">cache_effective_user  squid    #若不设置user和group，会默认使用nobody</span><br><span class="line">cache_effective_group  squid</span><br><span class="line"></span><br><span class="line">acl PURGE   method PURGE          #purge是squid自定义的方法，用于删除squid缓存中的对象（能让管理员强制删除）</span><br><span class="line">                                  #squid是默认拒绝Purge请求的</span><br><span class="line"></span><br><span class="line">http_access allow localhost manager  #只允许本机使用cache_object协议</span><br><span class="line">http_access allow localhost PURGE    #只允许本机使用purge方法</span><br><span class="line">http_access deny manager PURGE</span><br><span class="line"></span><br><span class="line">icp_access allow all         #允许所有客户机访问ICP端口</span><br><span class="line">http_reply_access allow all  #允许对所有客户机进行请求的回复</span><br></pre></td></tr></table></figure>
+<p>并且需要进行端口转发，即重定向，因为代理服务器需要将客户端发往 80 端口的数据包改为发往自己的 3128 端口，实现代理。因此需要开启防火墙 firewalld 或 iptables 服务。</p>
+<p>若是使用 firewalld，则先要确定是否开启了伪装 IP 功能（Masquerade）</p>
+<p><code>firewall-cmd --query-masquerade</code>，若为 no，则需要开启<code>firewall-cmd --add-masquerade --permanent</code>。</p>
+<p>设置端口转发：<code>firewall-cmd --add-forward-port=port=80:proto=tcp:toport=3128 --permanent</code></p>
+<p>若为 iptables，则添加两条规则：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">iptables -t nat -A PREROUTING -i ens33 -p tcp --dport 80 -j --REDIRECT --to-ports&#x3D;3128</span><br><span class="line">iptables -t nat -A POSTROUTING -o ens36 -s 192.168.205.0&#x2F;24 MASQUERADE</span><br><span class="line"># ens33为内网卡，ens36为外网卡</span><br></pre></td></tr></table></figure>
+<p>然后打开转发，无论是 firewalld 还是 iptables，都要打开。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;net.ipv4.ip_forward&#x3D;1&quot; &gt;&gt; &#x2F;etc&#x2F;sysctl.conf</span><br><span class="line">sysctl -p</span><br></pre></td></tr></table></figure>
+<p>最后放行 80 和 443 端口，放行 http 和 https 服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port&#x3D;80&#x2F;tcp --add-port&#x3D;443&#x2F;tcp</span><br><span class="line">firewall-cmd --permanent --add-service&#x3D;http --add-service&#x3D;https</span><br></pre></td></tr></table></figure>
+<h2 id="反向二级代理"><a class="markdownIt-Anchor" href="#反向二级代理"></a> 反向二级代理</h2>
+<h1 id="cachemgrcgi-管理-squid"><a class="markdownIt-Anchor" href="#cachemgrcgi-管理-squid"></a> cachemgr.cgi 管理 Squid</h1>
+<p>通过 web 界面管理 Squid，需要<code>cachemgr.cgi</code>动态网页文件，存放在<code>/usr/lib64/squid/</code>中。可以将该 cgi 文件复制到<code>/var/www/cgi-bin</code>中，也可不动，但要注意文件的权限问题，一定要改为<code>apache</code>。然后在 httpd 的主配置文件中添加，Location 配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ScriptAlias &quot;&#x2F;squidcgi&quot; &quot;&#x2F;var&#x2F;www&#x2F;cgi-bin&#x2F;cachemgr.cgi&quot;</span><br><span class="line">&lt;Location &quot;&#x2F;squidcgi&quot;&gt;</span><br><span class="line">    Order deny,allow     #逗号后不能有空格</span><br><span class="line">    Allow from all</span><br><span class="line">&lt;&#x2F;Location&gt;</span><br></pre></td></tr></table></figure>
+<p>然后浏览器通过<code>主机IP/squidcgi</code>访问。</p>
+<img src="/2018/Squid%E7%AC%94%E8%AE%B0/4.png" class="">
+<p>默认不需要填用户名密码即可登录。若要设置登录用户名密码，只需要在主配置文件中添加<code>cachemgr_password</code>参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cachemgr 密码  行为action</span><br><span class="line">要禁用一个操作，就把密码设为disable，后面跟上要禁止的操作</span><br><span class="line">要允许不输入密码的操作，就把密码设为none，后面跟上允许的操作</span><br><span class="line">action为all表示为所有操作设置相同密码</span><br></pre></td></tr></table></figure>
+<h1 id="squid-日志"><a class="markdownIt-Anchor" href="#squid-日志"></a> Squid 日志</h1>
+<p>Squid 日志不仅记录服务器进程的运行，还记录用户的访问情况、缓存存储状况、缓存访问状况等。</p>
+<p>Squid 三个日志：access.log，cache.log，store.log</p>
+<p>和日志文件相关的配置：</p>
+<ul>
+<li><code>cache_log /var/log/squid/cache.log</code>：指定缓存信息日志的路径。包含了缓存的起始配置信息，分类的错误信息，性能警告。</li>
+<li><code>cache_store_log /var/log/squid/store.log</code>：指定对象存储记录日志的路径。包含被写入缓存空间的对象、被从缓存空间清除的对象等。可设为<code>none</code>禁止</li>
+<li><code>cache_swap_log /var/spool/squid/cache_swap.log</code>：指定每个交换日志的路径。包含存储在交换空间的对象元数据。这类日志最好不要删除，否则可能会导致 Squid 故障。</li>
+<li><code>debug_options ALL,1</code>：控制日志记录内容的多少，第一个参数决定对哪些行为做记录，ALL 表示对所有行为做记录，第二个参数表示详细程度，1 表示详细程度最低。</li>
+<li><code>log_fqdn</code>：控制 access.log 日志中客户机地址的记录方式。on 表示会记录客户机的域名，off 则记录 IP 地址。开启会增加系统负担</li>
+</ul>
+<ul>
+<li><code>logformat squid %ts.%03tu %6tr %&gt;a %Ss/%03Hs %&lt;st %rm %ru %un %Sh/%&lt;A %mt</code>是在配置文件中日志格式的参数配置。
+<ul>
+<li><code>%ts.03tu</code>：记录请求完成时间。<code>%ts</code>为相对于 Unix 纪元（1970-1-1）的秒数，<code>%03tu</code>表示 3 个宽度的毫秒数，<code>.</code>为写入日志的固定符号。</li>
+<li><code>%6tr</code>：响应时间，表明了 Squid 处理请求的时间（接收到 HTTP 请求到响应报文发出），单位毫秒。ICP 响应时间一般为 0，非常快速。</li>
+<li><code>%&gt;a</code>：记录客户端地址，若开启了<code>log_fqdn</code>，则会记录客户端主机名。还可通过<code>client_netmask</code>隐藏客户端 IP 的一部分</li>
+<li><code>%Ss/%03Hs</code>：记录请求结果和状态码，<code>%Ss</code>是 Squid 特有的请求结果码，<code>%03Hs</code>是 HTTP 状态码</li>
+<li><code>%&lt;st</code>：记录传输的字节数。是整个数据包的大小，会比实际载荷信息大。</li>
+<li><code>%rm</code>：记录请求的方法。HTTP 的常见请求和 ICP 的 ICP_QUERY 请求</li>
+<li><code>%ru</code>：记录客户端请求的 URI。默认不会记录 URL 中第一个<code>?</code>后所有信息</li>
+<li><code>%un</code>：记录客户端用户身份。Squid 使用 RFC1413 或 HTTP 的验证头部确认用户身份</li>
+<li><code>%Sh/%&lt;A</code>：记录 peer 主机（其他代理服务器）信息</li>
+<li><code>%mt</code>：记录 MIME 类型。从响应的<code>Content-type</code>域获取信息，若没有就使用一个<code>-</code>代替。</li>
+</ul>
+</li>
+<li><code>logfile_rotate</code>：轮询保存的文件数，超过限制就会从头开始覆盖</li>
+</ul>
+<h2 id="日志轮询"><a class="markdownIt-Anchor" href="#日志轮询"></a> 日志轮询</h2>
+<p>Squid 并没有自动轮询的机制，只能使用<code>squid -k rotate</code>命令，并编写脚本通过 cron 周期执行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;bash</span><br><span class="line">cd &#x2F;var&#x2F;log&#x2F;squid&#x2F;</span><br><span class="line">[ -f access.log ] &amp;&amp; mv access.log access_$(date +%F).log</span><br><span class="line">squid -k rotate</span><br></pre></td></tr></table></figure>
+<h2 id="sarg-工具分析日志"><a class="markdownIt-Anchor" href="#sarg-工具分析日志"></a> Sarg 工具分析日志</h2>
+<p>Sarg 是一个 Squid 的日志分析工具，输出为 html 文件。<a target="_blank" rel="noopener" href="https://nchc.dl.sourceforge.net/project/sarg/sarg/sarg-2.3.11/sarg-2.3.11.tar.gz">Sarg 下载-tar.gz 包</a></p>
+<p>依赖 gd 库，pcre 库。在 sarg 安装完成后，进入安装目录的<code>bin</code>目录，执行<code>sarg</code>命令，sarg 会自动寻找 Squid 的日志文件，并分析。<code>SARG: Records in file: 595935, reading: 100.00%</code>，然后会生成一个目录，是自动存放在<code>/var/www/html/squid-reports</code>下，目录名为<code>起始日期-结束日期</code>，该目录下有<code>index.html</code></p>
+<p>通过浏览器访问该 index 文件，数据量相当庞大，并提供图表和日期时间的数据记录</p>
+<img src="/2018/Squid%E7%AC%94%E8%AE%B0/5.png" class="">
+<p>sarg 命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">sarg [options]</span><br><span class="line">     --convert      将access.log文件转换为易读的日期格式</span><br><span class="line">     -d DATE        指定报告的日志范围dd&#x2F;mm&#x2F;yyyy-dd&#x2F;mm&#x2F;yyyy</span><br><span class="line">     -e MAIL        将报告发送给指定email</span><br><span class="line">     -f FILE        指定配置文件，默认为安装目录的etc&#x2F;sarg.conf</span><br><span class="line">     --keeplogs     保留以前生成的每个报告</span><br><span class="line">     -l FILE        指定日志文件</span><br><span class="line">     -n             使用rDNS将IP地址解析成域名</span><br><span class="line">     -o DIR         报告存放目录</span><br><span class="line">     -p             使用IP地址而不是userid</span><br><span class="line">     --split        按-d指定的日期切割日志文件</span><br><span class="line">     -t TIME        指定时间范围[HH:MM 或 HH:MM-HH:MM]</span><br><span class="line">     -u USER        只报告指定用户的行为</span><br><span class="line">     -x             开始分析，且会先输出完整的配置信息</span><br><span class="line">     -z             显示完整的输出信息</span><br></pre></td></tr></table></figure>
+<p>Sarg 配置，存放在安装目录的<code>etc/sarg.conf</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">access_log &#x2F;usr&#x2F;local&#x2F;squid&#x2F;var&#x2F;logs&#x2F;access.log  #squid日志路径</span><br><span class="line">output_dir &#x2F;var&#x2F;www&#x2F;html&#x2F;squid-reports    #报告输出目录</span><br><span class="line">date_format u      #日期格式，u为美国格式mm&#x2F;dd&#x2F;yy，e为欧洲格式dd&#x2F;mm&#x2F;yy</span><br><span class="line">overwrite_report no   #是否对已存在的日期的报告覆盖</span><br></pre></td></tr></table></figure>
+<h1 id="squid-调优"><a class="markdownIt-Anchor" href="#squid-调优"></a> Squid 调优</h1>
+<h2 id="调整文件描述符"><a class="markdownIt-Anchor" href="#调整文件描述符"></a> 调整文件描述符</h2>
+<p>Squid 在高负载下，需要大量内核资源，又因为 Squid 是做缓存服务器，所以极度消耗文件描述符，而 unix 对文件描述符是有限制的（1024），这样会造成极大的性能影响，当 squid 用完所有文件描述符后，就不能接收新的请求了，并且 squid 发现文件描述符短缺后，就会发布警告。</p>
+<p>因此，需要先查看文件描述符是否满足使用，大多数情况 1024 已经足够使用，当出现高负载情况时，则需要更多，因此最好将系统限制的文件描述符数量设为每个进程限制的两倍。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ulimit -a  查看当前的资源限制信息</span><br><span class="line">找到open files，就是同时能打开的文件数量，即文件描述符，默认为1024</span><br><span class="line">优化性能，将此值设为2048</span><br><span class="line">ulimit -Hn 2048</span><br><span class="line"># -H 设定资源的硬性限制，也就是管理员所设下的限制</span><br><span class="line"># -n 设置同时最多能打开的文件数</span><br></pre></td></tr></table></figure>
+<p>注：<strong>ulimit 仅仅作为临时设置，可以作用于通过使用其命令登录的 shell 会话，在会话终止时便结束限制，并不影响于其他 shell 会话。</strong></p>
+<p>**若要永久设置，可写入<code>/etc/profile</code>：<code>echo &quot;ulimit -Hn 2048&quot;&gt;&gt;/etc/profile</code> **</p>
+<p><strong>或写入<code>/etc/security/limits.conf</code>：<code>echo &quot;* - nofile 2048&quot;&gt;&gt;/etc/security/limits.conf</code></strong></p>
+<h2 id="调整临时端口范围"><a class="markdownIt-Anchor" href="#调整临时端口范围"></a> 调整临时端口范围</h2>
+<p>临时端口是 TCP/IP 栈分配出连接的本地端口，当 squid 发起一条连接到另一台服务器，内核给本地 socket 分配一个端口号。CentOS 默认的临时端口范围是 32768 到 60999</p>
+<p>当 squid 高负载时，若临时端口号短缺，会造成很大的性能影响，因为一些 TCP 连接在关闭时会进入<code>TIME_WAIT</code>状态，此状态下临时端口不能重用。</p>
+<p>可通过<code>sysctl -a | grep net.ipv4.ip_local_port_range</code>查看</p>
+<p>设置范围 4000 到 65000，<code>sysctl -w net.ipv4.ip_local_port_range=&quot;4000 65000&quot;</code></p>
+<h1 id="参考文章"><a class="markdownIt-Anchor" href="#参考文章"></a> 参考文章</h1>
+<ul>
+<li>Linux 服务器架设指南（第二版）</li>
+<li>Linux 系统管理与网络管理（第二版）</li>
+<li>Linux 运维之道（第二版）</li>
+<li>高性能网站构建实战</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/%E7%BC%93%E5%AD%98/" rel="tag"><i class="fa fa-tag"></i> 缓存</a>
+              <a href="/tags/%E4%BB%A3%E7%90%86/" rel="tag"><i class="fa fa-tag"></i> 代理</a>
+              <a href="/tags/squid/" rel="tag"><i class="fa fa-tag"></i> squid</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Nagios%E7%9B%91%E6%8E%A7%E6%90%AD%E5%BB%BA/" rel="prev" title="Nagios监控搭建">
+      <i class="fa fa-chevron-left"></i> Nagios监控搭建
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Varnish%E7%AC%94%E8%AE%B0/" rel="next" title="Varnish笔记">
+      Varnish笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E4%BB%8B%E7%BB%8D"><span class="nav-text"> Squid 介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%A3%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A6%82%E5%BF%B5"><span class="nav-text"> 代理服务器概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E5%AE%89%E8%A3%85"><span class="nav-text"> Squid 安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E5%B8%B8%E8%A7%84%E9%85%8D%E7%BD%AE"><span class="nav-text"> Squid 常规配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6"><span class="nav-text"> Squid 访问控制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E5%A4%9A%E7%BA%A7%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE"><span class="nav-text"> Squid 多级代理配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E5%AE%9E%E9%AA%8C"><span class="nav-text"> Squid 实验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%8F%E6%98%8E%E4%BA%8C%E7%BA%A7%E4%BB%A3%E7%90%86"><span class="nav-text"> 透明二级代理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%90%91%E4%BA%8C%E7%BA%A7%E4%BB%A3%E7%90%86"><span class="nav-text"> 反向二级代理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#cachemgrcgi-%E7%AE%A1%E7%90%86-squid"><span class="nav-text"> cachemgr.cgi 管理 Squid</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E6%97%A5%E5%BF%97"><span class="nav-text"> Squid 日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E8%BD%AE%E8%AF%A2"><span class="nav-text"> 日志轮询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#sarg-%E5%B7%A5%E5%85%B7%E5%88%86%E6%9E%90%E6%97%A5%E5%BF%97"><span class="nav-text"> Sarg 工具分析日志</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#squid-%E8%B0%83%E4%BC%98"><span class="nav-text"> Squid 调优</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%83%E6%95%B4%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6"><span class="nav-text"> 调整文件描述符</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%83%E6%95%B4%E4%B8%B4%E6%97%B6%E7%AB%AF%E5%8F%A3%E8%8C%83%E5%9B%B4"><span class="nav-text"> 调整临时端口范围</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-text"> 参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

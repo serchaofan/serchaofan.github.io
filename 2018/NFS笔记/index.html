@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="NFS 原理 NFS 基础配置  服务器端 NFS 客户端 nfs 挂载优化  系统安全相关 挂载性能相关">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NFS基础笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/NFS%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="NFS 原理 NFS 基础配置  服务器端 NFS 客户端 nfs 挂载优化  系统安全相关 挂载性能相关">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/NFS%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/NFS%E7%AC%94%E8%AE%B0/2.png">
+<meta property="article:published_time" content="2018-05-02T09:18:46.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.540Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="nfs">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/NFS%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/NFS%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>NFS基础笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/NFS%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          NFS基础笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-05-02 17:18:46" itemprop="dateCreated datePublished" datetime="2018-05-02T17:18:46+08:00">2018-05-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#nfs-%e5%8e%9f%e7%90%86">NFS 原理</a></li>
+<li><a href="#nfs-%e5%9f%ba%e7%a1%80%e9%85%8d%e7%bd%ae">NFS 基础配置</a>
+<ul>
+<li><a href="#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af">服务器端</a></li>
+<li><a href="#nfs-%e5%ae%a2%e6%88%b7%e7%ab%af">NFS 客户端</a></li>
+<li><a href="#nfs-%e6%8c%82%e8%bd%bd%e4%bc%98%e5%8c%96">nfs 挂载优化</a>
+<ul>
+<li><a href="#%e7%b3%bb%e7%bb%9f%e5%ae%89%e5%85%a8%e7%9b%b8%e5%85%b3">系统安全相关</a></li>
+<li><a href="#%e6%8c%82%e8%bd%bd%e6%80%a7%e8%83%bd%e7%9b%b8%e5%85%b3">挂载性能相关</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h1 id="nfs-原理"><a class="markdownIt-Anchor" href="#nfs-原理"></a> NFS 原理</h1>
+<p>NFS（Network Files Network）网络文件系统，允许网络中主机通过通过 TCP/IP 进行资源共享。采用 C/S 工作模式，NFS 服务器相当于文件服务器，将某个目录设置为输出目录，客户端可将服务器端的输出目录挂载在本地进行访问。NFSv4 基于 TCP，端口号 2049。<br />
+RPC（Remote Procedure Call）远程过程调用，是一种通过网络从远程计算机程序上请求服务，跨越了传输层和应用层的协议。<br />
+NFS 在传输数据时使用的端口会随机选择，而客户端是通过 RPC 知道服务器端使用的哪个端口传输数据。NFS 的 RPC 主要功能是记录每个 NFS 功能对应的端口号，并在 NFS 客户端请求时将该端口和功能信息传给该客户端，确保客户端连到正确的端口。<br />
+当 NFS 服务启动时会随即取用若干端口，并主动向 RPC 服务注册这些端口，然后 RPC 使用固定的 111 端口监听 NFS 客户端请求，并将正确的端口信息返回给客户端。</p>
+<p><strong>注：</strong> 在启动 NFS 之前先要启动 RPC 服务，否则 NFS 无法向 RPC 注册，若 RPC 重启则原来注册的数据就全部丢失，NFS 也需重启以重新注册 RPC。</p>
+<img src="/2018/NFS%E7%AC%94%E8%AE%B0/1.png" class="">
+<ol>
+<li>用户访问 web 页面，web 服务器上的 nfs 客户端便会向后端的 NFS 服务器通过 rpc 服务发出请求。</li>
+<li>nfs 服务器端 rpc 找到对应注册的 nfs 端口后，通知 nfs 客户端的 rpc</li>
+<li>nfs 客户端得到了服务器端的取数据的端口，与 nfs daemon 连接存取数据</li>
+<li>nfs 客户端在将得到的文件传给前端</li>
+</ol>
+<p><strong>NFS 局限：</strong></p>
+<ul>
+<li>存在单点故障，可通过高可用集群解决</li>
+<li>高并发场景，NFS 性能有限</li>
+<li>客户端认证基于 IP 和主机名，安全性一般</li>
+<li>NFS 传输明文，不对数据完整性验证</li>
+<li>多台客户端挂载一个 NFS 时，耦合度高，管理维护麻烦</li>
+</ul>
+<h1 id="nfs-基础配置"><a class="markdownIt-Anchor" href="#nfs-基础配置"></a> NFS 基础配置</h1>
+<p>环境：</p>
+<ul>
+<li>两台虚拟机<br />
+192.168.163.103/24<br />
+192.168.163.104/24</li>
+<li>系统：CentOS7</li>
+<li>Selinux：关闭</li>
+<li>防火墙：关闭</li>
+</ul>
+<h2 id="服务器端"><a class="markdownIt-Anchor" href="#服务器端"></a> 服务器端</h2>
+<p>NFS 服务依赖于 RPC 服务与外界通信，所以需要安装 rpcbind 程序<br />
+而 NFS</p>
+<ol>
+<li>安装 NFS 主程序和 RPC 程序<br />
+<code>yum install nfs-utils rpcbind</code><br />
+<code>systemctl enable nfs-server</code><br />
+<code>systemctl start nfs-server rpcbind.service</code></li>
+<li>配置文件<code>/etc/exports</code></li>
+</ol>
+<p>可通过<code>rpcinfo -p localhost</code>查看已注册的端口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"># rpcinfo -p localhost</span><br><span class="line">   program vers proto   port  service</span><br><span class="line">    100000    4   tcp    111  portmapper</span><br><span class="line">    100000    3   tcp    111  portmapper</span><br><span class="line">    100000    2   tcp    111  portmapper</span><br><span class="line">    100000    4   udp    111  portmapper</span><br><span class="line">    100000    3   udp    111  portmapper</span><br><span class="line">    100000    2   udp    111  portmapper</span><br><span class="line">    100024    1   udp  49302  status</span><br><span class="line">    100024    1   tcp  49199  status</span><br><span class="line">    100005    1   udp  20048  mountd</span><br><span class="line">    100005    1   tcp  20048  mountd</span><br><span class="line">    100005    2   udp  20048  mountd</span><br><span class="line">    100005    2   tcp  20048  mountd</span><br><span class="line">    100005    3   udp  20048  mountd</span><br><span class="line">    100005    3   tcp  20048  mountd</span><br><span class="line">    100003    3   tcp   2049  nfs</span><br><span class="line">    100003    4   tcp   2049  nfs</span><br></pre></td></tr></table></figure>
+<p>nfs 相关进程</p>
+<ul>
+<li>rpc.statd：检查文件一致性</li>
+<li>rpc.idmapd：名字映射</li>
+<li>rpc.mountd：权限管理验证（nfs mount daemon）</li>
+<li>nfsd：NFS 主进程，管理登入，ID 身份判明等</li>
+</ul>
+<p><strong><code>/etc/exports</code>文件配置</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 格式为：共享目录  分享给的主机1(参数)  主机2(参数) ...</span><br><span class="line">&#x2F;var&#x2F;nfsshare  192.168.163.*(rw,sync)  *.example.com(rw)</span><br><span class="line"># 客户端地址可以是 IP、主机名、域名、网段</span><br></pre></td></tr></table></figure>
+<p><strong>参数列表</strong></p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ro</td>
+<td>客户端只读</td>
+</tr>
+<tr>
+<td>rw</td>
+<td>客户端可读写</td>
+</tr>
+<tr>
+<td>sync</td>
+<td>数据同步写入内存与磁盘，保证数据一致性，效率低</td>
+</tr>
+<tr>
+<td>async</td>
+<td>异步 IO，数据先暂时存与内存，待需要时写入硬盘，效率高，但数据丢失风险高</td>
+</tr>
+<tr>
+<td>noaccess</td>
+<td>阻止访问该目录及其子目录</td>
+</tr>
+<tr>
+<td>all_squash</td>
+<td>无论 NFS 客户端使用什么用户访问，都映射为 NFS 服务器端的匿名用户，即 nfsnobody</td>
+</tr>
+<tr>
+<td>root_squash</td>
+<td>当 NFS 客户端使用 root 访问时，映射为 NFS 服务器端的匿名用户，即 nfsnobody</td>
+</tr>
+<tr>
+<td>no_root_squash</td>
+<td>当 NFS 客户端使用 root 访问时，仍映射为 NFS 服务器端的 root，并不安全</td>
+</tr>
+<tr>
+<td>wdelay</td>
+<td>为合并多次更新而延迟写入磁盘</td>
+</tr>
+<tr>
+<td>no_wdelay</td>
+<td>尽可能快地写入磁盘</td>
+</tr>
+<tr>
+<td>secure</td>
+<td>限制 nfs 服务只能使用小于 1024 的 TCP/IP 端口传输数据</td>
+</tr>
+<tr>
+<td>insecure</td>
+<td>可使用大于 1024 的端口</td>
+</tr>
+<tr>
+<td>anounuid</td>
+<td>指定 NFS 服务器中的用户为匿名用户</td>
+</tr>
+<tr>
+<td>anoungid</td>
+<td>指定 NFS 服务器中的用户组为匿名用户组</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>默认情况下，nfs 服务会禁止客户端的 root 用户对共享目录进行写操作，目的是为了保证当 nfs 以共享目录工作时，共享目录的数据不会被客户端随意修改，但是当 nfs 以远程存储工作时，这个功能就不合理，所以当 nfs 以远程存储来工作时，需要在服务端设置 no_root_squash 选项关闭该功能。</p>
+</blockquote>
+<img src="/2018/NFS%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>配置完后使用<code>exportfs -rv</code>命令，不需要重启 NFS。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">exportfs</span><br><span class="line">	-a  导出所有列在&#x2F;etc&#x2F;exports的目录</span><br><span class="line">	-v  显示所有被导出或取消导出的目录</span><br><span class="line">	-r  重新导出所有列在&#x2F;etc&#x2F;exports的目录</span><br><span class="line">	-u [目录] 取消指定目录的导出，与-a同时用时，会取消配置文件中所有目录的导出</span><br></pre></td></tr></table></figure>
+<p><code>nfsstat</code>命令可查看当前 NFS 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">nfsstat</span><br><span class="line">	-s 显示NFS服务器信息</span><br><span class="line">	-c 显示NFS客户端信息</span><br><span class="line">	-m 显示每个NFS文件系统的统计信息（在客户端上查看）</span><br><span class="line">	-r 显示RPC信息</span><br></pre></td></tr></table></figure>
+<p>若开启了 firewalld，则需要放行 nfs 和 rpcbind 还有 mountd 服务，放行端口 2049</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-service&#x3D;nfs</span><br><span class="line">firewall-cmd --permanent --add-service&#x3D;rpc-bind</span><br><span class="line">firewall-cmd --permanent --add-service&#x3D;mountd</span><br><span class="line">firewall-cmd --permanent --add-port&#x3D;2049&#x2F;tcp 文件</span><br><span class="line">chcon -R -t public_content_t &#x2F;var&#x2F;nfsshare</span><br><span class="line">setsebool -P nfs_export_all_rw on</span><br><span class="line">setsebool -P nfs_export_all_ro on</span><br></pre></td></tr></table></figure>
+<h2 id="nfs-客户端"><a class="markdownIt-Anchor" href="#nfs-客户端"></a> NFS 客户端</h2>
+<ol>
+<li>需要安装<code>nfs-utils rpcbind</code><br />
+<code>yum install nfs-utils rpcbind</code></li>
+<li>通过<code>showmount</code>查看 NFS 服务器的共享信息</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">showmount [options] [NFS服务器]</span><br><span class="line">	-e 显示NFS服务器的共享列表</span><br><span class="line">	-a 显示本机挂载NFS资源情况</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># showmount -e 192.168.163.102</span><br><span class="line">Export list for 192.168.163.102:</span><br><span class="line">&#x2F;var&#x2F;nfsshare 192.168.163.*</span><br></pre></td></tr></table></figure>
+<ol start="3">
+<li>挂载到本机</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># mkdir &#x2F;nfsshare  #创建挂载目录</span><br><span class="line"># mount -t nfs 192.168.163.102:&#x2F;var&#x2F;nfsshare &#x2F;nfsshare</span><br><span class="line"># df -h</span><br><span class="line">Filesystem                     Size  Used Avail Use% Mounted on</span><br><span class="line">......</span><br><span class="line">192.168.163.102:&#x2F;var&#x2F;nfsshare   17G  8.1G  9.0G  48% &#x2F;nfsshare</span><br></pre></td></tr></table></figure>
+<p>在 mount 时也可使用<code>-o</code>指定文件系统的选项</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">rsize&#x3D;   从NFS服务器读文件时每次使用的字节数，默认1024字节</span><br><span class="line">wsize&#x3D;   向NFS服务器写文件时每次使用的字节数，默认1024字节</span><br><span class="line">timeo&#x3D;   RPC调用超时后，确定重试算法的参数</span><br><span class="line">soft   软挂载方式，当客户端请求得不到回应时，提示IO错误并退出</span><br><span class="line">hard   硬挂载方式，当客户端请求得不到回应时，提示服务器无响应，但继续请求。默认硬挂载</span><br><span class="line">intr   NFS文件操作超时并时硬挂载时，允许中断文件操作并向调用它的程序返回EINTR</span><br><span class="line">ro   只读方式挂载NFS文件系统</span><br><span class="line">rw   读写方式挂载NFS文件系统</span><br><span class="line">fg   在前台重试挂载</span><br><span class="line">bg   在后台重试挂载</span><br></pre></td></tr></table></figure>
+<p>也可通过配置文件<code>/etc/fstab</code>开机自动挂载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># vim &#x2F;etc&#x2F;fstab</span><br><span class="line">......</span><br><span class="line">192.168.163.102:&#x2F;var&#x2F;nfsshare  &#x2F;nfsshare  nfs  defaults 0 0</span><br></pre></td></tr></table></figure>
+<p>**使用 mount 或配置文件/etc/fstab 挂载的不足：**NFS 服务器与客户端的连接不是永久的，任何一方的掉线都会导致另一方等待超时。并且即使很多用户都挂载了共享目录，也会有大部分的用户在大部分时间是不会使用的，这样造成了 NFS 服务器资源的大量消耗。可通过 autofs 服务按需动态挂载解决该问题。</p>
+<ol start="4">
+<li>使用 autofs 自动挂载<br />
+autofs 是一个提供按需挂载的服务，只有在用户访问该挂载点时才会动态挂载该共享目录。<br />
+安装 autofs 程序，并开机自启<br />
+<code>yum install autofs</code><br />
+<code>systemctl enable autofs.service</code><br />
+<code>systemctl start autofs.service</code><br />
+创建 autofs 关于 nfs 主配置文件，也可以直接在 autofs 的主配置文件<code>/etc/auto.master</code>中添加内容。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># vim &#x2F;etc&#x2F;auto.master.d&#x2F;nfs.autofs</span><br><span class="line">主配置文件的配置格式：</span><br><span class="line">挂载点顶层目录      映射文件</span><br><span class="line">&#x2F;nfs                  &#x2F;etc&#x2F;nfs.misc</span><br><span class="line">由于挂载点为&#x2F;nfs&#x2F;share，所以顶层目录为&#x2F;nfs</span><br></pre></td></tr></table></figure>
+<p>创建 nfs 配置的映射文件<code>/etc/nfs.misc</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># vim &#x2F;etc&#x2F;nfs.misc</span><br><span class="line">映射文件格式：</span><br><span class="line">挂载点     [-挂载选项]       NFS服务器名或IP:共享目录</span><br><span class="line">挂载点是对于挂载点顶层目录的相对路径</span><br><span class="line">share   -fstype&#x3D;nfs,rw   192.168.163.102:&#x2F;var&#x2F;nfsshare</span><br></pre></td></tr></table></figure>
+<p>配置完成后重启 autofs 服务即可。<br />
+进入<code>/nfs</code>目录中，查看并无内容。然后进入<code>share</code>便可查看到挂载目录的内容。再通过<code>df</code>查看，已成功挂载。</p>
+<p>**注：**由于在客户端挂载时也会指定选项，若与服务器端选项不同，在执行操作时可能会报错，即：选项以服务器端配置为准。</p>
+<h2 id="nfs-挂载优化"><a class="markdownIt-Anchor" href="#nfs-挂载优化"></a> nfs 挂载优化</h2>
+<h3 id="系统安全相关"><a class="markdownIt-Anchor" href="#系统安全相关"></a> 系统安全相关</h3>
+<p>对企业一般来说，NFS 只共享静态数据，不需要 suid、exec 权限，不应允许执行命令。所以在挂载时应该指定以下参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t nfs -o nosuid,noexec,nodev,rw 10.0.0.1:&#x2F;data &#x2F;mnt</span><br></pre></td></tr></table></figure>
+<h3 id="挂载性能相关"><a class="markdownIt-Anchor" href="#挂载性能相关"></a> 挂载性能相关</h3>
+<ul>
+<li>禁止更新目录及文件时间戳挂载<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t nfs -o noatime,nodiratime 10.0.0.1:&#x2F;data</span><br></pre></td></tr></table></figure>
+</li>
+<li>安全加优化<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t nfs -o nosuid,noexec,nodev,noatime,nodiratime,intr,rsize&#x3D;131072,wsize&#x3D;131072 10.0.0.1:&#x2F;data &#x2F;mnt</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>rsize 为 nfs 客户端读 server 的数据块大小，wsize 为 nfs 客户端写 server 的数据块大小，最好设为 1024 的倍数<br />
+配置这两个参数可以让一次读写更多数据包，提高访问性能</p>
+</blockquote>
+</li>
+<li>内核层面优化
+<ul>
+<li><code>net.core.wmem_default</code>：接受套接字缓冲区大小的默认值，默认为 124928</li>
+<li><code>net.core.rmem_default</code>：发送套接字缓冲区大小的默认值，默认为 124928</li>
+<li><code>net.core.rmem_max</code>：接受套接字缓冲区大小的最大值，默认同上</li>
+<li><code>net.core.wmem_max</code>：发送套接字缓冲区大小的最大值，默认同上<br />
+<strong>可以将这些参数调大</strong></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/nfs/" rel="tag"><i class="fa fa-tag"></i> nfs</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/samba%E7%AC%94%E8%AE%B0/" rel="prev" title="Samba基础学习笔记">
+      <i class="fa fa-chevron-left"></i> Samba基础学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Apache-Server%E7%AC%94%E8%AE%B0/" rel="next" title="Apache-Server笔记">
+      Apache-Server笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#nfs-%E5%8E%9F%E7%90%86"><span class="nav-text"> NFS 原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#nfs-%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE"><span class="nav-text"> NFS 基础配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF"><span class="nav-text"> 服务器端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nfs-%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="nav-text"> NFS 客户端</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nfs-%E6%8C%82%E8%BD%BD%E4%BC%98%E5%8C%96"><span class="nav-text"> nfs 挂载优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8%E7%9B%B8%E5%85%B3"><span class="nav-text"> 系统安全相关</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8C%82%E8%BD%BD%E6%80%A7%E8%83%BD%E7%9B%B8%E5%85%B3"><span class="nav-text"> 挂载性能相关</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

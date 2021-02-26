@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta property="og:type" content="article">
+<meta property="og:title" content="Apache-Server笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Apache-Server%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/0.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/9.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/10.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/7.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/8.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/5.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/6.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/3.png">
+<meta property="article:published_time" content="2018-05-02T09:19:50.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.370Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="LAMP">
+<meta property="article:tag" content="LAMT">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Apache-Server%E7%AC%94%E8%AE%B0/0.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Apache-Server%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Apache-Server笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Apache-Server%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Apache-Server笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-05-02 17:19:50" itemprop="dateCreated datePublished" datetime="2018-05-02T17:19:50+08:00">2018-05-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/0.png" class="">
+  <span id="more"></span>
+<p>本片包含以下内容：</p>
+<ul>
+<li><a href="#apache-httpd-%e6%9c%8d%e5%8a%a1%e5%99%a8%e4%bb%8b%e7%bb%8d">Apache-httpd 服务器介绍</a></li>
+<li><a href="#httpd-%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%ae%89%e8%a3%85">httpd 服务器安装</a></li>
+<li><a href="#httpd-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6">httpd 配置文件</a></li>
+<li><a href="#httpd-%e8%99%9a%e6%8b%9f%e4%b8%bb%e6%9c%ba">httpd 虚拟主机</a></li>
+<li><a href="#httpd-%e8%ae%a4%e8%af%81%e6%8e%88%e6%9d%83">httpd 认证授权</a></li>
+<li><a href="#htaccess-%e6%96%87%e4%bb%b6">.htaccess 文件</a>
+<ul>
+<li><a href="#htaccess-%e6%96%87%e4%bb%b6%e7%9a%84%e5%b8%b8%e7%94%a8%e7%a4%ba%e4%be%8b">.htaccess 文件的常用示例</a></li>
+</ul>
+</li>
+<li><a href="#%e9%a1%b5%e9%9d%a2%e9%87%8d%e5%ae%9a%e5%90%91">页面重定向</a></li>
+<li><a href="#cgi">CGI</a></li>
+<li><a href="#%e5%8a%a8%e6%80%81-httpd">动态 httpd</a></li>
+<li><a href="#httpd-%e4%b8%8e-ssl">httpd 与 SSL</a></li>
+<li><a href="#httpd-%e6%97%a5%e5%bf%97">httpd 日志</a>
+<ul>
+<li><a href="#%e6%97%a5%e5%bf%97%e5%88%87%e5%89%b2">日志切割</a></li>
+<li><a href="#webalizer-%e5%88%86%e6%9e%90%e7%bb%9f%e8%ae%a1%e6%97%a5%e5%bf%97">Webalizer 分析统计日志</a></li>
+</ul>
+</li>
+<li><a href="#httpd-%e4%bb%a3%e7%90%86">httpd 代理</a></li>
+<li><a href="#apache-mpm-%e6%a8%a1%e5%bc%8f">Apache-MPM 模式</a></li>
+<li><a href="#apache-%e5%ae%9e%e7%94%a8%e7%ac%ac%e4%b8%89%e6%96%b9%e6%a8%a1%e5%9d%97">Apache 实用第三方模块</a>
+<ul>
+<li><a href="#gzip-%e5%8e%8b%e7%bc%a9">Gzip 压缩</a></li>
+<li><a href="#%e9%98%b2-ddos-%e6%94%bb%e5%87%bb">防 DDOS 攻击</a></li>
+</ul>
+</li>
+<li><a href="#lamp-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba">LAMP 环境搭建</a>
+<ul>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0">参考文章</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="apache-httpd-服务器介绍"><a class="markdownIt-Anchor" href="#apache-httpd-服务器介绍"></a> Apache-httpd 服务器介绍</h1>
+<p>Apache 服务器全称 Apache-HTTP-Server，而 httpd 就是 Apache 服务器端运行的软件，提供 WWW 服务器平台。</p>
+<p><strong>Apache 特性</strong></p>
+<ul>
+<li>简单强大的配置文件</li>
+<li>支持虚拟主机</li>
+<li>支持多种 HTTP 认证</li>
+<li>集成 Perl 脚本，代理服务器模块</li>
+<li>支持通用网关接口、FastCGI</li>
+<li>支持实时监视服务器状态和定制服务器日志</li>
+<li>支持 SSL、服务器端包含指令 SSI</li>
+<li>可通过第三方模块支持 Java Servlets</li>
+<li>提供对用户会话的跟踪</li>
+<li>采用模块化设计模型</li>
+</ul>
+<p><strong>Apache 最重要的特性就是：采用模块化设计模型</strong>。模块分为：</p>
+<ul>
+<li>静态模块：是 Apache 最基本的模块，无法随时添加和卸载，在编译安装时设定</li>
+<li>动态模块：是可以随时添加和卸载的模块，使得部署有最大的灵活性</li>
+</ul>
+<p>Apache 的模块会被编译为动态共享对象 DSO，这些 DSO 独立于 httpd，可以在编译时就添加，也可以后期通过 Apache Extension Tool 工具编译添加模块，可使用<code>httpd -M</code>查看模块加载清单。</p>
+<h1 id="httpd-服务器安装"><a class="markdownIt-Anchor" href="#httpd-服务器安装"></a> httpd 服务器安装</h1>
+<p>httpd 版本 2.4.34。可以使用源码安装，可进行更精细的设定。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;configure</span><br><span class="line">  --enable-so               # 开启模块化功能，支持DSO</span><br><span class="line">  --enable-mods-shared      # 指明以DSO方式编译的模块，all表示所有模块，most表示大部分模块</span><br><span class="line">  --enable-ssl              # 支持ssl加密</span><br><span class="line">  --enable-rewrite          # 支持地址重写</span><br><span class="line">  --with-mpm                # 设置httpd工作模式</span><br><span class="line">  --with-suexec-bin         # suexec库的路径，用于支持SUID、SGID</span><br><span class="line">  --with-apr                # 指定apr程序的绝对路径</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>apr：Apache Portable Runtime（APR）项目的任务是创建和维护软件库，为底层平台特定的实现提供可预测且一致的接口。主要目标是提供一个 API，软件开发人员可以对其进行编码，并确保可预测的行为，如果不是相同的行为，无论他们的软件构建在哪个平台上，都可以减轻他们编写特殊情况条件以解决问题的需要。</p>
+<p>源码安装前需要安装 apr 和 apr-util，仍然需要源码安装</p>
+</blockquote>
+<p>下载 apr 和 apr-util 的源码包，先安装 apr，先要确保安装了<code>gcc</code></p>
+<p><code>./configure --prefix=/usr/local/apr-1.6</code>然后<code>make &amp;&amp; make install</code></p>
+<p>再安装 apr-util，需要<code>--with-apr</code>指定 apr 的安装路径</p>
+<p><code>./configure --prefix=/usr/local/apr-util-1.6 --with-apr=/usr/local/apr-1.6</code>然后<code>make &amp;&amp; make install</code></p>
+<p>可能会报一个错<code>xml/apr_xml.c:35:19: 致命错误：expat.h：No such file or directory</code>，需要安装<code>expat-devel</code>，<code>yum install expat expat-devel</code>即可。</p>
+<p>安装与 Apache 相关的依赖库或软件，直接<code>yum|dnf</code>安装即可：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">pcre-devel          # perl正则表达式库</span><br><span class="line">libxml2-devel       # xml文件库，很重要</span><br><span class="line">libpng-devel        # png图像库</span><br><span class="line">libjpeg-devel       # jpeg图像库</span><br><span class="line">libmcrypt-devel     # mcrypt加密库</span><br><span class="line">zlib-devel          # zlib压缩库</span><br><span class="line">freetype-devel      # freetype字体库</span><br><span class="line">autoconf            # 生成配置脚本的软件，不一定要</span><br><span class="line">gd-devel            # gd图像库</span><br><span class="line">libcurl-devel       # curl库</span><br><span class="line">openssl-devel       # openssl库。注：php5不支持openssl1.1.0版本以上的</span><br></pre></td></tr></table></figure>
+<p>然后</p>
+<figure class="highlight plain"><figcaption><span>--prefix</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;httpd-2.4 \</span><br><span class="line">            --with-apr&#x3D;&#x2F;usr&#x2F;local&#x2F;apr-1.6 \</span><br><span class="line">            --with-apr-util&#x3D;&#x2F;usr&#x2F;local&#x2F;apr-util-1.6</span><br><span class="line">  # 若不指定--prefix，会默认安装在&#x2F;usr&#x2F;local&#x2F;apache2中</span><br></pre></td></tr></table></figure>
+<p>并<code>make &amp;&amp; make install</code>即可。源码安装后可能不能直接使用 Apache 的管理命令，需要添加环境变量，<code>export PATH=/usr/local/httpd-2.4/bin:$PATH</code>，也可以永久添加。</p>
+<p>httpd 提供两种编译方式：静态编译和动态编译</p>
+<ul>
+<li>静态编译：把模块直接编译进 httpd 核心，httpd 启动时所有静态编译的模块都会启动</li>
+<li>动态编译：将模块编译好，但不编译进 httpd 核心，httpd 启动动态模块并不会启动，而是需要在配置文件中<code>LoadModule</code>加载才能启动，实现了模块热插拔。</li>
+</ul>
+<p>可在编译时指定<code>--enable-模块名=shared|static</code>指定模块是动态或静态编译。</p>
+<blockquote>
+<p>httpd 能够实现动态编译的原因在于 httpd 默认会安装<code>mod_so</code>，此模块提供了配置文件的<code>LoadModule</code>和<code>LoadFile</code>指令，在编译时指定<code>--enable-so</code>即可，而此模块只能使用静态编译，若指定为<code>shared</code>则编译时会出错。</p>
+</blockquote>
+<p>动静态编译的优先级：</p>
+<ol>
+<li>不指定模块编译选项，则默认值为<code>--enable-mods-shared=most</code>即动态编译大部分模块</li>
+<li>显式指定的优先级高，如果某个模块既指定了静态，又指定了动态，则静态优先。</li>
+<li>静态关键字规则优先于动态关键字规则，即若<code>--enable-mods-static=few</code>和<code>--enable-mod-shared=all</code>同时配置，静态优于动态，静态生效。</li>
+</ol>
+<p>也可通过各种源安装。<code>yum|dnf install httpd</code>。安装完成后，Apache 会提供<code>apachectl</code>脚本命令，可进行 httpd 的启动、关闭和测试，若没有修改配置文件下使用<code>start</code>启动 httpd，会报以下错误信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Could not reliably determine the server&#39;s fully qualified domain name</span><br></pre></td></tr></table></figure>
+<p>报错说明 httpd 无法确定服务器域的名称，可通过修改主配置文件的<code>ServerName</code>解决。修改后再通过<code>apachectl starts</code>启动 httpd，再直接打命令<code>apachectl</code>能看到 httpd 已在运行的消息<code>httpd (pid 2012) already running</code>。也可以通过<code>systemctl start httpd</code>启动 httpd。</p>
+<p>若开启了<code>firewalld</code>服务，需要放行<code>80/tcp</code>端口，放行<code>http</code>服务。</p>
+<p>httpd 的主要目录（yum 源安装）：</p>
+<ul>
+<li><code>/etc/httpd</code>：httpd 服务根目录</li>
+<li><code>/etc/httpd/conf</code>和<code>/etc/httpd/conf.d</code>：httpd 服务配置文件目录</li>
+<li><code>/var/www/html</code>：网站数据目录</li>
+<li><code>/var/log/httpd</code>：httpd 日志目录，里面存放有<code>access_log</code>访问日志和<code>error_log</code>错误日志</li>
+</ul>
+<p>若是通过 yum 源安装的 httpd，则在<code>/etc/httpd</code>中的<code>logs</code>，<code>modules</code>和<code>run</code>目录都是软连接。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;etc&#x2F;httpd&#x2F;logs --&gt; &#x2F;var&#x2F;log&#x2F;httpd</span><br><span class="line">&#x2F;etc&#x2F;httpd&#x2F;modules --&gt; &#x2F;usr&#x2F;lib64&#x2F;httpd&#x2F;modules</span><br><span class="line">&#x2F;etc&#x2F;httpd&#x2F;run --&gt; &#x2F;run&#x2F;httpd</span><br></pre></td></tr></table></figure>
+<p><code>apachectl</code>命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">apachectl</span><br><span class="line">  -V           # 查看apache版本信息，以及模块、编译信息</span><br><span class="line">  -l           # 查看已被编译的模块</span><br><span class="line">  start        # 启动httpd，如果已在运行就会返回错误</span><br><span class="line">  stop         # 停止httpd</span><br><span class="line">  restart      # 重启httpd</span><br><span class="line">  fullstatus   # 显示mod_status的完整状态报告。需要在服务器上启用mod_status，并在系统上使用基于文本的浏览器</span><br><span class="line">  status       # 显示简要状态报告，信息与systemctl status httpd一致</span><br><span class="line">  graceful     # 优雅地重启Apache httpd守护进程。如果守护程序未运行，则启动它。这与正常重启不同，因为当前打开的连接不会中止。副作用是旧的日志文件不会立即关闭。这意味着，如果在日志轮换脚本中使用，则可能需要大量延迟才能确保在处理旧日志文件之前将其关闭。</span><br><span class="line">  graceful-stop # 让已运行的httpd进程不再接受新请求，并给他们足够的时间处理当前正在处理的事情，处理完成后才退出。所以在进程退出前，日志文件暂时不会关闭，正在进行的连接暂时不会断开。</span><br><span class="line">  configtest   # 配置文件语法测试，相当于apachectl -t</span><br></pre></td></tr></table></figure>
+<p><code>httpd</code>命令：与<code>apachectl</code>一致</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">httpd                # 可直接启动httpd</span><br><span class="line">  -D name            # 定义一个在&lt; IfDefine name &gt;中使用的name，以此容器中的指令</span><br><span class="line">  -d directory       # 指定ServerRoot</span><br><span class="line">  -f file            # 指定配置文件</span><br><span class="line">  -C &quot;directive&quot;     # 指定在加载配置文件前要处理的指令(directive)</span><br><span class="line">  -c &quot;directive&quot;     # 指定在加载配置文件后要处理的指令</span><br><span class="line">  -e level           # 显示httpd启动时的日志调试级别</span><br><span class="line">  -E file            # 将启动信息记录到指定文件中</span><br><span class="line">  -v                 # 显示版本号</span><br><span class="line">  -V                 # 显示编译配置选项</span><br><span class="line">  -h                 # 显示帮助信息</span><br><span class="line">  -l                 # 显示已编译但非动态编译的模块，即静态编译的模块</span><br><span class="line">  -L                 # 显示静态模块可用的指令列表</span><br><span class="line">  -t -D DUMP_VHOSTS  # 显示虚拟主机的设置信息</span><br><span class="line">  -t -D DUMP_RUN_CFG # 显示运行参数</span><br><span class="line">  -S                 # 等价于-t -D DUMP_VHOSTS -D DUMP_RUN_CFG。在调试如何解析配置文件时非常有用</span><br><span class="line">  -t -D DUMP_MODULES # 显示所有已被加载的模块，包括静态和动态编译的模块</span><br><span class="line">  -M                 # 等价于-t -D DUMP_MODULES</span><br><span class="line">  -t                 # 检查配置文件语法</span><br><span class="line">  -T                 # 不检查DocumentRoot，直接启动</span><br><span class="line">  -X                 # 调试模式，此模式下httpd进程依赖于终端</span><br><span class="line">  -k                 # 管理httpd进程，接受start|restart|graceful|graceful-stop|stop</span><br></pre></td></tr></table></figure>
+<h1 id="httpd-配置文件"><a class="markdownIt-Anchor" href="#httpd-配置文件"></a> httpd 配置文件</h1>
+<p>httpd 主配置文件主要由指令和容器构成，容器使用<code>&lt;容器名&gt;&lt;/容器名&gt;</code>作为开始和结束，容器的指令一般只在容器内生效，每个指令都是某个模块提供的，指令生效方式是从上往下读取，所以不要变更指令位置。</p>
+<p><strong>主配置文件重点指令</strong>：</p>
+<ul>
+<li><code>ServerRoot</code>：设置 Apache 的安装主目录，若采用源码安装，默认路径为<code>/usr/local/apache2</code></li>
+<li><code>Listen</code>：设置服务器监听端口 IP 及端口号，默认监听服务器本机所有 IP 地址的 80 端口。格式：<code>Listen [IP地址:]端口 [协议]</code>，默认监听所有 IP，使用 TCP 协议。可多次使用 Listen 以开启多个端口</li>
+<li><code>LoadModule</code>：加载模块。格式 <code>LoadModule 模块名 模块文件名</code>，模块文件一般存放在 ServerRoot 的 module 目录中</li>
+<li><code>ServerAdmin</code>：主服务器返回给客户端的错误消息中的管理员邮箱地址</li>
+<li><code>ServerName</code>：设置服务器本机的主机名和端口，用于 URL 重定向</li>
+<li><code>User</code>：apache 在本地系统上运行的用户名</li>
+<li><code>Group</code>：apache 在本地系统上运行的组名</li>
+<li><code>DocumentRoot</code>：网络路径相对路径的根，是文档的根目录，使用 rpm 包安装则默认值为<code>/var/www</code>，使用源码安装则默认为<code>$ServerRoot/htdocs</code></li>
+<li><code>ErrorLog</code>：服务器错误日志存放位置，默认使用相对路径<code>logs/error_log</code></li>
+<li><code>ErrorLogFormat</code>：错误日志格式</li>
+<li><code>CustomLog</code>：客户端访问日志文件路径及日志格式，格式：<code>CustomLog 文件名 格式</code>，默认相对路径为<code>logs/access_log</code></li>
+<li><code>LogFormat</code>：用户日志文件格式，一般用这里指定的格式创建别名，然后通过<code>CustomLog</code>调用该格式</li>
+<li><code>LogLevel</code>：日志消息等级，分为<code>debug/info/notice/warm/error/crit/alert/emerg</code></li>
+<li><code>AllowOverride</code>：支持从<code>.htaccess</code>文件中重写前面的指令，若值为<code>None</code>，表示不支持</li>
+<li><code>Require</code>：给所有用户或特定用户/组授予或拒绝对目录的访问</li>
+<li><code>Include</code>：允许 Apache 在主配置目录加载其他配置文件，默认为<code>conf.d/*.conf</code></li>
+<li><code>Options</code>：为特殊目录设置选项，语法格式为<code>Options [+|-]选项</code>。
+<ul>
+<li><code>All</code>：开启除<code>MultiViews</code>之外的所有选项</li>
+<li><code>None</code>：不启用额外功能</li>
+<li><code>FollowSymlinks</code>：允许 Options 指定目录下的文件链接到目录外的文件或目录</li>
+<li><code>Indexes</code>：若与 URL 对应的 Options 目录下找不到<code>DirectoryIndex</code>指定的首页文件，则会将当前目录的所有文件索引出来</li>
+</ul>
+</li>
+<li><code>Order</code>：控制默认访问状态以及<code>Allow</code>和<code>Deny</code>的顺序
+<ul>
+<li>若为<code>Order deny,allow</code>则先检查拒绝，当拒绝与允许冲突时，<code>allow</code>优先，默认规则<code>allow</code>，即只要是<code>deny</code>排在前面，就只要写拒绝的 IP 地址即可，使用<code>Deny from [IP地址]|all</code></li>
+<li>若为<code>Order allow,deny</code>则先检查允许，当拒绝与允许冲突时，<code>deny</code>优先，默认规则<code>deny</code>，即只要是<code>allow</code>排在前面，就只要写拒绝的 IP 地址即可，使用<code>Allow from [IP地址]|all</code></li>
+</ul>
+</li>
+<li><code>Alias</code>：用于将 URL 路径映射到本地文件系统的路径，且本地路径不受 DocumentRoot 的限制，该目录中的脚本不允许执行。格式：<code>Alias URL路径 &quot;本地资源的文件系统路径&quot;</code>。<code>Alias</code>不支持正则，而<code>AliasMatch</code>支持，格式一致。</li>
+<li><code>ScriptAlias</code>：类似于 Alias，并且能将 Web 路径映射到 DocumentRoot 之外的文件系统位置，还告诉 Apache 指定的目录存在 CGI 脚本，可以执行脚本</li>
+<li><code>DirectoryIndex</code>：作为索引的文件名，默认找<code>index.html</code>。若 url 中未指定网页文件，则会返回该目录下<code>DirectoryIndex</code>定义的文件，可指定多个文件，若都不存在，会生成所有文件列表，此时<code>Option Indexes</code>必须打开。</li>
+<li><code>UserDir</code>：定义和本地用户的主目录相对的目录，可将公共的 html 文件放入该目录，即每个用户的个人站点。默认设置为<code>public_html</code>，每个用户都可在自己的主目录下创建名为<code>public_html</code>的目录，该目录下的 html 文件可通过<code>域名/~用户名</code>访问。若值为<code>disabled</code>表示禁止使用个人站点。</li>
+<li><code>Timeout</code>：客户端与服务器连接的超时间隔</li>
+<li><code>KeepAlive</code>：开启长连接。HTTP/1.1 中支持一次连接多次传输，可在一次连接中传递多个 HTTP 请求</li>
+<li><code>KeepAliveTimeout</code>：一次连接中多次请求间的超时间隔</li>
+<li><code>MaxKeepAliveRequests</code>：一个 HTTP 连接中最多可请求的次数，若为 0，表示无限制</li>
+</ul>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/mod/quickreference.html">指令文档</a></p>
+</blockquote>
+<p><strong>常用容器：</strong></p>
+<ul>
+<li>
+<p><code>IfDefine</code>：使管理员能采用多种配置方式启动 Apache，当启动 httpd 时使用命令<code>httpd -D 自定义名</code>便会匹配，若测试条件为真，就会加载该容器中定义的参数。格式：<code>&lt;IfDefine [!]自定义名&gt;</code></p>
+</li>
+<li>
+<p><code>IfModule</code>：可以封装仅在条件满足时才会处理的命令，根据模块是否加载决定条件是否满足。语法：<code>&lt;IfModule [!] 模块&gt;指令&lt;/IfModule&gt;</code></p>
+</li>
+<li>
+<p><code>Directory</code>：仅用于特定的文件系统目录、子目录及目录下内容，通常<strong>用绝对路径</strong>，即使是相对路径，也是相对于文件系统的根目录。语法：<code>&lt;Directory 路径&gt;指令&lt;/Directory&gt;</code>，路径可使用<code>~</code>匹配正则表达式。</p>
+</li>
+<li>
+<p><code>DirectoryMatch</code>：类似 Directory，可直接用正则表达式匹配</p>
+</li>
+<li>
+<p><code>Files</code>：类似 Directory，但 Files 内指令仅能应用与特定文件，匹配的范围是<strong>它所在的上下文</strong>。语法：<code>&lt;Files 文件名&gt;指令&lt;/Files&gt;</code>，可使用<code>~</code>匹配正则表达式</p>
+</li>
+<li>
+<p><code>FilesMatch</code>：与 Files 类似，可直接用正则表达式匹配</p>
+</li>
+<li>
+<p><code>Location</code>：该容器内的指令仅对特定 URL 有效。格式<code>&lt;Location URL&gt;指令&lt;/Location&gt;</code>，可使用<code>~</code>匹配正则表达式。<code>Location</code>支持三种匹配模式：</p>
+<ul>
+<li>精确匹配：精确到资源的 URL 路径</li>
+<li>加尾随斜线：匹配目录内容，如<code>&lt;Location &quot;/myapp/&quot;&gt;</code></li>
+<li>无尾随斜线：匹配目录和目录内容，如<code>&lt;Location &quot;/myapp&quot;&gt;</code></li>
+</ul>
+</li>
+<li>
+<p><code>LocationMatch</code>：类似 Location，可直接用正则表达式匹配</p>
+</li>
+<li>
+<blockquote>
+<p>在 DirectoryMatch，Files，FilesMatch，Location，LocationMatch 中，若出现包含关系，如一个目录同时匹配到了两个相同类型容器，则会选择匹配先定义的容器</p>
+</blockquote>
+</li>
+<li>
+<p><code>VirtualHost</code>：虚拟主机，可直接用正则表达式匹配。语法：<code>VirtualHost IP地址:[端口号]</code>，IP 地址为监听的本地网卡 IP，若为<code>*</code>则表示监听本地所有网卡</p>
+</li>
+<li>
+<p><code>EnableSendfile</code>：使用 sendfile 系统调用，把静态文件发送给客户端，获得更好的性能</p>
+</li>
+</ul>
+<h1 id="httpd-虚拟主机"><a class="markdownIt-Anchor" href="#httpd-虚拟主机"></a> httpd 虚拟主机</h1>
+<p>基于 IP 的虚拟主机可根据不同 IP 地址及端口号定位不同的网站请求，但需要独立的公网 IP 地址。基于域名的虚拟主机能实现在一台公网服务器上部署多个网站，服务器根据客户端访问 HTTP 头部信息实现网站的分离解析。</p>
+<p>客户端请求到达后，服务器根据<code>&lt;VirtualHost IP地址:[端口号]&gt;</code>匹配主机，若 IP 地址 为<code>*</code>，表示匹配本地所有 IP 地址</p>
+<p>匹配顺序：</p>
+<ul>
+<li>匹配虚拟主机。匹配虚拟主机的规则为最佳匹配法，IP 地址越精确，匹配就越优先。</li>
+<li>如果基于名称的虚拟主机无法匹配上，则采用虚拟主机列表中的第一个虚拟主机作为响应主机。</li>
+<li>如果所有虚拟主机都无法匹配上，则采用从主配置段落中的主机。</li>
+</ul>
+<p>首先配置虚拟主机配置文件，将<code>/usr/share/doc/httpd/httpd-vhosts.conf</code>复制到<code>/etc/httpd/conf.d/</code>目录下，可改名，以此为模板，创建一台虚拟主机。配置完成后重启 httpd。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">    DocumentRoot &quot;&#x2F;var&#x2F;www&#x2F;virhost1&quot;</span><br><span class="line">    ServerName virhost1.example.com</span><br><span class="line">    ErrorLog &quot;&#x2F;var&#x2F;log&#x2F;httpd&#x2F;virhost1-error_log&quot;</span><br><span class="line">    CustomLog &quot;&#x2F;var&#x2F;log&#x2F;httpd&#x2F;virhost1-access_log&quot; common</span><br><span class="line">&lt;&#x2F;VirtualHost&gt;</span><br><span class="line">&lt;Directory &quot;&#x2F;var&#x2F;www&#x2F;virhost1&quot;&gt;</span><br><span class="line">    Require all granted</span><br><span class="line">    Options Indexes</span><br><span class="line">    AllowOverride None</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br></pre></td></tr></table></figure>
+<p>注：在实验机上，需要将该地址解析出来，所以要修改<code>/etc/hosts</code>，在环回口后添加<code>virhost1.example.com</code>，再访问即可。</p>
+<p><strong>注：物理站点与虚拟站点不能同时存在，如果启动虚拟站点，物理站点立刻失效。若要让之前的物理站点恢复访问，就将该站点按虚拟站点的格式重新搭建</strong></p>
+<h1 id="httpd-认证授权"><a class="markdownIt-Anchor" href="#httpd-认证授权"></a> httpd 认证授权</h1>
+<p>httpd 提供各种认证模块，名称以<code>mod_auth</code>开头。基础的 http 认证模块为<code>mod_auth_basic</code>。</p>
+<p>可以通过命令<code>htpasswd</code>生成用于网页认证的用户信息文件，该命令在<code>httpd-tools</code>包中，支持 3 种加密算法：MD5、SHA 和系统上的 crypt()函数，默认为 md5。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">htpasswd [-cimBdpsDv] [-C cost] passwordfile username</span><br><span class="line">htpasswd -b[cmBdpsDv] [-C cost] passwordfile username password</span><br><span class="line"></span><br><span class="line"> -c  创建一个新密码文件</span><br><span class="line"> -n  不会更新密码文件，仅仅在输出显示，因此不用指定密码文件。而若不指定此项就必须指定密码文件，不能与-c一起用</span><br><span class="line"> -b  在命令行中读取密码，若不指定，系统会提示输入</span><br><span class="line"> -i  从输入读取密码（类似echo XXX | htpasswd -i），常用于脚本</span><br><span class="line"> -m  使用md5加密（默认）</span><br><span class="line"> -B  使用bcrypt函数加密，很安全</span><br><span class="line"> -C  使用bcrypt函数加密的次数，默认为5，范围是4到31，次数越多越安全，但会更慢</span><br><span class="line"> -d  使用crypt函数加密，不安全</span><br><span class="line"> -s  使用SHA加密密码，不安全</span><br><span class="line"> -p  不加密密码，不安全</span><br><span class="line"> -D  删除指定认证用户</span><br></pre></td></tr></table></figure>
+<p>主配置文件的认证指令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">AuthType       指定web身份认证的类型，有四种类型：</span><br><span class="line">    none      不认证</span><br><span class="line">    basic     文件认证（默认），需要mod_auth_basic模块</span><br><span class="line">    digest    md5摘要认证，需要mod_auth_digest模块</span><br><span class="line">    form      表单认证，需要mod_auth_form模块</span><br><span class="line">AuthName       设置身份认证时的提示信息</span><br><span class="line">AuthUserFile   指定web用户认证列表，即htpasswd命令生成的密码文件</span><br><span class="line">AuthGroupFile  指定组认证文件，文件中分组格式为&quot;组名: 组成员....&quot;</span><br></pre></td></tr></table></figure>
+<p><strong><code>Require</code>指令</strong>：只能放在<code>Directory</code>容器中，用于控制对目录的访问权限，功能由<code>mod_authz_core</code>模块提供。有以下配置：</p>
+<ul>
+<li><code>Require all granted | denied</code>：允许|拒绝所有人访问该目录</li>
+<li><code>Require method http方法 ...</code>：只有指定的 http 方法（如 get,post）才能访问该目录</li>
+<li><code>Require expr 正则表达式</code>：只要满足指定正则表达式才能访问</li>
+<li><code>Require user 用户...</code>：只有指定用户能访问</li>
+<li><code>Require valid-user 用户...</code>：认证列表中所有用户都可访问
+<blockquote>
+<p>关于用户的认证需要<code>mod_authz_user</code>模块</p>
+</blockquote>
+</li>
+<li><code>Require group 组...</code>：指定组内的用户才能访问</li>
+<li><code>Require file-owner</code>：web 用户名必须与请求文件的 UID 对应用户名一致才能访问</li>
+<li><code>Require file-group</code>：web 用户名必须为请求文件的 gid 组中的一员才能访问
+<blockquote>
+<p>组认证需要<code>mod_authz_groupfile</code>模块</p>
+</blockquote>
+</li>
+<li><code>Require ip IP地址[/Mask]...</code>：指定 IP 能访问该目录</li>
+<li><code>Require host 域名...</code>：指定域名能访问该目录
+<blockquote>
+<p>关于 ip 和 host 的认证需要<code>mod_authz_host</code>模块</p>
+</blockquote>
+</li>
+<li>若<code>Require</code>后加上<code>not</code>则是取反。</li>
+</ul>
+<p><strong>认证实验：</strong></p>
+<p>首先创建密码认证文件：<code>htpasswd -cb /etc/httpd/secret mike 123456</code>，认证用户并不需要在系统中存在。</p>
+<p>配置文件中的认证配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;Directory &quot;&#x2F;var&#x2F;www&#x2F;virhost1&quot;&gt;</span><br><span class="line">    Options Indexes</span><br><span class="line">    AllowOverride None</span><br><span class="line">    #若通过.htaccess文件配置了以下认证信息，则需要将AllowOverride的值设为AuthConig</span><br><span class="line">    AuthType Basic</span><br><span class="line">    AuthName &quot;Enter Auth Username and Password:&quot;</span><br><span class="line">    AuthUserFile &#x2F;etc&#x2F;httpd&#x2F;secret</span><br><span class="line">    Require user mike</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br></pre></td></tr></table></figure>
+<p>重启 httpd，通过浏览器访问，会提示输入用户名密码。</p>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/4.png" class="">
+<p>创建组认证文件<code>echo &quot;group1: mike&quot; &gt; /etc/httpd/auth_group</code>，修改配置文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;Directory &quot;&#x2F;var&#x2F;www&#x2F;virhost1&quot;&gt;</span><br><span class="line">    Options Indexes</span><br><span class="line">    AllowOverride None</span><br><span class="line">    AuthType Basic</span><br><span class="line">    AuthName &quot;Enter Auth Username and Password:&quot;</span><br><span class="line">    AuthUserFile &#x2F;etc&#x2F;httpd&#x2F;secret</span><br><span class="line">    AuthGroupFile &#x2F;etc&#x2F;httpd&#x2F;auth_group</span><br><span class="line">    Require user mike</span><br><span class="line">    Require group group1</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="htaccess-文件"><a class="markdownIt-Anchor" href="#htaccess-文件"></a> .htaccess 文件</h1>
+<p><code>.htaccess</code>文件提供了一种基于每个目录进行配置更改的方法，该文件包含一个或多个配置，而该文件存放在某个<code>Directory</code>下，则该文件中的配置都应用于这个<code>Directory</code>。</p>
+<p>如果有权限访问 httpd 主服务器配置文件，则应该完全避免使用<code>.htaccess</code>文件，使用<code>.htaccess</code>文件会降低 Apache http 服务器的速度。</p>
+<p>如果想给<code>.htaccess</code>文件改名，则需要在配置文件中用指令<code>AccessFileName &quot;文件名&quot;</code>说明。</p>
+<p>是否启用<code>.htaccess</code>文件取决于<code>AllowOverride</code>指令，该指令决定是否启用文件中定义的指令。</p>
+<p>通常，只有在无法访问主服务器配置文件时才应使用<code>.htaccess</code> 文件。<code>.htaccess</code> 文件主要面向于没有 root 访问权限而无法改动主配置文件的用户，允许他们通过配置各自网站的<code>.htaccess</code> 文件自行进行配置修改。</p>
+<p>应该避免使用<code>.htaccess</code>文件的两点原因：</p>
+<ul>
+<li>
+<p>当 AllowOverride 设置为允许使用<code>.htaccess</code> 文件时，httpd 将在每个目录中查找<code>.htaccess</code> 文件。因此，允许<code>.htaccess</code> 文件会导致性能下降，且每次请求文档时都会加载<code>.htaccess</code> 文件。</p>
+<p>httpd 必须在所有更高级别的目录中查找<code>.htaccess</code> 文件，以便拥有必须应用的完整指令。 例如，如果从目录<code>/www/htdocs/example</code>中请求文件，httpd 必须查找以下文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;.htaccess</span><br><span class="line">&#x2F;www&#x2F;.htaccess</span><br><span class="line">&#x2F;www&#x2F;htdocs&#x2F;.htaccess</span><br><span class="line">&#x2F;www&#x2F;htdocs&#x2F;example&#x2F;.htaccess</span><br></pre></td></tr></table></figure>
+<p>这样会查找四个文件，即使不存在。</p>
+<p>若指定重定向的指令，则在<code>.htaccess</code> 上下文中，必须重新编译每个对目录的请求的正则表达式</p>
+</li>
+<li>
+<p>允许用户修改服务器配置可能导致无法控制的更改，必须对用户的权限进行精细的控制，准确地设置 AllowOverride 的内容。</p>
+</li>
+</ul>
+<p>由于会从最上级目录迭代向下查找<code>.htaccess</code> 文件，所以，若不同的<code>.htaccess</code> 文件中有相同指令，则最下层的<code>.htaccess</code> 文件中的该指令生效，下层的文件中的指令会覆盖上层文件中相同的指令。</p>
+<h2 id="htaccess-文件的常用示例"><a class="markdownIt-Anchor" href="#htaccess-文件的常用示例"></a> .htaccess 文件的常用示例</h2>
+<p><strong>认证（Authentication）</strong>：需要在<code>&lt;Directory&gt;</code>中配置<code>AllowOverride AuthConfig</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">AuthType Basic</span><br><span class="line">AuthName &quot;Password Required&quot;</span><br><span class="line">AuthUserFile &quot;&#x2F;www&#x2F;passwords&#x2F;password.file&quot;</span><br><span class="line">AuthGroupFile &quot;&#x2F;www&#x2F;passwords&#x2F;group.file&quot;</span><br><span class="line">Require group admins</span><br></pre></td></tr></table></figure>
+<p><strong>服务器端包括（Server Side Includes，SSI）</strong>：提供了向现有 HTML 文档添加动态内容的方法，而无需通过 CGI 程序或其他动态技术。 SSI 适用于在大部分内容都是静态的网页中添加小块动态信息，例如当前时间。若网页大部分内容都是动态生成的，则并不适用。</p>
+<p><strong>若要使能 SSI，则需要在配置文件中或.htaccess 文件中添加<code>Options +Includes</code></strong>，表示允许为 SSI 指令解析文件。</p>
+<p>还需要告诉 Apache 需要解析的文件，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">AddType text&#x2F;html .shtml</span><br><span class="line">AddOutputFilter INCLUDES .shtml</span><br></pre></td></tr></table></figure>
+<p>缺点：如果想将 SSI 指令添加到现有页面，则必须更改该页面的名称以及该页面的所有链接。</p>
+<p><strong>重写规则（Rewrite Rules）</strong>：在.htaccess 文件中使用 RewriteRule 时，每个目录的上下文会稍微改变一下，规则被认为是相对于当前目录，而不是原始请求的 URI。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">在根目录中的.htaccess文件</span><br><span class="line">RewriteRule &quot;^images&#x2F;(.+)\.jpg&quot; &quot;images&#x2F;$1.png&quot;</span><br><span class="line"></span><br><span class="line">在images中的.htaccess文件</span><br><span class="line">RewriteRule &quot;^(.+)\.jpg&quot; &quot;$1.png&quot;</span><br></pre></td></tr></table></figure>
+<p><strong>CGI 配置</strong>：允许指定目录中的 CGI 程序运行</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Options +ExecCGI</span><br><span class="line">AddHandler cgi-script cgi pl</span><br><span class="line">若要将目录中的所有文件都看做CGI程序，则将AddHandler替换为</span><br><span class="line">SetHandler cgi-script</span><br></pre></td></tr></table></figure>
+<h1 id="页面重定向"><a class="markdownIt-Anchor" href="#页面重定向"></a> 页面重定向</h1>
+<h1 id="cgi"><a class="markdownIt-Anchor" href="#cgi"></a> CGI</h1>
+<p>CGI（common gateway interface，通用网关接口）是 Web 服务器运行时外部程序的规范，按 CGI 编写的程序<strong>可以扩展服务器功能</strong>，处理动态内容。CGI 应用程序<strong>能与浏览器进行交互</strong>，还可<strong>通过数据库 API 与数据库服务器等外部数据源进行通信</strong>,从数据库服务器中获取数据。对于 HTTP，只有 get 和 post 方法允许执行 cgi 脚本。</p>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/9.png" class="">
+<p>常见的 CGI 术语：</p>
+<ul>
+<li><strong>fastcgi</strong>：是 cgi 协议的优化版本</li>
+<li><strong>php-cgi</strong>：php-cgi 实现了 fastcgi，但性能不佳，单进程处理请求。</li>
+<li><strong>php-fpm</strong>：全称：php-fastcgi process manager，是 php-cgi 的改进版，管理多个 php-cgi 的进程及线程</li>
+<li><strong>cgi 进程或线程</strong>：用于接收 web 服务器的动态请求，调用并初始化 zend 虚拟机</li>
+<li><strong>zend 虚拟机</strong>：对 php 文件的语法分析、编译并执行，执行完成后关闭</li>
+</ul>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/10.png" class="">
+<p>CGI 的三种交互模式：</p>
+<ul>
+<li>cgi 模式：httpd 每收到一个动态请求就 fork 一个 cgi 进程，该进程返回结果后就自动销毁</li>
+<li>动态模块模式：将 php-cgi 模块编译进 httpd</li>
+<li>php-fpm 模式：使用 php-fpm 管理 php-cgi，httpd 不再控制 php-cgi 进程的启动，可将 php-fpm 独立运行在其他非 web 服务器上，实现动静分离</li>
+</ul>
+<h1 id="动态-httpd"><a class="markdownIt-Anchor" href="#动态-httpd"></a> 动态 httpd</h1>
+<p>安装 Apache 后，会在存放网页的目录中生成一个目录<code>cgi-bin</code>，关于 CGI 的配置在主配置文件中。</p>
+<p>指令<code>ScriptAlias</code>：使 Apache 允许执行一个特定目录中的 CGI 程序，当客户端请求此特定目录中的资源时，Apache 假定其中所有的文件都是 CGI 程序并试图运行它。格式：<code>ScriptAlias /cgi-bin/ &quot;CGI存放目录&quot;</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule alias_module&gt;</span><br><span class="line">    ScriptAlias &#x2F;cgi-bin&#x2F; &quot;&#x2F;var&#x2F;www&#x2F;cgi-bin&#x2F;&quot;</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br><span class="line">&lt;Directory &quot;&#x2F;var&#x2F;www&#x2F;cgi-bin&quot;&gt;</span><br><span class="line">    AllowOverride None</span><br><span class="line">    Options None</span><br><span class="line">    Require all granted</span><br><span class="line">&lt;&#x2F;Directory&gt;</span><br></pre></td></tr></table></figure>
+<p>关于 CGI 模块加载的配置在<code>conf.modules.d/01-cgi.conf</code>中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mpm_worker_module&gt;</span><br><span class="line">   LoadModule cgid_module modules&#x2F;mod_cgid.so</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br><span class="line">&lt;IfModule mpm_event_module&gt;</span><br><span class="line">   LoadModule cgid_module modules&#x2F;mod_cgid.so</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br><span class="line"># worker和event使用mod_cgid，而prefork使用mod_cgi</span><br><span class="line">&lt;IfModule mpm_prefork_module&gt;</span><br><span class="line">   LoadModule cgi_module modules&#x2F;mod_cgi.so</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+<p>若开启了 Selinux，则还需要修改<code>cgi-bin</code>的上下文<code>chcon -R -t httpd_sys_script_exec_t /var/www/cgi-bin</code></p>
+<h1 id="httpd-与-ssl"><a class="markdownIt-Anchor" href="#httpd-与-ssl"></a> httpd 与 SSL</h1>
+<p>SSL 对 Apache 能提供的功能：</p>
+<ul>
+<li>认证用户与服务器</li>
+<li>提供数据保密性和完整性</li>
+</ul>
+<p>SSL 协议的工作流程包括<strong>服务器认证阶段</strong>和<strong>用户认证阶段</strong></p>
+<ul>
+<li>客户端向服务器发送一个 hello 开始消息，发起一个会话连接</li>
+<li>服务器根据客户端信息确定是否生成新的主密钥，如果需要就会在响应 hello 信息中添加生成主密钥需要的信息</li>
+<li>客户端收到响应信息，根据信息生成一个主密钥，用服务器的公钥加密发给服务器</li>
+<li>服务器收到后返回客户一个用主密钥认证的信息，让客户端认证服务器</li>
+<li>服务器通过客户端认证后，进入用户认证阶段，由服务器开始对客户端的认证</li>
+<li>服务器向客户端发起提问（封装在数字签名中）</li>
+<li>客户端返回答案和公钥，提供认证信息</li>
+</ul>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/7.png" class="">
+<p>HTTPS 安全超文本传输协议，内置在浏览器中，对数据压缩和解密。HTTPS 就是用 SSL 作为 HTTP 应用层的子层，使用 TCP443 端口。</p>
+<p>Apache 通过<code>mod_ssl</code>模块实现对 TLS/SSL 的支持，该模块存放在<code>/usr/lib64/httpd/modules/mod_ssl.so</code>，并有配置文件<code>/etc/httpd/conf.modules.d/00-ssl.conf</code>。还有相关模块<code>mod_socache_shmcb</code>，是一个共享对象缓存提供程序，提供对共享内存段内高性能循环缓冲区支持的缓存的创建和访问，已默认加载。</p>
+<p>httpd 服务器配置自签名证书：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">openssl genrsa -out &#x2F;etc&#x2F;pki&#x2F;tls&#x2F;private&#x2F;server.key 2048    #生成私钥</span><br><span class="line">openssl req -new -x509 -key &#x2F;etc&#x2F;pki&#x2F;tls&#x2F;private&#x2F;server.key -out &#x2F;etc&#x2F;pki&#x2F;tls&#x2F;certs&#x2F;server.crt  #根据私钥生成根证书</span><br><span class="line">    Country Name (2 letter code) [XX]:CN            #国家名</span><br><span class="line">    State or Province Name (full name) []:jiangsu   #省名</span><br><span class="line">    Locality Name (eg, city) [Default City]:Yangzhou    #地名</span><br><span class="line">    Organization Name (eg, company) [Default Company Ltd]:NJUPT  #公司名</span><br><span class="line">    Organizational Unit Name (eg, section) []:Tech    #部门名</span><br><span class="line">    Common Name (eg, your name or your server&#39;s hostname) []:system1  #主机名</span><br><span class="line">    Email Address []:system1@example.com  #邮箱</span><br></pre></td></tr></table></figure>
+<p>也可以通过进入<code>/etc/pki/tls/certs</code>并使用命令<code>make server.key</code>创建私钥。</p>
+<p>配置 SSL 虚拟主机，需要引用<code>/etc/httpd/conf.d/ssl.conf</code>中的配置，并做修改。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&lt;VirtualHost *:443&gt;</span><br><span class="line">    SSLEngine on</span><br><span class="line">    SSLProtocol all -SSLv2 -SSLv3</span><br><span class="line">    SSLCipherSuite HIGH:3DES:!aNULL:!MD5:!SEED:!IDEA</span><br><span class="line">    SSLHonorCipherOrder on</span><br><span class="line">    SSLCertificateFile &#x2F;etc&#x2F;pki&#x2F;tls&#x2F;certs&#x2F;server.crt</span><br><span class="line">    SSLCertificateKeyFile &#x2F;etc&#x2F;pki&#x2F;tls&#x2F;private&#x2F;server.key</span><br><span class="line"></span><br><span class="line">    DocumentRoot &quot;&#x2F;var&#x2F;www&#x2F;html&quot;</span><br><span class="line">    ServerName system1.example.com</span><br><span class="line">    ErrorLog &quot;&#x2F;var&#x2F;log&#x2F;httpd&#x2F;error_log&quot;</span><br><span class="line">    CustomLog &quot;&#x2F;var&#x2F;log&#x2F;httpd&#x2F;access_log&quot; common</span><br><span class="line">&lt;&#x2F;VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+<p>由于是对已存在的虚拟主机进行 SSL 封装，所以，需要在原虚拟主机中添加两条指令进行重定向，使任何访问原 http 地址的客户端都跳转到 https 地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">    DocumentRoot &quot;&#x2F;var&#x2F;www&#x2F;html&quot;</span><br><span class="line">    ServerName system1.example.com</span><br><span class="line">    ErrorLog &quot;&#x2F;var&#x2F;log&#x2F;httpd&#x2F;error_log&quot;</span><br><span class="line">    CustomLog &quot;&#x2F;var&#x2F;log&#x2F;httpd&#x2F;access_log&quot; common</span><br><span class="line">    RewriteEngine  on</span><br><span class="line">    RewriteRule  ^(&#x2F;.*)$  https:&#x2F;&#x2F;%&#123;HTTP_HOST&#125;$1  [redirect&#x3D;301]</span><br><span class="line">&lt;&#x2F;VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+<p>通过浏览器访问<code>http://system1.example.com</code>，会出现不安全提示</p>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/8.png" class="">
+<p>确认添加例外后，就能自动跳转到<code>https://system1.example.com</code>。</p>
+<h1 id="httpd-日志"><a class="markdownIt-Anchor" href="#httpd-日志"></a> httpd 日志</h1>
+<p>当 Apache 开始运行后，会生成 4 种标准日志文件：</p>
+<ul>
+<li>错误日志 error_log</li>
+<li>访问日志 access_log</li>
+<li>传输日志</li>
+<li>cookie 日志</li>
+</ul>
+<p>若使用 SSL 加密，还会生成<code>ssl_access_log</code>、<code>ssl_error_log</code>、<code>ssl_request_log</code>。当日志文件过大时，Apache 会自动生成新的日志文件，文件的名称以配置文件中指定。</p>
+<p><code>LogFormat</code>指定的日志记录格式变量：</p>
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>%b</td>
+<td>发送字节（不含 HTTP 标题）</td>
+</tr>
+<tr>
+<td>%f</td>
+<td>文件名</td>
+</tr>
+<tr>
+<td>%h</td>
+<td>远程主机</td>
+</tr>
+<tr>
+<td>%a</td>
+<td>远程 IP 地址</td>
+</tr>
+<tr>
+<td>%{HEADER}i</td>
+<td>HEADER 内容：发送给服务器的请求</td>
+</tr>
+<tr>
+<td>%p</td>
+<td>服务器的服务端口</td>
+</tr>
+<tr>
+<td>%r</td>
+<td>请求的第一行，类似 GET / HTTP/1.0</td>
+</tr>
+<tr>
+<td>%s</td>
+<td>状态（起始请求），最后请求状态为%&gt;s</td>
+</tr>
+<tr>
+<td>%t</td>
+<td>时间，格式是 common 日志格式中的时间格式</td>
+</tr>
+<tr>
+<td>%{format}t</td>
+<td>时间，格式由 format 给出</td>
+</tr>
+<tr>
+<td>%T</td>
+<td>服务器请求花费的时间（单位秒）</td>
+</tr>
+<tr>
+<td>%u</td>
+<td>来自 auth 的远程用户，若返回码为 401 则可能是假的</td>
+</tr>
+<tr>
+<td>%U</td>
+<td>请求的 URL 路径</td>
+</tr>
+<tr>
+<td>%v</td>
+<td>服务器的提供服务 ServerName</td>
+</tr>
+</tbody>
+</table>
+<p>错误日志记录的等级：</p>
+<table>
+<thead>
+<tr>
+<th>等级</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Emerg</td>
+<td>紧急，系统不可用</td>
+</tr>
+<tr>
+<td>Alert</td>
+<td>需要立刻注意</td>
+</tr>
+<tr>
+<td>Crit</td>
+<td>危险警告</td>
+</tr>
+<tr>
+<td>Error</td>
+<td>除上述三种外的其他情况</td>
+</tr>
+<tr>
+<td>Warm</td>
+<td>警告</td>
+</tr>
+<tr>
+<td>Notice</td>
+<td>需要引起注意</td>
+</tr>
+<tr>
+<td>Info</td>
+<td>一般消息</td>
+</tr>
+<tr>
+<td>Debug</td>
+<td>Debug 模式产生的消息</td>
+</tr>
+</tbody>
+</table>
+<p>访问日志的种类：</p>
+<ul>
+<li>普通日志：在 LogFormat 定义的名字为 common</li>
+<li>参考日志：记录客户访问站点的用户身份，名字为 referer</li>
+<li>代理日志：记录请求的用户代理，名字为 agent</li>
+<li>综合日志：结合了上面三种，名字为 combined</li>
+</ul>
+<h2 id="日志切割"><a class="markdownIt-Anchor" href="#日志切割"></a> 日志切割</h2>
+<p>Apache 提供了命令<code>rotatelogs</code>，对日志进行切割，将庞大的日志文件切割为相对小的文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">以轮替时间做切割：rotatelogs [options] 日志文件 [轮替时间（单位秒）][偏移量]</span><br><span class="line">以日志大小做切割：rotatelogs [options] 日志文件 [日志文件大小]</span><br><span class="line">偏移量为相对于UTC的分钟数，若省略，默认为0，即使用UTC时间。东八区即为8x60&#x3D;480</span><br><span class="line"></span><br><span class="line">可以把以下配置添加到主配置文件：</span><br><span class="line">TransferLog &quot;|rotatelogs 日志文件 86400&quot;</span><br><span class="line">TransferLog &quot;|rotatelogs 日志文件 5M&quot;</span><br><span class="line"></span><br><span class="line">默认生成的日志名为&quot;日志名.日志开始记录的时间&quot;，如果使用轮替时间，则该值就是轮替时间的倍数，可通过cron服务设置。如果日志文件包含了strftime转换格式，则使用该格式。当轮替时间结束或日志文件大小达到指定值，就会生成一个新日志文件</span><br><span class="line"></span><br><span class="line">  -v       详细的操作信息会被错误输出(strerr)</span><br><span class="line">  -l       使用本地时间。不要在改变了GMT偏移量的环境中使用该选项，若设置了此选项，也就不用设置偏移量了</span><br><span class="line">  -f       在程序启动时强制开启日志</span><br><span class="line">  -t       截断日志</span><br><span class="line">  -e       输出日志到标准输出</span><br><span class="line">  -c       创建日志，无论是否为空</span><br></pre></td></tr></table></figure>
+<p>若要按时间轮替日志文件：</p>
+<ul>
+<li><code>ErrorLog &quot;|rotatelogs 日志存放目录/%Y%m%d_error.log 86400 480&quot;</code></li>
+<li><code>CustomLog &quot;|rotatelogs 日志存放目录/%Y%m%d_access.log 86400 480&quot; common</code></li>
+</ul>
+<p>若要按日志大小轮替日志文件：</p>
+<ul>
+<li>
+<p><code>ErrorLog &quot;|rotatelogs -l 目录/%Y%m%d_error.log 5M&quot;</code></p>
+</li>
+<li>
+<p><code>CustomLog &quot;|rotatelogs -l 目录/%Y%m%d_access.log 5M&quot; common</code></p>
+</li>
+</ul>
+<h2 id="webalizer-分析统计日志"><a class="markdownIt-Anchor" href="#webalizer-分析统计日志"></a> Webalizer 分析统计日志</h2>
+<p>Webalizer 是一个高效的 web 服务器日志分析程序。webalizer 基本支持所有的日志文件格式，包括 common，combined。目前还支持 ftp 日志、squid 日志分析。</p>
+<p>直接<code>yum install webalizer</code>即可。webalizer 的配置主要通过配置文件<code>webalizer.conf</code>实现。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">LogFile      &#x2F;var&#x2F;log&#x2F;httpd&#x2F;access_log #日志文件的路径，也可通过命令行选项指定</span><br><span class="line">OutputDir    &#x2F;var&#x2F;www&#x2F;usage #统计报表的输出位置</span><br><span class="line">HistoryName  &#x2F;var&#x2F;lib&#x2F;webalizer&#x2F;webalizer.hist #webalizer生成的历史文件名</span><br><span class="line">Incremental  yes #设置是否增量</span><br><span class="line">IncrementalName &#x2F;var&#x2F;lib&#x2F;webalizer&#x2F;webalizer.current #保存当前数据的文件名</span><br><span class="line">PageType     htm* #定义哪些类型的URL属于页面访问</span><br><span class="line">UseHTTPS     no #若在一台安全服务器上运行，需要开启</span><br><span class="line">DNSCache     &#x2F;var&#x2F;lib&#x2F;webalizer&#x2F;dns_cache.db #反向DNS解析的缓存文件</span><br><span class="line">DNSChildren  10 #设置用于DNS解析的子进程，值要在5到20间</span><br><span class="line">Quiet        yes #不显示输出信息</span><br><span class="line">FoldSeqErr   yes #强制忽略次序错误，因为Apache HTTP服务器可能会生成无序日志条目</span><br><span class="line">HideURL      *.gif #设置需要隐藏的内容</span><br><span class="line">SearchEngine  yahoo.com p&#x3D; #设置搜索引擎和URL查询格式</span><br></pre></td></tr></table></figure>
+<p><strong>一般只要配置<code>LogFile</code>和<code>OutputDir</code>即可。</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">webalizer [options] [log file]</span><br><span class="line">  -v       显示日志详细信息</span><br><span class="line">  -d       显示额外的debug信息</span><br><span class="line">  -F type  设置日志类型（clf | ftp | squid | w3c）</span><br><span class="line">  -f       忽略次序错误</span><br><span class="line">  -i       忽略历史文件</span><br><span class="line">  -p       保留状态（递增）</span><br><span class="line">  -b       忽视状态（递增）</span><br><span class="line">  -q       忽略消息信息</span><br><span class="line">  -Q       忽略所有信息</span><br><span class="line">  -T       显示时间信息</span><br><span class="line">  -c file  指定配置文件</span><br><span class="line">  -n name  指定服务器主机名</span><br><span class="line">  -o dir   指定存放结果的文件</span><br><span class="line">  -t name  指定报告题目的主机名</span><br><span class="line">  --ip     查看指定IP地址的访问情况</span><br><span class="line">  --start  指定开始时间</span><br><span class="line">  --end    指定结束时间</span><br></pre></td></tr></table></figure>
+<p>在<code>/var/www/usage</code>下生成了几张图片和两个 html 文件，其中<code>index.html</code>是简要信息，<code>usage_日期.html</code>是详细的分析文件</p>
+<center>index.html</center>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/5.png" class="">
+<center>usage_日期.html</center>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/6.png" class="">
+<h1 id="httpd-代理"><a class="markdownIt-Anchor" href="#httpd-代理"></a> httpd 代理</h1>
+<p>httpd 通过<code>ProxyRequests</code>指令配置正向代理的功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ProxyRequests on</span><br><span class="line">ProxyVia on</span><br><span class="line">&lt;Proxy &quot;*&quot;&gt;      #访问任意外网URL</span><br><span class="line">    Require host 允许通过代理访问外网的内网服务器</span><br><span class="line">    #也可以是Require all granted</span><br><span class="line">&lt;&#x2F;Proxy&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="apache-mpm-模式"><a class="markdownIt-Anchor" href="#apache-mpm-模式"></a> Apache-MPM 模式</h1>
+<p>MPM(<code>Multi-Processing Modules</code>)，Apache 的多路处理模块，有三种模式：<code>prefork</code>、<code>worker</code>、<code>event</code>。</p>
+<p>编译时可通过<code>--with-mpm</code>指定模式，也可以通过<code>--enable-mpms-shared=all</code>支持全部三种。httpd2.4 以上默认采用<code>event</code>模式。并可通过<code>apachectl -l</code>看到编译了<br />
+<code>event.c</code>模块。</p>
+<blockquote>
+<p>httpd2.4 通过 rpm 安装会发现仍采用 prefork 模式，而源码安装则已使用 event 模式</p>
+</blockquote>
+<p>可以修改<code>httpd.conf</code>中添加以下模块（源码安装）或<code>/etc/httpd/conf.modules.d/00-mpm.conf</code>（rpm 安装）改变模式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">LoadModule mpm_prefork_module modules&#x2F;mod_mpm_prefork.so 或</span><br><span class="line">LoadModule mpm_worker_module modules&#x2F;mod_mpm_worker.so 或</span><br><span class="line">LoadModule mpm_event_module modules&#x2F;mod_mpm_event.so</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>prefork</code>：实现了一个非线程、预派生的工作模式。在 Apache 启动之初，就会<strong>预派生一些子进程</strong>，然后等待连接。可以减少频繁创建和销毁进程的开销，<strong>每个子进程只有一个线程</strong>。成熟稳定，可以<strong>兼容新老模块</strong>，也<strong>不需要担心线程安全问题</strong>。<strong>效率比<code>worker</code>略高</strong>
+<ul>
+<li>缺点：<strong>一个进程相对地占用更多的资源，消耗大量内存，不擅长处理高并发的场景</strong>。</li>
+</ul>
+</li>
+</ul>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/1.png" class="">
+<ul>
+<li><code>worker</code>：使用了<strong>多进程和多线程的混合模式</strong>，也同样会预派生一些子进程，然后每个子进程创建一些线程，同时包括<strong>一个监听线程</strong>，每个请求过来会被分配到一个线程来服务。<strong>占用内存少，适合高并发环境</strong>
+<ul>
+<li><strong>使用线程的原因：<strong>线程比进程更加轻量级，因为</strong>线程通常会共享父进程的内存地址的，因此内存占用会减少一些</strong>。如果一个线程异常挂了，会<strong>导致父进程和它的其他正常子线程都挂了，只会影响 Apache 的一部分</strong>，而不是整个服务。</li>
+<li>缺点：<strong>必须考虑线程安全问题</strong>，因为多个子进程时共享父进程的内存地址的。若使用 keepalive 的长连接方式，某个线程一直占据，若过多的线程被占用，会导致高并发时无服务线程可用。</li>
+</ul>
+</li>
+</ul>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/2.png" class="">
+<ul>
+<li><code>event</code>：从 Apache2.2 才被加入 MPM，Apache2.4 开始成为默认 MPM。类似 worker 模式，但解决了 keepalive 问题。有一个<strong>专门的线程来管理这些 keep-alive 线程</strong>，当有真实请求过来的时候，将请求传递给服务线程，<strong>执行完毕后，又允许它释放</strong>，这样增强了在高并发场景下的请求处理能力。</li>
+</ul>
+<img src="/2018/Apache-Server%E7%AC%94%E8%AE%B0/3.png" class="">
+<p><strong>各 MPM 模式的简单优化：</strong> 若是 rpm 安装，就在<code>httpd.conf</code>中添加，若为源码安装，就在<code>/usr/local/httpd-2.4/conf/extra/httpd-mpm.conf</code>中找到对应模块修改。以下参数基本采用配置文件默认值。</p>
+<ul>
+<li><code>worker</code>模式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mpm_worker_module&gt;</span><br><span class="line">    ServerLimit           25  #服务器允许配置的上限进程数</span><br><span class="line">    # 与ThreadLimit结合使用，可设置MaxClients允许配置的最大数值</span><br><span class="line">    # 在重启期间对ServerLimit的修改都会被忽略，但对MaxClients的修改可生效</span><br><span class="line"></span><br><span class="line">    ThreadLimit          200  #每个子进程可配置的线程数的上限</span><br><span class="line">    # 也设置了ThreadPerChild的上限，默认为64</span><br><span class="line"></span><br><span class="line">    StartServers           3  #服务器启动时建立的子进程数，默认为3</span><br><span class="line">    MinSpareThreads       75  #最小空闲线程数，默认75。</span><br><span class="line">    #若服务器中空闲进程太少，子进程会自动产生空闲进程等待</span><br><span class="line"></span><br><span class="line">    MaxSpareThreads      250  #最大空闲线程数，默认250。</span><br><span class="line">    #若服务器中空闲进程太多，子进程会杀死多余的空闲进程。</span><br><span class="line">    #取值范围：&gt;&#x3D; MinSpareThreads+ThreadsPerChild</span><br><span class="line"></span><br><span class="line">    MaxClients          2500  #允许同时运行的最大进程数，任何超过限制的请求进入等待队列</span><br><span class="line">    #默认值为ServerLimit*ThreadsPerChild。若要增加此项，则同时也要增加ServerLimit</span><br><span class="line"></span><br><span class="line">    ThreadsPerChild       25  #每个子进程建立的常驻执行线程数，默认25。</span><br><span class="line">    #子进程创建这些线程后就不创建新线程了</span><br><span class="line"></span><br><span class="line">    MaxConnectionsPerChild 0  #处理多少个请求后子进程自动销毁，默认值0意味着永不销毁。</span><br><span class="line">    # 在Apache2.4版本以前，叫做MaxRequestsPerChild</span><br><span class="line">    #当负载较高时，为了使每个进程处理更多的请求，避免销毁、创建进程的开销，一般建议设置为0或较大的数字。</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>prefork</code>模式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mpm_prefork_module&gt;</span><br><span class="line">    StartServers              5</span><br><span class="line">    MinSpareServers           5  #最小空闲进程数，与MinSpareThreads同理</span><br><span class="line">    MaxSpareServers          10  #最大空闲进程数，与MaxSpareThreads同理</span><br><span class="line">    ServerLimit            2000</span><br><span class="line">    MaxClients             1000  #默认MaxClients最多有256个线程</span><br><span class="line">    MaxConnectionsPerChild    0</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+<p>修改模式重启 httpd，查看进程，能看到五个子进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ps -ef | grep httpd</span><br><span class="line">root       2241      1  1 22:05 ?        00:00:00 &#x2F;usr&#x2F;sbin&#x2F;httpd -DFOREGROUND</span><br><span class="line">apache     2242   2241  0 22:05 ?        00:00:00 &#x2F;usr&#x2F;sbin&#x2F;httpd -DFOREGROUND</span><br><span class="line">apache     2243   2241  0 22:05 ?        00:00:00 &#x2F;usr&#x2F;sbin&#x2F;httpd -DFOREGROUND</span><br><span class="line">apache     2244   2241  0 22:05 ?        00:00:00 &#x2F;usr&#x2F;sbin&#x2F;httpd -DFOREGROUND</span><br><span class="line">apache     2245   2241  0 22:05 ?        00:00:00 &#x2F;usr&#x2F;sbin&#x2F;httpd -DFOREGROUND</span><br><span class="line">apache     2248   2241  0 22:05 ?        00:00:00 &#x2F;usr&#x2F;sbin&#x2F;httpd -DFOREGROUND</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>event</code>模式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&lt;IfModule mpm_event_module&gt;</span><br><span class="line">    StartServers             3</span><br><span class="line">    MinSpareThreads         75</span><br><span class="line">    MaxSpareThreads        250</span><br><span class="line">    ThreadsPerChild         25</span><br><span class="line">    MaxRequestWorkers      400</span><br><span class="line">    MaxConnectionsPerChild   0</span><br><span class="line">&lt;&#x2F;IfModule&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="apache-实用第三方模块"><a class="markdownIt-Anchor" href="#apache-实用第三方模块"></a> Apache 实用第三方模块</h1>
+<p>若要在 httpd 上添加新的模块，可以通过修改模块配置文件增加<code>LoalModule</code>指令添加，也可以使用<code>httpd-devel</code>提供的工具<code>apxs</code>直接添加，需要 httpd 开启了 DSO。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">apxs</span><br><span class="line">  -n 模块名    指定模块名，可与-i和-g组合</span><br><span class="line">  -i          安装模块，可指定多个</span><br><span class="line">  -a          自动在主配置文件加上LoadModule</span><br><span class="line">  -A          自动在主配置文件加上#LoadModule，即安装了但先不启用</span><br><span class="line">  -c C文件     将.c文件编译为.so文件</span><br></pre></td></tr></table></figure>
+<p>模块间可能存在依赖，可根据报错信息解决。</p>
+<h2 id="gzip-压缩"><a class="markdownIt-Anchor" href="#gzip-压缩"></a> Gzip 压缩</h2>
+<p>Gzip 将 Apache 网页内容压缩后传输给客户端，加快网页加载速度，建议开启。Gzip 有两个模块：<code>mod_gzip</code>和<code>mod_deflate</code>，</p>
+<h2 id="防-ddos-攻击"><a class="markdownIt-Anchor" href="#防-ddos-攻击"></a> 防 DDOS 攻击</h2>
+<p>应对 DDOS 攻击的模块为<code>mod_evasive</code>，可通过<code>yum install mod_evasive</code>获取。安装完成后会生成<code>/usr/lib64/httpd/modules/mod_evasive24.so</code>，以及<code>/etc/httpd/conf.d/mod_evasive.conf</code></p>
+<h1 id="lamp-环境搭建"><a class="markdownIt-Anchor" href="#lamp-环境搭建"></a> LAMP 环境搭建</h1>
+<p>直接用<code>yum|dnf</code>安装 php，php 版本为 7.1。php 的核心包：</p>
+<ul>
+<li><code>php</code>：在<code>/etc/httpd/conf.d/</code>创建了<code>php.conf</code>，在<code>/usr/lib64/httpd/modules/</code>创建了<code>libphp7.so</code></li>
+<li><code>php-common</code>：创建了大量模块存放在<code>/usr/lib64/php/modules/</code>，帮助文档，配置文件<code>/etc/php.ini</code>以及<code>/etc/php.d/</code>中各个配置文件。</li>
+<li><code>php-fpm</code>：创建了配置文件<code>/etc/php-fpm.conf</code>及<code>/etc/php-fpm.d/</code></li>
+<li><code>php-cli</code>：创建了命令<code>php</code>、<code>php-cgi</code>、<code>phar</code>、<code>phpize</code>存放在<code>/usr/bin/</code>中</li>
+</ul>
+<p>使用<code>systemctl start php-fpm</code>启动。</p>
+<h3 id="参考文章"><a class="markdownIt-Anchor" href="#参考文章"></a> 参考文章</h3>
+<ul>
+<li>高性能网站构建实战</li>
+<li>Linux 系统管理与网络管理</li>
+<li>Linux 就该这么学</li>
+<li>Linux 运维之道（第二版）</li>
+<li>Linux 服务器架设指南（第二版）</li>
+<li>防线-企业 Linux 安全运维理念和实战</li>
+<li>RHCSA/RHCE 红帽 Linux 认证学习指南（第 7 版）</li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/ccscu/article/details/70182476">Apache 性能优化之 MPM 选择和配置</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.jobbole.com/91920/">Apache 的三种 MPM 模式比较：prefork，worker，event</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/njys1/article/details/60867092">apache 的三种 mpm 模式</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/jpdoutop/p/httpd-htaccess.html">浅谈.htaccess 文件–避免滥用.htaccess 文件</a></li>
+<li><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/howto/htaccess.html">Apache HTTP Server Tutorial: .htaccess files</a></li>
+<li><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/howto/ssi.html">Apache httpd Tutorial: Introduction to Server Side Includes</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/f-ck-need-u/p/7627035.html">简单说明 CGI 和动态请求是什么</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/http/" rel="tag"><i class="fa fa-tag"></i> http</a>
+              <a href="/tags/Apache/" rel="tag"><i class="fa fa-tag"></i> Apache</a>
+              <a href="/tags/LAMP/" rel="tag"><i class="fa fa-tag"></i> LAMP</a>
+              <a href="/tags/LAMT/" rel="tag"><i class="fa fa-tag"></i> LAMT</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/NFS%E7%AC%94%E8%AE%B0/" rel="prev" title="NFS基础笔记">
+      <i class="fa fa-chevron-left"></i> NFS基础笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Nginx%E7%AC%94%E8%AE%B0/" rel="next" title="Nginx笔记">
+      Nginx笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#apache-httpd-%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BB%8B%E7%BB%8D"><span class="nav-text"> Apache-httpd 服务器介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AE%89%E8%A3%85"><span class="nav-text"> httpd 服务器安装</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-text"> httpd 配置文件</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E8%99%9A%E6%8B%9F%E4%B8%BB%E6%9C%BA"><span class="nav-text"> httpd 虚拟主机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83"><span class="nav-text"> httpd 认证授权</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#htaccess-%E6%96%87%E4%BB%B6"><span class="nav-text"> .htaccess 文件</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#htaccess-%E6%96%87%E4%BB%B6%E7%9A%84%E5%B8%B8%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="nav-text"> .htaccess 文件的常用示例</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A1%B5%E9%9D%A2%E9%87%8D%E5%AE%9A%E5%90%91"><span class="nav-text"> 页面重定向</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#cgi"><span class="nav-text"> CGI</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E6%80%81-httpd"><span class="nav-text"> 动态 httpd</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E4%B8%8E-ssl"><span class="nav-text"> httpd 与 SSL</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E6%97%A5%E5%BF%97"><span class="nav-text"> httpd 日志</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E5%88%87%E5%89%B2"><span class="nav-text"> 日志切割</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#webalizer-%E5%88%86%E6%9E%90%E7%BB%9F%E8%AE%A1%E6%97%A5%E5%BF%97"><span class="nav-text"> Webalizer 分析统计日志</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#httpd-%E4%BB%A3%E7%90%86"><span class="nav-text"> httpd 代理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#apache-mpm-%E6%A8%A1%E5%BC%8F"><span class="nav-text"> Apache-MPM 模式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#apache-%E5%AE%9E%E7%94%A8%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97"><span class="nav-text"> Apache 实用第三方模块</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#gzip-%E5%8E%8B%E7%BC%A9"><span class="nav-text"> Gzip 压缩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%B2-ddos-%E6%94%BB%E5%87%BB"><span class="nav-text"> 防 DDOS 攻击</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#lamp-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-text"> LAMP 环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-text"> 参考文章</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

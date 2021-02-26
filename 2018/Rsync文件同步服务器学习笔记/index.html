@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Rsync 介绍与搭建  quick check 算法介绍 rsync 的工作方式 rsync 命令使用 规则解析 Rsync 服务器搭建 Rsync 部分报错解决   Rsync+Inotify 文件自动同步  Inotify 介绍   参考文章">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rsync文件同步服务器学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Rsync 介绍与搭建  quick check 算法介绍 rsync 的工作方式 rsync 命令使用 规则解析 Rsync 服务器搭建 Rsync 部分报错解决   Rsync+Inotify 文件自动同步  Inotify 介绍   参考文章">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-08-01T12:58:22.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.596Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="同步">
+<meta property="article:tag" content="Rsync">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Rsync文件同步服务器学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Rsync文件同步服务器学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-01 20:58:22" itemprop="dateCreated datePublished" datetime="2018-08-01T20:58:22+08:00">2018-08-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#rsync-%e4%bb%8b%e7%bb%8d%e4%b8%8e%e6%90%ad%e5%bb%ba">Rsync 介绍与搭建</a>
+<ul>
+<li><a href="#quick-check-%e7%ae%97%e6%b3%95%e4%bb%8b%e7%bb%8d">quick check 算法介绍</a></li>
+<li><a href="#rsync-%e7%9a%84%e5%b7%a5%e4%bd%9c%e6%96%b9%e5%bc%8f">rsync 的工作方式</a></li>
+<li><a href="#rsync-%e5%91%bd%e4%bb%a4%e4%bd%bf%e7%94%a8">rsync 命令使用</a></li>
+<li><a href="#%e8%a7%84%e5%88%99%e8%a7%a3%e6%9e%90">规则解析</a></li>
+<li><a href="#rsync-%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%90%ad%e5%bb%ba">Rsync 服务器搭建</a></li>
+<li><a href="#rsync-%e9%83%a8%e5%88%86%e6%8a%a5%e9%94%99%e8%a7%a3%e5%86%b3">Rsync 部分报错解决</a></li>
+</ul>
+</li>
+<li><a href="#rsyncinotify-%e6%96%87%e4%bb%b6%e8%87%aa%e5%8a%a8%e5%90%8c%e6%ad%a5">Rsync+Inotify 文件自动同步</a>
+<ul>
+<li><a href="#inotify-%e4%bb%8b%e7%bb%8d">Inotify 介绍</a></li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="rsync-介绍与搭建"><a class="markdownIt-Anchor" href="#rsync-介绍与搭建"></a> Rsync 介绍与搭建</h1>
+<p>Rsync（Remote Synchronize）是一个远程数据同步工具，可使本地主机不同分区或目录之间及本地和远程两台主机之间的数据快速同步镜像，远程备份等功能。</p>
+<p>Rsync 特点：</p>
+<ul>
+<li>使用 TCP 873 端口</li>
+<li>可根据数据变化进行差异备份或增量备份，减少数据流量</li>
+<li>传输可以通过 ssh 协议加密数据</li>
+<li>支持拷贝特殊文件如链接，设备等</li>
+<li>可以镜像保存整个目录树和文件系统</li>
+<li>可以保持原来文件或目录的所有属性均不改变</li>
+<li>可使用 rsh、ssh，或直接通过 socket 连接</li>
+<li>支持匿名的或认证的进程模式传输</li>
+<li>使用 Rsync 自己的 <strong><code>quick check</code></strong> 算法</li>
+<li>rsync 传输大文件时速度大概是 scp 的 20 倍以上</li>
+</ul>
+<p>rsync 同步过程由两部分模式组成：<strong>决定哪些文件需要同步的检查模式</strong>，<strong>文件同步时的同步模式。</strong></p>
+<ul>
+<li>
+<p>检查模式是指按照指定规则来检查哪些文件需要被同步。</p>
+<blockquote>
+<p>默认情况下，rsync 使用<code>quick check</code>算法。可以通过<code>rsync</code>命令选项设置指定的检查模式。</p>
+</blockquote>
+</li>
+<li>
+<p>同步模式是指在文件确定要被同步后，在同步过程发生之前要做哪些额外工作。</p>
+</li>
+</ul>
+<h2 id="quick-check-算法介绍"><a class="markdownIt-Anchor" href="#quick-check-算法介绍"></a> quick check 算法介绍</h2>
+<p>比较源文件和目标文件的文件大小和修改时间 mtime（修改时间），只要存在不同，就发送端会传输该文件，如果目标路径下没有文件，则 rsync 会直接传输文件。若存在差异，并不会传送整个文件，而是只传源文件和目标文件所不同的部分，实现真正的增量同步。</p>
+<p>rsync 的增量传输体现在两个方面：<strong>文件级别</strong>的增量传输和<strong>数据块级别</strong>的增量传输。</p>
+<ul>
+<li><strong>文件级别</strong>的增量传输是指源主机上有，但目标主机上没有将直接传输该文件</li>
+<li><strong>数据块级别</strong>的增量传输是指只传输两文件所不同的那一部分数据。</li>
+</ul>
+<p>两台计算机<code>Host-A</code>与<code>Host-B</code>，其中<code>Host-A</code>是源主机，即数据的发送端<code>Sender</code>，<code>Host-B</code>是目标主机，即数据的接收端<code>Receiver</code>。<code>Host-A</code>上存在文件<code>file-A</code>，<code>Host-B</code>上存在<code>file-B</code>。注：<strong><code>file-A</code>与<code>file-B</code>是同名文件。</strong> rsync 的实现有以下过程：</p>
+<ol>
+<li>
+<p><code>Host-A</code>告诉<code>Host-B</code>有文件<code>file-A</code>要传输。</p>
+</li>
+<li>
+<p><code>Host-B</code>收到信息后，将文件<code>file-B</code>划分为一系列大小固定的数据块(大小在 500-1000 字节之间)，并以 chunk 号码对数据块进行编号，同时还会记录数据块的起始偏移地址以及数据块长度。</p>
+</li>
+<li>
+<p><code>Host-B</code>对每一个分割好的数据块执行两种校验：一种是 32 位的滚动弱校验（rolling checksum），另一种是 128 位的 MD5 强校验。将<code>file-B</code>计算出的所有滚动弱校验和强校验码跟随在对应数据块<code>chunk[N]</code>后形成校验码集合，然后发送给主机<code>Host-A</code></p>
+<blockquote>
+<p>不同数据块的滚动弱校验值有可能相同，但几率非常小。</p>
+</blockquote>
+</li>
+<li>
+<p><code>Host-A</code>通过搜索<code>file-A</code> 的所有该固定大小的数据块（偏移量可以任选），并计算它的校验码和校验码集合中的校验码进行匹配。</p>
+<ul>
+<li>如果能匹配上校验码集合中的某个数据块条目，则表示该数据块和<code>file-B</code>中数据块相同，不需要传输。</li>
+<li>如果不能匹配校验码集合中的数据块条目，则表示该数据块是<strong>非匹配数据块</strong>，它需要传输给<code>Host-B</code>，于是<code>Host-A</code>将跳转到<strong>下一个字节</strong>，从此字节处继续取数据块进行匹配。
+<blockquote>
+<p>数据匹配过程有三个层次：首先比较 hash 值，然后比较弱滚动校验，最后比较强校验。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>当<code>Host-A</code>发现是匹配数据块时，将只发送这个匹配块的附加信息给<code>Host-B</code>。同时，如果两个匹配数据块之间有非匹配数据，则还会发送这些非匹配数据。</p>
+</li>
+<li>
+<p>当<code>Host-B</code>陆陆续续收到这些数据后，会创建一个临时文件，并通过这些数据重组这个临时文件，使其内容和<code>file-A</code> 相同。临时文件重组完成后，修改该临时文件的属性信息(如权限、所有者、mtime 等)，然后重命名该临时文件替换掉<code>file-B</code>。</p>
+</li>
+</ol>
+
+<h2 id="rsync-的工作方式"><a class="markdownIt-Anchor" href="#rsync-的工作方式"></a> rsync 的工作方式</h2>
+<ul>
+<li>本地传输方式：首先 rsync 命令执行时，会有一个 rsync 进程，然后根据此进程 fork 另一个 rsync 进程作为连接的对端，连接建立之后，后续所有的通信将采用管道的方式。</li>
+<li>远程 shell 连接方式：本地敲下 rsync 命令后，将请求和远程主机建立远程 shell 连接（如 ssh 连接），连接建立成功后，在远程主机上将 fork 远程 shell 进程调用远程 rsync 程序，并将 rsync 所需的选项通过远程 shell 命令（如 ssh）传递给远程 rsync。这样两端就都启动了 rsync，之后它们将通过管道的方式进行通信。</li>
+<li>网络套接字连接远程主机上的 rsync daemon：当通过网络套接字和远程已运行好的 rsync 建立连接时，rsync daemon 进程会创建一个子进程来响应该连接并负责后续该连接的所有通信。这样两端也都启动了连接所需的 rsync，此后通信方式是通过网络套接字来完成的。</li>
+<li>远程 shell 临时启动一个 rsync daemon：不要求远程主机上事先启动 rsync 服务，而是临时派生出 rsync daemon，它是单用途的一次性 daemon，仅用于临时读取 daemon 的配置文件，当此次 rsync 同步完成，远程 shell 启动的 rsync daemon 进程也会自动停止。</li>
+</ul>
+<p>发起连接的一端称为 Client 端，就是执行 rsync 命令的一端，连接的另一端称为 Server 端。</p>
+<blockquote>
+<p>注：当 Client 端和 Server 端都启动好 rsync 进程并建立好了 rsync 连接(管道、网络套接字)后，将使用 Sender 端和 Receiver 端来代替 Client 端和 Server 端的概念。</p>
+</blockquote>
+<p>当两端的 rsync 连接建立后，Sender 端的 rsync 进程称为<code>Sender</code>进程，该进程负责 Sender 端所有的工作。Receiver 端的 rsync 进程称为<code>Receiver</code>进程，负责接收 sender 端发送的数据，以及完成文件重组的工作。Receiver 端还有一个核心进程 <strong><code>Generator</code></strong> 进程，该进程负责在 Receiver 端执行<code>--delete</code>动作、比较文件大小和 mtime 以决定文件是否跳过、对每个文件划分数据块、计算校验码以及生成校验码集合，然后将校验码集合发送给 Sender 端。</p>
+<p>三个进程的作业流程：<code>Generator</code>进程的输出结果作为<code>Sender</code>端的输入，<code>Sender</code>端的输出结果作为<code>Recevier</code>端的输入。并且，<strong>这三个进程是完全独立、并行工作的。</strong></p>
+<p><strong>数据同步方式</strong></p>
+<ul>
+<li><strong>推 push</strong>：一台主机负责把数据传送给其他主机，服务器开销很大，比较适合后端服务器少的情况</li>
+<li><strong>拉 pull</strong>：所有主机定时去找一主机拉数据，可能就会导致数据缓慢</li>
+</ul>
+<h2 id="rsync-命令使用"><a class="markdownIt-Anchor" href="#rsync-命令使用"></a> rsync 命令使用</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">本地传输方式:  rsync [OPTION...] SRC... [DEST]</span><br><span class="line"></span><br><span class="line">远程shell连接方式:</span><br><span class="line">    Pull: rsync [OPTION...] [USER@]HOST:SRC... [DEST]</span><br><span class="line">    Push: rsync [OPTION...] SRC... [USER@]HOST:DEST</span><br><span class="line"></span><br><span class="line">连接远程主机上的rsync daemon:</span><br><span class="line">    Pull: rsync [OPTION...] [USER@]HOST::SRC... [DEST]</span><br><span class="line">          rsync [OPTION...] rsync:&#x2F;&#x2F;[USER@]HOST[:PORT]&#x2F;SRC... [DEST]</span><br><span class="line">    Push: rsync [OPTION...] SRC... [USER@]HOST::DEST</span><br><span class="line">          rsync [OPTION...] SRC... rsync:&#x2F;&#x2F;[USER@]HOST[:PORT]&#x2F;DEST</span><br></pre></td></tr></table></figure>
+<p>若主机与路径用<code>:</code>分隔，则为 shell 连接，若为<code>::</code>，则为 daemon 连接。</p>
+<p>**注：**源路径如果是一个目录的话，带上尾随斜线和不带尾随斜线是不一样的，<strong>不带尾随斜线表示的是整个目录包括目录本身</strong>，<strong>带上尾随斜线表示的是目录中的文件，不包括目录本身。</strong></p>
+<p>若只有源路径或只有目的路径，则相当于<code>ls -l</code>查看指定文件或目录属性。</p>
+<p><strong>常用选项：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">-a        归档模式，表示递归传输并保持文件属性。等同于&quot;-rtopgDl&quot;。</span><br><span class="line">-P        显示文件传输的进度信息</span><br><span class="line">-v        显示rsync过程中详细信息(最多支持-vvvv)</span><br><span class="line">-r        递归</span><br><span class="line">-t        保持mtime属性(最好加上，否则时间会设置为当前系统时间，在增量备份时会因为时间出错)</span><br><span class="line">-o 　　　　保持owner属性</span><br><span class="line">-g 　　　　保持group属性(属组)。</span><br><span class="line">-p 　　　　保持perms属性(权限，不包括特殊权限)。</span><br><span class="line">-D　　　　 拷贝设备文件和特殊文件。</span><br><span class="line">-l　　　　 如果文件是软链接文件，则拷贝软链接本身而非软链接所指向的对象。</span><br><span class="line">-z 　　　　传输时进行压缩提高效率。</span><br><span class="line">-R        使用相对路径。意味着将命令行中指定的全路径而非路径最尾部的文件名发送给服务端，包括它们的属性</span><br><span class="line">-u      　仅在源mtime比目标已存在文件的mtime新时才拷贝。接收端判断，不会影响删除行为。</span><br><span class="line">--size-only　　只检查文件大小（默认算法是检查文件大小和mtime不同的文件）</span><br><span class="line">--max-size　　 限制rsync传输的最大文件大小。可以使用单位后缀，还可以是一个小数值(例如：&quot;--max-size&#x3D;1.5m&quot;)</span><br><span class="line">--min-size 　　限制rsync传输的最小文件大小。这可以用于禁止传输小文件或那些垃圾文件。</span><br><span class="line">--exclude   　指定排除规则来排除不需要传输的文件。一个exclude只能指定一条规则，若有多条规则，就要写多个exclude</span><br><span class="line">--exclude-from  若规则有多条，可以写在文件中，并使用此选项加载规则文件</span><br><span class="line">--include     指定传输规则，只传输符合该规则的文件，与exclude相反</span><br><span class="line">--delete    　接收端的rsync会先删除目标目录下已经存在，但发送端目录不存在的文件，以SRC为主，对DEST进行同步。多则删之，少则补之。注意&quot;--delete&quot;是在接收端执行的，所以它是在exclude&#x2F;include规则生效之后才执行的。</span><br><span class="line">-b --backup   对目标上已存在的文件做一个备份，备份的文件名后默认使用&quot;~&quot;做后缀。</span><br><span class="line">--backup-dir  指定备份文件的保存路径，若指定，保存路径必须存在。</span><br><span class="line">              不指定时默认和待备份文件保存在同一目录下。</span><br><span class="line">              默认没有后缀，可通过&quot;--suffix&#x3D;&quot;指定</span><br><span class="line">-e          　指定所要使用的远程shell程序，默认为ssh。</span><br><span class="line">--port      　连接daemon时使用的端口号，默认为873端口。</span><br><span class="line">--password-file　　daemon模式时的密码文件，是rsync模块认证的密码。</span><br><span class="line">-W --whole-file　　rsync将不再使用增量传输，而是全量传输。在网络带宽高于磁盘带宽时，该选项比增量传输更高效。</span><br><span class="line">--existing  　　        要求只更新目标端已存在的文件，目标端还不存在的文件不传输。注意，使用相对路径时如果上层目录不存在也不会传输。</span><br><span class="line">--ignore-existing      要求只更新目标端不存在的文件。和&quot;--existing&quot;结合使用有特殊功能。</span><br><span class="line">--remove-source-files  要求删除源端已经成功传输的文件。</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>最常用组合<code>-avz</code>。</strong></p>
+</blockquote>
+<p><strong>命令示例：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">rsync -r -R  &#x2F;etc&#x2F;dir-1  &#x2F;tmp         将&#x2F;etc&#x2F;dir-1目录复制到&#x2F;tmp目录下，tmp目录下将会有etc&#x2F;dir-1子目录</span><br><span class="line">rsync -r -R  &#x2F;etc&#x2F;.&#x2F;dir-1  &#x2F;tmp 将&#x2F;etc&#x2F;dir-1目录复制到&#x2F;tmp目录下，但在&#x2F;etc&#x2F;和dir-1目录间加上了“.”</span><br><span class="line">                                       因此仅仅将dir-1目录复制过去作为子目录，tmp目录下将有dir-1子目录</span><br><span class="line">rsync -r -b --backup-dir --suffix&#x3D;&#39;.bak&#39; &#x2F;etc&#x2F;dir-1 &#x2F;tmp   备份文件，若不存在就直接复制，若已存在就添加后缀以区分</span><br><span class="line"></span><br><span class="line">rsync -r --exclude&#x3D;&quot;*.txt&quot; &#x2F;etc&#x2F;dir-1 &#x2F;tmp   将&#x2F;etc&#x2F;dir-1目录下的以&quot;.txt&quot;结尾的文件排除</span><br><span class="line">rsync -r -v --delete --exclude&#x3D;&quot;*.txt&quot; &#x2F;etc&#x2F;dir-1 &#x2F;tmp   将&#x2F;tmp&#x2F;dir-1中存在而&#x2F;etc&#x2F;dir-1不存在的文件删除，并且不删除&quot;.txt&quot;结尾的文件（即使源中不存在）</span><br><span class="line">sending incremental file list</span><br><span class="line">deleting dir-1&#x2F;a3.log</span><br><span class="line">deleting dir-1&#x2F;a2.log</span><br><span class="line">deleting dir-1&#x2F;a1.log</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="规则解析"><a class="markdownIt-Anchor" href="#规则解析"></a> 规则解析</h2>
+<p><strong>规则作用时间：<strong>当发送端敲出 rsync 命令后，rsync 将立即</strong>扫描命令行中给定的文件和目录</strong>(扫描过程中还会按照目录进行排序，将同一个目录的文件放在相邻的位置)，这称为<strong>拷贝树</strong>(copy tree)，扫描完成后将待传输的文件或目录<strong>记录到文件列表中</strong>，然后将文件列表传输给接收端。<strong>筛选规则的作用时刻是在扫描拷贝树时，所以会根据规则来匹配并决定文件是否记录到文件列表中</strong>(严格地说是会记录到文件列表中的，只不过<strong>排除的文件会被标记为 hide 隐藏起来</strong>)，只有记录到了文件列表中的文件或目录才是真正需要传输的内容。<strong>筛选规则的生效时间在 rsync 整个同步过程中是非常靠前的，它会影响很多选项的操作对象，最典型的如<code>--delete</code></strong>，<code>--delete</code>是在 generator 进程处理每个文件列表时、生成校验码之前进行的，这样就无需为多余的文件生成校验码。</p>
+<p><strong>rsync 规则</strong>：通过选项<code>--filter</code>指定规则</p>
+<ul>
+<li><code>exclude</code>规则：即排除规则，只作用于发送端，被排除的文件不会进入文件列表(实际上是加上隐藏规则进行隐藏)。</li>
+<li><code>include</code>规则：即包含规则，也称为传输规则，只作用于发送端，被包含的文件将明确记录到文件列表中。</li>
+<li><code>hide</code>规则：即隐藏规则，只作用于发送端，隐藏后的文件对于接收端来说是看不见的，也就是说接收端会认为它不存在于源端。</li>
+<li><code>show</code>规则：即显示规则，只作用于发送端，是隐藏规则的反向规则。</li>
+<li><code>protect</code>规则：即保护规则，该规则只作用于接收端，被保护的文件不会被删除掉。</li>
+<li><code>risk</code>规则：即取消保护规则。是<code>protect</code>的反向规则。</li>
+<li><code>clear</code>规则：删除<code>include</code>/<code>exclude</code>规则列表。</li>
+</ul>
+<blockquote>
+<p>上述内容都引用自<a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7220009.html">骏马金龙－rsync 介绍与用法</a></p>
+</blockquote>
+<h2 id="rsync-服务器搭建"><a class="markdownIt-Anchor" href="#rsync-服务器搭建"></a> Rsync 服务器搭建</h2>
+<p>实验环境：</p>
+<ul>
+<li>Rsync 服务器：192.168.205.135</li>
+<li>Rsync 客户端：192.168.205.134</li>
+</ul>
+<p>首先，两台主机都需要安装 rsync，<code>yum/dnf install rsync</code>，fedora 已默认安装。</p>
+<p>由于 rsync 的配置文件默认不存在，所以需要手动创建。Rsync 有三个配置文件：</p>
+<ul>
+<li>rsyncd.conf：主配置文件</li>
+<li>rsyncd.secrets：密码文件</li>
+<li>rsyncd.motd：服务器信息文件</li>
+</ul>
+<p>创建<code>/etc/rsyncd.conf</code>文件，具体参数可通过<code>man rsyncd.conf</code>查看</p>
+<p>配置文件分为两部分：全局参数，模块参数<br />
+全局参数：对 rsync 服务器生效，如果模块参数和全局参数冲突，冲突的地方模块参数生效<br />
+模块参数：定义需要通过 rsync 输出的目录定义的参数</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"># 常见全局参数：</span><br><span class="line">port &#x3D; 873                     监听端口</span><br><span class="line">address &#x3D; 192.168.205.135      监听服务器地址</span><br><span class="line">uid &#x3D; nobody                   数据传输时使用的用户ID，默认nobody</span><br><span class="line">gid &#x3D; nobody                   数据传输时使用的组ID，默认nobody</span><br><span class="line">read only &#x3D; yes                是否只读</span><br><span class="line">max connections &#x3D; 10           并发连接数，0表示无限制。超出并发连接数时若再访问，会收到稍后重试的消息</span><br><span class="line">use chroot &#x3D; no                是否开启chroot，若设为yes，rsync会首先进行chroot设置，将根映射到模块中path指定目录</span><br><span class="line">                               需要root权限，在同步符号连接资料时仅同步文件名，不同步文件内容</span><br><span class="line">transfer logging &#x3D; yes           开启Rsync数据传输日志功能</span><br><span class="line">#log format &#x3D;                    设置日志格式，默认log格式为：&quot;%o %h [%a] %m (%u) %f %l&quot;</span><br><span class="line"># 默认log格式表达的是：&quot;操作类型 远程主机名[远程IP地址] 模块名 (认证的用户名) 文件名 文件长度字符数&quot;</span><br><span class="line">#syslog facility &#x3D;               指定rsync发送日志消息给syslog时的消息级别，默认值是daemon</span><br><span class="line">lock file &#x3D; &#x2F;var&#x2F;run&#x2F;rsync.lock  设置锁文件</span><br><span class="line">log file &#x3D; &#x2F;var&#x2F;log&#x2F;rsyncd.log   设置日志文件</span><br><span class="line">pid file &#x3D; &#x2F;var&#x2F;run&#x2F;rsyncd.pid   设置进程号文件</span><br><span class="line">motd file &#x3D; &#x2F;etc&#x2F;rsyncd.motd     设置服务器信息提示文件</span><br><span class="line">hosts allow &#x3D; 192.168.205.134    设置允许访问服务器的主机</span><br><span class="line"></span><br><span class="line"># 模块配置</span><br><span class="line">[rsync_test]</span><br><span class="line">comment &#x3D; rsync test   添加注释</span><br><span class="line">path &#x3D; &#x2F;root&#x2F;rsync_test     同步文件或目录路径</span><br><span class="line">ignore errors                忽略一些IO错误</span><br><span class="line"># exclude &#x3D;                    可以指定不同步的目录或文件，使用相对路径</span><br><span class="line">auth users &#x3D; tom,jack        允许连接的用户，可以是系统中不存在的</span><br><span class="line">secrets file &#x3D; &#x2F;etc&#x2F;rsyncd.secrets   设置密码验证文件，该文件的权限要求为只读（600），该文件仅在设置了auth users才有效</span><br><span class="line">list &#x3D; false      是否允许查看模块信息</span><br><span class="line">timeout &#x3D; 600     可以覆盖客户指定的 IP 超时时间。确保rsync服务器不会永远等待一个崩溃的客户端。</span><br><span class="line">                  超时单位为秒钟，0表示没有超时定义，这也是默认值。</span><br><span class="line">                  对于匿名rsync服务器来说，一个理想的数字是600</span><br></pre></td></tr></table></figure>
+<p>相关系统操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">useradd tom &amp;&amp; echo &quot;redhat&quot; | passwd tom --stdin</span><br><span class="line">echo &quot;tom:redhat&quot; &gt;&gt; &#x2F;etc&#x2F;rsyncd.secrets</span><br><span class="line">echo &quot;jack:redhat&quot; &gt;&gt; &#x2F;etc&#x2F;rsyncd.secrets      添加用户到密码文件</span><br><span class="line">chmod 600 &#x2F;etc&#x2F;rsyncd.secrets                  修改密码文件权限</span><br><span class="line">echo &quot;Welcome to Rsync&quot; &gt;&gt; &#x2F;etc&#x2F;rsyncd.motd</span><br><span class="line"># firewall-cmd --permanent --add-port&#x3D;873&#x2F;tcp  若开启了防火墙，就放行端口</span><br><span class="line">rsync --daemon --config&#x3D;&#x2F;etc&#x2F;rsyncd.conf         启动rsyncd服务</span><br></pre></td></tr></table></figure>
+<p>客户端同步文件：<code>rsync -r tom@192.168.205.135::rsync_test /root/rsync_test</code></p>
+<p>自动备份脚本，可配合 crond 使用</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;bash</span><br><span class="line"># 本脚本是将服务器端的文件定期同步到本端</span><br><span class="line"># 设置服务器端模块和本端目录</span><br><span class="line">SRC&#x3D;rsync_test</span><br><span class="line">DEST&#x3D;&#x2F;root&#x2F;rsync_test</span><br><span class="line">Server&#x3D;192.168.205.135</span><br><span class="line"># 设置验证用户名和密码</span><br><span class="line">User&#x3D;tom</span><br><span class="line">Password&#x3D;redhat</span><br><span class="line"># 若本地同步目录不存在，就创建目录。同步时会删除目录中本端存在，但服务器端不存在的文件</span><br><span class="line">[ ! -d $DEST ] &amp;&amp; mkdir $DEST</span><br><span class="line">rsync -az --delete $&#123;User&#125;@$&#123;Server&#125;::$SRC $DEST&#x2F;$(date +%Y%m%d)</span><br></pre></td></tr></table></figure>
+<p>若使用 Xinetd 服务管理 Rsync，需要先安装 xinetd。创建文件<code>/etc/xinetd.d/rsync</code>，添加以下内容。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">service rsync &#123;</span><br><span class="line">    disable &#x3D; no</span><br><span class="line">    socket_type &#x3D; stream</span><br><span class="line">    wait &#x3D; no</span><br><span class="line">    user &#x3D; root</span><br><span class="line">    server &#x3D; &#x2F;usr&#x2F;bin&#x2F;rsync</span><br><span class="line">    server_args &#x3D; --daemon --config&#x3D;&#x2F;etc&#x2F;rsyncd.conf</span><br><span class="line">    log_on_failure +&#x3D; USERID</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后重启 xinetd 服务即可。</p>
+<h2 id="rsync-部分报错解决"><a class="markdownIt-Anchor" href="#rsync-部分报错解决"></a> Rsync 部分报错解决</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rsync: failed to connect to 192.168.205.135 (192.168.205.135): No route to host (113)</span><br><span class="line">rsync error: error in socket IO (code 10) at clientserver.c(125) [Receiver&#x3D;3.1.2]</span><br></pre></td></tr></table></figure>
+<p>解决：防火墙问题，放行端口或直接关闭</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">@ERROR: auth failed on module rsync_test</span><br><span class="line">rsync error: error starting client-server protocol (code 5) at main.c(1648) [Receiver&#x3D;3.1.2]</span><br></pre></td></tr></table></figure>
+<p>解决：用户名与密码问题或模块问题，检查用户名与密码是否匹配，服务器端模块是否存在</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rsync: read error: Connection reset by peer (104)</span><br><span class="line">rsync error: error in rsync protocol data stream (code 12) at io.c(759) [Receiver&#x3D;3.1.2]</span><br></pre></td></tr></table></figure>
+<p>解决：服务器端配置文件/etc/rsyncd.conf 问题，检查配置文件参数是否出错</p>
+<h1 id="rsyncinotify-文件自动同步"><a class="markdownIt-Anchor" href="#rsyncinotify-文件自动同步"></a> Rsync+Inotify 文件自动同步</h1>
+<h2 id="inotify-介绍"><a class="markdownIt-Anchor" href="#inotify-介绍"></a> Inotify 介绍</h2>
+<p><strong>Inotify</strong>是一个 Linux 特性，是<code>inode notify</code>的简写，能监控文件系统操作，反应灵敏，异步传输信息，比 cron 高效，通过 Inotify 能试试了解文件系统发生的所有变化。</p>
+<p>注：Linux 内核需要大于 2.6 才集成了 Inotify，先要通过 uname -r 查看内核版本</p>
+<p>Inotify 一些特点：</p>
+<ul>
+<li>允许程序员使用标准 <code>select</code> 或者 <code>poll</code> 函数来监视事件</li>
+<li>使用一个独立的文件描述符，可以通过系统调用获得</li>
+</ul>
+<p>使用 rsync 工具与 inotify 机制相结合，可以实现触发式备份（实时同步）。</p>
+<p>在系统<code>/proc/sys/fs/inotify/</code>目录中有三个文件：</p>
+<ul>
+<li><code>max_queued_events</code>：inotify 实例事件队列可容纳的事件个数，默认 16384</li>
+<li><code>max_user_instances</code>：每个用户可以运行的 inotifywait 或 inotifywatch 命令的进程数，默认 128</li>
+<li><code>max_user_watches</code>：每个进程最多监控文件数，默认 8192</li>
+</ul>
+<blockquote>
+<p>若要监控的文件量较大时，需要适当增大这三个值</p>
+</blockquote>
+<p>可以在<code>/etc/sysctl.conf</code>中添加以下内容修改这三个值，或通过<code>sysctl -w</code>直接设置。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fs.inotify.max_queued_events &#x3D;</span><br><span class="line">fs.inotify.max_user_instances &#x3D;</span><br><span class="line">fs.inotify.max_user_watches &#x3D;</span><br></pre></td></tr></table></figure>
+<p>Inotify 常用的文件系统事件：</p>
+<table>
+<thead>
+<tr>
+<th>事件名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IN_ACCESS</td>
+<td>文件访问事件</td>
+</tr>
+<tr>
+<td>IN_MODIFY</td>
+<td>文件修改事件</td>
+</tr>
+<tr>
+<td>IN_ATTRIB</td>
+<td>文件属性修改事件</td>
+</tr>
+<tr>
+<td>IN_OPEN</td>
+<td>文件打开事件</td>
+</tr>
+<tr>
+<td>IN_CLOSE_WRITE</td>
+<td>可写文件被关闭事件</td>
+</tr>
+<tr>
+<td>IN_CLOSE_NOWRITE</td>
+<td>不可写文件被关闭事件</td>
+</tr>
+<tr>
+<td>IN_MOVED_FROM IN_MOVED_TO</td>
+<td>文件移动或重命名事件</td>
+</tr>
+<tr>
+<td>IN_DELETE</td>
+<td>文件或目录删除事件</td>
+</tr>
+<tr>
+<td>IN_CREATE</td>
+<td>文件或目录创建事件</td>
+</tr>
+<tr>
+<td>IN_DELETE_SELF</td>
+<td>自删除事件</td>
+</tr>
+</tbody>
+</table>
+<p>若系统为 fedora，可直接安装<code>dnf install inotify-tools</code>，若系统为 CentOS，则需要先安装<code>epel-release</code>再安装<code>yum install inotify-tools</code></p>
+<p>inotify-tools 提供两个应用程序：<code>inotifywait</code>和<code>inotifywatch</code></p>
+<p><code>inotifywait</code>命令用法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">inotifywait [options] file...</span><br><span class="line">    @&lt;file&gt;        排除监控指定文件</span><br><span class="line">    --exclude &lt;pattern&gt;    使用正则表达式匹配例外文件，区分大小写</span><br><span class="line">    --excludei &lt;pattern&gt;   使用正则表达式匹配例外文件，不区分大小写</span><br><span class="line">	-m|--monitor  	一直监听，不退出。若不加此项，监听到一个事件后就退出</span><br><span class="line">	-d|--daemon   	相当于-m，但是是在后台运行，需要-o或--outfile指定输出文件，或者通过再指定--syslog将错误信息输出至syslog系统日志</span><br><span class="line">	-r|--recursive	递归监控目录</span><br><span class="line">	--fromfile &lt;file&gt;   从文件中读取需要监控与例外的文件名，每行一个文件，若文件名以@开头，表示例外文件</span><br><span class="line">	-o|--outfile &lt;file&gt; 将事件信息输出到文件，默认输出到标准输出</span><br><span class="line">	-s|--syslog   	将错误事件日志发送到syslog，而不是stderr</span><br><span class="line">	-q|--quiet    	静默模式，只输出事件</span><br><span class="line">	-qq           	静默模式，什么都不输出（包括事件）</span><br><span class="line">	--format &lt;fmt&gt;	指定输出信息格式</span><br><span class="line">	--timefmt &lt;fmt&gt;	设置时间格式</span><br><span class="line">	-c|--csv      	使用CSV格式输出</span><br><span class="line">	-t|--timeout &lt;seconds&gt; 在指定时间内若监听到事件，就退出</span><br><span class="line">	-e|--event &lt;event1&gt; [ -e|--event &lt;event2&gt; ... ] 只监控指定事件</span><br></pre></td></tr></table></figure>
+<p>实例：<code>inotifywait -m -d -r -o /var/log/html_monitor /var/www/html</code></p>
+<p>然后进入<code>/var/www/html</code>进行以下操作</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">touch a.html</span><br><span class="line">vim a.html</span><br><span class="line">cp a.html b.html</span><br><span class="line">rm a.html</span><br><span class="line">chmod -r b.html</span><br><span class="line">mv b.html a.html</span><br></pre></td></tr></table></figure>
+<p>在<code>/var/log/html_monitor</code>中就有以下信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; CREATE a.html</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; OPEN a.html</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; ATTRIB a.html</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; CLOSE_WRITE,CLOSE a.html</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; OPEN,ISDIR</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; ACCESS,ISDIR</span><br><span class="line">.....</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; MOVED_FROM b.html</span><br><span class="line">&#x2F;var&#x2F;www&#x2F;html&#x2F; MOVED_TO a.html</span><br></pre></td></tr></table></figure>
+<p>仅仅几步操作，就生成了 170 多行事件信息。</p>
+<p>##　 Inotify 与 Rsync 实时同步数据</p>
+<p>要求分析：数据发布服务器既是 Rsync 服务器同时也是 Inotify 监控服务器，该服务器是用于发布数据的，将数据同步到 Web 服务器，实现 Web 服务器与此数据发布服务器的同步。</p>
+
+<p>实验环境：</p>
+<ul>
+<li>数据发布服务器：192.168.205.135</li>
+<li>Web 服务器：192.168.205.134</li>
+</ul>
+<p>首先需要在 Web 服务器上编写<code>rsyncd.conf</code>，添加模块</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[www]</span><br><span class="line">comment &#x3D; web file dictionary</span><br><span class="line">path &#x3D; &#x2F;var&#x2F;www&#x2F;html</span><br><span class="line">auth users &#x3D; www</span><br><span class="line">secrets file &#x3D; &#x2F;etc&#x2F;rsyncd.secrets</span><br><span class="line">hosts allow &#x3D; 192.168.205.135</span><br></pre></td></tr></table></figure>
+<p>进行系统准备：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 在Web服务器上创建用户www</span><br><span class="line">useradd www &amp;&amp; echo &quot;redhat&quot; | passwd www --stdin</span><br><span class="line">echo &quot;www:redhat&quot; &gt;&gt; &#x2F;etc&#x2F;rsyncd.secrets</span><br><span class="line">chmod 600 &#x2F;etc&#x2F;rsyncd.secrets</span><br><span class="line">查看&#x2F;var&#x2F;www是否所属于www，若不是就chown -R www:www &#x2F;var&#x2F;www</span><br><span class="line"></span><br><span class="line"># 在数据发布服务器上</span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id -i ~&#x2F;.ssh&#x2F;id_rsa.pub www@192.168.205.134</span><br><span class="line"># 在Web服务器上，同理，双向交换ssh公钥</span><br><span class="line">ssh-copy-id -i ~&#x2F;.ssh&#x2F;id_rsa.pub root@192.168.205.135</span><br></pre></td></tr></table></figure>
+<p>数据发布服务器上触发同步脚本示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#!&#x2F;bin&#x2F;bash</span><br><span class="line">SRC&#x3D;&#x2F;var&#x2F;www&#x2F;web_html&#x2F;</span><br><span class="line">DST&#x3D;www@192.168.205.134::www</span><br><span class="line">&#x2F;usr&#x2F;bin&#x2F;inotifywait -d -r -o var&#x2F;log&#x2F;inotify_web -e modify,delete,create,attrib $&#123;SRC&#125; | while read line</span><br><span class="line">do</span><br><span class="line">    &#x2F;usr&#x2F;bin&#x2F;rsync -az --delete $&#123;SRC&#125; $&#123;DST&#125; 2&gt;&amp;1</span><br><span class="line">done &amp;</span><br></pre></td></tr></table></figure>
+<p>加上执行权限<code>chmod a+x</code>并写入<code>/etc/rc.local</code>，<code>echo &quot;脚本名&quot; &gt;&gt; /etc/rc.local</code></p>
+<h1 id="参考文章"><a class="markdownIt-Anchor" href="#参考文章"></a> 参考文章</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/george-guo/p/7718515.html">rsync</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/atong/1344829">Rsync 原理详解及部署</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7220009.html">Rsync 完全手册</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/chenhao6/1298375">inotify+rsync+mutt+msmtp 实现 linux 文件或者目录自动更新并且实现发邮件给管理员</a></li>
+<li>Linux 运维之道（第二版）</li>
+<li><a target="_blank" rel="noopener" href="http://www.ttlsa.com/web/let-infotify-rsync-fast/">真正的 inotify+rsync 实时同步 彻底告别同步慢</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/%E5%90%8C%E6%AD%A5/" rel="tag"><i class="fa fa-tag"></i> 同步</a>
+              <a href="/tags/Rsync/" rel="tag"><i class="fa fa-tag"></i> Rsync</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" rel="prev" title="Linux性能监控与优化">
+      <i class="fa fa-chevron-left"></i> Linux性能监控与优化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="无人值守学习笔记">
+      无人值守学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#rsync-%E4%BB%8B%E7%BB%8D%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="nav-text"> Rsync 介绍与搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#quick-check-%E7%AE%97%E6%B3%95%E4%BB%8B%E7%BB%8D"><span class="nav-text"> quick check 算法介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rsync-%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F"><span class="nav-text"> rsync 的工作方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rsync-%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8"><span class="nav-text"> rsync 命令使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%84%E5%88%99%E8%A7%A3%E6%9E%90"><span class="nav-text"> 规则解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rsync-%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%90%AD%E5%BB%BA"><span class="nav-text"> Rsync 服务器搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rsync-%E9%83%A8%E5%88%86%E6%8A%A5%E9%94%99%E8%A7%A3%E5%86%B3"><span class="nav-text"> Rsync 部分报错解决</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rsyncinotify-%E6%96%87%E4%BB%B6%E8%87%AA%E5%8A%A8%E5%90%8C%E6%AD%A5"><span class="nav-text"> Rsync+Inotify 文件自动同步</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#inotify-%E4%BB%8B%E7%BB%8D"><span class="nav-text"> Inotify 介绍</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-text"> 参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

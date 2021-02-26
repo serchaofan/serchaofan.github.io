@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="LDAP 概述  目录服务 X.500 LDAP  LDAP 的配置模式     LDAP 简单部署">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LDAP学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="LDAP 概述  目录服务 X.500 LDAP  LDAP 的配置模式     LDAP 简单部署">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/3.png">
+<meta property="og:image" content="https://github.com/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png">
+<meta property="article:published_time" content="2018-11-24T01:22:47.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.501Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="LDAP">
+<meta property="article:tag" content="验证">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>LDAP学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LDAP学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-11-24 09:22:47" itemprop="dateCreated datePublished" datetime="2018-11-24T09:22:47+08:00">2018-11-24</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#ldap-%e6%a6%82%e8%bf%b0">LDAP 概述</a>
+<ul>
+<li><a href="#%e7%9b%ae%e5%bd%95%e6%9c%8d%e5%8a%a1">目录服务</a></li>
+<li><a href="#x500">X.500</a></li>
+<li><a href="#ldap">LDAP</a>
+<ul>
+<li><a href="#ldap-%e7%9a%84%e9%85%8d%e7%bd%ae%e6%a8%a1%e5%bc%8f">LDAP 的配置模式</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#ldap-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2">LDAP 简单部署</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="ldap-概述"><a class="markdownIt-Anchor" href="#ldap-概述"></a> LDAP 概述</h1>
+<h2 id="目录服务"><a class="markdownIt-Anchor" href="#目录服务"></a> 目录服务</h2>
+<p><strong>目录</strong>是一类为了浏览和搜索数据而设计的特殊数据库，按照<strong>树状</strong>形式存储信息，目的包含基于属性的描述性信息，支持高级过滤功能。</p>
+<p>目录不支持大多数事务型数据库支持的高吞吐量和复杂更新操作。<strong>目录服务适合的业务应用于大量查询与搜索操作，而不是大量写入操作。目录服务器还能提供主从服务器同步目录数据功能。</strong></p>
+<blockquote>
+<p>DNS 就是一个典型的大范围分布式目录服务</p>
+</blockquote>
+<p>目录服务器功能：</p>
+<ul>
+<li>按照网络管理员指令，强制实施安全策略，保证目录信息安全</li>
+<li>目录数据库可分布在一个网络的多台计算机上，提高响应速度</li>
+<li>复制目录，使更多用户可使用目录，提高可靠性和稳定性</li>
+<li>将目录划分为多个数据源（存储区），以存储大量对象</li>
+</ul>
+<h2 id="x500"><a class="markdownIt-Anchor" href="#x500"></a> X.500</h2>
+<p>X.500 是构成全球分布式的名录服务系统的协议，描述了用户信息的存储和访问方式，X.500 不是一个协议，而是一个协议族，包括从 X.501 到 X.525 等一系列完整的目录服务协议。X.500 采用层次结构（类似 DNS）。</p>
+<p>X.500 相关协议或机制：</p>
+<ul>
+<li><strong>DAP 目录访问协议</strong>：控制服务器和客户端之间的通信</li>
+<li>DSA 目录系统代理：用于存储目录信息的数据库，采用分层格式，提供快速高效的搜索功能，与目录信息树 DIT 连接。<strong>DSA 之间通过链操作实现分布式访问。</strong></li>
+<li>DUA 目录用户代理：用于访问一个或多个 DSA 的用户接口程序</li>
+<li>DSP 目录系统协议：控制两个或多个 DSA 间、DUA 与 DSA 间的交互</li>
+<li>DISP 目录信息映像协议：定义了如何将选定的信息在服务器间进行复制</li>
+<li>DOP 目录操作绑定协议：定义了服务器间自动协商连接配置的机制</li>
+<li>X.501：模型定义，定义目录服务的基本模型和概念</li>
+<li>X.509：认证框架，定义如何处理目录服务中客户和服务器的认证</li>
+<li>X.511：抽象服务定义，定义 X.500 提供的服务原语</li>
+<li>X.518：分布式操作过程定义，定义如何跨平台处理目录服务</li>
+<li>X.520：定义属性类型和数据元素</li>
+<li>X.521：定义了对象类</li>
+<li>X.525：定义在多个服务器间的复制操作</li>
+<li>X.530：定义目录管理系统的使用</li>
+</ul>
+<p>X.500 的 OSI 模型：</p>
+<p>独立的目录信息树 DIT，采用层级化节点结构，每个节点都有一个唯一名称标识 DN（也称唯一辨别名），唯一名称由相对唯一名称 RDN（也称相对辨别名）标识和父节点标识组成。</p>
+<p>X.500 特征：</p>
+<ul>
+<li>分散维护：运行 X.500 的每个站点只负责本地目录，可立刻进行更新和维护</li>
+<li>搜索性能：X.500 有强大的搜索功能，支持用户建立复杂查询</li>
+<li>单一全局命名空间：为用户提供单一同性命名空间（Single Homogeneous Namespace），类似 DNS，但比 DNS 灵活且可扩展。</li>
+<li>结构化信息结构：目录中定义了信息结构，允许本地扩展</li>
+<li>基于标准的目录服务：请求应用目录信息的应用（邮件、资源分配器等）能访问重要且有价值的信息</li>
+<li>基于 OSI 协议，需要在会话层和表示层进行许多连接的建立和包处理</li>
+</ul>
+<h2 id="ldap"><a class="markdownIt-Anchor" href="#ldap"></a> LDAP</h2>
+<p>LDAP 就是活动目录在 Linux 上的一个实现。</p>
+<p>LDAP（Lightweight Directory Access Protocol）轻量目录访问协议，基于 X.500 标准，支持 TCP/IP。</p>
+<p>LDAP 支持一主多从、多主多从以及分布式。</p>
+<p>DAP 是一个重量级的协议，在整个 OSI 协议栈上操作，需要占用大量计算资源，而 LDAP 设计在 TCP/IP 上，以小得多的资源消耗实现了大多数 DAP 功能。LDAP 服务器可当做网关访问 X.500 服务器，但基本都是在 X.500 服务器上直接实现 LDAP。</p>
+<img src="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>单独的 LDAP 守护程序 slapd，可看做是轻量级 X.500 服务器。LDAP 就是轻量级的 DAP。</p>
+<p>LDAP 与 X.500 的相同点：</p>
+<ul>
+<li>都实现了通用的平台结构</li>
+<li>信息模型上，都使用了项、对象类、属性等概念描述信息</li>
+<li>命名空间上，都使用了目录信息树结构和层次命名模型</li>
+<li>功能模型上，都使用了相似操作命令</li>
+<li>认证框架上，都实现了用户名密码、安全加密认证</li>
+<li>灵活性上，目录规模都可大可小</li>
+<li>分布性上，目录信息都可分布在多个目录服务器上，服务器由各组织管理，保证目录信息总体结构一致</li>
+</ul>
+<p>LDAP 常用名词：</p>
+<ul>
+<li>dc：Domain Component，域名部分，会将完整域名分成几部分。如 <a target="_blank" rel="noopener" href="http://example.com">example.com</a> 会分为 dc=example,dc=com</li>
+<li>uid：User id，用户 ID。最常见的 uid 是从<code>/etc/passwd</code>中转来的条目。</li>
+<li>ou：Organization Unit，组织单位，类似文件系统的子目录，是一个容器对象，可包含其他各种对象。</li>
+<li>cn：Common Name，公共名称。最常见的 cn 是从<code>/etc/group</code>中转来的条目</li>
+<li>sn：Surname，姓</li>
+<li>dn：Distinguished Name，唯一辨别名，类似文件系统的绝对路径，每个对象都有一个唯一名称。</li>
+<li>rdn：Relative dn：相对辨别名，类似文件系统的相对路径，是与目录树结构无关的部分。</li>
+<li>c：Country，国家。如 CN、US</li>
+<li>o：Organization，组织。如 Inc</li>
+</ul>
+<img src="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>LDAP 目录结构与信息：</p>
+<ul>
+<li>目录数据库以目录信息树 DIT 为存储方式的。</li>
+<li>DIT 由条目（Entry）构成，条目相当于关系数据库中的表的记录。</li>
+<li>条目又由 DN 的键值对（Attribute-Value）组成</li>
+<li>LDAP 允许通过 objectClass 来控制哪些属性是条目必须的，objectClass 的值是条目必须遵从的方案 schema 定义的。</li>
+<li>LDAP 目录的根称为 BaseDN</li>
+<li>ou 下是真正的用户条目</li>
+<li>LDAP 数据导入导出的格式是 LDIF，LDIF 是 LDAP 数据库信息的一种文本格式。</li>
+</ul>
+<p>LDAP 特点总结：</p>
+<ul>
+<li>跨平台</li>
+<li>树型结构，无需 SQL 语句维护</li>
+<li>静态数据快速查询</li>
+<li>使用基于推拉的复制信息技术</li>
+<li>支持多种安全协议（SASL、SSL、TLS）和多种访问控制</li>
+<li>支持异类数据存储（存储文件可以是文本或图片）</li>
+<li>C/S 模型</li>
+</ul>
+<p>LDAP 常见应用：</p>
+<ul>
+<li>数字证书管理、授权管理、单点登录</li>
+<li>分布式计算环境 DCE、统一描述发现与集成协议 UDDI</li>
+<li>MAIL、DNS、网络用户管理、电话号码簿</li>
+<li>内网组织信息服务、电子政务目录、人口基础库</li>
+</ul>
+<p>LDAP 目录数据文件：</p>
+<p>LDIF（LDAP Data Interchange Format，轻量级目录交换格式）是一种 ASCII 文件格式，能够向目录导入与修改信息。</p>
+<p>LDIF 文件注意点：</p>
+<ul>
+<li>空行分割一个条目或定义</li>
+<li>#注释</li>
+<li>属性: 属性值</li>
+<li>属性可被重复赋值</li>
+<li>每行结尾不能有空格</li>
+<li>每条记录必须有至少一个 objectClass 属性</li>
+</ul>
+<h3 id="ldap-的配置模式"><a class="markdownIt-Anchor" href="#ldap-的配置模式"></a> LDAP 的配置模式</h3>
+<ul>
+<li>
+<p>基本的目录查询服务：slapd 仅为本地域提供目录服务，不会以任何方式与别的目录服务器交互。</p>
+<img src="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/3.png" class="">
+</li>
+<li>
+<p>目录查询代理服务：带有指针（Refferals），类似 DNS，若本地的 LDAP 无法处理，则会返回一个指针，指向更高级的服务器地址。</p>
+<img src="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png" class="">
+</li>
+<li>
+<p>异机复制数据，即主从同步：LDAP 的 slurpd 守护进程是用于将 slapd 上的改变传播到一个或多个从的 slapd 上。可以通过 inotify+rsync 方案实现简单的同步。</p>
+<img src="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png" class="">
+</li>
+</ul>
+<h1 id="ldap-简单部署"><a class="markdownIt-Anchor" href="#ldap-简单部署"></a> LDAP 简单部署</h1>
+<p>实验环境：</p>
+<ul>
+<li>Master：192.168.60.134</li>
+<li>Slave：192.168.60.135</li>
+</ul>
+<p>要安装的软件：安装的 ldap 版本 2.4</p>
+<ul>
+<li><code>openldap</code>：ldap 库</li>
+<li><code>openldap-servers</code>：ldap 服务器</li>
+<li><code>openldap-clients</code>：ldap 客户端</li>
+<li><code>openldap-devel</code>：ldap 开发库与头文件</li>
+<li><code>nss</code>：网络安全服务，类似 Openssl，是底层密码库</li>
+</ul>
+<p>OpenLDAP 的配置目录：<code>/etc/openldap/</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;etc&#x2F;openldap&#x2F;</span><br><span class="line">├── certs</span><br><span class="line">├── check_password.conf</span><br><span class="line">├── ldap.conf       # ldap默认的全局配置</span><br><span class="line">├── schema          # 存放LDAP的schema</span><br><span class="line">└── slapd.d         # 存放ldap的配置文件</span><br><span class="line">老版本还有slapd.conf，作为主配置文件，记录根域信息、管理员信息等。2.3以后已不再使用，但目前仍然支持。</span><br></pre></td></tr></table></figure>
+<p>OpenLDAP 2.3 及更高版本已转换为使用动态运行时配置引擎 slapd-config</p>
+<ul>
+<li>完全启用 LDAP</li>
+<li>使用标准 LDAP 操作进行管理</li>
+<li>将其配置数据存储在 LDIF 数据库中，通常位于<code>/etc/openldap/slapd.d</code>目录中。</li>
+<li>允许所有 slapd 的配置选项在运行中进行更改，通常无需重新启动服务器即可使更改生效。</li>
+</ul>
+<p>OpenLDAP 监听的端口：</p>
+<ul>
+<li>389：默认监听端口，是传输明文数据的</li>
+<li>636：加密监听端口，默认启动时不开启，是传输密文数据的</li>
+</ul>
+<p>OpenLDAP 的配置文件目录结构：<code>/etc/openldap/slapd.d</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">slapd.d&#x2F;</span><br><span class="line">└── cn&#x3D;config</span><br><span class="line">    └── cn&#x3D;schema</span><br></pre></td></tr></table></figure>
+<p>slapd-config 配置树具有非常特定的结构。 树的根名为<code>cn = config</code>并包含全局配置设置。<code>cn = config</code>中包含的指令通常适用于整个服务器。 其中大多数是面向系统或连接，而不是数据库相关。 此条目必须具有<code>olcGlobal</code>的 objectClass。</p>
+<blockquote>
+<p>参考资料</p>
+<p>Linux 服务器架设指南</p>
+<p>Linux 就该这么学</p>
+<p>Linux 企业应用案例精解</p>
+<p>Linux 系统管理大全</p>
+<p>百度百科——X.500</p>
+<p>百度百科——LDAP</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/LDAP/" rel="tag"><i class="fa fa-tag"></i> LDAP</a>
+              <a href="/tags/%E9%AA%8C%E8%AF%81/" rel="tag"><i class="fa fa-tag"></i> 验证</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="SaltStack学习笔记">
+      <i class="fa fa-chevron-left"></i> SaltStack学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/" rel="next" title="NFS高可用笔记">
+      NFS高可用笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ldap-%E6%A6%82%E8%BF%B0"><span class="nav-text"> LDAP 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E6%9C%8D%E5%8A%A1"><span class="nav-text"> 目录服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#x500"><span class="nav-text"> X.500</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ldap"><span class="nav-text"> LDAP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ldap-%E7%9A%84%E9%85%8D%E7%BD%AE%E6%A8%A1%E5%BC%8F"><span class="nav-text"> LDAP 的配置模式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ldap-%E7%AE%80%E5%8D%95%E9%83%A8%E7%BD%B2"><span class="nav-text"> LDAP 简单部署</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

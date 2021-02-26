@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Varnish 概述  Squid 与 Varnish 对比   Varnish 基本配置">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Varnish笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Varnish%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Varnish 概述  Squid 与 Varnish 对比   Varnish 基本配置">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Varnish%E7%AC%94%E8%AE%B0/varnish-bunny.png">
+<meta property="og:image" content="https://github.com/2018/Varnish%E7%AC%94%E8%AE%B0/1.png">
+<meta property="article:published_time" content="2018-05-31T04:00:39.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.642Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="缓存">
+<meta property="article:tag" content="varnish">
+<meta property="article:tag" content="代理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Varnish%E7%AC%94%E8%AE%B0/varnish-bunny.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Varnish%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Varnish笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Varnish%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Varnish笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-05-31 12:00:39" itemprop="dateCreated datePublished" datetime="2018-05-31T12:00:39+08:00">2018-05-31</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#varnish-%e6%a6%82%e8%bf%b0">Varnish 概述</a>
+<ul>
+<li><a href="#squid-%e4%b8%8e-varnish-%e5%af%b9%e6%af%94">Squid 与 Varnish 对比</a></li>
+</ul>
+</li>
+<li><a href="#varnish-%e5%9f%ba%e6%9c%ac%e9%85%8d%e7%bd%ae">Varnish 基本配置</a></li>
+</ul>
+<span id="more"></span>
+<img src="/2018/Varnish%E7%AC%94%E8%AE%B0/varnish-bunny.png" class="">
+<h1 id="varnish-概述"><a class="markdownIt-Anchor" href="#varnish-概述"></a> Varnish 概述</h1>
+<p>Varnish 是一款高性能、开源的反向代理服务器和缓存服务器。并且，Varnish 还能提供以下功能：</p>
+<ul>
+<li>web 应用防火墙</li>
+<li>DDoS 防护</li>
+<li>网站防盗链</li>
+<li>负载均衡</li>
+<li>单点登录（SSO）网关</li>
+<li>认证与授权</li>
+<li>后端主机快速修复</li>
+<li>HTTP 路由</li>
+</ul>
+<p>Varnish 缓存策略的实现是通过 VCL（Varnish Configuration Language）实现，VCL 的语法简单，继承了 C 语言的很多特性，使得 VCL 样式看起来很像 C 和 PELR 语言，运行 Varnish 时，此配置将转换为 C 代码，然后送入 C 编译器，加载并执行。</p>
+<h2 id="squid-与-varnish-对比"><a class="markdownIt-Anchor" href="#squid-与-varnish-对比"></a> Squid 与 Varnish 对比</h2>
+<table>
+<thead>
+<tr>
+<th>软件</th>
+<th>存储模式</th>
+<th>共享存储</th>
+<th>性能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Squid</td>
+<td>硬盘</td>
+<td>可并联，但很复杂</td>
+<td>较高</td>
+</tr>
+<tr>
+<td>Varnish</td>
+<td>硬盘/内存</td>
+<td>不能</td>
+<td>很高</td>
+</tr>
+</tbody>
+</table>
+<p>Varnish 对比 Squid 的优点：</p>
+<ul>
+<li>Varnish 稳定性比 Squid 高，Squid 发生故障的几率要高于 Varnish</li>
+<li>Varnish 访问速度比 Squid 快，因为 Varnish 采用了<strong>Visual Page Cache</strong>，所有缓存之久从内存中读取，而 Squid 从硬盘读取，所以 Varnish 会更快。</li>
+<li>Varnish 支持更高的并发连接，因为 Varnish 的 TCP 连接释放要比 Squid 快。</li>
+<li>Varnish 可以通过管理端口，使用正则表达式批量清除缓存。</li>
+<li>Varnish 可通过 fork 进行多进程处理，而 Squid 仅是单进程。</li>
+</ul>
+<p>Varnish 对比 Squid 的缺点：</p>
+<ul>
+<li>一旦 Varnish 宕机或重启，缓存数据会在内存中丢失，所有请求就又给了后端服务器，造成后端的压力。</li>
+<li>Varnish 在高并发下，CPU、I/O 和内存资源开销会高于 Squid。</li>
+</ul>
+<h1 id="varnish-基本配置"><a class="markdownIt-Anchor" href="#varnish-基本配置"></a> Varnish 基本配置</h1>
+<p>最好直接从官网下载，不要通过 epel 库下载，因为 epel 库中的 varnish 版本过老。或者从 varnish 官方提供的 repo 中下载。<a target="_blank" rel="noopener" href="https://packagecloud.io/varnishcache/varnish60/install#manual-rpm">官方 repo 配置（貌似已不可用）</a>。或者下载源码编译安装。</p>
+<p>编译安装可能需要的依赖<code>python-docutils</code>、<code>libedit-devel</code></p>
+<p>进入解压目录，直接<code>./configure --prefix=/usr/local/varnish6</code>编译之后<code>make &amp;&amp; make install</code>即可。</p>
+<p>Varnish 提供以下工具：</p>
+<ul>
+<li>
+<p><strong><code>varnishd</code></strong>：是 Varnish 的核心进程，以守护进程方式运行，接收 http 请求并转发到后端，进行缓存并响应客户端。存放在安装目录的<code>sbin</code>中</p>
+</li>
+<li>
+<p><strong><code>varnishtest</code></strong>：Varnish 测试工具，可验证 Varnish 安装、可自定义 client 请求模型、可与 Varnish 交互</p>
+</li>
+<li>
+<p><strong><code>varnishadm</code></strong>：Varnish 实例命令行管理工具</p>
+</li>
+<li>
+<p><strong><code>varnishstat</code></strong>：可访问全局计算器，提供全面统计信息。</p>
+</li>
+<li>
+<p><strong><code>varnishlog</code></strong>：显示 Varnish 日志，显示的是实时日志，最好设置好过滤规则，支持精确日志匹配</p>
+</li>
+<li>
+<p><strong><code>varnishncsa</code></strong>、<strong><code>varnishtop</code></strong>、**<code>varnishhist</code>**是 Varnish 的性能及状态分析工具</p>
+<ul>
+<li>
+<p><code>varnishhist</code>：读取 varnish 日志，生成连续的柱状图，若缓存命中则标记<code>|</code>，若没命中则标记<code>#</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">15_                           |</span><br><span class="line">                              |              |</span><br><span class="line">                              |              #</span><br><span class="line">+--------------+--------------+--------------+--------------+----</span><br><span class="line">|1e-6          |1e-5          |1e-4          |1e-3          |1e-2</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>varnishtop</code>：读取日志，显示实时日志信息，类似<code>varnishlog</code>，支持过滤</p>
+</li>
+<li>
+<p><code>varnishncsa</code>：实时显示请求日志信息</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>安装目录中是没有配置文件的，需要将解压目录中<code>etc/example.vcl</code>复制到安装目录中，并改名为<code>default.vcl</code>。</p>
+<p>修改配置文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">backend default &#123;      # 默认的后端服务器配置，默认为本机</span><br><span class="line">    .host &#x3D; &quot;172.16.246.135&quot;;    # 后端服务器IP</span><br><span class="line">    .port &#x3D; &quot;80&quot;;    # 本地的代理端口。当要从后端取数据时，就会访问本地的该指定端口</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后开启 varnish。<code>varnishd -f /var/local/varnish6/default.vcl</code>，通过<code>-f</code>指定配置文件，而且配置文件的路径一定要是<strong>绝对路径</strong>，否则会提示没有该文件。确保该指定端口在本地没有被占用。</p>
+<p>启动成功后，可以看到默认 varnish 启动了两个进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># ps -ef | grep varnish</span><br><span class="line">root      62560      1  0 02:23 ?        00:00:00 sbin&#x2F;varnishd -f &#x2F;usr&#x2F;local&#x2F;varnish6&#x2F;default.vcl</span><br><span class="line">root      62571  62560  0 02:23 ?        00:00:00 sbin&#x2F;varnishd -f &#x2F;usr&#x2F;local&#x2F;varnish6&#x2F;default.vcl</span><br></pre></td></tr></table></figure>
+<p>通过浏览器访问 Varnish 服务器，使用开发者工具可看到响应头中的消息显示是 Varnish 返回的。</p>
+<img src="/2018/Varnish%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>可以通过<code>backend</code>块定义多个后端服务器。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">backend host2 &#123;</span><br><span class="line">  .host&#x3D;&quot;172.16.246.136&quot;;</span><br><span class="line">  .port&#x3D;&quot;81&quot;;</span><br><span class="line">  .connect_timeout&#x3D;3s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>参考文章</p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzIyMDA1MzgyNw==&amp;mid=2651970143&amp;idx=1&amp;sn=8117adafc988b11c2e43db95e1060571&amp;chksm=8c349273bb431b65feb0c59cf9f940e103ba14806b811e80b68aa6d3ea150d8afdf7c48e18a7&amp;mpshare=1&amp;scene=23&amp;srcid=0909L9lKHa2NEFTMf3W19eAv#rd">Varnish 从菜鸟到专家（一）</a></p>
+<p>高性能网站构建实战</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BC%93%E5%AD%98/" rel="tag"><i class="fa fa-tag"></i> 缓存</a>
+              <a href="/tags/varnish/" rel="tag"><i class="fa fa-tag"></i> varnish</a>
+              <a href="/tags/%E4%BB%A3%E7%90%86/" rel="tag"><i class="fa fa-tag"></i> 代理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Squid%E7%AC%94%E8%AE%B0/" rel="prev" title="Squid笔记">
+      <i class="fa fa-chevron-left"></i> Squid笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/HAProxy%E7%AC%94%E8%AE%B0/" rel="next" title="HAProxy笔记">
+      HAProxy笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#varnish-%E6%A6%82%E8%BF%B0"><span class="nav-text"> Varnish 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#squid-%E4%B8%8E-varnish-%E5%AF%B9%E6%AF%94"><span class="nav-text"> Squid 与 Varnish 对比</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#varnish-%E5%9F%BA%E6%9C%AC%E9%85%8D%E7%BD%AE"><span class="nav-text"> Varnish 基本配置</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

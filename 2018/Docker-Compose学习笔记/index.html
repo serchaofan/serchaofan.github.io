@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="环境：docker：18.06.1，docker-compose：1.22.0 docker18.06 对应的 Compose 文件格式版本为 3.7 本篇包含以下内容：  docker-compose 介绍 Compose 文件格式 docker-compose 示例  官方 wordpress 案例 官方 Django 案例 官方 Flask 案例">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker Compose学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Docker-Compose%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="环境：docker：18.06.1，docker-compose：1.22.0 docker18.06 对应的 Compose 文件格式版本为 3.7 本篇包含以下内容：  docker-compose 介绍 Compose 文件格式 docker-compose 示例  官方 wordpress 案例 官方 Django 案例 官方 Flask 案例">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-07-30T09:32:29.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.405Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="云计算">
+<meta property="article:tag" content="docker-compose">
+<meta property="article:tag" content="容器编排">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Docker-Compose%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Docker Compose学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Docker-Compose%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Docker Compose学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-07-30 17:32:29" itemprop="dateCreated datePublished" datetime="2018-07-30T17:32:29+08:00">2018-07-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>环境：docker：18.06.1，docker-compose：1.22.0</p>
+<p>docker18.06 对应的 Compose 文件格式版本为 3.7</p>
+<p>本篇包含以下内容：</p>
+<ul>
+<li><a href="#docker-compose-%e4%bb%8b%e7%bb%8d">docker-compose 介绍</a></li>
+<li><a href="#compose-%e6%96%87%e4%bb%b6%e6%a0%bc%e5%bc%8f">Compose 文件格式</a></li>
+<li><a href="#docker-compose-%e7%a4%ba%e4%be%8b">docker-compose 示例</a>
+<ul>
+<li><a href="#%e5%ae%98%e6%96%b9-wordpress-%e6%a1%88%e4%be%8b">官方 wordpress 案例</a></li>
+<li><a href="#%e5%ae%98%e6%96%b9-django-%e6%a1%88%e4%be%8b">官方 Django 案例</a></li>
+<li><a href="#%e5%ae%98%e6%96%b9-flask-%e6%a1%88%e4%be%8b">官方 Flask 案例</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h1 id="docker-compose-介绍"><a class="markdownIt-Anchor" href="#docker-compose-介绍"></a> docker-compose 介绍</h1>
+<p><code>Docker Compose</code>是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。在配置文件中，所有的容器通过 services 来定义，然后使用 docker-compose 脚本来启动，停止和重启应用，和应用中的服务以及所有依赖服务的容器。</p>
+<p><strong>Compose 的特性</strong></p>
+<ul>
+<li>通过项目名称将单个主机隔离成多个环境，能将应用环境复制多份，还能防止使用相同名称的服务的应用间的干扰</li>
+<li>能够保护卷中的数据，如果 Compose 发现存在之前运行过的容器，它会把旧容器中的数据卷拷贝到新的容器中</li>
+<li>只会重新创建改变过的容器，Compose 会缓存用于创建容器的配置信息，当你重启服务时，如果服务没有被更改，Compose 就会重用已经存在的容器，加快了修改应用的速度</li>
+</ul>
+<p>**编排：**Orchestration，根据被部署的对象间的耦合关系以及被部署对象对环境的依赖，制定部署流程中各个动作的执行顺序，部署过程中所需要的依赖文件和被部署文件的存储位置和获取方式，以及如何验证部署成功。这些信息都会在编排工具中以制定格式定义并保存。</p>
+<p>**部署：**Deployment，按照编排所指定的内容和流程，在目标机器上执行编排指定环境初始化，存放指定的依赖和文件，运行指定的部署动作，按照编排中规则确认是否部署成功。</p>
+<blockquote>
+<p>以上编排和部署定义摘选自《docker 容器与容器云》</p>
+</blockquote>
+<p><strong>docker-compose 安装</strong></p>
+<p>使用 pip 快速安装<code>pip install docker-compose</code><br />
+或通过 compose 的 github 库按提示安装<a href="https://github.com/docker/compose/releases">docker-compose 的 github</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -L https:&#x2F;&#x2F;github.com&#x2F;docker&#x2F;compose&#x2F;releases&#x2F;download&#x2F;1.22.0&#x2F;docker-compose-&#96;uname -s&#96;-&#96;uname -m&#96; -o &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</span><br><span class="line">chmod +x &#x2F;usr&#x2F;local&#x2F;bin&#x2F;docker-compose</span><br></pre></td></tr></table></figure>
+<p>docker-compose 参数选项：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">docker-compose [-f &lt;arg&gt;...] [options] [COMMAND] [ARGS...]</span><br><span class="line">  -f, --file FILE             指定compose文件，默认为docker-compose.yml</span><br><span class="line">  -p, --project-name NAME     指定项目名，默认为所在目录名</span><br><span class="line">  --verbose                   显示详细过程信息</span><br><span class="line">  --log-level LEVEL           设置日志级别(DEBUG, INFO, WARNING, ERROR, CRITICAL)</span><br><span class="line">  --no-ansi                   不打印ANSI控制字符</span><br><span class="line">  -H, --host HOST             指定要连接的主机</span><br><span class="line"></span><br><span class="line">  --tls                       使用tls，就是指--tlsverify</span><br><span class="line">  --tlscacert CA_PATH         指定只承认该CA颁发的证书</span><br><span class="line">  --tlscert CLIENT_CERT_PATH  TLS证书路径</span><br><span class="line">  --tlskey TLS_KEY_PATH       TLS密钥路径</span><br><span class="line">  --tlsverify                 使用TLS</span><br><span class="line">  --skip-hostname-check       不根据客户端证书中指定的名称检查守护程序的主机名</span><br><span class="line">  --project-directory PATH    指定工作目录，默认为compose文件所在目录</span><br><span class="line">  --compatibility             Compose将尝试将v3文件中的部署密钥转换为其非Swarm等效项</span><br></pre></td></tr></table></figure>
+<p><strong>docker-compose 命令：</strong></p>
+<ul>
+<li>
+<p><strong><code>build</code></strong>：构建或重构服务（services）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">build [options] [--build-arg key&#x3D;val...] [SERVICE...]</span><br><span class="line">    --compress              使用gzip压缩构建上下文</span><br><span class="line">    --force-rm              始终移除中间容器</span><br><span class="line">    --no-cache              构建镜像时不使用缓存</span><br><span class="line">    --pull                  总是尝试拉取最新镜像</span><br><span class="line">    -m, --memory MEM        设置构建镜像的内存上限</span><br><span class="line">    --build-arg key&#x3D;val     设置服务的构建时变量</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>bundle</code></strong>：从 Compose 文件生成 Docker 包</p>
+<p>镜像必须存储摘要，这需要与 Docker Registry 进行交互。如果没有为所有镜像存储摘要，可以使用<code>docker-compose pull</code>或<code>docker-compose push</code>来获取。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bundle [options]</span><br><span class="line">    --push-images              在打包时自动推送已使用build指定的服务的镜像</span><br><span class="line">    -o, --output PATH          包文件路径，默认为&quot;项目名.dab&quot;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>config</code></strong>：校验并查看 compose 文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">config [options]</span><br><span class="line">    --resolve-image-digests  将镜像标签写入摘要</span><br><span class="line">    -q, --quiet              静默模式，只校验配置，不打印信息</span><br><span class="line">    --services               列出所有服务</span><br><span class="line">    --volumes                列出所有数据卷</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>down</code></strong>：停止并删除容器、网络、镜像、数据卷</p>
+<p>默认能删除的内容：</p>
+<ul>
+<li>Compose 文件中定义的服务的容器</li>
+<li>Compose 文件的<code>networks</code>中定义的网络</li>
+<li>默认网络（如果使用）</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">down [options]</span><br><span class="line">    --rmi type              删除镜像，必须指定类型：</span><br><span class="line">                              &#39;all&#39;: 删除任何服务使用的所有镜像</span><br><span class="line">                              &#39;local&#39;: 只删除没有通过image指定自定义标签的镜像</span><br><span class="line">    -v, --volumes           删除在Compose文件的&quot;volumes&quot;中声明的命名卷和附加到容器的匿名卷。</span><br><span class="line">    --remove-orphans        为服务删除没有在compose文件中声明的容器</span><br><span class="line">    -t, --timeout TIMEOUT   指定几秒后关闭（默认10s）</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>events</code></strong>：从容器接收实时事件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">events [options] [SERVICE...]</span><br><span class="line">    --json      使用json格式输出事件</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>exec</code></strong>：在运行的容器中执行命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">exec [options] [-e KEY&#x3D;VAL...] SERVICE COMMAND [ARGS...]</span><br><span class="line">    -d, --detach      后台运行命令</span><br><span class="line">    --privileged      给进程额外的权限</span><br><span class="line">    -u, --user USER   指定运行命令的用户</span><br><span class="line">    -T                禁止分配伪终端，exec默认分配一个伪终端</span><br><span class="line">    --index&#x3D;index     设置容器的索引（如果一个服务有多个容器），默认为1</span><br><span class="line">    -e, --env KEY&#x3D;VAL 设置环境变量</span><br><span class="line">    -w, --workdir DIR 设置工作目录</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>images</code></strong>：列出镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">images [options] [SERVICE...]</span><br><span class="line">    -q, --quiet  静默模式，只显示镜像号</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>kill</code></strong>：杀死容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kill [options] [SERVICE...]</span><br><span class="line">    -s SIGNAL         发送给容器的SIGNAL，默认为SIGKILL</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>logs</code></strong>：显示容器的输出</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">logs [options] [SERVICE...]</span><br><span class="line">    --no-color          单色输出</span><br><span class="line">    -f, --follow        按照日志输出</span><br><span class="line">    -t, --timestamps    显示时间戳</span><br><span class="line">    --tail&#x3D;&quot;all&quot;        显示日志的末尾行数</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>pause</code></strong>：暂停服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pause [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>ps</code></strong>：列出容器，执行此命令时必须<code>cd</code>到项目的根目录下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ps [options] [SERVICE...]</span><br><span class="line">    -q, --quiet          静默，只显示容器号</span><br><span class="line">    --services           显示服务</span><br><span class="line">    --filter KEY&#x3D;VAL     根据属性过滤服务</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>port</code></strong>：显示用于绑定的公共端口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">port [options] SERVICE PRIVATE_PORT</span><br><span class="line">    --protocol&#x3D;proto  选择协议，tcp或udp，默认tcp</span><br><span class="line">    --index&#x3D;index     设置容器的索引，默认为1</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>pull</code></strong>：拉取服务镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">pull [options] [SERVICE...]</span><br><span class="line">    --ignore-pull-failures  忽略拉取失败的镜像</span><br><span class="line">    --parallel              并行拉取多个镜像，默认开启，官方不推荐</span><br><span class="line">    --no-parallel           禁止并行拉取多个镜像</span><br><span class="line">    -q, --quiet             静默模式，不显示拉取信息</span><br><span class="line">    --include-deps          同时拉取依赖的服务</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>push</code></strong>：推送服务镜像</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">push [options] [SERVICE...]</span><br><span class="line">    --ignore-push-failures  忽略推送失败的镜像</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>restart</code></strong>：重启服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">restart [options] [SERVICE...]</span><br><span class="line">  -t, --timeout TIMEOUT      指定几秒后重启（默认10s）</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>rm</code></strong>：删除停止的容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rm [options] [SERVICE...]</span><br><span class="line">    -f, --force   不询问确认删除</span><br><span class="line">    -s, --stop    在删除前自动停止容器</span><br><span class="line">    -v            删除任何关联的匿名数据卷，默认不会删除</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>run</code></strong>：运行一次性命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">run [options] [-v VOLUME...] [-p PORT...] [-e KEY&#x3D;VAL...] [-l KEY&#x3D;VALUE...] SERVICE [COMMAND] [ARGS...]</span><br><span class="line">    -d, --detach          后台运行</span><br><span class="line">    --name NAME           设置容器名</span><br><span class="line">    --entrypoint CMD      覆盖容器的ENTRYPOINT</span><br><span class="line">    -e KEY&#x3D;VAL            设置环境变量</span><br><span class="line">    -l, --label KEY&#x3D;VAL   添加或覆盖标签</span><br><span class="line">    -u, --user&#x3D;&quot;&quot;         以指定用户执行，可设置用户名或uid</span><br><span class="line">    --no-deps             不启动相连的服务，默认依赖的服务也会启动</span><br><span class="line">    --rm                  在运行后删除容器，不与-d兼容</span><br><span class="line">    -p, --publish&#x3D;[]      发布公共端口</span><br><span class="line">    --service-ports       通过已启用并映射到主机的端口执行命令</span><br><span class="line">    --use-aliases         在容器连接的网络中使用服务的网络别名</span><br><span class="line">    -v, --volume&#x3D;[]       Bind mount挂载一个数据卷</span><br><span class="line">    -T                    禁止分配伪终端（tty），默认run会分配一个</span><br><span class="line">    -w, --workdir&#x3D;&quot;&quot;      容器中的工作目录</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>start</code></strong>：启动已存在的容器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">start [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>stop</code></strong>：停止运行中的容器，并不会删除它们</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">stop [options] [SERVICE...]</span><br><span class="line">  -t, --timeout TIMEOUT      指定几秒后关闭（默认10s）</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>top</code></strong>：显示服务的进程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">top [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>unpause</code></strong>：恢复暂停的服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unpause [SERVICE...]</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>up</code></strong>：创建并启动容器</p>
+<p>默认会启动相连的服务。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">up [options] [--scale SERVICE&#x3D;NUM...] [SERVICE...]</span><br><span class="line">    -d, --detach               后台运行。与--abort-on-container-exit不兼容</span><br><span class="line">    --no-color                 单色输出</span><br><span class="line">    --quiet-pull               静默拉取</span><br><span class="line">    --no-deps                  不启动连接的服务</span><br><span class="line">    --force-recreate           强制重建服务（即使配置和镜像都没变）</span><br><span class="line">    --always-recreate-deps     重建依赖的服务，与--no-recreate不兼容</span><br><span class="line">    --no-recreate              若容器存在就不会重建，与--force-recreate和-V不兼容</span><br><span class="line">    --no-build                 即使镜像丢失也不重建镜像</span><br><span class="line">    --no-start                 在构建服务后不启动该服务</span><br><span class="line">    --build                    在启动容器前先构建镜像</span><br><span class="line">    --abort-on-container-exit  如果任何容器停止，就停止所有容器，与-d不兼容</span><br><span class="line">    -t, --timeout TIMEOUT      设置容器几秒后关闭（默认10s）</span><br><span class="line">    -V, --renew-anon-volumes   重建匿名卷而不是从以前的容器中恢复数据。</span><br><span class="line">    --remove-orphans           删除服务的compose文件中未定义的容器</span><br><span class="line">    --exit-code-from SERVICE   返回指定服务的退出码 Implies --abort-on-container-exit.</span><br><span class="line">    --scale SERVICE&#x3D;NUM        将SERVICE扩展到NUM个实例。会覆盖Compose文件中的&quot;scale&quot;设置（如果存在）</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="compose-文件格式"><a class="markdownIt-Anchor" href="#compose-文件格式"></a> Compose 文件格式</h1>
+<p>Compose 文件采用 YAML，文件名以<code>.yml</code>或<code>.yaml</code>结尾，默认应存放在项目的根目录中，文件名应为<code>docker-compose.yml</code>。在 Compose 文件中无需再指定 Dockerfile 中已定义的项。</p>
+<p>文件格式为 3.7，所以 compose 文件最开始要写上<code>version: &quot;3&quot;</code></p>
+<p>然后定义服务<code>services</code>，在<code>services:</code>下添加服务，开始对服务的配置。</p>
+<p><code>build</code>：用于指定在构建时应用的配置选项。</p>
+<p><code>context</code>：用于指定构建上下文。</p>
+<p><code>dockerfile</code>：用于指定 Dockerfile 文件</p>
+<p><code>args</code>：用于给 Dockerfile 文件中<code>ARG</code>定义的参数传参</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">version: &quot;3&quot;</span><br><span class="line">services:</span><br><span class="line">  webapp:</span><br><span class="line">    build: .&#x2F;dir     可以这样直接指定上下文路径</span><br><span class="line"></span><br><span class="line">  webapp:</span><br><span class="line">    build:           也可以作为具有在上下文中指定的路径的对象</span><br><span class="line">      context: .&#x2F;dir 然后通过context指定上下文路径</span><br><span class="line">      当提供的值是相对路径时，context被解释为相对于Compose文件的位置。此目录也是发送到Docker daemon的构建上下文</span><br><span class="line">    build:</span><br><span class="line">      context: .</span><br><span class="line">      dockerfile: webapp.dockerfile   还可以指定Dockerfile文件</span><br><span class="line">      args:          可以为Dockerfile文件传参</span><br><span class="line">        args1: 123</span><br><span class="line">        args2: 345</span><br><span class="line">      也可以这样表示：</span><br><span class="line">      args:</span><br><span class="line">      - args1&#x3D;123</span><br><span class="line">      - args2&#x3D;345</span><br><span class="line">    image: webapp:tag  可以指定构建镜像，会生成一个名为webapp，并打上tag标签的镜像</span><br><span class="line">    在群集模式下使用Compose文件（版本3）部署堆栈时，将忽略image选项。 docker stack命令仅接受预先构建的图像。</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：YAML 布尔值（true，false，yes，no，on，off）必须用引号括起来，以便解析器将它们解释为字符串。</p>
+</blockquote>
+<p><code>cache_from</code>：指定 Docker 引擎用于实现缓存的镜像列表</p>
+<p><code>labels</code>：使用标签将元数据添加到生成的镜像中，可使用数组或字典</p>
+<p><code>shm_size</code>：为构建的容器设置<code>/dev/shm</code>分区的大小，指定字节数或字节值字符串，如<code>2mb</code>或<code>2000000</code></p>
+<p><code>target</code>：根据 Dockerfile 中的定义构建指定的阶段</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">build:</span><br><span class="line">  context: .</span><br><span class="line">  target: prod</span><br></pre></td></tr></table></figure>
+<p><code>cap_add</code>和<code>cap_drop</code>：添加或删除容器功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">cap_add:</span><br><span class="line">  - ALL</span><br><span class="line"></span><br><span class="line">cap_drop:</span><br><span class="line">  - NET_ADMIN</span><br><span class="line">  - SYS_ADMIN</span><br></pre></td></tr></table></figure>
+<p><code>command</code>：覆盖容器启动后默认执行的命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">command: bundle exec thin -p 3000</span><br><span class="line">或使用列表表示：</span><br><span class="line">command: [&quot;bundle&quot;, &quot;exec&quot;, &quot;thin&quot;, &quot;-p&quot;, &quot;3000&quot;]</span><br></pre></td></tr></table></figure>
+<p><code>container_name</code>：自定义该容器名称。由于 Docker 容器名称必须是唯一的，因此如果指定了自定义名称，则无法将服务扩展到多个容器</p>
+<p><code>volumes</code>：卷挂载路径设置。格式：<code>宿主机源路径:容器目的路径[:访问权限]</code>，默认访问权限为读写。可使用相对路径，相对于 compose 文件所在目录。</p>
+<p><code>links</code>：链接到另一个服务中的容器，格式：<code>服务名[:别名]</code></p>
+<p><code>external-links</code>：链接到 docker-compose.yml 外部的容器，甚至并非 Compose 管理的容器。</p>
+<p><code>expose</code>：暴露端口，但不映射到宿主机，只被连接的服务访问。最好使用字符串表示数字，因为 YAML 会解析<code>xx:yy</code>这种数字格式为 60 进制，容器端口小于 60 可能出错。</p>
+<p><code>ports</code>：暴露端口信息，格式：<code>[宿主机IP:][端口:]容器端口</code>，可用<code>-</code>表示一个端口范围</p>
+<h1 id="docker-compose-示例"><a class="markdownIt-Anchor" href="#docker-compose-示例"></a> docker-compose 示例</h1>
+<h2 id="官方-wordpress-案例"><a class="markdownIt-Anchor" href="#官方-wordpress-案例"></a> 官方 wordpress 案例</h2>
+<p>只需要一个<code>docker-compose.yml</code>文件即可</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3.3&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">db:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">mysql:5.7</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db_data:/var/lib/mysql</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">MYSQL_ROOT_PASSWORD:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">MYSQL_DATABASE:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">MYSQL_USER:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">MYSQL_PASSWORD:</span> <span class="string">wordpress</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">wordpress:</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">wordpress:latest</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8000:80&quot;</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_HOST:</span> <span class="string">db:3306</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_USER:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_PASSWORD:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_NAME:</span> <span class="string">wordpress</span></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">db_data:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>然后通过 8000 端口访问。<br />
+命令<code>docker-compose down</code>删除容器和默认网络，但保留 WordPress 数据库。</p>
+<p>命令<code>docker-compose down --volumes</code>删除容器，默认网络和 WordPress 数据库。</p>
+<h2 id="官方-django-案例"><a class="markdownIt-Anchor" href="#官方-django-案例"></a> 官方 Django 案例</h2>
+<p>配置 Dockerfile</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> python</span><br><span class="line"><span class="keyword">ENV</span> PYTHONUNBUFFERED <span class="number">1</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> mkdir /code</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /code</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> requirements.txt /code/</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> pip install -r requirements.txt</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> . /code/</span></span><br></pre></td></tr></table></figure>
+<p>配置 requirements.txt</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Django&gt;&#x3D;2.0</span><br><span class="line">psycopg2&gt;&#x3D;2.7</span><br></pre></td></tr></table></figure>
+<p>配置 compose 文件</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">db:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">postgres</span></span><br><span class="line">  <span class="attr">web:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">command:</span> <span class="string">python</span> <span class="string">manage.py</span> <span class="string">runserver</span> <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span><span class="string">:8000</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">.:/code</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8000:8000&quot;</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db</span></span><br></pre></td></tr></table></figure>
+<p>创建 Django 项目</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker-compose run web django-admin startproject djangoapp .</span><br></pre></td></tr></table></figure>
+<p>启动后，django 项目就创建完成了，当前目录就是 django 的根目录，编辑<code>settings.py</code>，修改数据库配置</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">DATABASES = &#123;</span><br><span class="line">    <span class="string">&#x27;default&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;ENGINE&#x27;</span>: <span class="string">&#x27;django.db.backends.postgresql&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;NAME&#x27;</span>: <span class="string">&#x27;postgres&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;USER&#x27;</span>: <span class="string">&#x27;postgres&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;HOST&#x27;</span>: <span class="string">&#x27;db&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;PORT&#x27;</span>: <span class="number">5432</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时根据 compose 文件中的暴露地址修改 settings 中的 <code>ALLOWED_HOSTS</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ALLOWED_HOSTS = [<span class="string">&#x27;0.0.0.0&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<p>然后<code>docker-compose up</code>启动，通过配置的 8000 端口访问</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ docker-compose ps</span><br><span class="line">     Name                    Command               State           Ports</span><br><span class="line">---------------------------------------------------------------------------------</span><br><span class="line">djangoapp_db_1    docker-entrypoint.sh postgres    Up      5432&#x2F;tcp</span><br><span class="line">djangoapp_web_1   python manage.py runserver ...   Up      0.0.0.0:8000-&gt;8000&#x2F;tcp</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">$ docker ps -a</span><br><span class="line">CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES</span><br><span class="line">17743c2c1145        djangoapp_web       &quot;python manage.py ru…&quot;   10 minutes ago      Up 17 seconds       0.0.0.0:8000-&gt;8000&#x2F;tcp   djangoapp_web_1</span><br><span class="line">4a5e0f4f5559        postgres            &quot;docker-entrypoint.s…&quot;   43 minutes ago      Up 18 seconds       5432&#x2F;tcp                 djangoapp_db_1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="官方-flask-案例"><a class="markdownIt-Anchor" href="#官方-flask-案例"></a> 官方 Flask 案例</h2>
+<p>创建<code>app.py</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> redis</span><br><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask</span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line">cache = redis.Redis(host=<span class="string">&#x27;redis&#x27;</span>, port=<span class="number">6379</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_hit_count</span>():</span></span><br><span class="line">    retries = <span class="number">5</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="keyword">return</span> cache.incr(<span class="string">&#x27;hits&#x27;</span>)</span><br><span class="line">        <span class="keyword">except</span> redis.exceptions.ConnectionError <span class="keyword">as</span> exc:</span><br><span class="line">            <span class="keyword">if</span> retries == <span class="number">0</span>:</span><br><span class="line">                <span class="keyword">raise</span> exc</span><br><span class="line">            retries -= <span class="number">1</span></span><br><span class="line">            time.sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/&#x27;</span></span>)</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">hello</span>():</span></span><br><span class="line">    count = get_hit_count()</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;Hello World! I have been seen &#123;&#125; times.\n&#x27;</span>.<span class="built_in">format</span>(count)</span><br></pre></td></tr></table></figure>
+<p>配置<code>requirements.txt</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">flask</span><br><span class="line">redis</span><br></pre></td></tr></table></figure>
+<p>创建 Dockerfile</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> python:<span class="number">3.7</span>-alpine</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="bash"> /code</span></span><br><span class="line"><span class="keyword">ENV</span> FLASK_APP app.py</span><br><span class="line"><span class="keyword">ENV</span> FLASK_RUN_HOST <span class="number">0.0</span>.<span class="number">0.0</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apk add --no-cache gcc musl-dev linux-headers</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> requirements.txt requirements.txt</span></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> pip install -r requirements.txt</span></span><br><span class="line"><span class="keyword">COPY</span><span class="bash"> . .</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;flask&quot;</span>, <span class="string">&quot;run&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+<p>创建 compose 文件</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">web:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">&quot;redis:alpine&quot;</span></span><br></pre></td></tr></table></figure>
+<p>然后<code>docker-compose up</code>启动即可，通过 5000 端口访问<br />
+也可添加 volume，存储项目代码</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">web:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">.:/code</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">FLASK_ENV:</span> <span class="string">development</span></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">&quot;redis:alpine&quot;</span></span><br></pre></td></tr></table></figure>
+<p><strong>参考文章</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/vchy_zhao/article/details/70238413">Docker 三剑客之 Compose-一</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/vchy_zhao/article/details/70238432">Docker 三剑客之 Compose-二</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/vchy_zhao/article/details/70238461">Docker 三剑客之 Compose-三</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/pushiqiang/article/details/78682323">docker-compose 教程（安装，使用, 快速入门）</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/compose/">docker-compose 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/ee900222/p/docker_5.html">Docker 系列之（五）：使用 Docker Compose 编排容器</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"><i class="fa fa-tag"></i> docker</a>
+              <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/" rel="tag"><i class="fa fa-tag"></i> 云计算</a>
+              <a href="/tags/docker-compose/" rel="tag"><i class="fa fa-tag"></i> docker-compose</a>
+              <a href="/tags/%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92/" rel="tag"><i class="fa fa-tag"></i> 容器编排</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Kubernetes%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Kubernetes学习笔记">
+      <i class="fa fa-chevron-left"></i> Kubernetes学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/BGP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="BGP学习笔记">
+      BGP学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-compose-%E4%BB%8B%E7%BB%8D"><span class="nav-text"> docker-compose 介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#compose-%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="nav-text"> Compose 文件格式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-compose-%E7%A4%BA%E4%BE%8B"><span class="nav-text"> docker-compose 示例</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9-wordpress-%E6%A1%88%E4%BE%8B"><span class="nav-text"> 官方 wordpress 案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9-django-%E6%A1%88%E4%BE%8B"><span class="nav-text"> 官方 Django 案例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%98%E6%96%B9-flask-%E6%A1%88%E4%BE%8B"><span class="nav-text"> 官方 Flask 案例</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

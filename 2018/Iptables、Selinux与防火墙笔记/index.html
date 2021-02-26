@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本片包含以下内容：  Iptables  Netfilter&#x2F;Iptables 框架 iptables 规则 iptables 应用   Selinux firewalld  参考文章">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Iptables、Selinux与防火墙笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="本片包含以下内容：  Iptables  Netfilter&#x2F;Iptables 框架 iptables 规则 iptables 应用   Selinux firewalld  参考文章">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/0.png">
+<meta property="article:published_time" content="2018-06-05T16:04:20.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.457Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="iptables">
+<meta property="article:tag" content="安全">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="Selinux">
+<meta property="article:tag" content="防火墙">
+<meta property="article:tag" content="firewalld">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/0.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Iptables、Selinux与防火墙笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Iptables、Selinux与防火墙笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-06-06 00:04:20" itemprop="dateCreated datePublished" datetime="2018-06-06T00:04:20+08:00">2018-06-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本片包含以下内容：</p>
+<ul>
+<li><a href="#iptables">Iptables</a>
+<ul>
+<li><a href="#netfilteriptables-%e6%a1%86%e6%9e%b6">Netfilter/Iptables 框架</a></li>
+<li><a href="#iptables-%e8%a7%84%e5%88%99">iptables 规则</a></li>
+<li><a href="#iptables-%e5%ba%94%e7%94%a8">iptables 应用</a></li>
+</ul>
+</li>
+<li><a href="#selinux">Selinux</a></li>
+<li><a href="#firewalld">firewalld</a>
+<ul>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0">参考文章</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h1 id="iptables"><a class="markdownIt-Anchor" href="#iptables"></a> Iptables</h1>
+<h2 id="netfilteriptables-框架"><a class="markdownIt-Anchor" href="#netfilteriptables-框架"></a> Netfilter/Iptables 框架</h2>
+<p>Netfilter 是 Linux 2.4.x 引入的一个子系统，它作为一个通用的、抽象的框架，为每种网络协议都提供一整套的 hook 函数的管理机制，使得诸如数据包过滤、网络地址转换(NAT)和基于协议类型的连接跟踪成为了可能。Netfilter 的架构就是在整个网络流程的若干位置放置了一些检测点（HOOK），而在每个检测点上登记了一些处理函数进行处理。</p>
+<p>Netfilter 采用的关键技术：</p>
+<ul>
+<li>连线跟踪（Connection Tracking）：是<strong>包过滤、地址转换的基础</strong>，它作为一个独立的模块运行。在<strong>协议栈低层截取数据包</strong>，将当前数据包及其状态信息<strong>与历史数据包及其状态信息进行比较</strong>，从而得到当前数据包的<strong>控制信息</strong>，根据这些信息决定对网络数据包的操作，达到保护网络的目的。</li>
+<li>包过滤（Packet Filtering）：检查通过的每个数据包的头部，然后根据规则处理</li>
+<li>地址转换（NAT）：网络地址转换分为源 NAT（SNAT）、目的 NAT（DNAT）和端口转换（PNAT）。SNAT 修改数据包的源 IP，DNAT 修改数据包的目的 IP。SNAT 在数据包送出之前的最后一刻做好转换工作，DNAT 在数据包进入后立刻完成转换。</li>
+<li>包处理（Packet Mangling）：可以设置或改变数据包的服务类型（TOS），改变包的生存期（TTL），在包中设置标志值，利用该标志值可以进行带宽限制和分类查询。</li>
+</ul>
+<blockquote>
+<p>资料摘自<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/netfilter/8916221?fr=aladdin#2_1">百度百科-netfilter</a></p>
+</blockquote>
+<p>Netfilter 为 IPv4 定义了 5 个 hook 函数，这些 hook 函数会在数据报流过协议栈的 5 个关键点被调用。</p>
+<ul>
+<li><code>NF_IP_PRE_ROUTING</code>：刚刚进入网络层的数据包通过此点（已完成版本号，校验和等检测）， 目的地址转换在此点进行</li>
+<li><code>NF_IP_LOCAL_IN</code>：经路由查找后，送往本机的数据包通过此检查点，INPUT 包过滤在此点进行</li>
+<li><code>NF_IP_FORWARD</code>：要转发的包通过此检测点，FORWARD 包过滤在此点进行</li>
+<li><code>NF_IP_POST_ROUTING</code>：所有马上要通过网络设备出去的包通过此检测点，内置的源地址转换 SNAT 功能（包括地址伪装）在此点进行</li>
+<li><code>NF_IP_LOCAL_OUT</code>：本机进程发出的包通过此检测点，OUTPUT 包过滤在此点进行</li>
+</ul>
+<p>Netfilter 所有的过滤规则都以模块存放在<code>/usr/lib/modules/$(uname -r)/kernel/net/netfilter/</code>目录中。在 Linux 内核版本 2.6 前，netfilter 分为<code>IPv4</code>版和<code>IPv6</code>版，分别存放在<code>/usr/lib/modules/$(uname -r)/kernel/net/ipv4</code>和<code>/usr/lib/modules/$(uname -r)/kernel/net/ipv6</code>中，Linux2.6 后进行了整合，使得 Netfilter 更加简单高效。</p>
+<h2 id="iptables-规则"><a class="markdownIt-Anchor" href="#iptables-规则"></a> iptables 规则</h2>
+<p>iptables 是一个工具，位于用户空间，用于插入，修改，删除数据包过滤表的规则。</p>
+<p>iptables 分为三部分：</p>
+<ol>
+<li>
+<p>表：分为四张表</p>
+<ol>
+<li>
+<p>raw 表：是否对该数据包进行状态跟踪</p>
+</li>
+<li>
+<p>mangle 表：为数据包设置标记，修改数据包（TOS，TTL，MARK）</p>
+</li>
+<li>
+<p>nat 表：修改数据包中源、目的 IP 地址或端口</p>
+</li>
+<li>
+<p>filter 表：过滤数据包（对数据包）</p>
+<p>顺序：<strong>raw -&gt; mangle -&gt; nat -&gt; filter</strong></p>
+</li>
+</ol>
+</li>
+<li>
+<p>链：分为五条链</p>
+<ol>
+<li>
+<p>在路由选择前处理数据包（PREROUTING）</p>
+</li>
+<li>
+<p>处理流入的数据包（这条规则起到保证内网不被侵犯的关键作用）（INPUT）</p>
+</li>
+<li>
+<p>处理流出的数据包（OUTPUT）</p>
+</li>
+<li>
+<p>处理转发的数据包（FORWARD）</p>
+</li>
+<li>
+<p>在路由选择后处理数据包（POSTROUTING）</p>
+<p>链顺序：</p>
+<ul>
+<li>入站：<strong>prerouting -&gt; input</strong></li>
+<li>出站：<strong>output -&gt; postrouting</strong></li>
+<li>转发：<strong>prerouting -&gt; forward -&gt; postrouting</strong></li>
+</ul>
+</li>
+</ol>
+</li>
+<li>
+<p>规则：规则被分组在链中，<strong>规则被添加到相应的链中，链被添加在表中</strong>。规则表默认是允许，则规则链就是被禁止的规则。若规则表是禁止的，则规则链就是被允许的规则</p>
+</li>
+</ol>
+<p><strong>完整包过滤流程：</strong></p>
+<ol>
+<li>包到达网络接口</li>
+<li>进入 raw 表的 prerouting 链（在连接跟踪前处理数据包）</li>
+<li>连接跟踪（若要做）</li>
+<li>进入 mangle 表的 prerouting 链，修改数据包</li>
+<li>进入 nat 表的 prerouting 链，做 DNAT（目标地址转换，改变数据包目的地址使包能到达内网某服务器），但不做过滤</li>
+<li>路由判断
+<ul>
+<li>若是要<strong>转发</strong>：进入<strong>mangle 表 forward 链</strong>，然后进入<strong>filter 表的 forward 链过滤</strong>，进入<strong>mangle 表的 postrouting 链</strong>，进入<strong>nat 表的 postrouting 链</strong>，做<strong>SNAT，但不过滤</strong>，然后数据包离开本机。</li>
+<li>若是<strong>发给本地</strong>的：进入<strong>mangle 表的 input 链</strong>，进入<strong>filter 表的 input 链</strong>，对数据<strong>包过滤</strong>，然后交给本地程序，处理完后<strong>先判断路由</strong>，进入<strong>raw 表的 output 链</strong>，<strong>连接跟踪</strong>对包的处理，进入<strong>mangle 表的 output 链</strong>，可<strong>修改数据包但不过滤</strong>，进入<strong>nat 表的 output 链，做 NAT</strong>，然后路由，进入<strong>filter 表的 output 链</strong>，可<strong>过滤包</strong>，进入<strong>mangle 表的 postrouiting 链</strong>，进入<strong>nat 表的 postrouting 链</strong>，做<strong>SNAT 但不过滤</strong>，包离开本机。</li>
+</ul>
+</li>
+</ol>
+<img src="/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/0.png" class="">
+<h2 id="iptables-应用"><a class="markdownIt-Anchor" href="#iptables-应用"></a> iptables 应用</h2>
+<p>iptables 有八种匹配后的触发动作：</p>
+<ol>
+<li>ACCEPT：允许通过</li>
+<li>DROP：丢弃</li>
+<li>REJECT：拒绝</li>
+<li>LOG：记录日志（syslog）</li>
+<li>DNAT：目的地址转换</li>
+<li>SNAT：源地址转换</li>
+<li>MASQUERADE：地址欺骗</li>
+<li>REDIRECT：重定向</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">iptables [-t 表名] 选项 [链名] [条件] [-j 控制类型（上面八种）]</span><br><span class="line">  -P INPUT (DROP|ACCEPT) 设置默认策略</span><br><span class="line">  -L  查看规则链</span><br><span class="line">  -F  清空规则链</span><br><span class="line">  -A  在链末尾加新规则</span><br><span class="line">  -I num  在链头部加新规则</span><br><span class="line">  -D num  删除指定规则</span><br><span class="line">  -R  替换指定链中的一条匹配规则</span><br><span class="line">  -N  创建一个新链</span><br><span class="line">  -X  删除指定用户的定义链，若未指定就删除所有用户链</span><br><span class="line">  -C  检查数据包是否与指定链规则匹配</span><br><span class="line">  -Z  将指定链中的所有规则byte计数器清零</span><br><span class="line">  匹配参数：</span><br><span class="line">  -s 匹配源IP&#x2F;mask，加！表示除该IP</span><br><span class="line">  -d  匹配目的地址</span><br><span class="line">  -i [网卡] 匹配流入网卡的数据</span><br><span class="line">  -o [网卡] 匹配流出网卡的数据</span><br><span class="line">  -p [协议] 匹配协议</span><br><span class="line">  -n   ip地址会以数字显示</span><br><span class="line">  --dport num    匹配目标端口号</span><br><span class="line">  --sport num    匹配源端口号</span><br></pre></td></tr></table></figure>
+<h1 id="selinux"><a class="markdownIt-Anchor" href="#selinux"></a> Selinux</h1>
+<h1 id="firewalld"><a class="markdownIt-Anchor" href="#firewalld"></a> firewalld</h1>
+<p>RHEL7 中 firewalld 取代了 iptables。firewalld 将所有网络流量都分类汇集到 zones，然后通过 zones 管理防火墙规则。</p>
+<p>firewalld 匹配规则：</p>
+<ul>
+<li>数据包进入系统，首先检查源 IP 地址和网卡接口，若与某个 zone 匹配，则按照该 zone 的规则过滤。每个 zone 都有开启或关闭的服务和端口列表，数据包根据列表决定是否放行。如果数据包不与任何定义的 zone 匹配，则进入默认 zone，默认 zone 的名称为<code>public</code>。firewalld 提供以下默认 zone：<code>home/drop/work/internal/block/public/trusted/dmz/external</code>，在 fedora 中，还会默认提供<code>FedoraWorkstation</code>和<code>FedoraServer</code>两个 zone。</li>
+<li></li>
+</ul>
+<p>firewall 命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd</span><br><span class="line">Status Options</span><br><span class="line">  --state              返回firewalld状态</span><br><span class="line">  --reload             重新加载firewalld，会保留状态信息</span><br><span class="line">  --complete-reload    重载firewalld，不会保留状态信息</span><br><span class="line">  --runtime-to-permanent</span><br><span class="line">                       Create permanent from runtime configuration</span><br><span class="line">  --permanent          设置为永久配置</span><br><span class="line"></span><br><span class="line">  --get-default-zone   显示默认zone</span><br><span class="line">  --set-default-zone&#x3D;&lt;zone&gt;</span><br><span class="line">                       设置默认zone</span><br><span class="line">  --get-active-zones   显示活跃的zone</span><br><span class="line">  --get-zones          显示所有预设的zone</span><br><span class="line">  --get-services       显示所有预设服务</span><br><span class="line">  --list-all-zones     列出所有zone的信息</span><br><span class="line">  --new-zone&#x3D;&lt;zone&gt;    创建新的zone</span><br><span class="line">  --delete-zone&#x3D;&lt;zone&gt; 删除指定zone</span><br><span class="line">  --load-zone-defaults&#x3D;&lt;zone&gt; 加载zone的默认配置</span><br><span class="line">  --zone&#x3D;&lt;zone&gt;        指定zone进行设置</span><br><span class="line">  --info-zone&#x3D;&lt;zone&gt;   显示指定zone的信息</span><br><span class="line">  --list-all           列出活跃的zone的信息</span><br><span class="line"></span><br><span class="line">  --list-services      列出放行的服务</span><br><span class="line">  --add-service&#x3D;&lt;service&gt;      添加放行的服务</span><br><span class="line">  --remove-service&#x3D;&lt;service&gt;   取消放行服务</span><br><span class="line">  --query-service&#x3D;&lt;service&gt;    返回服务是否放行</span><br><span class="line"></span><br><span class="line">  --list-ports         列出zone中放行的端口</span><br><span class="line">  --add-port&#x3D;&lt;portid&gt;[-&lt;portid&gt;]&#x2F;&lt;protocol&gt;     放行端口</span><br><span class="line">  --remove-port&#x3D;&lt;portid&gt;[-&lt;portid&gt;]&#x2F;&lt;protocol&gt;  取消放行端口</span><br><span class="line">  --query-port&#x3D;&lt;portid&gt;[-&lt;portid&gt;]&#x2F;&lt;protocol&gt;  返回端口是否放行</span><br><span class="line"></span><br><span class="line">  --list-protocols     列出指定区域添加的协议</span><br><span class="line">  --add-protocol&#x3D;&lt;protocol&gt; 为指定区域添加协议</span><br><span class="line">  --remove-protocol&#x3D;&lt;protocol&gt; 去除协议</span><br><span class="line">  --query-protocol&#x3D;&lt;protocol&gt; 查询是否协议被添加到区域</span><br><span class="line"></span><br><span class="line">  --list-source-ports  查看区域中定义的源端口</span><br><span class="line">  --add-source-port&#x3D;&lt;portid&gt;[-&lt;portid&gt;]&#x2F;&lt;protocol&gt; 添加设置源端口</span><br><span class="line">  --remove-source-port&#x3D;&lt;portid&gt;[-&lt;portid&gt;]&#x2F;&lt;protocol&gt; 去除源端口</span><br><span class="line">  --query-source-port&#x3D;&lt;portid&gt;[-&lt;portid&gt;]&#x2F;&lt;protocol&gt; 查询源端口是否属于该区域</span><br><span class="line"></span><br><span class="line">  --list-rich-rules    列出所有rich rules</span><br><span class="line">  --add-rich-rule&#x3D;&lt;rule&gt; 添加rich rules</span><br><span class="line">  --remove-rich-rule&#x3D;&lt;rule&gt; 去除rich rules</span><br><span class="line">  --query-rich-rule&#x3D;&lt;rule&gt; 查询指定rich rules是否属于该域</span><br><span class="line"></span><br><span class="line">  --list-interfaces    列出区域中的网卡</span><br><span class="line">  --add-interface&#x3D;&lt;interface&gt; 在区域中添加网卡</span><br><span class="line">  --query-interface&#x3D;&lt;interface&gt; 查询网卡是否属于一个区域</span><br><span class="line">  --remove-interface&#x3D;&lt;interface&gt; 从区域移除网卡</span><br><span class="line"></span><br><span class="line">  --list-sources       查看区域中定义的源</span><br><span class="line">  --add-source&#x3D;&lt;source&gt;[&#x2F;&lt;mask&gt;] 添加源</span><br><span class="line">  --query-source&#x3D;&lt;source&gt;[&#x2F;&lt;mask&gt;] 查询区域中是否有指定源</span><br><span class="line">  --remove-source&#x3D;&lt;source&gt;[&#x2F;&lt;mask&gt;]  去除区域中指定源</span><br></pre></td></tr></table></figure>
+<h3 id="参考文章"><a class="markdownIt-Anchor" href="#参考文章"></a> 参考文章</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://wangchujiang.com/linux-command/c/firewall-cmd.html">firewall-cmd</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/iptables/" rel="tag"><i class="fa fa-tag"></i> iptables</a>
+              <a href="/tags/%E5%AE%89%E5%85%A8/" rel="tag"><i class="fa fa-tag"></i> 安全</a>
+              <a href="/tags/Linux/" rel="tag"><i class="fa fa-tag"></i> Linux</a>
+              <a href="/tags/Selinux/" rel="tag"><i class="fa fa-tag"></i> Selinux</a>
+              <a href="/tags/%E9%98%B2%E7%81%AB%E5%A2%99/" rel="tag"><i class="fa fa-tag"></i> 防火墙</a>
+              <a href="/tags/firewalld/" rel="tag"><i class="fa fa-tag"></i> firewalld</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/DHCP%E7%AC%94%E8%AE%B0/" rel="prev" title="DHCP笔记">
+      <i class="fa fa-chevron-left"></i> DHCP笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/FTP%E7%AC%94%E8%AE%B0/" rel="next" title="FTP笔记">
+      FTP笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#iptables"><span class="nav-text"> Iptables</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#netfilteriptables-%E6%A1%86%E6%9E%B6"><span class="nav-text"> Netfilter&#x2F;Iptables 框架</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#iptables-%E8%A7%84%E5%88%99"><span class="nav-text"> iptables 规则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#iptables-%E5%BA%94%E7%94%A8"><span class="nav-text"> iptables 应用</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#selinux"><span class="nav-text"> Selinux</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#firewalld"><span class="nav-text"> firewalld</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-text"> 参考文章</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

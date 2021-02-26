@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本篇笔记包含以下内容  FTP 原理 VSFTP 搭建  服务器端  配置文件&#x2F;etc&#x2F;vsftpd&#x2F;vsftpd.conf简单解析 认证访问控制 使用本地用户认证 使用虚拟账户   常用客户端软件   TFTP 原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FTP笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/FTP%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="本篇笔记包含以下内容  FTP 原理 VSFTP 搭建  服务器端  配置文件&#x2F;etc&#x2F;vsftpd&#x2F;vsftpd.conf简单解析 认证访问控制 使用本地用户认证 使用虚拟账户   常用客户端软件   TFTP 原理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/FTP%E7%AC%94%E8%AE%B0/post.png">
+<meta property="og:image" content="https://github.com/2018/FTP%E7%AC%94%E8%AE%B0/pasv.png">
+<meta property="article:published_time" content="2018-06-05T16:07:17.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.436Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="ftp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/FTP%E7%AC%94%E8%AE%B0/post.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/FTP%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>FTP笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/FTP%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          FTP笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-06-06 00:07:17" itemprop="dateCreated datePublished" datetime="2018-06-06T00:07:17+08:00">2018-06-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本篇笔记包含以下内容</p>
+<ul>
+<li><a href="#ftp-%e5%8e%9f%e7%90%86">FTP 原理</a></li>
+<li><a href="#vsftp-%e6%90%ad%e5%bb%ba">VSFTP 搭建</a>
+<ul>
+<li><a href="#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af">服务器端</a>
+<ul>
+<li><a href="#%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6etcvsftpdvsftpdconf%e7%ae%80%e5%8d%95%e8%a7%a3%e6%9e%90">配置文件<code>/etc/vsftpd/vsftpd.conf</code>简单解析</a></li>
+<li><a href="#%e8%ae%a4%e8%af%81%e8%ae%bf%e9%97%ae%e6%8e%a7%e5%88%b6">认证访问控制</a></li>
+<li><a href="#%e4%bd%bf%e7%94%a8%e6%9c%ac%e5%9c%b0%e7%94%a8%e6%88%b7%e8%ae%a4%e8%af%81">使用本地用户认证</a></li>
+<li><a href="#%e4%bd%bf%e7%94%a8%e8%99%9a%e6%8b%9f%e8%b4%a6%e6%88%b7">使用虚拟账户</a></li>
+</ul>
+</li>
+<li><a href="#%e5%b8%b8%e7%94%a8%e5%ae%a2%e6%88%b7%e7%ab%af%e8%bd%af%e4%bb%b6">常用客户端软件</a></li>
+</ul>
+</li>
+<li><a href="#tftp-%e5%8e%9f%e7%90%86">TFTP 原理</a></li>
+</ul>
+<span id="more"></span>
+<h2 id="ftp-原理"><a class="markdownIt-Anchor" href="#ftp-原理"></a> FTP 原理</h2>
+<p>File Transfer Protocol 文件传输协议，基于 TCP 协议，采用 C/S 模式，控制连接端口 21，数据连接端口 20。</p>
+<ul>
+<li>控制连接：负责 FTP 客户端与服务器交互命令与信息的传输，在整个会话过程中始终打开。</li>
+<li>数据连接：负责客户端与服务器数据的传输，传输完毕就会关闭</li>
+</ul>
+<p><strong>文件类型：</strong> 一共有４种，但目前主流仅支持以下两种。</p>
+<ol>
+<li>ASCII：默认模式，发送方将文件转为 ASCII 码传输，适合文本文件传输</li>
+<li>二进制：也称图像文件传输模式，按比特流传输，适合程序文件传输</li>
+</ol>
+<p><strong>格式控制</strong>：有三种选项，但目前主流配置只允许<strong>非打印</strong>。非打印：表示文件中不含有垂直格式信息。</p>
+<p><strong>数据结构</strong>：有四种选项，但主流配置只允许<strong>文件结构</strong>。文件结构认为数据是一个连续的字节流。</p>
+<p><strong>传输模式</strong>：有四种选项，但主流仅允许<strong>流方式</strong>，文件以字节流形式传输。对于文件节后，发送方在文件结束处提示关闭数据连接。</p>
+<p><strong>数据传输方式：</strong></p>
+<ul>
+<li>主动 PORT</li>
+</ul>
+<ol>
+<li>首先客户端（随机端口）与服务器（21 端口）TCP 三次握手建立连接，建立控制连接通道</li>
+<li>客户端向服务器发送 PORT 命令，告知服务器使用主动模式。<br />
+其中 PORT 命令携带参数（客户端 IP 地址, P1, P2），P1 与 P2 用于标识客户端数据连接的临时端口号，具体为 256*P1+P2，IP 地址也是四段，每段用逗号分隔</li>
+<li>服务器收到 PORT 命令后按照参数用 20 端口与客户端指定端口三次握手建立数据传输通道。</li>
+<li>数据传输完毕，发送方发送 FIN 报文，关闭数据连接</li>
+</ol>
+<blockquote>
+<p>注：若客户端在防火墙内部网络，主动方式会出现问题，因为客户端提供的端口是随机的，防火墙若未放行该端口，则无法建立 FTP 连接。此时需要使用<strong>被动方式</strong>建立连接</p>
+</blockquote>
+<img src="/2018/FTP%E7%AC%94%E8%AE%B0/post.png" class="">
+<ul>
+<li>被动 PASV</li>
+</ul>
+<ol>
+<li>首先客户端（随机端口）与服务器（21 端口）TCP 三次握手建立连接，建立控制连接通道</li>
+<li>客户端向服务器发送 PASV 命令，参数与 PORT 一致。但 IP 是服务器的，标识的是服务器端的临时端口号。</li>
+<li>客户端用随机端口与服务器的指定临时端口 TCP 三次握手建立数据连接通道。</li>
+<li>数据传输完毕，发送方发送 FIN 报文，关闭数据连接</li>
+</ol>
+<img src="/2018/FTP%E7%AC%94%E8%AE%B0/pasv.png" class="">
+<p><strong>FTP 应答格式：</strong><br />
+服务器端处理完命令后，会将状态信息，如命令是否执行成功、出错类型、是否就绪等，通过控制连接发送给客户端，即应答。应答的目的就是对数据传输过程进行同步，也为了让客户端了解服务器目前的状态。</p>
+<p>FTP 应答由 3 个 ASCII 码数字组成，并跟随解释性文本符号。数字面向机器，文本面向用户。</p>
+<ul>
+<li>第一位：
+<ul>
+<li>1：确定预备应答：仅仅是在发送另一个命令前期待另一个应答时启动</li>
+<li>2：确定完成应答：要求的操作已完成，可接受新命令</li>
+<li>3：确定中间应答：该命令已被接受，另一个命令必须被发送</li>
+<li>4：暂时拒绝完成应答：请求的命令没有执行，但差错状态是暂时的，命令以后可以再发。</li>
+<li>5：永久拒绝完成应答：该命令不被接受，并要求不要再重试。</li>
+</ul>
+</li>
+<li>第二位：
+<ul>
+<li>0：语法错误</li>
+<li>1：一般性的解释信息</li>
+<li>2：与控制和数据连接有关</li>
+<li>3：与认证和账户登录过程有关</li>
+<li>5：与文件系统有关</li>
+</ul>
+</li>
+<li>第三位：未明确规定，指示对第二位的进一步细化。</li>
+</ul>
+<p><strong>常见 FTP 应答：</strong></p>
+<ul>
+<li>110：重新启动标记应答</li>
+<li>120：服务在多久时间内准备</li>
+<li>125：数据连接打开，传输开始</li>
+<li>150：文件状态正常，打开数据连接端口</li>
+<li>200：命令执行成功</li>
+<li>202：命令执行失败</li>
+<li>211：系统状态或是系统求助响应</li>
+<li>212：目录的状态</li>
+<li>213：文件的状态</li>
+<li>214：帮助信息</li>
+<li>215：名称系统类型</li>
+<li>220：新的联机服务准备</li>
+<li>221：服务控制连接关闭，可注销</li>
+<li>225：数据连接开启，但无传输动作</li>
+<li>226：关闭数据连接端口，请求的文件操作成功</li>
+<li>227：进入 passive modes</li>
+<li>250：请求的文件操作完成</li>
+<li>331：用户名已接受，需要输入密码</li>
+<li>332：登录时需账号信息</li>
+<li>350：请求的命令需要进一步的命令</li>
+<li>421：无法提供服务，关闭控制连接</li>
+<li>425：无法开启数据连接</li>
+<li>426：关闭联机，终止传输</li>
+<li>450：请求的操作未执行</li>
+<li>451：命令终止，有本地错误</li>
+<li>452：未执行命令，磁盘空间不足</li>
+<li>500：格式错误，无法识别命令</li>
+<li>501：参数语法错误</li>
+<li>502：命令执行失败</li>
+<li>503：命令顺序错误</li>
+<li>504：命令所接的参数不正确</li>
+<li>530：未登录</li>
+<li>532：存储文件需要账户登录</li>
+<li>550：未执行请求的操作</li>
+<li>551：请求的命令终止，类型未知</li>
+<li>552：请求的文件终止，储存位溢出</li>
+<li>553：未执行请求的命令，名称不正确</li>
+</ul>
+<h2 id="vsftp-搭建"><a class="markdownIt-Anchor" href="#vsftp-搭建"></a> VSFTP 搭建</h2>
+<p>Very Secure FTP 安全文件传输软件。针对系统的程序权限设计，有以下特点：</p>
+<ul>
+<li>将 PID 的权限降低</li>
+<li>使用 chroot 机制</li>
+<li>服务的启动者就是一个一般用户</li>
+<li>任何需要执行具有较高执行权限的 VSFTP 指令都由特殊的上层程序控制</li>
+</ul>
+<p>VSFTPD 有两种启动方式：</p>
+<ul>
+<li>stand alone：CentOS 默认使用该方式启动 VSFTPD，适合主要用于提供大量下载的任务，服务速度快。使用 systemd 管理就是 stand alone</li>
+<li>super daemon：适合内部人员小范围使用。使用 xinetd 管理就是 super daemon</li>
+</ul>
+<h3 id="服务器端"><a class="markdownIt-Anchor" href="#服务器端"></a> 服务器端</h3>
+<p>安装 vsftpd 服务<br />
+<code>yum install vsftpd</code><br />
+<code>systemctl enable vsftpd</code><br />
+<code>systemctl start vsftpd</code></p>
+<p>安装完在<code>/etc/vsftpd</code>中有四个默认文件：</p>
+<ul>
+<li><code>ftpusers</code>：指定哪些用户不能访问 FTP 服务器，即黑名单</li>
+<li><code>user_list</code>：实行访问控制的用户列表</li>
+<li><code>vsftpd.conf</code>：VSFTP 主配置文件</li>
+<li><code>vsftpd_conf_migrate.sh</code>：VSFTPD 操作的一些变量和设置的脚本</li>
+</ul>
+<h4 id="配置文件etcvsftpdvsftpdconf简单解析"><a class="markdownIt-Anchor" href="#配置文件etcvsftpdvsftpdconf简单解析"></a> 配置文件<code>/etc/vsftpd/vsftpd.conf</code>简单解析</h4>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">listen &#x3D; YES            # IPv4监听，默认是以StandAlone方式启动</span><br><span class="line">listen_ipv6 &#x3D; NO        # IPv6监听</span><br><span class="line">                        # ipv6监听若v4为yes则v6必须为no,同理v6为yes则v4为no</span><br><span class="line">listen_address &#x3D;        # 监听的IP地址</span><br><span class="line">listen_port &#x3D; 21        # 监听的端口</span><br><span class="line">port_enable &#x3D; YES       # 开启端口监听</span><br><span class="line">ftp_data_port &#x3D; 20      # 数据传输端口20</span><br><span class="line">connect_from_port_20&#x3D;YES  # 数据连接的端口号</span><br><span class="line">pasv_enable &#x3D; YES       # 是否启用被动连接</span><br><span class="line">pasv_max_port &#x3D;         # 被动连接的最大端口号</span><br><span class="line">pasv_min_port &#x3D;         # 被动连接的最小端口号</span><br><span class="line"></span><br><span class="line">connect_timeout &#x3D; 60    # 主动连接若60秒tcp无法建立就不建立了</span><br><span class="line">accept_timeout &#x3D; 60     # 被动连接若60秒tcp无法建立就不建立了</span><br><span class="line">max_clients &#x3D; 2000      # 最多允许2000用户同时登录（0为不限制）</span><br><span class="line">max_login_fails &#x3D; 3     # 最多允许3次登录失败</span><br><span class="line">max_per_ip &#x3D; 20         # 同一地址最多允许多少连接（0为不限制）</span><br><span class="line">data_connection_timeout &#x3D; 300   # 数据连接超时时间（数据无响应）就断开</span><br><span class="line">idle_session_timeout &#x3D; 300      # 用户登录上后无操作时间300s则断开</span><br><span class="line"></span><br><span class="line">user_config_dir &#x3D; &#x2F;etc&#x2F;vsftpd&#x2F;conf  #</span><br><span class="line">dirmessage_enable&#x3D;YES   # 是否启用目录提示信息，默认YES。</span><br><span class="line">                        # 当用户进入某个目录时，会先检查该目录是否存在message_file参数指定的文件</span><br><span class="line">                        # 若有就显示文件中的内容，通常用于放置欢迎语或目录说明</span><br><span class="line">message_file &#x3D;          # 设置文件路径，该文件用于存放目录的说明或欢迎语（当dirmessage_enable为YES时生效）</span><br><span class="line"></span><br><span class="line">xferlog_enable&#x3D;YES      # 是否启用详细记录上传下载的日志功能，日志文件路径由xferlog_file指定</span><br><span class="line">xferlog_file &#x3D; &#x2F;var&#x2F;log&#x2F;xferlog    # 设置文件路径，该文件用于存放目录的说明或欢迎语（当xferlog_enable为YES时生效）</span><br><span class="line">pam_service_name&#x3D;vsftpd   # PAM认证服务配置文件名，放在&#x2F;etc&#x2F;pam.d&#x2F;目录中</span><br><span class="line">tcp_wrappers&#x3D;YES          # 开启TCP_wrappers防火墙，用于在一定程度上限制某种服务的访问权限</span><br><span class="line">ftpd_banner &#x3D;             # 登录FTP服务器时的欢迎语，默认为空</span><br><span class="line"></span><br><span class="line">download_enable &#x3D; YES     # 是否允许下载</span><br><span class="line">userlist_enable &#x3D; YES     # 是否启用用户名单（对名单中的用户进行访问控制）</span><br><span class="line">chroot_list_enable &#x3D; YES  # 是否启用锁定用户在自己的主目录中的功能。</span><br><span class="line">                          # 被锁定的用户登录FTP服务器后只能进入自己的主目录，不能进入其他目录，默认为NO，应该禁用。</span><br><span class="line">                          # 锁定的用户名单文件由chroot_list_file参数指定</span><br><span class="line">chroot_local_user &#x3D; YES   # 是否将用户限制在自己的根目录中</span><br><span class="line">chroot_list_file &#x3D; &#x2F;etc&#x2F;vsftpd&#x2F;chroot_list  # 实行或不实行chroot的用户名单，默认就是该文件。文件中是一个用户一行记录</span><br><span class="line">                          # 若chroot_list_enable为enable，则该文件中的用户会chroot</span><br><span class="line">                          # 若chroot_local_user为enable（chroot_list_enable为enbale仍为前提），则该文件中的用户不会chroot</span><br><span class="line">write_enable &#x3D; YES        # 是否允许修改，默认NO</span><br><span class="line">userlist_enable&#x3D;YES       # 当用户登录FTP服务器时，在输入完账户名后，服务器会根据userlist_file中指定的用户列表进行控制</span><br><span class="line">                          # 若在该文件中，则禁止该用户输入密码。默认NO</span><br><span class="line">userlist_file &#x3D; &#x2F;etc&#x2F;vsftpd&#x2F;user_list    # 禁止访问的，默认该文件</span><br><span class="line">uesrlist_deny &#x3D; NO        # 是否不允许该文件中的用户登录ftp，需要userlist_enable&#x3D;YES</span><br><span class="line">                          # NO表示只允许该文件中的用户访问，YES表示禁止文件中的用户登录FTP</span><br><span class="line">use_localtime &#x3D; YES       # VSFTPD默认使用GMT（格林威治）时间，为防止文档时间错误，需要改为YES，即使用本地时间</span><br><span class="line">banner_file &#x3D; &#x2F;etc&#x2F;vsftpd&#x2F;welcome.txt    # 当用户登录时会显示的文字，文件必须存在</span><br></pre></td></tr></table></figure>
+<h4 id="认证访问控制"><a class="markdownIt-Anchor" href="#认证访问控制"></a> 认证访问控制</h4>
+<p>VSFTPD 提供三种认证方式：</p>
+<ul>
+<li>匿名访问 anoymous：无需认证即可登入</li>
+<li>本地用户 local：使用 ftp 服务器中的用户登录</li>
+<li>虚拟用户：创建独立 ftp 账户。是最安全的</li>
+</ul>
+<p><strong>匿名访问</strong><br />
+无需提供真正用户名和密码就能登录 FTP 服务器。最好不要开启匿名登录，若要开启就进行限制行为。</p>
+<ul>
+<li>只允许匿名用户使用少量基本的操作命令</li>
+<li>限制文件下载数量，不要允许上传</li>
+<li>限制匿名登录的最大同时联机数</li>
+</ul>
+<p>配置文件相关参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">anonymous_enable &#x3D; YES    # 是否允许匿名用户登录，默认YES</span><br><span class="line">                          # 因为是匿名模式，所以要开启。否则尽量不要匿名访问</span><br><span class="line">anon_umask &#x3D; 077          # 匿名用户创建文件的umask值，默认077，此时匿名传递的文档权限为600</span><br><span class="line">anon_root &#x3D; &#x2F;var&#x2F;ftp&#x2F;anon # 匿名用户的ftp根目录</span><br><span class="line">anon_upload_enable &#x3D; NO   # 允许匿名用户上传文件（这项生效的条件为write_enable为YES且ftp匿名用户对该目录有写权限），默认NO</span><br><span class="line">anon_mkdir_writable_enable &#x3D; NO    # 是否允许匿名用户创建目录（需要该目录的父目录的写权限），默认为NO</span><br><span class="line">anon_other_writable_enable &#x3D; NO    # 是否开放匿名用户其他写入权限，最好关闭</span><br><span class="line">anon_world_readable &#x3D; YES          # 仅允许匿名用户下载可读文档</span><br><span class="line">anon_max_rate &#x3D; 0         # 匿名用户最大传输速率，0为不限制，单位字节&#x2F;秒</span><br><span class="line"># 传输速率的控制大概有20%的上下浮动，即范围为速度*80%到120%</span><br><span class="line">no_anon_password &#x3D; NO     # 匿名用户登录是否需要密码（NO为需要，YES为不需要，默认为NO）</span><br><span class="line">                          # 若为需要，登录时输入任意字符串即可</span><br></pre></td></tr></table></figure>
+<p>在客户端上匿名登录 ftp 服务器：只要在输用户名时输入 anonymous，并任意输入字符串作为密码</p>
+<p><strong>本地用户</strong><br />
+使用 ftp 服务器本地的用户进行登录，会更加安全，也是最常用的方式。</p>
+<p>配置文件相关参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">local_enable &#x3D; YES        # 允许本地用户登录ftp，默认YES，在实际工作环境中，应该将这项设为NO</span><br><span class="line">local_umask &#x3D; 022         # 本地用户上传文件的umask，默认为077</span><br><span class="line">local_root &#x3D; &#x2F;var&#x2F;ftp     # 本地用户的根目录</span><br><span class="line">local_max_rate &#x3D; 0        # 本地用户最大传输速率，0为不限制，单位字节&#x2F;秒</span><br></pre></td></tr></table></figure>
+<p><strong>虚拟用户</strong></p>
+<p>本地用户登录时会自动转为虚拟用户，即使有大量用户登录，但最终也仅仅转为一个虚拟用户，避免了创建大量的系统用户。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">guest_enable &#x3D; YES        # 是否开启虚拟账户</span><br><span class="line">guest_username &#x3D; ftp      # 虚拟账户映射的用户名</span><br></pre></td></tr></table></figure>
+<h4 id="使用本地用户认证"><a class="markdownIt-Anchor" href="#使用本地用户认证"></a> 使用本地用户认证</h4>
+<p>创建 FTP 用户限制该用户仅能登录 FTP 服务器<code>useradd ftpuser -s /sbin/nologin</code>并设置密码。<br />
+为该用户创建一个主目录，即用户登录 FTP 后的根目录。<br />
+<code>mkdir -p /data/ftp/ftpuser/pub</code>。<br />
+其中<code>/data/ftp/ftpuser</code>为用户<code>ftpuser</code>的主目录，该目录不得上传文件，该目录下的<code>pub</code>目录供 ftpuser 用户上传文件。<br />
+<code>usermod -d /data/ftp/ftpuser ftpuser</code><br />
+<code>chmod a-w /data/ftp/ftpuser</code><br />
+<code>chmod a+w -R /data/ftp/ftpuser/pub</code></p>
+<p>配置文件中几条修改项：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">local_enable &#x3D; YES</span><br><span class="line">local_root &#x3D; &#x2F;data&#x2F;ftp</span><br></pre></td></tr></table></figure>
+<h4 id="使用虚拟账户"><a class="markdownIt-Anchor" href="#使用虚拟账户"></a> 使用虚拟账户</h4>
+<p>首先创建虚拟用户文件<code>/etc/vsftpd/visualusers</code>，文件中列出虚拟用户名和密码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ftp_visual_1</span><br><span class="line">123456</span><br><span class="line">ftp_visual_2</span><br><span class="line">234567</span><br></pre></td></tr></table></figure>
+<p>生成虚拟用户数据库（可选）。需要工具<code>libdb4-utils</code>（Berkeley DB 工具，CentOS 中是该软件包）</p>
+<p><code>db_load -T -t hash -f /etc/vsftpd/visualusers /etc/vsftpd/visualusers.db</code> ，然后修改该备份文件的访问权限<code>chmod 600 /etc/vsftpd/&#123;visualusers,visualusers.db&#125;</code></p>
+<p>创建 PAM 文件，设置账户验证。</p>
+<p>PAM 配置文件位于<code>/etc/pam.d/vsftpd</code>，该文件的名称取决于 vsftpd 主配置文件的<code>pam_service_name</code>字段。将默认配置注释，然后添加以下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">auth required &#x2F;lib64&#x2F;security&#x2F;pam_userdb.so db&#x3D;&#x2F;etc&#x2F;vsftpd&#x2F;visualusers.db</span><br><span class="line">account required &#x2F;lib64&#x2F;security&#x2F;pam_userdb.so db&#x3D;&#x2F;etc&#x2F;vsftpd&#x2F;visualusers.db</span><br></pre></td></tr></table></figure>
+<p>所有的虚拟用户都需要映射到一个真实的系统用户，因此需要添加一个系统账户并设置家目录。</p>
+<p><code>useradd -s /sbin/nologin -d /home/virtual virtual</code></p>
+<p>查看修改主配置文件（有的不用改）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">local_enable &#x3D; YES</span><br><span class="line">chroot_local_user &#x3D; YES</span><br><span class="line">pam_service_name &#x3D; vsftpd</span><br><span class="line">user_config_dir &#x3D; &#x2F;etc&#x2F;vsftpd&#x2F;visual_config     # 设置虚拟用户配置文件主目录</span><br></pre></td></tr></table></figure>
+<p>创建虚拟用户配置文件的存放目录<code>/etc/vsftpd/visual_config</code>，这样可以为每个账户做单独的权限设置</p>
+<p>创建用户<code>visual</code>的独立配置（举例）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># vim &#x2F;etc&#x2F;vsftpd&#x2F;visual_config&#x2F;visual</span><br><span class="line">guest_enable &#x3D; YES</span><br><span class="line">guest_username &#x3D; ftp_visual_1</span><br><span class="line">anon_max_rate &#x3D; 100000</span><br></pre></td></tr></table></figure>
+<h3 id="常用客户端软件"><a class="markdownIt-Anchor" href="#常用客户端软件"></a> 常用客户端软件</h3>
+<h2 id="tftp-原理"><a class="markdownIt-Anchor" href="#tftp-原理"></a> TFTP 原理</h2>
+<p>Trivial File Transfer Protocol 简单文件传输协议，基于 UDP 协议，端口号 69<br />
+<strong>特点：</strong></p>
+<ul>
+<li>仅提供简单文件传输功能（上传，下载）</li>
+<li>无存取授权与认证机制，无目录功能</li>
+<li>由客户端发起</li>
+</ul>
+<p><strong>下载过程：</strong></p>
+<ol>
+<li>客户端向服务器发送读请求</li>
+<li>服务器根据请求回应数据报文（块编号从 1 开始）</li>
+<li>客户端收到数据后回应确认报文。重复 2.3 步直至完成下载</li>
+</ol>
+<p><strong>上传过程：</strong></p>
+<ol>
+<li>客户端向服务器发送写请求</li>
+<li>服务器回应确认报文（块编号为 0）</li>
+<li>客户端发送数据报文（块编号从 1 开始）</li>
+<li>服务器收到后回应确认报文。重复 3，4 步直至上传完成</li>
+</ol>
+<blockquote>
+<p>文件传输时，将文件分成多个文件块，封装到数据报文中并打上文件块编号</p>
+</blockquote>
+<p><strong>传输文件模式：</strong></p>
+<ul>
+<li>netASCII：对应 FTP 的 ASCII 模式</li>
+<li>octet：对应 FTP 二进制模式</li>
+</ul>
+<p><strong>协议报文：</strong></p>
+<ul>
+<li>RRQ 读请求报文</li>
+<li>WRQ 写请求报文</li>
+<li>数据报文</li>
+<li>确认正确/错误报文</li>
+</ul>
+<p>报文的头两个字节是操作码字段，1 为读请求，2 为写请求，3 为数据报文，4 为确认正确，5 为错误。<br />
+文件传输过程中读写出错就发送差错报文，数据传输就停止，差错报文不会被确认也不会重传。<br />
+TFTP 每次传输的数据报文中文件块大小固定为 512 字节，若文件大小刚好是 512 字节的整数倍，则传完文件后还要再发一个空文件块的数据报文表明文件传输完成。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/ftp/" rel="tag"><i class="fa fa-tag"></i> ftp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Iptables%E3%80%81Selinux%E4%B8%8E%E9%98%B2%E7%81%AB%E5%A2%99%E7%AC%94%E8%AE%B0/" rel="prev" title="Iptables、Selinux与防火墙笔记">
+      <i class="fa fa-chevron-left"></i> Iptables、Selinux与防火墙笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" rel="next" title="常见VPN技术笔记">
+      常见VPN技术笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ftp-%E5%8E%9F%E7%90%86"><span class="nav-text"> FTP 原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#vsftp-%E6%90%AD%E5%BB%BA"><span class="nav-text"> VSFTP 搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF"><span class="nav-text"> 服务器端</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6etcvsftpdvsftpdconf%E7%AE%80%E5%8D%95%E8%A7%A3%E6%9E%90"><span class="nav-text"> 配置文件&#x2F;etc&#x2F;vsftpd&#x2F;vsftpd.conf简单解析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%A4%E8%AF%81%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6"><span class="nav-text"> 认证访问控制</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%9C%AC%E5%9C%B0%E7%94%A8%E6%88%B7%E8%AE%A4%E8%AF%81"><span class="nav-text"> 使用本地用户认证</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E8%99%9A%E6%8B%9F%E8%B4%A6%E6%88%B7"><span class="nav-text"> 使用虚拟账户</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BD%AF%E4%BB%B6"><span class="nav-text"> 常用客户端软件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tftp-%E5%8E%9F%E7%90%86"><span class="nav-text"> TFTP 原理</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Prometheus基础应用笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/image001.png">
+<meta property="og:image" content="https://github.com/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/3.png">
+<meta property="article:published_time" content="2019-12-13T03:41:10.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.584Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="监控">
+<meta property="article:tag" content="云计算">
+<meta property="article:tag" content="Prometheus">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/image001.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Prometheus基础应用笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Prometheus基础应用笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-12-13 11:41:10" itemprop="dateCreated datePublished" datetime="2019-12-13T11:41:10+08:00">2019-12-13</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。</p>
+<span id="more"></span>
+<ul>
+<li><a href="#prometheus-%e5%9f%ba%e6%9c%ac%e6%a6%82%e5%bf%b5">Prometheus 基本概念</a>
+<ul>
+<li><a href="#%e7%89%b9%e7%82%b9">特点</a></li>
+<li><a href="#%e7%bb%84%e6%88%90">组成</a></li>
+<li><a href="#%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b">工作流程</a></li>
+<li><a href="#%e6%95%b0%e6%8d%ae%e6%a8%a1%e5%9e%8b">数据模型</a></li>
+<li><a href="#%e5%9b%9b%e7%a7%8d-metric-%e7%b1%bb%e5%9e%8b">四种 Metric 类型</a></li>
+<li><a href="#instance-%e5%92%8c-jobs">instance 和 jobs</a></li>
+<li><a href="#node-exporter">Node exporter</a></li>
+<li><a href="#prometheus-server">Prometheus Server</a></li>
+<li><a href="#%e4%bd%bf%e7%94%a8-promql-%e6%9f%a5%e8%af%a2%e7%9b%91%e6%8e%a7%e6%95%b0%e6%8d%ae">使用 PromQL 查询监控数据</a>
+<ul>
+<li><a href="#%e5%b8%b8%e7%94%a8%e5%87%bd%e6%95%b0">常用函数</a></li>
+</ul>
+</li>
+<li><a href="#alertmanager-%e6%8a%a5%e8%ad%a6">AlertManager 报警</a></li>
+<li><a href="#prometheus-server-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e8%af%a6%e7%bb%86%e8%af%b4%e6%98%8e">Prometheus Server 配置文件详细说明</a></li>
+<li><a href="#http-api">HTTP API</a>
+<ul>
+<li><a href="#%e8%a1%a8%e8%be%be%e5%bc%8f%e8%af%b7%e6%b1%82">表达式请求</a></li>
+<li><a href="#%e8%af%b7%e6%b1%82%e5%85%83%e6%95%b0%e6%8d%ae">请求元数据</a></li>
+<li><a href="#targets">targets</a></li>
+<li><a href="#rules">rules</a></li>
+<li><a href="#alerts">alerts</a></li>
+<li><a href="#alertmanager">alertmanager</a></li>
+<li><a href="#status">status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="prometheus-基本概念"><a class="markdownIt-Anchor" href="#prometheus-基本概念"></a> Prometheus 基本概念</h1>
+<h2 id="特点"><a class="markdownIt-Anchor" href="#特点"></a> 特点</h2>
+<p>强大的多维度数据模型：</p>
+<ul>
+<li>时间序列数据通过 metric 名和键值对来区分。</li>
+<li>所有的 metrics 都可以设置任意的多维标签。</li>
+<li>数据模型更随意，不需要刻意设置为以点分隔的字符串。</li>
+<li>可以对数据模型进行聚合，切割和切片操作。</li>
+<li>支持双精度浮点类型，标签可以设为全 unicode。</li>
+<li>灵活而强大的查询语句（PromQL）：在同一个查询语句，可以对多个 metrics 进行乘法、加法、连接、取分数位等操作。</li>
+<li>易于管理： Prometheus server 是一个单独的二进制文件，可直接在本地工作，不依赖于分布式存储。</li>
+<li>高效：平均每个采样点仅占 3.5 bytes，且一个 Prometheus server 可以处理数百万的 metrics。</li>
+<li>使用 pull 模式采集时间序列数据，这样不仅有利于本机测试而且可以避免有问题的服务器推送坏的 metrics。</li>
+<li>可以采用 push gateway 的方式把时间序列数据推送至 Prometheus server 端。</li>
+<li>可以通过服务发现或者静态配置去获取监控的 targets。</li>
+<li>有多种可视化图形界面。</li>
+<li>易于伸缩。</li>
+</ul>
+<blockquote>
+<p>由于数据采集可能会有丢失，所以 Prometheus 不适用对采集数据要 100% 准确的情形</p>
+</blockquote>
+<h2 id="组成"><a class="markdownIt-Anchor" href="#组成"></a> 组成</h2>
+<ul>
+<li>Prometheus Server: 用于收集和存储时间序列数据。Prometheus Server 本身就是一个时序数据库，将采集到的监控数据按照时间序列的方式存储在本地磁盘当中。</li>
+<li>Client Library: 客户端库，为需要监控的服务生成相应的 metrics 并暴露给 Prometheus server。当 Prometheus server 来 pull 时，直接返回实时状态的 metrics。</li>
+<li>Exporters: Exporter 将监控数据采集的端点通过 HTTP 服务的形式暴露给 Prometheus Server，Prometheus Server 通过访问该 Exporter 提供的 Endpoint 端点，即可获取到需要采集的监控数据<br />
+一般来说可以将 Exporter 分为 2 类：
+<ul>
+<li>直接采集：这一类 Exporter 直接内置了对 Prometheus 监控的支持，比如 cAdvisor，Kubernetes，Etcd，Gokit 等，都直接内置了用于向 Prometheus 暴露监控数据的端点。</li>
+<li>间接采集：间接采集，原有监控目标并不直接支持 Prometheus，因此我们需要通过 Prometheus 提供的 Client Library 编写该监控目标的监控采集程序。例如： Mysql Exporter，JMX Exporter，Consul Exporter 等。</li>
+</ul>
+</li>
+<li>Alertmanager: 在 Prometheus Server 中支持基于 PromQL 创建告警规则，如果满足 PromQL 定义的规则，则会产生一条告警，而告警的后续处理流程则由 AlertManager 进行管理。在 AlertManager 中我们可以与邮件，Slack 等等内置的通知方式进行集成，也可以通过 Webhook 自定义告警处理方式。<br />
+AlertManager 即 Prometheus 体系中的告警处理中心。从 Prometheus server 端接收到 alerts 后，会进行去除重复数据，分组，并路由到对收的接受方式，发出报警。常见的接收方式有：电子邮件，pagerduty，OpsGenie, webhook 等。</li>
+<li>Push Gateway: 主要用于短期的 jobs。由于这类 jobs 存在时间较短，可能在 Prometheus 来 pull 之前就消失了。为此，这次 jobs 可以直接向 Prometheus server 端推送它们的 metrics。这种方式主要用于服务层面的 metrics，对于机器层面的 metrices，需要使用 node exporter。</li>
+</ul>
+<p><img src="https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/image001.png" alt="" /></p>
+<h2 id="工作流程"><a class="markdownIt-Anchor" href="#工作流程"></a> 工作流程</h2>
+<p>Prometheus server 定期从配置好的 jobs 或者 exporters 中拉 metrics，或者接收来自 Pushgateway 发过来的 metrics，或者从其他的 Prometheus server 中拉 metrics。<br />
+Prometheus server 在本地存储收集到的 metrics，并运行已定义好的 alert.rules，记录新的时间序列或者向 Alertmanager 推送报警。<br />
+Alertmanager 根据配置文件，对接收到的报警进行处理，发出告警。<br />
+在图形界面中，可视化采集数据。</p>
+<h2 id="数据模型"><a class="markdownIt-Anchor" href="#数据模型"></a> 数据模型</h2>
+<p>Prometheus 中存储的数据为时间序列，是由 metric 的名字和一系列的标签（键值对）唯一标识的，不同的标签则代表不同的时间序列。</p>
+<ul>
+<li>metric name：该名字应该具有语义，一般用于表示 metric 的功能，例如：<code>http*requests_total</code>, 表示 http 请求的总数。其中，metric 名字由 ASCII 字符，数字，下划线，以及冒号组成，且必须满足正则表达式 <code>[a-zA-Z*:][a-zA-Z0-9_:]\_</code>。</li>
+<li>标签 label：使同一个时间序列有了不同维度的识别。例如 <code>http*requests_total&#123;method=&quot;Get&quot;&#125;</code> 表示所有 http 请求中的 Get 请求。当 method=“post” 时，则为新的一个 metric。标签中的键由 ASCII 字符，数字，以及下划线组成，且必须满足正则表达式 <code>[a-zA-Z*:][a-zA-Z0-9_:]\_</code>。</li>
+<li>样本 timestamp + value：实际的时间序列，每个序列包括一个 float64 的值和一个毫秒级的时间戳。</li>
+<li>格式：<code>&lt;metric name&gt;&#123;&lt;label name&gt;=&lt;label value&gt;, …&#125;</code>，例如：<code>http_requests_total&#123;method=&quot;POST&quot;,endpoint=&quot;/api/tracks&quot;&#125;</code>。</li>
+</ul>
+<h2 id="四种-metric-类型"><a class="markdownIt-Anchor" href="#四种-metric-类型"></a> 四种 Metric 类型</h2>
+<p>Prometheus 客户端库主要提供四种主要的 metric 类型：</p>
+<ul>
+<li>Counter<br />
+一种累加的 metric，只增不减（除非系统发生重置），典型的应用如：<code>http_requests_total</code>，<code>node_cpu</code> 等等。<br />
+例如，查询 <code>http_requests_total&#123;method=&quot;get&quot;, job=&quot;Prometheus&quot;, handler=&quot;query&quot;&#125;</code> 返回 <code>8</code>，10 秒后，再次查询，则返回<code>14</code>。<br />
+一般在定义 Counter 类型指标的名称时推荐使用_total 作为后缀。</li>
+<li>Gauge<br />
+一种常规的 metric，典型的应用如：温度，运行的 goroutines 的个数。Gauge 类型的指标侧重于反应系统的当前状态。<br />
+可以任意加减。<br />
+例如：<code>go_goroutines&#123;instance=&quot;172.17.0.2&quot;, job=&quot;Prometheus&quot;&#125;</code> 返回值 <code>147</code>，10 秒后返回 <code>124</code>。</li>
+<li>Histogram<br />
+可以理解为柱状图，典型的应用如：请求持续时间，响应大小。<br />
+可以对观察结果采样，分组及统计。</li>
+<li>Summary<br />
+类似于 Histogram, 典型的应用如：请求持续时间，响应大小。<br />
+提供观测值的 count 和 sum 功能。<br />
+提供百分位的功能，即可以按百分比划分跟踪结果。</li>
+</ul>
+<p>Histogram 和 Summary 主用用于统计和分析样本的分布情况。</p>
+<p>在大多数情况下人们都倾向于使用某些量化指标的平均值，例如 CPU 的平均使用率、页面的平均响应时间。这种方式的问题很明显，以系统 API 调用的平均响应时间为例：如果大多数 API 请求都维持在 100ms 的响应时间范围内，而个别请求的响应时间需要 5s，那么就会导致某些 WEB 页面的响应时间落到中位数的情况，而这种现象被称为长尾问题。</p>
+<p>为了区分是平均的慢还是长尾的慢，最简单的方式就是按照请求延迟的范围进行分组。例如，统计延迟在 0~10ms 之间的请求数有多少而 10~20ms 之间的请求数又有多少。通过这种方式可以快速分析系统慢的原因。Histogram 和 Summary 都是为了能够解决这样问题的存在，通过 Histogram 和 Summary 类型的监控指标，我们可以快速了解监控样本的分布情况。</p>
+<p>与 Summary 类型的指标相似之处在于 Histogram 类型的样本同样会反应当前指标的记录的总数(以<code>_count</code> 作为后缀)以及其值的总量（以<code>_sum</code> 作为后缀）。不同在于 Histogram 指标直接反应了在不同区间内样本的个数，区间通过标签 len 进行定义。</p>
+<p>不同在于 Histogram 通过 <code>histogram_quantile</code> 函数是在服务器端计算的分位数。 而 Sumamry 的分位数则是直接在客户端计算完成。因此对于分位数的计算而言，Summary 在通过 PromQL 进行查询时有更好的性能表现，而 Histogram 则会消耗更多的资源。反之对于客户端而言 Histogram 消耗的资源更少。</p>
+<h2 id="instance-和-jobs"><a class="markdownIt-Anchor" href="#instance-和-jobs"></a> instance 和 jobs</h2>
+<ul>
+<li>instance: 一个单独 scrape 的目标， 一般对应于一个进程。</li>
+<li>jobs: 一组同种类型的 instances（主要用于保证可扩展性和可靠性）</li>
+</ul>
+<h2 id="node-exporter"><a class="markdownIt-Anchor" href="#node-exporter"></a> Node exporter</h2>
+<p>主要用于暴露 metrics 给 Prometheus，其中 metrics 包括：cpu 的负载，内存的使用情况，网络等。<br />
+下载安装：<a target="_blank" rel="noopener" href="https://prometheus.io/download/#node_exporter">https://prometheus.io/download/#node_exporter</a><br />
+解压后将 node_exporter 放到<code>/usr/local/bin</code>中，然后执行。可通过浏览器访问 9100 端口<code>/metrics</code>查看</p>
+<p>可创建 systemd 服务：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;node_exporter</span><br><span class="line">After&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;node_exporter</span><br><span class="line">Restart&#x3D;on-failure</span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure>
+<p>docker 启动：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d -p 9100:9100 -v &#x2F;proc:&#x2F;host&#x2F;proc -v &#x2F;sys:&#x2F;host&#x2F;sys -v &#x2F;:&#x2F;rootfs prom&#x2F;node-exporter</span><br></pre></td></tr></table></figure>
+<h2 id="prometheus-server"><a class="markdownIt-Anchor" href="#prometheus-server"></a> Prometheus Server</h2>
+<p>下载安装：<a target="_blank" rel="noopener" href="https://prometheus.io/download/#prometheus">https://prometheus.io/download/#prometheus</a><br />
+解压后将目录中的命令（prometheus、promtool、tsdb）放到<code>/usr/local/bin</code> 中。<br />
+其采集的数据会以文件的形似存储在本地中，默认的存储路径为当前目录的 <code>data/</code>中。若不存在会自动创建。<br />
+用户也可以通过参数<code>--storage.tsdb.path=&quot;data/&quot;</code>修改本地数据存储的路径。<br />
+<strong>但是启动一定要 <code>prometheus.yml</code> 文件，若没有就启动不了</strong></p>
+<p>默认配置文件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">global:</span><br><span class="line">scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.</span><br><span class="line">evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.</span><br><span class="line"></span><br><span class="line">alerting:</span><br><span class="line">alertmanagers:</span><br><span class="line"></span><br><span class="line">- static_configs:</span><br><span class="line">  - targets:</span><br><span class="line"></span><br><span class="line">rule_files:</span><br><span class="line"></span><br><span class="line">scrape_configs:</span><br><span class="line">- job_name: &#39;prometheus&#39;</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets: [&#39;localhost:9090&#39;]</span><br></pre></td></tr></table></figure>
+<p>配置为 systemd 服务：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;Prometheus Server</span><br><span class="line">After&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">Restart&#x3D;on-failure</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;prometheus --config.file&#x3D;&#x2F;etc&#x2F;prometheus&#x2F;prometheus.yml --storage.tsdb.path&#x3D;&#x2F;var&#x2F;lib&#x2F;prometheus</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure>
+<p>docker 启动：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -p 9090:9090 -v &#x2F;etc&#x2F;prometheus&#x2F;prometheus.yml:&#x2F;etc&#x2F;prometheus&#x2F;prometheus.yml prom&#x2F;prometheus</span><br></pre></td></tr></table></figure>
+<p>启动后，可通过 9090 端口访问 web 页面，或<code>/metrics</code> 访问纯数据</p>
+<p>为了能够让 Prometheus Server 能够从当前 node exporter 获取到监控数据，这里需要修改 Prometheus 配置文件。编辑<code>prometheus.yml</code> 并在 <code>scrape_configs</code> 节点下添加以下内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">scrape_configs:</span><br><span class="line">- job_name: &#39;prometheus&#39;</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets: [&#39;localhost:9090&#39;]</span><br><span class="line"></span><br><span class="line"># 采集 node exporter 监控数据</span><br><span class="line"></span><br><span class="line">- job_name: &#39;node&#39;</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets: [&#39;localhost:9100&#39;]</span><br></pre></td></tr></table></figure>
+<p>在 web 上选择参数 up，就能看到指定的参数的值</p>
+<img src="/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>常见指标：</p>
+<ul>
+<li><code>node*boot_time</code>：系统启动时间</li>
+<li><code>node_cpu</code>：系统 CPU 使用量</li>
+<li><code>nodedisk*</code>：磁盘 IO</li>
+<li><code>nodefilesystem*</code>：文件系统用量</li>
+<li><code>node_load1</code>：系统负载</li>
+<li><code>nodememeory*</code>：内存使用量</li>
+<li><code>nodenetwork*</code>：网络带宽</li>
+<li><code>node_time</code>：当前系统时间</li>
+<li><code>go*_</code>：node exporter 中 go 相关指标</li>
+<li><code>process__</code>：node exporter 自身进程相关运行指标</li>
+</ul>
+<h2 id="使用-promql-查询监控数据"><a class="markdownIt-Anchor" href="#使用-promql-查询监控数据"></a> 使用 PromQL 查询监控数据</h2>
+<p>PromQL 是 Prometheus 自定义的一套强大的数据查询语言，除了使用监控指标作为查询关键字以为，还内置了大量的函数，帮助用户进一步对时序数据进行处理。</p>
+<p>可通过<code>node_cpu_seconds_total&#123;mode='idle'&#125;</code>查找具体的某项的值<br />
+<code>rate(node_cpu_seconds_total&#123;mode='idle'&#125;[2m])</code> 查看过去 2min 的增长速率</p>
+<p>在 Prometheus 中，每一个暴露监控样本数据的 HTTP 服务称为一个实例。例如在当前主机上运行的 node exporter 可以被称为一个实例(Instance)。<br />
+当前在每一个 Job 中主要使用了静态配置(static_configs)的方式定义监控目标。除了静态配置每一个 Job 的采集 Instance 地址以外，Prometheus 还支持与 DNS、Consul、E2C、Kubernetes 等进行集成实现自动发现 Instance 实例，并从这些 Instance 上获取监控数据。<br />
+除了通过使用“up”表达式查询当前所有 Instance 的状态以外，还可以通过 Prometheus UI 中的 Targets 页面查看当前所有的监控采集任务，以及各个任务下所有实例的状态:</p>
+<img src="/2019/Prometheus%E5%9F%BA%E7%A1%80%E5%BA%94%E7%94%A8%E7%AC%94%E8%AE%B0/3.png" class="">
+<p>Prometheus 会将所有采集到的样本数据以时间序列（time-series）的方式保存在内存数据库中，并且定时保存到硬盘上。time-series 是按照时间戳和值的序列顺序存放的，我们称之为向量(vector). 每条 time-series 通过指标名称(metrics name)和一组标签集(labelset)命名。</p>
+<p>在 time-series 中的每一个点称为一个样本（sample），样本由以下三部分组成：</p>
+<ul>
+<li>指标(metric)：metric name 和描述当前样本特征的 labelsets;</li>
+<li>时间戳(timestamp)：一个精确到毫秒的时间戳;</li>
+<li>样本值(value)： 一个 float64 的浮点型数据表示当前样本的值。</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http_request_total&#123;status&#x3D;&quot;200&quot;, method&#x3D;&quot;GET&quot;&#125;@1434417560938 &#x3D;&gt; 94355</span><br><span class="line">|----metric name--|----------labelsets-------|---timestamp--|--value-|</span><br></pre></td></tr></table></figure>
+<p>其中<code>__</code>作为前缀的标签，是系统保留的关键字，只能在系统内部使用。标签的值则可以包含任何 Unicode 编码的字符。在 Prometheus 的底层实现中指标名称实际上是以<code>__name__=&lt;metric name&gt;</code>的形式保存在数据库中的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http_request_total&#123;status&#x3D;&quot;200&quot;, method&#x3D;&quot;GET&quot;&#125; &#x3D;&#x3D; &#123;__name__&#x3D;&quot;http_request_total&quot;, status&#x3D;&quot;200&quot;, method&#x3D;&quot;GET&quot;&#125;</span><br></pre></td></tr></table></figure>
+<p>PromQL 支持用户根据时间序列的标签匹配模式来对时间序列进行过滤，目前主要支持两种匹配模式：完全匹配和正则匹配。<br />
+PromQL 支持使用=和!=两种完全匹配模式<br />
+PromQL 还可以支持使用正则表达式作为匹配条件，多个表达式之间使用<code>|</code>进行分离：</p>
+<ul>
+<li>使用<code>label=~regx</code>表示选择那些标签符合正则表达式定义的时间序列；</li>
+<li>反之使用<code>label!~regx</code>进行排除；</li>
+</ul>
+<p>直接查找时，返回值中只会包含该时间序列中的最新的一个样本值，这样的返回结果我们称之为瞬时向量。而相应的这样的表达式称之为瞬时向量表达式。如果我们想过去一段时间范围内的样本数据时，我们则需要使用区间向量表达式，时间范围通过时间范围选择器[]进行定义，通过区间向量表达式查询到的结果我们称为区间向量。时间选择器单位：<code>s - 秒</code>、<code>m - 分钟</code>、<code>h - 小时</code>、<code>d - 天</code>、<code>w - 周</code>、<code>y - 年</code><br />
+如果想查询，5 分钟前的瞬时样本数据，或昨天一天的区间内的样本数据，可以使用位移操作，位移操作的关键字为 offset。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http_request_total&#123;&#125; offset 5m</span><br><span class="line">http_request_total&#123;&#125;[1d] offset 1d</span><br></pre></td></tr></table></figure>
+<p>如果描述样本特征的标签(label)在并非唯一的情况下，通过 PromQL 查询数据，会返回多条满足这些特征维度的时间序列。而 PromQL 提供的聚合操作可以用来对这些时间序列进行处理，形成一条新的时间序列</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># 查询系统所有 http 请求的总量</span><br><span class="line">sum(http_request_total)</span><br><span class="line"></span><br><span class="line"># 按照 mode 计算主机 CPU 的平均使用时间</span><br><span class="line">avg(node_cpu) by (mode)</span><br><span class="line"></span><br><span class="line"># 按照主机查询各个主机的 CPU 使用率</span><br><span class="line">sum(sum(irate(node_cpu&#123;mode!&#x3D;&#39;idle&#39;&#125;[5m])) &#x2F; sum(irate(node_cpu[5m]))) by (instance)</span><br></pre></td></tr></table></figure>
+<p>PromQL 还直接支持用户使用标量(Scalar)和字符串(String)。</p>
+<ul>
+<li>标量（Scalar）：一个浮点型的数字值，标量只有一个数字，没有时序。</li>
+<li>字符串（String）：一个简单的字符串值，直接使用字符串，作为 PromQL 表达式，则会直接返回字符串。</li>
+</ul>
+<p>PromQL 还支持丰富的操作符，用户可以使用这些操作符对进一步的对事件序列进行二次加工。这些操作符包括：数学运算符，逻辑运算符，布尔运算符等等。<br />
+数学运算工作方式：依次找到与左边向量元素匹配（标签完全一致）的右边向量元素进行运算，如果没找到匹配元素，则直接丢弃。同时新的时间序列将不会包含指标名称。<br />
+布尔运算则支持用户根据时间序列中样本的值，对时间序列进行过滤。瞬时向量与标量进行布尔运算时，PromQL 依次比较向量中的所有时间序列样本的值，如果比较结果为 true 则保留，反之丢弃。瞬时向量与瞬时向量直接进行布尔运算时，同样遵循默认的匹配模式：依次找到与左边向量元素匹配（标签完全一致）的右边向量元素进行相应的操作，如果没找到匹配元素，则直接丢弃。</p>
+<p>布尔运算符的默认行为是对时序数据进行过滤。而在其它的情况下我们可能需要的是真正的布尔结果。这时可以使用 bool 修饰符改变布尔运算的默认行为。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http_requests_total &gt; bool 1000</span><br></pre></td></tr></table></figure>
+<p>使用 bool 修改符后，布尔运算不会对时间序列进行过滤，而是直接依次瞬时向量中的各个样本数据与标量的比较结果 0 或者 1。从而形成一条新的时间序列。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">http_requests_total&#123;code&#x3D;&quot;200&quot;,handler&#x3D;&quot;query&quot;,instance&#x3D;&quot;localhost:9090&quot;,job&#x3D;&quot;prometheus&quot;,method&#x3D;&quot;get&quot;&#125; 1</span><br><span class="line">http_requests_total&#123;code&#x3D;&quot;200&quot;,handler&#x3D;&quot;query_range&quot;,instance&#x3D;&quot;localhost:9090&quot;,job&#x3D;&quot;prometheus&quot;,method&#x3D;&quot;get&quot;&#125; 0</span><br></pre></td></tr></table></figure>
+<p>如果是在两个标量之间使用布尔运算，则必须使用 bool 修饰符</p>
+<p>通过集合运算，可以在两个瞬时向量与瞬时向量之间进行相应的集合操作。支持以下集合运算符：<code>and</code> (并且)， <code>or</code> (或者) ，<code>unless</code> (排除)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">vector1 and vector2 会产生一个由 vector1 的元素组成的新的向量。该向量包含 vector1 中完全匹配 vector2 中的元素组成。</span><br><span class="line">vector1 or vector2 会产生一个新的向量，该向量包含 vector1 中所有的样本数据，以及 vector2 中没有与 vector1 匹配到的样本数据。</span><br><span class="line">vector1 unless vector2 会产生一个新的向量，新向量中的元素由 vector1 中没有与 vector2 匹配的元素组成。</span><br></pre></td></tr></table></figure>
+<p>在 PromQL 操作符中优先级由高到低依次为：</p>
+<ol>
+<li><code>^</code></li>
+<li><code>*</code>, <code>/</code>, <code>%</code></li>
+<li><code>+</code>, <code>-</code></li>
+<li><code>==</code>, <code>!=</code>, <code>&lt;=</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&gt;</code></li>
+<li><code>and</code>, <code>unless</code></li>
+<li><code>or</code></li>
+</ol>
+<p>PromQL 中有两种典型的匹配模式：一对一（one-to-one）,多对一（many-to-one）或一对多（one-to-many）。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vector1 &lt;operator&gt; vector2</span><br></pre></td></tr></table></figure>
+<p>在操作符两边表达式标签不一致的情况下，可以使用 on(label list)或者 ignoring(label list）来修改便签的匹配行为。使用 ignoring 可以在匹配时忽略某些便签。而 on 则用于将匹配行为限定在某些便签之内。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; ignoring(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; on(&lt;label list&gt;) &lt;vector expr&gt;</span><br></pre></td></tr></table></figure>
+<p>对于样本：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">method_code:http_errors:rate5m&#123;method&#x3D;&quot;get&quot;, code&#x3D;&quot;500&quot;&#125; 24</span><br><span class="line">method_code:http_errors:rate5m&#123;method&#x3D;&quot;get&quot;, code&#x3D;&quot;404&quot;&#125; 30</span><br><span class="line">method_code:http_errors:rate5m&#123;method&#x3D;&quot;put&quot;, code&#x3D;&quot;501&quot;&#125; 3</span><br><span class="line">method_code:http_errors:rate5m&#123;method&#x3D;&quot;post&quot;, code&#x3D;&quot;500&quot;&#125; 6</span><br><span class="line">method_code:http_errors:rate5m&#123;method&#x3D;&quot;post&quot;, code&#x3D;&quot;404&quot;&#125; 21</span><br><span class="line"></span><br><span class="line">method:http_requests:rate5m&#123;method&#x3D;&quot;get&quot;&#125; 600</span><br><span class="line">method:http_requests:rate5m&#123;method&#x3D;&quot;del&quot;&#125; 34</span><br><span class="line">method:http_requests:rate5m&#123;method&#x3D;&quot;post&quot;&#125; 120</span><br></pre></td></tr></table></figure>
+<p>若要对两个关键字进行操作，必须进行限制一方的标签，否则无法匹配，通过 ignoring，将 code 标签忽略</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">method_code:http_errors:rate5m&#123;code&#x3D;&quot;500&quot;&#125; &#x2F; ignoring(code) method:http_requests:rate5m</span><br></pre></td></tr></table></figure>
+<p>匹配的结果</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123;method&#x3D;&quot;get&quot;&#125; 0.04 &#x2F;&#x2F; 24 &#x2F; 600 第一行与第七行</span><br><span class="line">&#123;method&#x3D;&quot;post&quot;&#125; 0.05 &#x2F;&#x2F; 6 &#x2F; 120 第四行与第九行</span><br></pre></td></tr></table></figure>
+<p>多对一和一对多两种匹配模式指的是“一”侧的每一个向量元素可以与&quot;多&quot;侧的多个元素匹配的情况。在这种情况下，必须使用 group 修饰符：group_left 或者 group_right 来确定哪一个向量具有更高的基数（充当“多”的角色）。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; ignoring(&lt;label list&gt;) group_left(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; ignoring(&lt;label list&gt;) group_right(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; on(&lt;label list&gt;) group_left(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; on(&lt;label list&gt;) group_right(&lt;label list&gt;) &lt;vector expr&gt;</span><br></pre></td></tr></table></figure>
+<p>多对一和一对多两种模式一定是出现在操作符两侧表达式返回的向量标签不一致的情况。因此需要使用 ignoring 和 on 修饰符来排除或者限定匹配的标签列表。<br />
+同样用上面的例子，右向量中的元素可能匹配到多个左向量中的元素 因此该表达式的匹配模式为多对一，需要使用 group 修饰符 group_left 指定左向量具有更好的基数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">method_code:http_errors:rate5m &#x2F; ignoring(code) group_left method:http_requests:rate5m</span><br></pre></td></tr></table></figure>
+<p>匹配结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;method&#x3D;&quot;get&quot;, code&#x3D;&quot;500&quot;&#125; 0.04 &#x2F;&#x2F; 24 &#x2F; 600</span><br><span class="line">&#123;method&#x3D;&quot;get&quot;, code&#x3D;&quot;404&quot;&#125; 0.05 &#x2F;&#x2F; 30 &#x2F; 600</span><br><span class="line">&#123;method&#x3D;&quot;post&quot;, code&#x3D;&quot;500&quot;&#125; 0.05 &#x2F;&#x2F; 6 &#x2F; 120</span><br><span class="line">&#123;method&#x3D;&quot;post&quot;, code&#x3D;&quot;404&quot;&#125; 0.175 &#x2F;&#x2F; 21 &#x2F; 120</span><br></pre></td></tr></table></figure>
+<p>group 修饰符只能在比较和数学运算符中使用。在逻辑运算 and,unless 和 or 才注意操作中默认与右向量中的所有元素进行匹配。</p>
+<p>PromQL 聚合可以将瞬时表达式返回的样本数据进行聚合，形成一个具有较少样本值的新的时间序列。</p>
+<ul>
+<li><code>sum</code> (求和)</li>
+<li><code>min</code> (最小值)</li>
+<li><code>max</code> (最大值)</li>
+<li><code>avg</code> (平均值)</li>
+<li><code>stddev</code> (标准差)</li>
+<li><code>stdvar</code> (标准差异)</li>
+<li><code>count</code> (计数)</li>
+<li><code>count_values</code> (对 value 进行计数)</li>
+<li><code>bottomk</code> (样本值最小的 k 个元素)</li>
+<li><code>topk</code> (样本值最大的 k 个元素)</li>
+<li><code>quantile</code> (分布统计)</li>
+</ul>
+<p>这些操作符被用于聚合所有标签维度，或者通过 without 或者 by 子语句来保留不同的维度。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;aggr-op&gt;([parameter,] &lt;vector expression&gt;) [without|by (&lt;label list&gt;)]</span><br></pre></td></tr></table></figure>
+<p>其中只有 count_values, quantile, topk, bottomk 支持参数(parameter)。<br />
+without 用于从计算结果中移除列举的标签，而保留其它标签。by 则正好相反，结果向量中只保留列出的标签，其余标签则移除。通过 without 和 by 可以按照样本的问题对数据进行聚合。</p>
+<p>如果指标 http_requests_total 的时间序列的标签集为 application, instance, 和 group，我们可以通过以下方式计算所有 instance 中每个 application 和 group 的请求总量：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sum(http_requests_total) without (instance)</span><br></pre></td></tr></table></figure>
+<p>等价于</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sum(http_requests_total) by (application, group)</span><br></pre></td></tr></table></figure>
+<p>如果只需要计算整个应用的 HTTP 请求总量，可以直接使用表达式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sum(http_requests_total)</span><br></pre></td></tr></table></figure>
+<p><code>count_values</code> 用于时间序列中每一个样本值出现的次数。<code>count_values</code>会为每一个唯一的样本值输出一个时间序列，并且每一个时间序列包含一个额外的标签。这个标签的名字由聚合参数指定，同时这个标签值是唯一的样本值。<br />
+例如要计算运行每个构建版本的二进制文件的数量：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">count_values(&quot;version&quot;, build_version)</span><br></pre></td></tr></table></figure>
+<p>返回结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;count&#x3D;&quot;641&quot;&#125; 1</span><br><span class="line">&#123;count&#x3D;&quot;3226&quot;&#125; 2</span><br><span class="line">&#123;count&#x3D;&quot;644&quot;&#125; 4</span><br></pre></td></tr></table></figure>
+<p><code>topk</code> 和 <code>bottomk</code> 则用于对样本值进行排序，返回当前样本值前 n 位，或者后 n 位的时间序列。<br />
+获取 HTTP 请求数前 5 位的时序样本数据，可以使用表达式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">topk(5, http_requests_total)</span><br></pre></td></tr></table></figure>
+<p><code>quantile</code> 用于计算当前样本数据值的分布情况 <code>quantile(φ, express)</code> ，其中 0 ≤ φ ≤ 1。<br />
+例如，当 φ 为 0.5 时，即表示找到当前样本数据中的中位数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">quantile(0.5, http_requests_total)</span><br></pre></td></tr></table></figure>
+<p>返回结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;&#125; 656</span><br></pre></td></tr></table></figure>
+<h3 id="常用函数"><a class="markdownIt-Anchor" href="#常用函数"></a> 常用函数</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">函数名</th>
+<th>作用</th>
+<th style="text-align:center">函数名</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">abs</td>
+<td>返回绝对值</td>
+<td style="text-align:center">absent</td>
+<td>检查是否有样本数据</td>
+</tr>
+<tr>
+<td style="text-align:center">ceil</td>
+<td>向上取整</td>
+<td style="text-align:center">floor</td>
+<td>向下取整</td>
+</tr>
+<tr>
+<td style="text-align:center">changes</td>
+<td>区间向量内每个样本数据值变化的次数</td>
+<td style="text-align:center">clamp_max</td>
+<td>样本数据值若大于 max，则改为 max</td>
+</tr>
+<tr>
+<td style="text-align:center">clamp_min</td>
+<td>样本数据值若小于 min，则改为 min</td>
+<td style="text-align:center">delta</td>
+<td>区间向量第一个元素和最后一个元素之间的差值</td>
+</tr>
+<tr>
+<td style="text-align:center">increase</td>
+<td>区间向量中的第一个和最后一个样本并返回其增长量</td>
+<td style="text-align:center">irate</td>
+<td>计算区间向量的增长率</td>
+</tr>
+<tr>
+<td style="text-align:center">rate</td>
+<td>计算区间向量在时间窗口内平均增长速率</td>
+<td style="text-align:center">round</td>
+<td>返回向量中所有样本值的最接近的整数</td>
+</tr>
+<tr>
+<td style="text-align:center">sort</td>
+<td>对向量按元素的值进行升序排序</td>
+<td style="text-align:center">sort_desc</td>
+<td>对向量按元素的值进行降序排序</td>
+</tr>
+</tbody>
+</table>
+<h2 id="alertmanager-报警"><a class="markdownIt-Anchor" href="#alertmanager-报警"></a> AlertManager 报警</h2>
+<p>Prometheus 的报警分为两个部分。 Prometheus 服务器中的报警规则将报警发送到 Alertmanager。 然后，报警管理器将重复数据删除，分组，再通过电子邮件，通话通知系统和聊天平台等方法管理这些报警，包括静默，禁止，聚合和发出通知。</p>
+<p>分组（Grouping）将性质相似的警报归类为单个通知。当许多系统同时发生故障，并且可能同时发出数百到数千个警报时，这种方法尤其有用。警报分组、分组通知的定时以及这些通知的接收者由配置文件中的路由树配置。</p>
+<p>抑制（Inhibition）是当某些其他警报已经触发时，抑制某些警报的通知。发出警报，通知整个群集不可访问。 可以将 Alertmanager 配置为使与该群集有关的所有其他警报静音，这样可以防止与实际问题无关的数百或数千个触发警报的通知。通过 Alertmanager 的配置文件配置抑制。</p>
+<p>静默（Sliences）是一种简单地在给定时间内静音警报的简单方法。静默是基于匹配器（matchers）配置的，就像路由树一样。将检查传入警报是否与活动静默的所有相等或正则表达式匹配。如果这样做了，将不会发送该警报的通知。静默是在 Alertmanager 的 web 界面配置的。</p>
+<p>Alertmanager 支持配置以创建高可用性集群。这可以使用<code>——cluster-*</code>标志进行配置。重点是不要在 Prometheus 和它的 Alertmanagers 之间进行负载平衡，而是将 Prometheus 指向一个所有 Alertmanagers 的列表。</p>
+<p>下载：<a target="_blank" rel="noopener" href="https://prometheus.io/download/#alertmanager">https://prometheus.io/download/#alertmanager</a><br />
+解压后执行 alertmanager 命令，需要当前目录有配置文件，默认配置文件为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">global:</span><br><span class="line">  resolve_timeout: 5m</span><br><span class="line"></span><br><span class="line">route:</span><br><span class="line">  group_by: [&#39;alertname&#39;]</span><br><span class="line">  group_wait: 10s</span><br><span class="line">  group_interval: 10s</span><br><span class="line">  repeat_interval: 1h</span><br><span class="line">  receiver: &#39;web.hook&#39;</span><br><span class="line">receivers:</span><br><span class="line">- name: &#39;web.hook&#39;</span><br><span class="line">  webhook_configs:</span><br><span class="line">  - url: &#39;http:&#x2F;&#x2F;127.0.0.1:5001&#x2F;&#39;</span><br><span class="line">inhibit_rules:</span><br><span class="line">  - source_match:</span><br><span class="line">      severity: &#39;critical&#39;</span><br><span class="line">    target_match:</span><br><span class="line">      severity: &#39;warning&#39;</span><br><span class="line">    equal: [&#39;alertname&#39;, &#39;dev&#39;, &#39;instance&#39;]</span><br></pre></td></tr></table></figure>
+<p>启动 alertmanager，通过 web 的 9093 端口访问</p>
+<p>配置 systemd 服务<code>/usr/lib/systemd/system/alertmanager.service</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description&#x3D;Alertmanager</span><br><span class="line">After&#x3D;network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type&#x3D;simple</span><br><span class="line">Restart&#x3D;on-failure</span><br><span class="line">ExecStart&#x3D;&#x2F;usr&#x2F;local&#x2F;bin&#x2F;alertmanager --config.file&#x3D;&#x2F;etc&#x2F;prometheus&#x2F;alertmanager.yml --storage.path&#x3D;&#x2F;var&#x2F;lib&#x2F;alertmanager</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy&#x3D;multi-user.target</span><br></pre></td></tr></table></figure>
+<h2 id="prometheus-server-配置文件详细说明"><a class="markdownIt-Anchor" href="#prometheus-server-配置文件详细说明"></a> Prometheus Server 配置文件详细说明</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">global:</span><br><span class="line">  # 查询目标的频率</span><br><span class="line">  [ scrape_interval: &lt;duration&gt; | default &#x3D; 1m ]</span><br><span class="line"></span><br><span class="line">  # 查询失败的超时时间</span><br><span class="line">  [ scrape_timeout: &lt;duration&gt; | default &#x3D; 10s ]</span><br><span class="line"></span><br><span class="line">  # 匹配规则的频率</span><br><span class="line">  [ evaluation_interval: &lt;duration&gt; | default &#x3D; 1m ]</span><br><span class="line"></span><br><span class="line">  # 当与外部系统（外部存储、Alertmanager）联系时，可附加到任意时间序列或告警的标签</span><br><span class="line">  external_labels:</span><br><span class="line">    [ &lt;labelname&gt;: &lt;labelvalue&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 指定规则文件</span><br><span class="line">rule_files:</span><br><span class="line">  [ - &lt;filepath_glob&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 抓取配置</span><br><span class="line">scrape_configs:</span><br><span class="line">  [ - &lt;scrape_config&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 与alertmanager相关的告警配置</span><br><span class="line">alerting:</span><br><span class="line">  alert_relabel_configs:</span><br><span class="line">    [ - &lt;relabel_config&gt; ... ]</span><br><span class="line">  alertmanagers:</span><br><span class="line">    [ - &lt;alertmanager_config&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 配置远端写入特性</span><br><span class="line">remote_write:</span><br><span class="line">  [ - &lt;remote_write&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 配置远端读取特性</span><br><span class="line">remote_read:</span><br><span class="line">  [ - &lt;remote_read&gt; ... ]</span><br></pre></td></tr></table></figure>
+<p>抓取配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">scrape_configs:</span><br><span class="line">  - job_name: &#39;prometheus&#39;</span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [&#39;localhost:9090&#39;]</span><br><span class="line">  # 采集node exporter监控数据</span><br><span class="line">  - job_name: &#39;node&#39;</span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [&#39;localhost:9100&#39;, &quot;192.168.1.13:9100&quot;]</span><br></pre></td></tr></table></figure>
+<p>将 prometheus 数据自动写入 influxdb</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">remote_write:</span><br><span class="line">  - url: &quot;http:&#x2F;&#x2F;192.168.0.16:8086&#x2F;api&#x2F;v1&#x2F;prom&#x2F;write?db&#x3D;test&quot;</span><br><span class="line"></span><br><span class="line">remote_read:</span><br><span class="line">  - url: &quot;http:&#x2F;&#x2F;192.168.0.16:8086&#x2F;api&#x2F;v1&#x2F;prom&#x2F;read?db&#x3D;test&quot;</span><br></pre></td></tr></table></figure>
+<h2 id="http-api"><a class="markdownIt-Anchor" href="#http-api"></a> HTTP API</h2>
+<p>Prometheus API 使用了 JSON 格式的响应内容。 当 API 调用成功后将会返回 2xx 的 HTTP 状态码。当 API 调用失败时可能返回以下几种不同的 HTTP 状态码：</p>
+<ul>
+<li><code>404 Bad Request</code>：参数错误或者缺失</li>
+<li><code>422 Unprocessable Entity</code>：表达式无法执行</li>
+<li><code>503 Service Unavailiable</code>：请求超时或者被中断</li>
+</ul>
+<h3 id="表达式请求"><a class="markdownIt-Anchor" href="#表达式请求"></a> 表达式请求</h3>
+<p>瞬时数据请求：<code>/api/v1/query</code>，有 GET 和 POST 两种方法。有以下参数，参数间用<code>&amp;</code>连接：</p>
+<ul>
+<li><code>query=</code>：PromQL 表达式</li>
+<li><code>time=&lt;rfc3339 | unix_timestamp&gt;</code>：用于指定用于计算 PromQL 的时间戳。可选参数，默认情况下使用当前系统时间。</li>
+<li><code>timeout=</code>：超时设置。可选参数，默认情况下使用<code>-query.timeout</code> 的全局设置。</li>
+</ul>
+<p>请求结果的<code>data</code>段的结构如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;resultType&quot;: &quot;matrix&quot; | &quot;vector&quot; | &quot;scalar&quot; | &quot;string&quot;,</span><br><span class="line">  &quot;result&quot;: &lt;value&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">curl &#39;http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;query?query&#x3D;up&amp;time&#x3D;2015-07-01T20:10:51.781Z&#39;</span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : &#123;</span><br><span class="line">      &quot;resultType&quot; : &quot;vector&quot;,</span><br><span class="line">      &quot;result&quot; : [</span><br><span class="line">         &#123;</span><br><span class="line">            &quot;metric&quot; : &#123;</span><br><span class="line">               &quot;__name__&quot; : &quot;up&quot;,</span><br><span class="line">               &quot;job&quot; : &quot;prometheus&quot;,</span><br><span class="line">               &quot;instance&quot; : &quot;localhost:9090&quot;</span><br><span class="line">            &#125;,</span><br><span class="line">            &quot;value&quot;: [ 1435781451.781, &quot;1&quot; ]</span><br><span class="line">         &#125;,</span><br><span class="line">         ...</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>区间数据请求：<code>/api/v1/query_range</code>，支持 GET 和 POST。有以下参数：</p>
+<ul>
+<li><code>query=</code>: PromQL 表达式。</li>
+<li><code>start=</code>: 起始时间。</li>
+<li><code>end=</code>: 结束时间。</li>
+<li><code>step=</code>: 查询步长。</li>
+<li><code>timeout=</code>: 超时设置。可选参数，默认情况下使用<code>-query.timeout</code>的全局设置。</li>
+</ul>
+<p>请求结果的<code>data</code>段结构：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;resultType&quot;: &quot;matrix&quot;,</span><br><span class="line">  &quot;result&quot;: &lt;value&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">curl &#39;http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;query_range?query&#x3D;up&amp;start&#x3D;2015-07-01T20:10:30.781Z&amp;end&#x3D;2015-07-01T20:11:00.781Z&amp;step&#x3D;15s&#39;</span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : &#123;</span><br><span class="line">      &quot;resultType&quot; : &quot;matrix&quot;,</span><br><span class="line">      &quot;result&quot; : [</span><br><span class="line">         &#123;</span><br><span class="line">            &quot;metric&quot; : &#123;</span><br><span class="line">               &quot;__name__&quot; : &quot;up&quot;,</span><br><span class="line">               &quot;job&quot; : &quot;prometheus&quot;,</span><br><span class="line">               &quot;instance&quot; : &quot;localhost:9090&quot;</span><br><span class="line">            &#125;,</span><br><span class="line">            &quot;values&quot; : [</span><br><span class="line">               [ 1435781430.781, &quot;1&quot; ],</span><br><span class="line">               [ 1435781445.781, &quot;1&quot; ],</span><br><span class="line">               [ 1435781460.781, &quot;1&quot; ]</span><br><span class="line">            ]</span><br><span class="line">         &#125;,</span><br><span class="line">         ...</span><br><span class="line">      ]</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="请求元数据"><a class="markdownIt-Anchor" href="#请求元数据"></a> 请求元数据</h3>
+<p>请求序列信息：<code>/api/v1/series</code>，有 GET 和 POST 方法。有以下参数：</p>
+<ul>
+<li><code>match[] = &lt;series_selector&gt;</code>：重复的序列选择器参数，用于选择要返回的序列。必须至少提供一个<code>match[]</code>参数。</li>
+<li><code>start = &lt;rfc3339 | unix_timestamp&gt;</code>：开始时间戳。</li>
+<li><code>end = &lt;rfc3339 | unix_timestamp&gt;</code>：结束时间戳。</li>
+</ul>
+<p>查询结果的<code>data</code>部分由一个对象列表组成，这些对象包含标识每个系列的标签名/值对。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">curl -g &#39;http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;series?&#39; --data-urlencode&#x3D;&#39;match[]&#x3D;up&#39; --data-urlencode&#x3D;&#39;match[]&#x3D;process_start_time_seconds&#123;job&#x3D;&quot;prometheus&quot;&#125;&#39;</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : [</span><br><span class="line">      &#123;</span><br><span class="line">         &quot;__name__&quot; : &quot;up&quot;,</span><br><span class="line">         &quot;job&quot; : &quot;prometheus&quot;,</span><br><span class="line">         &quot;instance&quot; : &quot;localhost:9090&quot;</span><br><span class="line">      &#125;,</span><br><span class="line">      ...</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取标签（label）名：<code>/api/v1/labels</code>，支持 GET 和 POST。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">curl &#39;localhost:9090&#x2F;api&#x2F;v1&#x2F;labels&#39;</span><br><span class="line">&#123;</span><br><span class="line">    &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">    &quot;data&quot;: [</span><br><span class="line">        &quot;__name__&quot;,</span><br><span class="line">        &quot;call&quot;,</span><br><span class="line">        &quot;code&quot;,</span><br><span class="line">        &quot;config&quot;,</span><br><span class="line">        &quot;dialer_name&quot;,</span><br><span class="line">        &quot;endpoint&quot;,</span><br><span class="line">        ...</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取标签值：<code>/api/v1/label/&lt;label_name&gt;/values</code>，仅支持 GET</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;label&#x2F;job&#x2F;values</span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : [</span><br><span class="line">      &quot;node&quot;,</span><br><span class="line">      &quot;prometheus&quot;</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="targets"><a class="markdownIt-Anchor" href="#targets"></a> targets</h3>
+<p>获取 targets：<code>/api/v1/targets</code>，支持 GET。<br />
+活动（active）目标和已删除（dropped）目标都是响应的一部分。 <code>labels</code>表示在重新标记后的标签集。<code>discoverLabel</code>表示在重新标记之前在服务发现期间检索到的未修改的标签。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;targets</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;activeTargets&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;discoveredLabels&quot;: &#123;</span><br><span class="line">          &quot;__address__&quot;: &quot;127.0.0.1:9090&quot;,</span><br><span class="line">          &quot;__metrics_path__&quot;: &quot;&#x2F;metrics&quot;,</span><br><span class="line">          &quot;__scheme__&quot;: &quot;http&quot;,</span><br><span class="line">          &quot;job&quot;: &quot;prometheus&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;labels&quot;: &#123;</span><br><span class="line">          &quot;instance&quot;: &quot;127.0.0.1:9090&quot;,</span><br><span class="line">          &quot;job&quot;: &quot;prometheus&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;scrapeUrl&quot;: &quot;http:&#x2F;&#x2F;127.0.0.1:9090&#x2F;metrics&quot;,</span><br><span class="line">        &quot;lastError&quot;: &quot;&quot;,</span><br><span class="line">        &quot;lastScrape&quot;: &quot;2017-01-17T15:07:44.723715405+01:00&quot;,</span><br><span class="line">        &quot;health&quot;: &quot;up&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;droppedTargets&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;discoveredLabels&quot;: &#123;</span><br><span class="line">          &quot;__address__&quot;: &quot;127.0.0.1:9100&quot;,</span><br><span class="line">          &quot;__metrics_path__&quot;: &quot;&#x2F;metrics&quot;,</span><br><span class="line">          &quot;__scheme__&quot;: &quot;http&quot;,</span><br><span class="line">          &quot;job&quot;: &quot;node&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="rules"><a class="markdownIt-Anchor" href="#rules"></a> rules</h3>
+<p>获取 rules：<code>/api/v1/rules</code>，支持 GET。返回当前加载的报警和记录规则的列表，还返回由每个报警规则的 Prometheus 实例触发的当前活动报警。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;rules</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    &quot;data&quot;: &#123;</span><br><span class="line">        &quot;groups&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;rules&quot;: [</span><br><span class="line">                    &#123;</span><br><span class="line">                        &quot;alerts&quot;: [</span><br><span class="line">                            &#123;</span><br><span class="line">                                &quot;activeAt&quot;: &quot;2018-07-04T20:27:12.60602144+02:00&quot;,</span><br><span class="line">                                &quot;annotations&quot;: &#123;</span><br><span class="line">                                    &quot;summary&quot;: &quot;High request latency&quot;</span><br><span class="line">                                &#125;,</span><br><span class="line">                                &quot;labels&quot;: &#123;</span><br><span class="line">                                    &quot;alertname&quot;: &quot;HighRequestLatency&quot;,</span><br><span class="line">                                    &quot;severity&quot;: &quot;page&quot;</span><br><span class="line">                                &#125;,</span><br><span class="line">                                &quot;state&quot;: &quot;firing&quot;,</span><br><span class="line">                                &quot;value&quot;: &quot;1e+00&quot;</span><br><span class="line">                            &#125;</span><br><span class="line">                        ],</span><br><span class="line">                        &quot;annotations&quot;: &#123;</span><br><span class="line">                            &quot;summary&quot;: &quot;High request latency&quot;</span><br><span class="line">                        &#125;,</span><br><span class="line">                        &quot;duration&quot;: 600,</span><br><span class="line">                        &quot;health&quot;: &quot;ok&quot;,</span><br><span class="line">                        &quot;labels&quot;: &#123;</span><br><span class="line">                            &quot;severity&quot;: &quot;page&quot;</span><br><span class="line">                        &#125;,</span><br><span class="line">                        &quot;name&quot;: &quot;HighRequestLatency&quot;,</span><br><span class="line">                        &quot;query&quot;: &quot;job:request_latency_seconds:mean5m&#123;job&#x3D;\&quot;myjob\&quot;&#125; &gt; 0.5&quot;,</span><br><span class="line">                        &quot;type&quot;: &quot;alerting&quot;</span><br><span class="line">                    &#125;,</span><br><span class="line">                    &#123;</span><br><span class="line">                        &quot;health&quot;: &quot;ok&quot;,</span><br><span class="line">                        &quot;name&quot;: &quot;job:http_inprogress_requests:sum&quot;,</span><br><span class="line">                        &quot;query&quot;: &quot;sum(http_inprogress_requests) by (job)&quot;,</span><br><span class="line">                        &quot;type&quot;: &quot;recording&quot;</span><br><span class="line">                    &#125;</span><br><span class="line">                ],</span><br><span class="line">                &quot;file&quot;: &quot;&#x2F;rules.yaml&quot;,</span><br><span class="line">                &quot;interval&quot;: 60,</span><br><span class="line">                &quot;name&quot;: &quot;example&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;status&quot;: &quot;success&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="alerts"><a class="markdownIt-Anchor" href="#alerts"></a> alerts</h3>
+<p>获取 alerts：<code>/api/v1/alerts</code>，支持 GET。返回所有启用的报警的列表。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;alerts</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    &quot;data&quot;: &#123;</span><br><span class="line">        &quot;alerts&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;activeAt&quot;: &quot;2018-07-04T20:27:12.60602144+02:00&quot;,</span><br><span class="line">                &quot;annotations&quot;: &#123;&#125;,</span><br><span class="line">                &quot;labels&quot;: &#123;</span><br><span class="line">                    &quot;alertname&quot;: &quot;my-alert&quot;</span><br><span class="line">                &#125;,</span><br><span class="line">                &quot;state&quot;: &quot;firing&quot;,</span><br><span class="line">                &quot;value&quot;: &quot;1e+00&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;status&quot;: &quot;success&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="alertmanager"><a class="markdownIt-Anchor" href="#alertmanager"></a> alertmanager</h3>
+<p>获取 alertmanager 信息：<code>/api/v1/alertmanagers</code>。支持 GET。返回 Prometheus alertmanager 发现的当前状态的概述。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;alertmanagers</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;activeAlertmanagers&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;url&quot;: &quot;http:&#x2F;&#x2F;127.0.0.1:9090&#x2F;api&#x2F;v1&#x2F;alerts&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;droppedAlertmanagers&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;url&quot;: &quot;http:&#x2F;&#x2F;127.0.0.1:9093&#x2F;api&#x2F;v1&#x2F;alerts&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="status"><a class="markdownIt-Anchor" href="#status"></a> status</h3>
+<p>获取该结点的当前的 Prometheus 配置：<code>/api/v1/status/config</code>，支持 GET。<br />
+配置作为转储的 YAML 文件返回。 由于 YAML 库的限制，不包括 YAML 注释。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;status&#x2F;config</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;yaml&quot;: &quot;&lt;content of the loaded config file in YAML&gt;&quot;,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取配置 Prometheus 的标志值：<code>/api/v1/status/flags</code>，支持 GET。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;status&#x2F;flags</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;alertmanager.notification-queue-capacity&quot;: &quot;10000&quot;,</span><br><span class="line">    &quot;alertmanager.timeout&quot;: &quot;10s&quot;,</span><br><span class="line">    &quot;log.level&quot;: &quot;info&quot;,</span><br><span class="line">    &quot;query.lookback-delta&quot;: &quot;5m&quot;,</span><br><span class="line">    &quot;query.max-concurrency&quot;: &quot;20&quot;,</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取关于 Prometheus 服务器的各种运行时信息属性：<code>/api/v1/status/runtimeinfo</code>，支持 GET。<br />
+根据运行时属性的性质，返回的值具有不同的类型。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;status&#x2F;runtimeinfo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;startTime&quot;: &quot;2019-11-02T17:23:59.301361365+01:00&quot;,</span><br><span class="line">    &quot;CWD&quot;: &quot;&#x2F;&quot;,</span><br><span class="line">    &quot;reloadConfigSuccess&quot;: true,</span><br><span class="line">    &quot;lastConfigTime&quot;: &quot;2019-11-02T17:23:59+01:00&quot;,</span><br><span class="line">    &quot;chunkCount&quot;: 873,</span><br><span class="line">    &quot;timeSeriesCount&quot;: 873,</span><br><span class="line">    &quot;corruptionCount&quot;: 0,</span><br><span class="line">    &quot;goroutineCount&quot;: 48,</span><br><span class="line">    &quot;GOMAXPROCS&quot;: 4,</span><br><span class="line">    &quot;GOGC&quot;: &quot;&quot;,</span><br><span class="line">    &quot;GODEBUG&quot;: &quot;&quot;,</span><br><span class="line">    &quot;storageRetention&quot;: &quot;15d&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取关于 Prometheus 服务器的各种构建信息属性：<code>/api/v1/status/buildinfo</code>，支持 GET。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:9090&#x2F;api&#x2F;v1&#x2F;status&#x2F;buildinfo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;version&quot;: &quot;2.13.1&quot;,</span><br><span class="line">    &quot;revision&quot;: &quot;cb7cbad5f9a2823a622aaa668833ca04f50a0ea7&quot;,</span><br><span class="line">    &quot;branch&quot;: &quot;master&quot;,</span><br><span class="line">    &quot;buildUser&quot;: &quot;julius@desktop&quot;,</span><br><span class="line">    &quot;buildDate&quot;: &quot;20191102-16:19:59&quot;,</span><br><span class="line">    &quot;goVersion&quot;: &quot;go1.13.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%9B%91%E6%8E%A7/" rel="tag"><i class="fa fa-tag"></i> 监控</a>
+              <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/" rel="tag"><i class="fa fa-tag"></i> 云计算</a>
+              <a href="/tags/Prometheus/" rel="tag"><i class="fa fa-tag"></i> Prometheus</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/PowerShell%E5%AE%9E%E6%88%98%E7%AC%94%E8%AE%B0/" rel="prev" title="PowerShell实战笔记">
+      <i class="fa fa-chevron-left"></i> PowerShell实战笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/5G-NSA%E4%B8%8ESA%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/" rel="next" title="5G NSA与SA概念笔记">
+      5G NSA与SA概念笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#prometheus-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-text"> Prometheus 基本概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%89%B9%E7%82%B9"><span class="nav-text"> 特点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%84%E6%88%90"><span class="nav-text"> 组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="nav-text"> 工作流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B"><span class="nav-text"> 数据模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E7%A7%8D-metric-%E7%B1%BB%E5%9E%8B"><span class="nav-text"> 四种 Metric 类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#instance-%E5%92%8C-jobs"><span class="nav-text"> instance 和 jobs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#node-exporter"><span class="nav-text"> Node exporter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#prometheus-server"><span class="nav-text"> Prometheus Server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-promql-%E6%9F%A5%E8%AF%A2%E7%9B%91%E6%8E%A7%E6%95%B0%E6%8D%AE"><span class="nav-text"> 使用 PromQL 查询监控数据</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0"><span class="nav-text"> 常用函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#alertmanager-%E6%8A%A5%E8%AD%A6"><span class="nav-text"> AlertManager 报警</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#prometheus-server-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E7%BB%86%E8%AF%B4%E6%98%8E"><span class="nav-text"> Prometheus Server 配置文件详细说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#http-api"><span class="nav-text"> HTTP API</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%AF%B7%E6%B1%82"><span class="nav-text"> 表达式请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%85%83%E6%95%B0%E6%8D%AE"><span class="nav-text"> 请求元数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#targets"><span class="nav-text"> targets</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#rules"><span class="nav-text"> rules</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#alerts"><span class="nav-text"> alerts</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#alertmanager"><span class="nav-text"> alertmanager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#status"><span class="nav-text"> status</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

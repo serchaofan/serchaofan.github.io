@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》  简介 UTS IPC PID Mount Network User">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux-Namespace学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》  简介 UTS IPC PID Mount Network User">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/mount-condition.png">
+<meta property="og:image" content="https://github.com/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/reflection.png">
+<meta property="article:published_time" content="2018-12-30T06:42:04.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.517Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="namespace">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/mount-condition.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Linux-Namespace学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux-Namespace学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-12-30 14:42:04" itemprop="dateCreated datePublished" datetime="2018-12-30T14:42:04+08:00">2018-12-30</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》</p>
+<ul>
+<li><a href="#%e7%ae%80%e4%bb%8b">简介</a></li>
+<li><a href="#uts">UTS</a></li>
+<li><a href="#ipc">IPC</a></li>
+<li><a href="#pid">PID</a></li>
+<li><a href="#mount">Mount</a></li>
+<li><a href="#network">Network</a></li>
+<li><a href="#user">User</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="简介"><a class="markdownIt-Anchor" href="#简介"></a> 简介</h1>
+<p>Linux 提供了 6 种 Namespace 隔离。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">namespace</th>
+<th style="text-align:center">系统调用参数</th>
+<th style="text-align:center">隔离内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">UTS</td>
+<td style="text-align:center">CLONE_NEWUTS</td>
+<td style="text-align:center">主机名与域名</td>
+</tr>
+<tr>
+<td style="text-align:center">IPC</td>
+<td style="text-align:center">CLONE_NEWIPC</td>
+<td style="text-align:center">信号量、消息队列、共享内存</td>
+</tr>
+<tr>
+<td style="text-align:center">PID</td>
+<td style="text-align:center">CLONE_NEWPID</td>
+<td style="text-align:center">进程编号</td>
+</tr>
+<tr>
+<td style="text-align:center">Network</td>
+<td style="text-align:center">CLONE_NEWNET</td>
+<td style="text-align:center">网络设备、网络栈、端口等</td>
+</tr>
+<tr>
+<td style="text-align:center">Mount</td>
+<td style="text-align:center">CLONE_NEWNS</td>
+<td style="text-align:center">挂载点</td>
+</tr>
+<tr>
+<td style="text-align:center">User</td>
+<td style="text-align:center">CLONE_NEWUSER</td>
+<td style="text-align:center">用户与用户组</td>
+</tr>
+</tbody>
+</table>
+<p>namespace 有以下 API：<code>clone()</code>、<code>setns()</code>、<code>unshare()</code></p>
+<p><code>clone()</code>是 Linux 系统调用 <code>fork()</code>的一种更通用的方式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int clone(int (_child_func)(void _), void *child_stack, int flags, void *arg);</span><br><span class="line"></span><br><span class="line">child*func 传入子进程运行的程序主函数</span><br><span class="line">child_stack 传入子程序使用的栈空间</span><br><span class="line">flags 表示使用哪些 CLONE*\*标志位</span><br><span class="line">args 传入用户参数</span><br></pre></td></tr></table></figure>
+<p>从 3.8 版本开始，可通过<code>/proc/[pid]/ns</code> 目录查看指向不同 namespace 号的文件，<code>[]</code>中的就是 namespace 号。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">ll &#x2F;proc&#x2F;\$\$&#x2F;ns</span><br><span class="line"></span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 ipc -&gt; ipc:[4026531839]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 mnt -&gt; mnt:[4026531840]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 net -&gt; net:[4026531956]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 pid -&gt; pid:[4026531836]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 user -&gt; user:[4026531837]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 uts -&gt; uts:[4026531838]</span><br></pre></td></tr></table></figure>
+<p>设置链接的作用：一旦 link 文件被打开，只要打开的文件描述符存在，则即使该 namespace 下的所有进程都结束，这个 namespace 仍会继续存在，后续的进程仍能加入进来。</p>
+<p>通过 <code>setns()</code>加入一个已存在的 namespace</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setns</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">int</span> nstype)</span></span>;</span><br><span class="line"></span><br><span class="line">fd 为要加入 <span class="keyword">namespace</span> 的文件描述符</span><br><span class="line">nstype 让调用者检查 fd 指向的 <span class="keyword">namespace</span> 类型是否符合实际要求。若为 <span class="number">0</span> 表示不检查</span><br></pre></td></tr></table></figure>
+<p>通过 <code>unshare()</code>在原先进程上进行 namespace 隔离，而不用启动新的进程。Docker 暂时还没有使用此调用。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unshare</span><span class="params">(<span class="keyword">int</span> flags)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><code>fork()</code>系统调用，fork 函数不属于 namespace 的 API，属于 Linux 系统自带的调用。能创建新的进程，并分配资源。<code>fork()</code>调用一次却能返回两次，父进程和子进程各返回一次。可能有三种返回值：</p>
+<ul>
+<li>在父进程中，返回新创建的子进程的进程 ID</li>
+<li>在子进程中，返回 0</li>
+<li>若出现错误，返回一个负值</li>
+</ul>
+<p>一个实例代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">pid_t</span> fpid;</span><br><span class="line">    <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line">    fpid = fork();</span><br><span class="line">    <span class="keyword">if</span>(fpid &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;error&quot;</span>);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(fpid == <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;child process id: %d\n&quot;</span>, getpid());</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;parent process id: %d\n&quot;</span>, getpid());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译后输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">parent process id: 33008</span><br><span class="line">child process id: 33009</span><br></pre></td></tr></table></figure>
+<p>在使用 <code>fork()</code>函数后，父进程有义务监视子进程的运行状态，并在子进程退出后自己才能正常退出，否则子进程就会孤儿进程。对于孤儿进程，会直接由上级的父进程接管。</p>
+<p>以下是 6 种隔离的具体实现，以下为学习顺序</p>
+<ul>
+<li><a href="#%e7%ae%80%e4%bb%8b">简介</a></li>
+<li><a href="#uts">UTS</a></li>
+<li><a href="#ipc">IPC</a></li>
+<li><a href="#pid">PID</a></li>
+<li><a href="#mount">Mount</a></li>
+<li><a href="#network">Network</a></li>
+<li><a href="#user">User</a></li>
+</ul>
+<h1 id="uts"><a class="markdownIt-Anchor" href="#uts"></a> UTS</h1>
+<p>简单实现 UTS 隔离，实现代码<code>uts.c</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> STACK_SIZE (1024*1024)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">char</span> child_stack[STACK_SIZE];</span><br><span class="line"><span class="keyword">char</span>* <span class="keyword">const</span> child_args[] = &#123;<span class="string">&quot;/bin/bash&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">child_main</span><span class="params">(<span class="keyword">void</span>* args)</span></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    sethostname(<span class="string">&quot;newnamespace&quot;</span>, <span class="number">12</span>);</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">sethostname函数来自unistd.h库，用于设置主机名</span></span><br><span class="line"><span class="comment">int sethostname(const char *name, size_t len);</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">execv函数来自unistd.h库，用于运行其他程序</span></span><br><span class="line"><span class="comment">int execv(const char *pathname, char * const argv[]);</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;程序开始\n&quot;</span>);</span><br><span class="line">    <span class="keyword">int</span> child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br><span class="line">    waitpid(child_pid, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;已退出\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">waitpid来自sys/wait.h头文件，暂停执行调用进程，直到pid参数指定的子进程发生更改状态。 默认情况下，waitpid()仅等待已终止的子项。</span></span><br><span class="line"><span class="comment">pid_t waitpid(pid_t pid, int *status, int options);</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p>编译运行，实现了域名隔离</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@s1 uts]# gcc -Wall uts.c -o uts</span><br><span class="line">[root@s1 uts]# .&#x2F;uts</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace uts]# exit</span><br><span class="line">exit</span><br><span class="line">已退出</span><br><span class="line">[root@s1 uts]#</span><br></pre></td></tr></table></figure>
+<h1 id="ipc"><a class="markdownIt-Anchor" href="#ipc"></a> IPC</h1>
+<p>简单实现 IPC 隔离，代码与 uts.c 基本一致，只需要添加一个标识位<code>CLONE_NEWIPC</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> child_pid = clone(child_main, child_stack + STACK_SIZE,</span><br><span class="line">        CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+<p>先创建一个消息队列</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@s1 ipc]# ipcmk -Q</span><br><span class="line">Message queue id: 0</span><br><span class="line">[root@s1 ipc]# ipcs -q</span><br><span class="line"></span><br><span class="line">------ Message Queues --------</span><br><span class="line">key        msqid      owner      perms  used-bytes   messages</span><br><span class="line">0xf1646a41 0          root       644  0            0</span><br></pre></td></tr></table></figure>
+<p>编译后运行 ipc</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@s1 ipc]# gcc -Wall ipc.c -o ipc</span><br><span class="line">[root@s1 ipc]# .&#x2F;ipc</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace ipc]# ipcs -q</span><br><span class="line"></span><br><span class="line">------ Message Queues --------</span><br><span class="line">key        msqid      owner      perms  used-bytes   messages</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>已实现了 IPC 隔离，在子进程中查看不到原先创建的消息队列</p>
+<h1 id="pid"><a class="markdownIt-Anchor" href="#pid"></a> PID</h1>
+<p>每个 PID namespace 都有自己的计数器，内核为所有 PID namespace 维护一个树状结构，最顶层是系统初始化时创建的，称为 root namespace，新的 Namespace 称为 child namespace。<br />
+所属父进程能看到子节点的进程，并可通过信号等方式对子节点的进程产生影响。而子节点不能看到父进程 PID namespace 中的内容。</p>
+<p>同样代码仍然使用<code>ipc.c</code> 的，只要添加一个标志位<code>CLONE_NEWPID</code>，保存为<code>pid.c</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> child_pid = clone(child_main, child_stack + STACK_SIZE,</span><br><span class="line">        CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+<p>首先查看当前的 shell 的 PID，再运行 pid，查看 shell 的 PID</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@s1 pid]# echo $$</span><br><span class="line">35580</span><br><span class="line">[root@s1 pid]# .&#x2F;pid</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace pid]# echo $$</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+<p>init 进程的 PID 为 1，作为所有进程的父进程，维护一张进程表，检查进程状态，一旦有子进程因父进程的错误变为孤儿进程，init 会收养该子进程，并回收资源，结束进程。</p>
+<p>内核为 PID namespace 中的 init 进程赋予了<strong>信号屏蔽</strong>的特权，若 init 中没有编写处理某个信号的代码，则与 init 同一个 PID namespace 的进程发送给 init 的该信号就会被屏蔽。主要用于防止 init 进程被误杀。</p>
+<p>父节点向子节点发送的除<code>SIGKILL</code>或<code>SIGSTOP</code>信号外的其他信号也会被子节点屏蔽。而对于<code>SIGKILL</code>和<code>SIGSTOP</code>信号，子节点会强制执行，因此，父节点有权终止子节点的进程。</p>
+<p>当子节点的 init 进程被销毁，即使<code>/proc/[pid]/ns/pid</code>处于挂载或打开状态，导致 namespace 保存下来，但该 namespace 也无法通过<code>setns()</code>或<code>fork()</code>创建进程。</p>
+<p>当一个容器中存在多个进程时，容器内的 init 进程可对信号捕获，对子进程做信息保存、资源回收等处理。</p>
+<p>在新的 PID namespace 中用<code>ps</code>查看，仍然会看到所有进程。因为与 PID 相关的<code>/proc</code>文件系统<code>profs</code>没有挂载到一个与原<code>/proc</code>不同的位置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@newnamespace pid]# ps -a</span><br><span class="line">   PID TTY          TIME CMD</span><br><span class="line"> 36025 pts&#x2F;1    00:00:00 pid</span><br><span class="line"> 36026 pts&#x2F;1    00:00:00 bash</span><br><span class="line"> 36060 pts&#x2F;1    00:00:00 ps</span><br></pre></td></tr></table></figure>
+<p>挂载文件系统 proc 到/proc</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[root@newnamespace pid]# mount -t proc proc &#x2F;proc</span><br><span class="line">[root@newnamespace pid]# ps a</span><br><span class="line">   PID TTY      STAT   TIME COMMAND</span><br><span class="line">     1 pts&#x2F;1    S      0:00 &#x2F;bin&#x2F;bash</span><br><span class="line">    38 pts&#x2F;1    R+     0:00 ps a</span><br></pre></td></tr></table></figure>
+<p>但此时并没有进行 mount namespace 的隔离，所以该操作实际上影响了 root namespace 的文件系统。因此退出后，仍要重新挂载 proc：<code>mount -t proc proc /proc</code></p>
+<p>调用<code>unshare()</code>和<code>setns()</code>创建新的 PID namespace 时，该调用程序并不进入，而是之后创建的子进程才会进入 namespace，成为 init。因为调用<code>getpid()</code>函数得到的 PID 是根据调用者所在的 PID namespace 决定返回哪个 PID，进入新的 PID namespace 会导致 PID 变动，造成进程错误。</p>
+<h1 id="mount"><a class="markdownIt-Anchor" href="#mount"></a> Mount</h1>
+<p>通过隔离文件系统挂载点对隔离文件系统提供支持，是第一个支持的 Linux namespace。</p>
+<p>进程创建 mount namespace 时，会把当前的文件结构复制给新的 namespace，并且子节点中的挂载只影响自身，不影响外部。但也会有例外，因此，2006 年引入的<strong>挂载传播</strong>解决了该问题，定义了挂载对象（mount object）间的关系：</p>
+<ul>
+<li>共享挂载（share relationship）：若两个挂载对象具有共享关系，则一个挂载对象中的挂载事件会传播到另一个挂载对象，反之亦然。</li>
+<li>从属关系（slave relationship）：若两个挂载对象形成从属关系，则一个挂载对象中的挂载事件会传播到另一个挂载对象，反之不行。从属对象是事件的接受者。</li>
+</ul>
+<p>有可能出现的挂载状态：</p>
+<ul>
+<li>共享挂载（share）：传播事件的挂载对象</li>
+<li>从属挂载（slave）：接收传播事件的挂载对象</li>
+<li>共享/从属挂载（shared and slave）：既传播又接收事件的挂载对象</li>
+<li>私有挂载（private）：既不传播也不接收事件的挂载对象</li>
+<li>不可绑定挂载（unbindable）：类似私有挂载，但不允许执行绑定挂载，即这块文件对象不可被复制</li>
+</ul>
+<img src="/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/mount-condition.png" class="">
+<p><code>mount</code>提供以上的各种挂载方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">--make-shared           mark a subtree as shared</span><br><span class="line">--make-slave            mark a subtree as slave</span><br><span class="line">--make-private          mark a subtree as private</span><br><span class="line">--make-unbindable       mark a subtree as unbindable</span><br><span class="line">--make-rshared          recursively marka whole subtree as shared</span><br><span class="line">--make-rslave           recursively marka whole subtree as slave</span><br><span class="line">--make-rprivate         recursively marka whole subtree as private</span><br><span class="line">--make-runbindable      recursively marka whole subtree as unbindable</span><br></pre></td></tr></table></figure>
+<p>代码仍然只需要添加标志位<code>CLONE_NEWNS</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> STACK_SIZE (1024*1024)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">char</span> child_stack[STACK_SIZE];</span><br><span class="line"><span class="keyword">char</span>* <span class="keyword">const</span> child_args[] = &#123;<span class="string">&quot;/bin/bash&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">child_main</span><span class="params">(<span class="keyword">void</span>* args)</span></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    sethostname(<span class="string">&quot;newnamespace&quot;</span>, <span class="number">12</span>);</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;程序开始\n&quot;</span>);</span><br><span class="line">    <span class="keyword">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br><span class="line">    waitpid(child_pid, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;已退出\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>编译后运行，挂载 CDROM</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@newnamespace mount]# mount &#x2F;dev&#x2F;cdrom &#x2F;mnt</span><br><span class="line">mount: &#x2F;dev&#x2F;sr0 is write-protected, mounting read-only</span><br><span class="line">[root@newnamespace mount]# df</span><br><span class="line">Filesystem              1K-blocks    Used Available Use% Mounted on</span><br><span class="line">&#x2F;dev&#x2F;mapper&#x2F;centos-root  17811456 1836940  15974516  11% &#x2F;</span><br><span class="line">......</span><br><span class="line">&#x2F;dev&#x2F;sda1                 1038336  129608    908728  13% &#x2F;boot</span><br><span class="line">&#x2F;dev&#x2F;sr0                  4414592 4414592         0 100% &#x2F;mnt</span><br></pre></td></tr></table></figure>
+<h1 id="network"><a class="markdownIt-Anchor" href="#network"></a> Network</h1>
+<p>网络隔离包括：网络设备、IPv4 和 IPv6 协议栈、IP 路由表、防火墙、<code>/proc/net</code>、<code>/sys/class/net</code>、套接字等。</p>
+<p>通过创建 veth pair（虚拟网络设备对）实现容器内外的通信。当创建的 network namespace 被释放时，这个 namespace 中的物理网卡会返回到 root namespace，而不是创建 namespace 的父进程。</p>
+<p>在建立好 veth pair 前，新旧 namespace 间通过管道（pipe）通信。以 docker 为例，docker daemon 在宿主进程上创建 veth pair，把一端绑定在 docker0 网桥上，另一端接入新建的 network namespace，在 veth pair 建立完成前，docker daemon 和 init 通过管道通信，直到 init 接收到 docker daemon 发送的 veth 设备信息，然后关闭管道，并启动 eth0。</p>
+<p>代码仅需要在 mount.c 上添加标志位<code>CLONE_NEWNET</code>，保存为<code>network.c</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWNET | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+<p>编译运行后，查看网络设备，只有一个环回口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@s1 network]# .&#x2F;network</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace network]# ifconfig</span><br><span class="line">[root@newnamespace network]# ip addr</span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop state DOWN qlen 1</span><br><span class="line">    link&#x2F;loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br></pre></td></tr></table></figure>
+<h1 id="user"><a class="markdownIt-Anchor" href="#user"></a> User</h1>
+<p>user namespace 主要隔离安全相关的标识符和属性，包括用户（组）ID、root 目录、密钥和特殊权限。user namespace 也类似 PID namespace，是树状结构。</p>
+<p>为了能查看用户权限，需要在代码中添加内容。需要导入<code>sys/capability.h</code>，该包需要安装<code>libcap-dev</code>（debian）或<code>libcap-devel</code>（redhat）。</p>
+<p>在<code>child_main</code>函数中添加</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">child_main</span><span class="params">(<span class="keyword">void</span>* args)</span></span>&#123;</span><br><span class="line">    <span class="keyword">cap_t</span> caps;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    sethostname(<span class="string">&quot;newnamespace&quot;</span>, <span class="number">12</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;eUID=%ld, eGID=%ld\n&quot;</span>, (<span class="keyword">long</span>)geteuid(), (<span class="keyword">long</span>)getegid());</span><br><span class="line">    caps = cap_get_proc();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;capabilities: %s\n&quot;</span>, cap_to_text(caps, <span class="literal">NULL</span>));</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并在 main 函数添加标志位<code>CLONE_NEWUSER</code>，并且需要删除以前的<code>CLONE</code>标识符，否则可能无法正常显示。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWUSER | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+<p>因为添加了 capability 头文件，在编译时需要添加选项<code>-lcap</code>。<code>gcc -Wall -lcap userns.c -o userns</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root:user &gt; .&#x2F;userns</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">eUID&#x3D;65534, eGID&#x3D;65534</span><br><span class="line">capabilities: &#x3D; cap_chown,cap_dac_override,......</span><br><span class="line">nobody:user &gt;</span><br></pre></td></tr></table></figure>
+<p>子节点的 UID 和 GID 都变为了 65534（默认的），并且用户名变为 nobody。capabilities 为子节点中该用户的权限，已经有所有权限了。65534 表示尚未与外部的 namespace 的用户（组）映射。</p>
+<img src="/2018/Linux-Namespace%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/reflection.png" class="">
+<p>进行用户绑定，通过在<code>/proc/[pid]/uid_map</code>和<code>/proc/[pid]/gid_map</code>写入对应绑定信息即可。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ID-inside-ns   ID-outside-ns   length</span><br></pre></td></tr></table></figure>
+<p>注：</p>
+<ul>
+<li><strong>这两个文件仅允许拥有该 user namespace 中 CAP_SETUID 的进程写入一次，不允许修改</strong></li>
+<li><strong>写入的进程必须是 user namespace 的父 namespace 或子 namespace</strong></li>
+<li>第一个字段<code>ID-inside-ns</code>表示新建的 user namespace 中对应的 UID/GID，第二个字段<code>ID-outside-ns</code>表示外部映射的 UID/GID，<code>length</code>表示映射范围，通常就填 1，表示只映射一个。</li>
+</ul>
+<p>创建函数设置 UID 和 GID</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">set_uid_map</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> inside_id, <span class="keyword">int</span> outside_id, <span class="keyword">int</span> length)</span></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/uid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* uid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(uid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(uid_map);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">set_gid_map</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> inside_id, <span class="keyword">int</span> outside_id, <span class="keyword">int</span> length)</span></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/gid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* gid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(gid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(gid_map);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在 child_main 函数中添加对这两个函数的调用</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">child_main</span><span class="params">(<span class="keyword">void</span>* args)</span></span>&#123;</span><br><span class="line">    <span class="keyword">cap_t</span> caps;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    set_uid_map(getpid(), <span class="number">0</span>, <span class="number">1000</span>, <span class="number">1</span>);</span><br><span class="line">    set_gid_map(getpid(), <span class="number">0</span>, <span class="number">1000</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;eUID=%ld, eGID=%ld\n&quot;</span>, (<span class="keyword">long</span>)geteuid(), (<span class="keyword">long</span>)getegid());</span><br><span class="line">    caps = cap_get_proc();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;capabilities: %s\n&quot;</span>, cap_to_text(caps, <span class="literal">NULL</span>));</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>userns.c</code>完整文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/capability.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> STACK_SIZE (1024*1024)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">char</span> child_stack[STACK_SIZE];</span><br><span class="line"><span class="keyword">char</span>* <span class="keyword">const</span> child_args[] = &#123;<span class="string">&quot;/bin/bash&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">set_uid_map</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> inside_id, <span class="keyword">int</span> outside_id, <span class="keyword">int</span> length)</span></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/uid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* uid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(uid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(uid_map);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">set_gid_map</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> inside_id, <span class="keyword">int</span> outside_id, <span class="keyword">int</span> length)</span></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/gid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* gid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(gid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(gid_map);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">child_main</span><span class="params">(<span class="keyword">void</span>* args)</span></span>&#123;</span><br><span class="line">    <span class="keyword">cap_t</span> caps;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    <span class="comment">// sethostname(&quot;newnamespace&quot;, 12);</span></span><br><span class="line">    <span class="comment">// printf(&quot;------------&quot;);</span></span><br><span class="line">    set_uid_map(getpid(), <span class="number">0</span>, <span class="number">1000</span>, <span class="number">1</span>);</span><br><span class="line">    set_gid_map(getpid(), <span class="number">0</span>, <span class="number">995</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;eUID=%ld, eGID=%ld\n&quot;</span>, (<span class="keyword">long</span>)geteuid(), (<span class="keyword">long</span>)getegid());</span><br><span class="line">    caps = cap_get_proc();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;capabilities: %s\n&quot;</span>, cap_to_text(caps, <span class="literal">NULL</span>));</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;程序开始\n&quot;</span>);</span><br><span class="line">    <span class="keyword">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWUSER | SIGCHLD, <span class="literal">NULL</span>);</span><br><span class="line">    waitpid(child_pid, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;已退出\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>重新编译执行，结果如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">gutianyi:user &gt; .&#x2F;userns</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">eUID&#x3D;0, eGID&#x3D;0</span><br><span class="line">capabilities: &#x3D; cap_chown......</span><br><span class="line">root:user &gt;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：执行的用户必须是<code>set_uid_map</code>和<code>set_gid_map</code>中 outside_id 对应的用户。</p>
+</blockquote>
+<p>Linux 内核将原来与超级用户相关的高级权限划分为不同的单元，称为 Capability。管理员可独立对特定的 Capability 进行使用或禁用。在 Docker 中同时使用了 user namespace 和 Capability，加强了容器安全性。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/namespace/" rel="tag"><i class="fa fa-tag"></i> namespace</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/%E5%9C%A8Vultr%E4%B8%8A%E6%90%AD%E5%BB%BAShadowsock%E8%AE%B0%E5%BD%95/" rel="prev" title="在Vultr上搭建Shadowsocks记录">
+      <i class="fa fa-chevron-left"></i> 在Vultr上搭建Shadowsocks记录
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/Jenkins%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Jenkins学习笔记">
+      Jenkins学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-text"> 简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#uts"><span class="nav-text"> UTS</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ipc"><span class="nav-text"> IPC</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#pid"><span class="nav-text"> PID</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#mount"><span class="nav-text"> Mount</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#network"><span class="nav-text"> Network</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#user"><span class="nav-text"> User</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="基于华三网络学习笔记（理论）  组播概述 组播组管理协议  IGMPv2">
+<meta property="og:type" content="article">
+<meta property="og:title" content="组播学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="基于华三网络学习笔记（理论）  组播概述 组播组管理协议  IGMPv2">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/3.png">
+<meta property="article:published_time" content="2018-07-31T14:12:09.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.813Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="组播">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>组播学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          组播学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-07-31 22:12:09" itemprop="dateCreated datePublished" datetime="2018-07-31T22:12:09+08:00">2018-07-31</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>基于华三网络学习笔记（理论）</strong></p>
+<ul>
+<li><a href="#%e7%bb%84%e6%92%ad%e6%a6%82%e8%bf%b0">组播概述</a></li>
+<li><a href="#%e7%bb%84%e6%92%ad%e7%bb%84%e7%ae%a1%e7%90%86%e5%8d%8f%e8%ae%ae">组播组管理协议</a>
+<ul>
+<li><a href="#igmpv2">IGMPv2</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h1 id="组播概述"><a class="markdownIt-Anchor" href="#组播概述"></a> 组播概述</h1>
+<p>组播用于实现点到多点的传输。</p>
+<ul>
+<li>效率高，分布式应用，多点传输</li>
+<li>数据源仅发送一份数据包，链路仅传输一份数据包，只有组播组中接受者能收到数据包</li>
+<li>尽最大努力交付</li>
+<li>无拥塞控制</li>
+<li>数据报重复</li>
+<li>数据包无序交付</li>
+</ul>
+<p><strong>组播需求问题与相关技术：</strong></p>
+<ol>
+<li>如何标识接受者-----组播地址机制</li>
+<li>接受者动态加入或离开组播组-----组成员关系管理</li>
+<li>组播报文如何在网络中转发----组播报文转发过程</li>
+<li>组播报文转发路径（组播转发树）构建-----组播路由协议</li>
+</ol>
+<p>组播地址：<br />
+组播地址范围：<code>224.0.0.0---239.255.255.255</code></p>
+<ul>
+<li>本地协议预留组播地址：<code>224.0.0.0---224.0.0.255</code>，属于局部范围，不会被路由器转发</li>
+<li>用户组播地址：<code>224.0.1.0---238.255.255.255</code>，用户可用组播地址，全网有效<br />
+<code>232.0.0.0/8</code>为 SSM 组地址，其余属于 ASM 组</li>
+<li>本地管理组地址：<code>239.0.0.0---239.255.255.255</code>，特定本地范围有效，属于 ASM 组</li>
+<li>组播 MAC 地址：以太网：<code>01-00-5e-xx-xx-xx</code></li>
+</ul>
+<p>组播地址映射：<br />
+组播 MAC 地址中高 24 位固定为<code>0x01005E</code>，第 25 位为 0，低 23 位来自组播 IP 地址的低 23 位。<br />
+组播 IP 地址的高 4 位为<code>1110</code>，标识组播，而低 28 位只有 23 位被映射到组播 MAC 地址，即有 5 位的丢失，一共会有<code>2^5</code>即 32 个 IP 地址公用一个组播 MAC，也就是可能会接受所在组播组外的其他组播数据。</p>
+<img src="/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>举例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">组播IP地址为：224.231.123.14</span><br><span class="line">换成二进制：11100000 11100111 01111011 00001110</span><br><span class="line">组播MAC地址高24位为01005E，即</span><br><span class="line">0000 0001 0000 0000 0101 1110</span><br><span class="line"></span><br><span class="line">                1110|00001|11001110111101100001110   组播IP地址，共32位</span><br><span class="line">000000010000000001011110|0|11001110111101100001110   组播MAC地址，共48位</span><br><span class="line">组播IP地址中第二部分，案例中00001部分，在MAC地址中没有任何对应，一共有32种可能</span><br></pre></td></tr></table></figure>
+<h1 id="组播组管理协议"><a class="markdownIt-Anchor" href="#组播组管理协议"></a> 组播组管理协议</h1>
+<p>常用的组播组管理协议为 IGMP（Internet Group Management Protocol 因特网组管理协议）。<br />
+主机通过 IGMP 通知路由器加入或离开某个组播组，路由器通过 IGMP 周期查询组播组成员是否处于活动状态，收集成员关系并维护</p>
+<p>IGMP 有三个版本：</p>
+<ul>
+<li>IGMPv1：定义了基本的组成员查询和报告过程</li>
+<li>IGMPv2：添加了组成员快速离开机制</li>
+<li>IGMPv3：添加了成员可指定接受或拒绝组播源的报文，支持 SSM 模型</li>
+</ul>
+<h2 id="igmpv2"><a class="markdownIt-Anchor" href="#igmpv2"></a> IGMPv2</h2>
+<p>IGMP 报文：</p>
+<ul>
+<li><code>Type</code>：IGMP 报文类型，包含<code>Membership Query</code>、<code>Report</code>、<code>Leave Group</code></li>
+<li><code>Max Reps Time</code>：最大响应时间，只有<code>Membership Query</code>使用该字段</li>
+<li><code>checksum</code>：校验和</li>
+<li><code>Group Address</code>：组地址。不同报文填的不同。普遍查询填 0，特定组查询填指定组播组地址，报告报文和离开报文填组播组地址</li>
+</ul>
+<p>IGMPv2 原理：</p>
+<ol>
+<li>当同一网段中有多个 IGMP 路由器时，通过查询器选举机制（最小接口 IP）选出唯一查询器。</li>
+<li>查询器周期发送普遍查询消息<code>General Query</code>，目的地址<code>224.0.0.1</code>，<code>TTL</code>为 1，进行组成员关系查询。主机收到后发送报告消息<code>Report</code>响应。也有称为<code>Membership Report</code>，但本篇统一为<code>Report</code></li>
+<li>主机若要加入组播组，可直接向查询器发送<code>Report</code>，离开组播组时，直接发送<code>Leave</code>，目的地址为<code>224.0.0.2</code>，通告所有组播路由器。查询器收到<code>Leave</code>后，会发送特定组查询消息<code>Group-Specific Query</code>确定该组所有成员是否都离开。</li>
+<li>若是加入，查询器则会查看组播转发表项，若不存在就添加，表项为<code>(组播源IP地址,组播组IP)</code>，若为<code>*</code>表示任意源。组播转发表项还包含：组播指定报文的入接口、出接口等</li>
+</ol>
+<p>案例完整流程：</p>
+<img src="/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="">
+<img src="/2018/%E7%BB%84%E6%92%AD%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/3.png" class="">
+<p>IGMP Snooping：解决二层组播。原因：组播数据在二层以广播发送<br />
+主机发往 IGMP 查询器的报告消息经过交换机时，交换机会监听并将组播 MAC 和端口做映射，建立表项。当交换机收到组播数据时，就按表项转发，也就只向组成员发送了</p>
+<p>IGMPv3 概述： 1.可对源过滤 2.新的报文类型与格式 3.报告报文的组播地址为 224.0.0.22 4.取消成员报告抑制机制<br />
+IGMPv3 主机为接口上每个组播组维护一个表项（组地址，过滤模式，源列表）<br />
+过滤模式：INCLUDE：只接收来自源列表的组播源的数据包<br />
+EXCLUDE：只接收不在源列表的组播源的数据包<br />
+三种状态：当前状态，过滤模式改变状态，源列表改变状态。对应三种记录<br />
+当主机接口维护的组状态变化时，会主动发送组记录类型为过滤模型变化或源列表变化的报告报文。当接收到查询报文时，会响应记录类型为当前状态的报告报文</p>
+<p>组播分发树模型：是组播数据的转发数据，分为最短路径树(S,G)和共享树<code>(*,G)</code><br />
+组播转发机制：逆向路径转发<br />
+组播路由协议：域内：DVMRP（基于路径矢量协议）、MOSPF（基于 OSPF）、PIM 域间：MSDP、MBGP<br />
+域内协议：基于 SPT：PIM DM、DVMRP、MOSPF 基于 RPT：PIM SM<br />
+组播模型：ASM 任意信源组播：接收端只选择加入组播组，不能选择组播源<br />
+SSM 指定信源组播：接收端可以指定组播源</p>
+<p>组播分发树：由组播路由协议建立的无环传输路径<br />
+SPT 最短路径树：组播源到接受者的最短路径。要为每个组播源建一棵最短路径树<br />
+缺点：路由器必须为每个组播源保存路由信息<br />
+RPT 共享树：以某个路由器作为树根，该路由器称为汇聚点 RP，以 RP 为树根建立到每个接收者的最短路径树。所有组播源和接收者都使用这棵树收发报文。组播源先向 RP 发数据，再由 RP 发送到所有接收者。<br />
+优点：路由器保留的路由信息很少<br />
+缺点：数据报文先要经过 RP，再到达接收者，对 RP 的可靠性和性能要求高<br />
+组播报文转发机制<br />
+RPF 逆向路径转发<br />
+原因：组播报文是发送给一组接收者的，路由器收到组播报文后，必须根据报文的源地址确定正确的入接口和下游方向，然后向下游方向转发。该过程就是 RPF。<br />
+目的：确保组播数据沿正确路径传输，避免出现环路<br />
+检查过程：在单播路由表上查找组播源（分发树为 SPT）或 RP（分发树为 RPT）对应的 RPF 接口，若数据包是在 RPF 端口接收到的，则 RPF 检查成功，转发数据包。否则检查失败，直接丢弃<br />
+PIM 协议无关组播：与单播路由无关，但仍然依靠单播路由表进行组播路由。使用 RPF 转发报文。分为两种模式：PIM-DM（密集模式），PIM-SM（稀疏模式）<br />
+PIM-DM：用于小型网络中接收者较多且密集的情况，采用“推”方式将流量泛洪。<br />
+邻居发现：路由器周期发送 PIM Hello 消息，发现其他 PIM 路由器，建立邻居关系，判断叶子网络，选举 DR（若运行的是 IGMPv1，通过 Hello 选举，其他版本就不需要选举 DR）。<br />
+扩散-剪枝：将组播数据扩散到每个节点，每个节点创建(S,G)表项（包含出接口（除 RPF 接口外所有连接 PIM-DM 邻居或组播组成员的接口）与入接口列表），若节点没有该组播组成员，就向上游发送 Prune 剪枝消息，若共享网段有路由器上有接收者，就向上游发送 Join 消息，覆盖其他路由器发送的 Prune。 扩散-剪枝过程周期进行。最终形成 SPT。<br />
+Prune 消息发送情况：1.若路由器(S,G)表中出接口表为空 2.路由器从非 RPF 接口收到组播报文，会触发断言 Assert 机制，断言失败一方会向成功一方发送 Prune 消息。<br />
+断言 Assert：若同一网段有多个组播路由器，相同报文可能会被重复发送，通过断言选取网段唯一转发组播数据的路由器。<br />
+过程：路由器在重复接收到报文的接口上发送 Assert 消息，包含 S，G，单播路由的优先级，开销 Metric。先比较路由优先级（高的胜），再比较开销（小的胜），再比较本地接口 IP 地址（大的胜）。当一台路由器上游接口故障时，该路由器将 Metric 值设为无穷大并广播 Assert，引发新一轮断言，保证流量不会长时间中断。<br />
+状态刷新机制：与组播源直连的路由器发送 State Refresh，其他路由器收到后重置剪枝超时定时器，并向所有连接 PIM-DM 邻居的路由器发送该消息，对于处于转发的接口，消息中剪枝位为 0，处于剪枝的接口，剪枝位为 1。周期发送该消息可使剪枝状态的接口维持状态，减少不必要的扩散。<br />
+嫁接：当被剪枝的节点上出现接收者时，节点会主动向上游发送嫁接 Graft 消息，上游收到后回复 Graft Ack 消息确认，节点从剪枝状态变为转发状态。两个消息都是单播发送。<br />
+PIM-SM：用于中大型网络中，组播组成员相对分散，范围较广，采用“拉”方式。核心任务是构造维护 RPT，选出 RP 作为共享树的根。<br />
+过程：组播源侧 DR 向 RP 注册，将注册报文单播发给 RP，该报文到达 RP 后触发建立 SPT，组播源把数据沿 SPT 发给 RP，再由 RP 沿 RPT 发给接收者</p>
+<p>ASM 模型：任意源模型。任何发送者都可作为组播源向组播组发数据，接收者无法预先知道组播源位置，但可以在任意时间加入离开组播组<br />
+SSM 模型：指定信源组播模型。接收端能指定组播源。SSM 模型无需 RP，无需构建 RPT，无需组播源注册过程。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag"><i class="fa fa-tag"></i> 网络</a>
+              <a href="/tags/%E7%BB%84%E6%92%AD/" rel="tag"><i class="fa fa-tag"></i> 组播</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/OSPF%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="OSPF学习笔记">
+      <i class="fa fa-chevron-left"></i> OSPF学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/STP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="STP学习笔记">
+      STP学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%84%E6%92%AD%E6%A6%82%E8%BF%B0"><span class="nav-text"> 组播概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%84%E6%92%AD%E7%BB%84%E7%AE%A1%E7%90%86%E5%8D%8F%E8%AE%AE"><span class="nav-text"> 组播组管理协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#igmpv2"><span class="nav-text"> IGMPv2</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

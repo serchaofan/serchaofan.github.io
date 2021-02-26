@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本篇主要包含以下内容：  PXE 概述 Kickstart  Kickstart 概述 Kickstart 准备  DHCP 配置 TFTP 配置 使用 VSFTP 搭建镜像源 使用 HTTP 搭建镜像源 Syslinux 配置   网络安装试验 Kickstart 配置  手动配置 system-config-kickstart 配置     Cobbler  Cobbler 安装  使用 co">
+<meta property="og:type" content="article">
+<meta property="og:title" content="无人值守学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="本篇主要包含以下内容：  PXE 概述 Kickstart  Kickstart 概述 Kickstart 准备  DHCP 配置 TFTP 配置 使用 VSFTP 搭建镜像源 使用 HTTP 搭建镜像源 Syslinux 配置   网络安装试验 Kickstart 配置  手动配置 system-config-kickstart 配置     Cobbler  Cobbler 安装  使用 co">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/0.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/6.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/10.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/11.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/12.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/13.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/14.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/15.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/16.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/17.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/18.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/19.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/20.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/21.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/22.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/23.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/24.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/25.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/26.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/27.png">
+<meta property="og:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/28.png">
+<meta property="article:published_time" content="2018-08-01T12:59:39.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.752Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="无人值守">
+<meta property="article:tag" content="PXE">
+<meta property="article:tag" content="Kickstart">
+<meta property="article:tag" content="Cobbler">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/0.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>无人值守学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          无人值守学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-01 20:59:39" itemprop="dateCreated datePublished" datetime="2018-08-01T20:59:39+08:00">2018-08-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本篇主要包含以下内容：</p>
+<ul>
+<li><a href="#pxe-%e6%a6%82%e8%bf%b0">PXE 概述</a></li>
+<li><a href="#kickstart">Kickstart</a>
+<ul>
+<li><a href="#kickstart-%e6%a6%82%e8%bf%b0">Kickstart 概述</a></li>
+<li><a href="#kickstart-%e5%87%86%e5%a4%87">Kickstart 准备</a>
+<ul>
+<li><a href="#dhcp-%e9%85%8d%e7%bd%ae">DHCP 配置</a></li>
+<li><a href="#tftp-%e9%85%8d%e7%bd%ae">TFTP 配置</a></li>
+<li><a href="#%e4%bd%bf%e7%94%a8-vsftp-%e6%90%ad%e5%bb%ba%e9%95%9c%e5%83%8f%e6%ba%90">使用 VSFTP 搭建镜像源</a></li>
+<li><a href="#%e4%bd%bf%e7%94%a8-http-%e6%90%ad%e5%bb%ba%e9%95%9c%e5%83%8f%e6%ba%90">使用 HTTP 搭建镜像源</a></li>
+<li><a href="#syslinux-%e9%85%8d%e7%bd%ae">Syslinux 配置</a></li>
+</ul>
+</li>
+<li><a href="#%e7%bd%91%e7%bb%9c%e5%ae%89%e8%a3%85%e8%af%95%e9%aa%8c">网络安装试验</a></li>
+<li><a href="#kickstart-%e9%85%8d%e7%bd%ae">Kickstart 配置</a>
+<ul>
+<li><a href="#%e6%89%8b%e5%8a%a8%e9%85%8d%e7%bd%ae">手动配置</a></li>
+<li><a href="#system-config-kickstart-%e9%85%8d%e7%bd%ae">system-config-kickstart 配置</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#cobbler">Cobbler</a>
+<ul>
+<li><a href="#cobbler-%e5%ae%89%e8%a3%85">Cobbler 安装</a>
+<ul>
+<li><a href="#%e4%bd%bf%e7%94%a8-cobbler-web-%e5%9b%be%e5%bd%a2%e5%8c%96%e9%85%8d%e7%bd%ae">使用 cobbler-web 图形化配置</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="pxe-概述"><a class="markdownIt-Anchor" href="#pxe-概述"></a> PXE 概述</h1>
+<p>Preboot Execution Environment 远程预启动执行环境，就是使计算机通过网络启动。</p>
+<p>要达成 PXE 必须要有两个环节：</p>
+<ul>
+<li>客户端的网卡必须要支持 PXE 用户端功能，并且开机时选择从网卡启动，这样系统才会以网卡进入 PXE 客户端的程序</li>
+<li>PXE 服务器必须要提供至少含有 DHCP 以及 TFTP 的服务
+<ul>
+<li>DHCP 服务必须要能够提供客户端的网络参数，还要告知客户端 TFTP 所在的位置；</li>
+<li>TFTP 则提供客户端的<code>boot loader</code>及<code>kernel file</code>下载路径。</li>
+</ul>
+</li>
+</ul>
+<p>可选的其他服务：NFS、FTP、HTTP 等</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/0.png" class="">
+<p>完整的 PXE 交互过程：</p>
+<ol>
+<li>Client 向 DHCP 发送 IP 地址请求消息，DHCP 检测 Client 是否合法（主要是检测 Client 的网卡 MAC 地址），如果合法则返回 Client 的 IP 地址，同时将启动文件 pxelinux.0 的位置信息一并传送给 Client</li>
+<li>Client 向 TFTP 发送获取 pxelinux.0 请求消息，TFTP 接收到消息之后再向 Client 发送 pxelinux.0 大小信息，试探 Client 是否满意，当 TFTP 收到 Client 发回的同意大小信息之后，正式向 Client 发送 pxelinux.0，Client 接收并执行 pxelinux.0 文件</li>
+<li>Client 向 TFTP Server 发送获取针对本机的配置信息文件的请求（在 TFTP 服务的 pxelinux.cfg 目录下，这是系统菜单文件，格式和 isolinux.cfg 格式一样，功能也是类似），TFTP 将配置文件发回 Client，继而 Client 根据配置文件执行后续操作。</li>
+<li>Client 向 TFTP 发送 Linux 内核请求信息，TFTP 接收到消息之后将内核文件发送给 Client</li>
+<li>Client 向 TFTP 发送根文件请求信息，TFTP 接收到消息之后返回 Linux 根文件系统 Client 启动 Linux 内核</li>
+<li>Client 从 FTP 或 HTTP 下载安装源文件，读取自动化安装脚本</li>
+</ol>
+<blockquote>
+<p>引用自<a target="_blank" rel="noopener" href="http://baijiahao.baidu.com/s?id=1601105969236933071&amp;wfr=spider&amp;for=pc">Cobbler 原理解析</a></p>
+</blockquote>
+<h1 id="kickstart"><a class="markdownIt-Anchor" href="#kickstart"></a> Kickstart</h1>
+<h2 id="kickstart-概述"><a class="markdownIt-Anchor" href="#kickstart-概述"></a> Kickstart 概述</h2>
+<p>Kickstart 是通过自动应答文件，将安装系统过程中手动设置的语言、密码、网络等参数自动设置。</p>
+<p>Kickstart 文件有三种生成方式：</p>
+<ul>
+<li>手动书写</li>
+<li><code>system-config-kickstart</code>图形化配置</li>
+<li>红帽系系统自带的<code>Anaconda</code>生成</li>
+</ul>
+<h2 id="kickstart-准备"><a class="markdownIt-Anchor" href="#kickstart-准备"></a> Kickstart 准备</h2>
+<p>服务分工介绍：</p>
+<ul>
+<li>DHCP：为安装的新主机分配 IP 地址</li>
+<li>TFTP：仅仅提供引导文件</li>
+<li>VSFTP|HTTP|NFS：提供系统镜像中所有文件，然后会根据 Kickstart 文件自动选择要安装的软件，并配置</li>
+</ul>
+<p>防止访问出现错误，先将 selinux 设为 Permissive。<code>setenforce 0</code></p>
+<h3 id="dhcp-配置"><a class="markdownIt-Anchor" href="#dhcp-配置"></a> DHCP 配置</h3>
+<p>首先配置 DHCP 服务。<br />
+<code>yum install dhcp</code><br />
+修改配置文件<code>/etc/dhcp/dhcpd.conf</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"># 日志级别</span><br><span class="line">log-facility local7;</span><br><span class="line"># DNS服务器域名</span><br><span class="line">option domain-name-servers system1.example.com;</span><br><span class="line"># 网关</span><br><span class="line">option routers 192.168.10.2;</span><br><span class="line"># 默认分配时间</span><br><span class="line">default-lease-time 600;</span><br><span class="line"># 最大分配时间</span><br><span class="line">max-lease-time 7200;</span><br><span class="line"></span><br><span class="line">subnet 192.168.10.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  # 地址分配范围</span><br><span class="line">  range 192.168.10.101 192.168.10.110;</span><br><span class="line">  # TFTP服务器（重要）</span><br><span class="line">  next-server 192.168.10.100;</span><br><span class="line">  # TFTP服务器上的共享启动文件名（重要）</span><br><span class="line">  filename &quot;pxelinux.0&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>重新加载并设置开机自启<br />
+<code>systemctl restart dhcpd</code><br />
+<code>systemctl enable dhcpd</code><br />
+若开启了防火墙应该放行服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-service&#x3D;dhcp</span><br><span class="line">firewall-cmd --permanent --add-port&#x3D;67&#x2F;tcp --add-port&#x3D;67&#x2F;udp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+<h3 id="tftp-配置"><a class="markdownIt-Anchor" href="#tftp-配置"></a> TFTP 配置</h3>
+<p>配置 TFTP 服务，首先需要安装<code>xinetd</code>服务，因为 TFTP 是被 Xinetd 动态管理的服务。<br />
+<code>yum install xinetd tftp-server</code><br />
+修改配置文件<code>/etc/xinetd.d/tftp</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">service tftp</span><br><span class="line">&#123;</span><br><span class="line">        socket_type             &#x3D; dgram</span><br><span class="line">        protocol                &#x3D; udp</span><br><span class="line">        wait                    &#x3D; yes</span><br><span class="line">        user                    &#x3D; root</span><br><span class="line">        server                  &#x3D; &#x2F;usr&#x2F;sbin&#x2F;in.tftpd</span><br><span class="line">        # server_args指定共享目录路径</span><br><span class="line">        server_args             &#x3D; -s &#x2F;tftpboot</span><br><span class="line">        disable                 &#x3D; no</span><br><span class="line">        per_source              &#x3D; 11</span><br><span class="line">        cps                     &#x3D; 100 2</span><br><span class="line">        flags                   &#x3D; IPv4</span><br><span class="line">&#125;</span><br><span class="line">disable的值默认为yes，表示禁用tftp，因此要改为no，开启tftp</span><br></pre></td></tr></table></figure>
+<p>重启 Xinted 服务<code>systemctl restart xinetd.service</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">通过查看服务是否开启</span><br><span class="line"># ss -aupt | grep xinetd</span><br><span class="line">udp    UNCONN     0      0       *:tftp                  *:*                     users:((&quot;xinetd&quot;,pid&#x3D;3490,fd&#x3D;5))</span><br></pre></td></tr></table></figure>
+<p>若开启了防火墙，需要放行服务和端口</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-service&#x3D;tftp</span><br><span class="line">firewall-cmd --permanent --add-port&#x3D;69&#x2F;udp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+<h3 id="使用-vsftp-搭建镜像源"><a class="markdownIt-Anchor" href="#使用-vsftp-搭建镜像源"></a> 使用 VSFTP 搭建镜像源</h3>
+<p>安装 VSFTPD 服务<code>yum install vsftpd</code><br />
+<code>systemctl start vsftpd</code><br />
+<code>systemctl enable vsftpd</code></p>
+<p>将光盘镜像挂载在<code>/var/ftp/pub</code>中。<code>mount /dev/cdrom /var/ftp/pub</code></p>
+<p>若开启了防火墙，应该放行端口和服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port&#x3D;20&#x2F;tcp --add-port&#x3D;21&#x2F;tcp</span><br><span class="line">firewall-cmd --permanent --add-service&#x3D;ftp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+<p>在浏览器中输入<code>ftp://192.168.10.100</code>访问成功。</p>
+<h3 id="使用-http-搭建镜像源"><a class="markdownIt-Anchor" href="#使用-http-搭建镜像源"></a> 使用 HTTP 搭建镜像源</h3>
+<p>安装 HTTPD 服务<code>yum install httpd</code><br />
+<code>systemctl start httpd</code><br />
+<code>systemctl enable httpd</code></p>
+<p>将光盘镜像挂载在<code>/var/www/html/centos7</code>上。<code>mount /dev/cdrom /var/www/html/centos7</code></p>
+<p>若开启了防火墙，应该放行端口和服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port&#x3D;80&#x2F;tcp</span><br><span class="line">firewall-cmd --permanent --add-service&#x3D;http</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+<p>在浏览器中输入<code>192.168.10.100/centos7</code>访问成功。</p>
+<h3 id="syslinux-配置"><a class="markdownIt-Anchor" href="#syslinux-配置"></a> Syslinux 配置</h3>
+<p>安装 syslinux 服务<br />
+syslinux 是一个功能强大的引导加载程序，用于获取引导文件。<br />
+<code>yum install syslinux</code><br />
+将引导文件复制到 TFTP 主目录<code>cp /usr/share/syslinux/pxelinux.0 /tftpboot</code><br />
+若要图形化菜单功能（仅仅是可以上下键切换，最好一起复制了），可将<code>/usr/share/syslinux</code>中的<code>menu.32</code>或<code>vesamenu.c32</code>复制到<code>/tftpboot</code>。这里就复制<code>vesamenu.c32</code>，比<code>menu.32</code>更好。<br />
+并在<code>/tftpboot</code>中创建目录<code>pxelinux.cfg</code>用于存放默认开机选项，并在该目录中创建<code>default</code>文件</p>
+<p>创建存放 CentOS7 内核文件的目录<code>mkdir /tftpboot/centos7</code>，并将挂载镜像目录<code>/var/ftp/pub/isolinux/</code>中<code>vmlinuz</code>和<code>initrd.img</code>两个内核文件复制到该目录中。<code>cp /var/ftp/pub/isolinux/&#123;vmlinuz,initrd.img&#125; /tftpboot/centos7/</code><br />
+最好将<code>isolinux</code>目录下的<code>isolinux.cfg</code>也复制过去，该文件提供了开机选项，可以以它作为修改开机选项和菜单的模板。可以直接将内容拷贝过去，<code>cat /var/ftp/pub/isolinux/isolinux.cfg &gt; /tftpboot/pxelinux.cfg/default</code>。</p>
+<p><code>default</code>即<code>isolinux.cfg</code>简单解析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">default vesamenu.c32    # 必须指定，填&#x2F;tftpboot中复制的图形化文件</span><br><span class="line">timeout 10              # 在选择界面停留的时间（若未操作）</span><br><span class="line">display boot.msg   　　　# 选项的说明文件</span><br><span class="line"></span><br><span class="line">菜单的一些显示设置，不用改</span><br><span class="line">menu clear</span><br><span class="line">menu background splash.png</span><br><span class="line">menu title CentOS 7    # 引导是显示的标题</span><br><span class="line">menu vshift 8</span><br><span class="line">menu rows 18</span><br><span class="line">menu margin 8</span><br><span class="line">#menu hidden</span><br><span class="line">menu helpmsgrow 15</span><br><span class="line">menu tabmsgrow 13</span><br><span class="line">.....</span><br><span class="line">在引导界面上显示的选项</span><br><span class="line">label linux</span><br><span class="line">  menu label ^Install CentOS 7</span><br><span class="line">  kernel .&#x2F;centos7&#x2F;vmlinuz   # vmlinuz是可引导的、压缩的内核，路径要设为相对路径（相对于tftp根目录）</span><br><span class="line">  append initrd&#x3D;.&#x2F;centos7&#x2F;initrd.img ks&#x3D;ftp:&#x2F;&#x2F;192.168.10.100&#x2F;ks_config&#x2F;ks.cfg quiet</span><br><span class="line">  # 设置内核文件，要设置initrd.img的相对路径</span><br><span class="line">  # initrd.img全称boot loader initialized RAM disk， boot loader初始化的内存盘。在linux内核启动前，boot loader会将存储介质中的initrd文件加载到内存，内核启动时会在访问真正的根文件系统前先访问该内存中的initrd文件系统</span><br><span class="line">  # 后面跟着ks&#x3D;ks.cfg文件的路径，http或ftp都行</span><br><span class="line">  # 后面还可以跟上ksdevice&#x3D;eth0，当客户端有多块网卡时，此项就会让系统不提示要选择哪块网卡</span><br><span class="line"></span><br><span class="line">label check</span><br><span class="line">  menu label Test this ^media &amp; install CentOS 7</span><br><span class="line">  menu default     # 默认光标停留在此标签（选项）上</span><br><span class="line">  kernel .&#x2F;centos7&#x2F;vmlinuz</span><br><span class="line">  append initrd&#x3D;.&#x2F;centos7&#x2F;initrd.img inst.stage2&#x3D;hd:LABEL&#x3D;CentOS\x207\x20x86_64 rd.live.check quiet</span><br></pre></td></tr></table></figure>
+<p>整个<code>/tftpboot</code>的目录结构如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;tftpboot&#x2F;</span><br><span class="line">├── centos7</span><br><span class="line">│   ├── initrd.img</span><br><span class="line">│   └── vmlinuz</span><br><span class="line">├── pxelinux.0</span><br><span class="line">├── pxelinux.cfg</span><br><span class="line">│   └── default</span><br><span class="line">└── vesamenu.c32</span><br></pre></td></tr></table></figure>
+<h2 id="网络安装试验"><a class="markdownIt-Anchor" href="#网络安装试验"></a> 网络安装试验</h2>
+<p>做这个实验时，要先修改<code>/tftpboot/pxelinux.cfg/default</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">找到以下内容</span><br><span class="line">label linux</span><br><span class="line">  menu label ^Install CentOS 7</span><br><span class="line">  menu default</span><br><span class="line">  kernel .&#x2F;centos7&#x2F;vmlinuz</span><br><span class="line">  append initrd&#x3D;.&#x2F;centos7&#x2F;initrd.img inst.stage2&#x3D;ftp:&#x2F;&#x2F;192.168.10.100&#x2F;pub quiet</span><br><span class="line">net.ifnames&#x3D;0 biosdevname&#x3D;0</span><br><span class="line"></span><br><span class="line">inst.stage2设置FTP镜像源</span><br><span class="line">在quiet后再加上net.ifnames&#x3D;0 biosdevname&#x3D;0</span><br><span class="line">让网卡名称为ethN，而不是默认的eno16777728这样的随机名称</span><br></pre></td></tr></table></figure>
+<p>创建一个新的虚拟机，不指定镜像。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>进入虚拟机的 BIOS 设置</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>进入 Boot 菜单，通过<code>-</code>或<code>+</code>改变启动顺序，将<code>Network boot from Intel E1000</code>移到最上面。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png" class="">
+<p>保存退出，会自动启动主机，通过网络读取 FTP 镜像源。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png" class="">
+<p>最后进入图形化安装界面</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/6.png" class="">
+<h2 id="kickstart-配置"><a class="markdownIt-Anchor" href="#kickstart-配置"></a> Kickstart 配置</h2>
+<h3 id="手动配置"><a class="markdownIt-Anchor" href="#手动配置"></a> 手动配置</h3>
+<p>首先创建<code>ks.cfg</code>，存放在<code>/var/ftp/ks_config</code>（FTP 源）或<code>/var/www/html/centos/ks_config</code>（HTTP 源）。<br />
+修改<code>/tftpboot/pxelinux.cfg/default</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">仍然找到这段内容，修改initrid后的内容</span><br><span class="line">删除原来的inst.stage2，改为ks&#x3D;fs.cfg路径，HTTP同理</span><br><span class="line">label linux</span><br><span class="line">  menu label ^Install CentOS 7</span><br><span class="line">  menu default</span><br><span class="line">  kernel .&#x2F;centos7&#x2F;vmlinuz</span><br><span class="line">  append initrd&#x3D;.&#x2F;centos7&#x2F;initrd.img ks&#x3D;ftp:&#x2F;&#x2F;192.168.10.100&#x2F;ks_config&#x2F;ks.cfg quiet</span><br><span class="line">net.ifnames&#x3D;0 biosdevname&#x3D;0</span><br></pre></td></tr></table></figure>
+<p>在主目录中有系统自动创建的<code>anaconda-ks.cfg</code>，可以此为模板。在图像化配置安装时就是向该文件中添加配置，直到点击安装时，安装程序就会根据该配置文件安装。</p>
+<p><code>anaconda-ks.cfg</code>简单解析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br></pre></td><td class="code"><pre><span class="line">分为三个部分：</span><br><span class="line">1. 选项指令段，用于图形化安装时除包选择外的所有手动操作</span><br><span class="line">2. %packages段，用于选择软件包</span><br><span class="line">3. 脚本段，可选。分为两种：</span><br><span class="line">  %pre：预安装脚本段，在安装系统之前就执行的脚本。很少使用</span><br><span class="line">  %post：后安装脚本段，在系统安装完成后执行的脚本。</span><br><span class="line"></span><br><span class="line">必选选项：</span><br><span class="line"># auth验证选项</span><br><span class="line">auth --enableshadow --passalgo&#x3D;sha512</span><br><span class="line">  --enableshadow|--useshadow   开启shadow文件验证</span><br><span class="line">  --passalgo　　指定密码加密算法</span><br><span class="line"></span><br><span class="line"># bootloader指定如何安装引导程序</span><br><span class="line">bootloader --append&#x3D;&quot;crashkernel&#x3D;auto&quot; --location&#x3D;mbr --boot-drive&#x3D;sda</span><br><span class="line">  --append      指定内核参数</span><br><span class="line">  --location    指定引导程序的位置，默认为MBR</span><br><span class="line">  --boot-drive  指定grub安装的分区</span><br><span class="line"></span><br><span class="line"># keyboard键盘类型</span><br><span class="line">keyboard --vckeymap&#x3D;us --xlayouts&#x3D;&#39;us&#39;</span><br><span class="line">  --vckeymap指定键盘分布，默认为us美式</span><br><span class="line"></span><br><span class="line"># lang指定语言</span><br><span class="line">lang en_US.UTF-8</span><br><span class="line"></span><br><span class="line"># rootpw指定root密码</span><br><span class="line">rootpw --iscrypted $6$D2fmDfXJI30ZbG0x$lenXfD98spplf7jHTmfiJ0m7CgQqJM.ddQ5hu07qiU3A5fJcRhSQA5KZolrWoSfGm2oIwJUglnRwoXth9rDGc0</span><br><span class="line">  --iscrypted 使用加密密码</span><br><span class="line"></span><br><span class="line">可选选项：</span><br><span class="line">install   表示是安装系统，若为install还需指定安装方式：</span><br><span class="line">  cdrom      表示从光盘安装</span><br><span class="line">  harddrive  硬盘安装，硬盘必须是VFAT或EXT文件系统</span><br><span class="line">    --dir    指定从包含安装树（install-tree）的目录安装</span><br><span class="line">    --partition  指定从哪个分区安装</span><br><span class="line">  nfs</span><br><span class="line">    --server   指定NFS服务器主机名或IP地址</span><br><span class="line">    --dir      指定安装树目录</span><br><span class="line">    --opts     指定NFS的挂载选项</span><br><span class="line">  url</span><br><span class="line">    --url 后面跟上地址</span><br><span class="line">update    表示是升级系统</span><br><span class="line"></span><br><span class="line">graphical 表示图形模式下执行kickstart安装，默认</span><br><span class="line">text　　 文本模式下根据kickstart执行安装（手动创建一定是text）</span><br><span class="line">firstboot 安装后第一次启动默认会有需要手动配置的界面，应该禁用</span><br><span class="line">  --enable|--disable  启用|禁用</span><br><span class="line">ignoredisk 指定忽略的磁盘</span><br><span class="line">  --only-use&#x3D;sda</span><br><span class="line">network  配置网络</span><br><span class="line">  --bootproto      地址协议，dhcp或static。若为static需要配置IP、掩码、网关、DNS</span><br><span class="line">  --device&#x3D;ens33   设置网卡名</span><br><span class="line">  --onboot&#x3D;off     是否在引导系统时启用设备</span><br><span class="line">  --ipv6&#x3D;auto 　　　开启IPv6</span><br><span class="line">  --no-activate</span><br><span class="line">  --hostname&#x3D;localhost.localdomain　主机名</span><br><span class="line">若协议为static，则需要以下选项：</span><br><span class="line">  --ip&#x3D;</span><br><span class="line">  --netmask&#x3D;</span><br><span class="line">  --gateway&#x3D;</span><br><span class="line">  --nameserver&#x3D;</span><br><span class="line"></span><br><span class="line">repo    设置repo源</span><br><span class="line">  --name&#x3D;</span><br><span class="line">  --baseurl&#x3D;</span><br><span class="line">services      设置服务是否启用</span><br><span class="line">  --disabled&#x3D;</span><br><span class="line">  --enabled&#x3D;</span><br><span class="line">timezone Asia&#x2F;Shanghai --isUtc --nontp  指定时区</span><br><span class="line">selinux     设置selinux</span><br><span class="line">  --enforcing</span><br><span class="line">  --permissive</span><br><span class="line">  --disabled</span><br><span class="line">firewall  是否开启防火墙</span><br><span class="line">  --disable|--enable</span><br><span class="line">xconfig  --startxonboot</span><br><span class="line">autostep     交互式，和interactive类似</span><br><span class="line">interactive  使用kickstart文件指定的参数交互式安装，但仍会给出每一步的选择项，如果直接下一步就使用kickstart参数</span><br><span class="line">cmdline      在完全非交互的命令行模式下进行安装</span><br><span class="line">driverdisk   指定驱动程序所在位置</span><br><span class="line">  --source&#x3D;</span><br><span class="line">autopart     自动分区</span><br><span class="line">  --type&#x3D;lvm</span><br><span class="line">zerombr      清除磁盘的MBR</span><br><span class="line">clearpart    在安装系统前清除分区</span><br><span class="line">  --all      清除所有分区</span><br><span class="line">  --initlabel   创建标签，对于没有MBR或者GPT的新硬盘，该选项是必须的</span><br><span class="line">  --drives&#x3D;sda  清除指定的分区</span><br><span class="line">  --Linux    清除Linux分区</span><br><span class="line">  --none     不清除分区</span><br><span class="line">  常用cleanpart --all --initlabel</span><br><span class="line"></span><br><span class="line">part [分区]  　创建分区</span><br><span class="line">  --fstype    文件系统类型</span><br><span class="line">  --asprimary 强制为主分区</span><br><span class="line">  --size      设置大小（单位Mb）</span><br><span class="line">  --grow      使用所有可用空间，即为其分配所有剩余空间。</span><br><span class="line">  对于根分区至少需要3G空间（即使是--grow，也还是需要指定--size）</span><br><span class="line"></span><br><span class="line">user    在系统中生成一个新用户</span><br><span class="line">  --name      指定用户名</span><br><span class="line">  --groups    指定辅助组，非默认组</span><br><span class="line">  --homedir   用户家目录，如果不指定则默认为&#x2F;home&#x2F;&lt;username&gt;</span><br><span class="line">  --password  该用户的密码，如果不指定或省略则创建后该用户处于锁定状态</span><br><span class="line">  --shell     用户的shell，不指定则默认</span><br><span class="line">  --uid       用户UID，不指定则自动分配一个非系统用户的UID</span><br><span class="line">loggin      指定安装过程中的错误日志位置</span><br><span class="line">  --host    指定日志将发送到那台主机上</span><br><span class="line">  --port    如果远程主机的rsyslog使用非默认端口，则应该指定该端口选项</span><br><span class="line">  --level   指定日志级别</span><br><span class="line">halt|reboot   安装完成后操作，halt为关机，reboot为重启，默认是halt</span><br><span class="line"></span><br><span class="line"># 软件包或软件包组</span><br><span class="line"># @表示包组，@base和@core默认包含</span><br><span class="line">%packages</span><br><span class="line">@^graphical-server-environment</span><br><span class="line">@base</span><br><span class="line">@core</span><br><span class="line">@desktop-debugging</span><br><span class="line">@dial-up</span><br><span class="line">@fonts</span><br><span class="line">@gnome-desktop</span><br><span class="line">@guest-agents</span><br><span class="line">@guest-desktop-agents</span><br><span class="line">@hardware-monitoring</span><br><span class="line">@input-methods</span><br><span class="line">@internet-browser</span><br><span class="line">@multimedia</span><br><span class="line">@print-client</span><br><span class="line">@x11</span><br><span class="line">kexec-tools</span><br><span class="line">%end</span><br><span class="line"></span><br><span class="line">%addon com_redhat_kdump --enable --reserve-mb&#x3D;&#39;auto&#39;</span><br><span class="line">%end</span><br><span class="line"></span><br><span class="line">%anaconda</span><br><span class="line">pwpolicy root --minlen&#x3D;6 --minquality&#x3D;1 --notstrict --nochanges --notempty</span><br><span class="line">pwpolicy user --minlen&#x3D;6 --minquality&#x3D;1 --notstrict --nochanges --emptyok</span><br><span class="line">pwpolicy luks --minlen&#x3D;6 --minquality&#x3D;1 --notstrict --nochanges --notempty</span><br><span class="line">%end</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>注：<code>%addon</code>、<code>%anaconda</code>、<code>%packages</code>、<code>%onerror</code>、<code>%pre</code>、<code>%post</code>必须以<code>%end</code>结尾</strong></p>
+</blockquote>
+<p>官方并不建议手工创建 kickstart 文件，因为太过复杂，且容易出错。因此，可通过<code>system-config-kickstart</code>图形化工具快速生成 kickstart 文件。</p>
+<h3 id="system-config-kickstart-配置"><a class="markdownIt-Anchor" href="#system-config-kickstart-配置"></a> system-config-kickstart 配置</h3>
+<p>需要安装该工具<code>yum install system-config-kickstart</code><br />
+打开工具后，按照以下界面配置即可。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/10.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/11.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/12.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/13.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/14.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/15.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/16.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/17.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/18.png" class="">
+<p>若需要修改，则直接打开修改即可。若图形化无法添加安装软件包，就在生成的<code>ks.cfg</code>中添加。最终修改后的<code>ks.cfg</code>文件如下</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">install</span><br><span class="line">keyboard &#39;us&#39;</span><br><span class="line">rootpw --iscrypted $1$8.DdzSgf$UIjrFmFh&#x2F;4Mavb&#x2F;4q7z8U.</span><br><span class="line">url --url&#x3D;&quot;ftp:&#x2F;&#x2F;192.168.10.100&#x2F;pub&quot;</span><br><span class="line">lang en_US</span><br><span class="line">firewall --disabled</span><br><span class="line">auth  --useshadow  --passalgo&#x3D;sha512</span><br><span class="line">graphical</span><br><span class="line">selinux --disabled</span><br><span class="line">skipx</span><br><span class="line"></span><br><span class="line">network  --bootproto&#x3D;dhcp --device&#x3D;eth0</span><br><span class="line">network  --hostname&#x3D;system10.example.com</span><br><span class="line">reboot</span><br><span class="line">timezone Asia&#x2F;Shanghai</span><br><span class="line">bootloader --location&#x3D;mbr</span><br><span class="line">zerombr</span><br><span class="line">clearpart --all --initlabel</span><br><span class="line">part &#x2F;boot --fstype&#x3D;&quot;xfs&quot; --size&#x3D;200</span><br><span class="line">part &#x2F; --fstype&#x3D;&quot;xfs&quot; --size&#x3D;5</span><br><span class="line">part &#x2F;var --fstype&#x3D;&quot;xfs&quot; --size&#x3D;10</span><br><span class="line">services --enabled&#x3D;httpd</span><br><span class="line"></span><br><span class="line">%packages</span><br><span class="line">@base</span><br><span class="line">@core</span><br><span class="line">tree</span><br><span class="line">nmap</span><br><span class="line">wget</span><br><span class="line">httpd</span><br><span class="line">%end</span><br></pre></td></tr></table></figure>
+<p>再次进行安装，进入下面画面时，发现配置已根据 kickstart 文件填写完成。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/19.png" class="">
+<h1 id="cobbler"><a class="markdownIt-Anchor" href="#cobbler"></a> Cobbler</h1>
+<p>Cobbler 与 Kickstart 类似，是一个 Linux 服务器快速网络安装的服务，可以通过 PXE 快速安装、重装物理服务器和虚拟机。基于 Python 开发，支持命令行管理、<strong>web 界面管理</strong>、提供 API 接口。可以管理 DHCP，DNS，TFTP、RSYNC 以及 yum 仓库、构造系统 ISO 镜像。</p>
+<p>Cobbler 会在请求内核文件后，再请求 Kickstart 文件（即 ks.cfg）和 OS 镜像。然后 Cobbler 加载 Kickstart 文件并接收安装 OS 镜像。</p>
+<p>Cobbler 常见术语：</p>
+<ul>
+<li>distro：发行版，相当于一个操作系统镜像，包含内核和 initrd 信息以及软件包等</li>
+<li>repository：保存一个 yum 或 rsync 存储库的镜像信息</li>
+<li>profile：配置文件，包含 distro、kickstart 文件和 repository 等信息，作用为了修改<code>/tftpboot/pxelinux.cfg/default</code>文件，每生成或修改一次 profile，都会在 default 文件中修改或追加对应的 label</li>
+<li>system：目标系统，即要安装的主机，包含配置文件或镜像，IP 地址等信息</li>
+<li>image：系统镜像</li>
+</ul>
+<blockquote>
+<p>system、image、repository 用的很少，主要用 distro 和 profile。</p>
+</blockquote>
+<h2 id="cobbler-安装"><a class="markdownIt-Anchor" href="#cobbler-安装"></a> Cobbler 安装</h2>
+<p>仍然使用之前 Kickstart 的环境。<strong>必须关闭 selinux</strong>。<br />
+首先安装<code>epel-release</code>，因为 Cobbler 位于 epel 源中。<br />
+然后安装 Cobbler 及其他工具程序<br />
+<code>yum install cobbler cobbler-web pykickstart</code><br />
+其中 cobbler-web 是 cobbler 的网页端配置工具，可不用安装。<br />
+pykickstart 是用于检查 kickstart 文件语法的工具<br />
+cobbler 的运行依赖于 dhcp、tftp、rsync 及 dns 服务，因此在现有环境下还要安装 rsync。<code>yum install rsync</code><br />
+<code>systemctl enable rsyncd</code><br />
+<code>systemctl start rsyncd</code><br />
+<code>systemctl enable cobblerd.service</code><br />
+<code>systemctl start cobblerd.service</code></p>
+<p>使用命令<code>cobbler check</code>进行检查，对查出的错误一一解决。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1 : The &#39;server&#39; field in &#x2F;etc&#x2F;cobbler&#x2F;settings must be set to something other than localhost,</span><br><span class="line">or kickstarting features will not work.</span><br><span class="line">This should be a resolvable hostname</span><br><span class="line">or IP for the boot server as reachable by all machines that will use it.</span><br><span class="line">2 : For PXE to be functional, the &#39;next_server&#39; field in &#x2F;etc&#x2F;cobbler&#x2F;settings</span><br><span class="line">must be set to something other than 127.0.0.1,</span><br><span class="line">and should match the IP of the boot server on the PXE network.</span><br></pre></td></tr></table></figure>
+<p>这两个问题需要设置<code>/etc/cobbler/settings</code>，修改以下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># 将127.0.0.1修改为本机的IP地址</span><br><span class="line">next_server: 192.168.10.100</span><br><span class="line">server: 192.168.10.100</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">3 : Some network boot-loaders are missing from &#x2F;var&#x2F;lib&#x2F;cobbler&#x2F;loaders, you may run &#39;cobbler get-loaders&#39; to download them, or, if you only want to handle x86&#x2F;x86_64 netbooting, you may ensure that you have installed a *recent* version of the syslinux package installed and can ignore this message entirely.  Files in this directory, should you want to support all architectures, should include pxelinux.0, menu.c32, elilo.efi, and yaboot. The &#39;cobbler get-loaders&#39; command is the easiest way to resolve these requirements.</span><br></pre></td></tr></table></figure>
+<p>问题是需要获取 bootloaders 文件，执行<code>cobbler get-loaders</code>自动下载，但要求联网。也可复制，但需要的文件很多，有的不好找，最好直接执行命令。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">4 : debmirror package is not installed, it will be required to manage debian deployments and repositories</span><br></pre></td></tr></table></figure>
+<p>安装<code>debmirror</code>软件包并将<code>/etc/debmirror.conf</code>中的<code>dists</code>和<code>arches</code>注释。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#@dists&#x3D;&quot;sid&quot;;</span><br><span class="line">#@arches&#x3D;&quot;i386&quot;;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">5 : The default password used by the sample templates for newly installed machines (default_password_crypted in &#x2F;etc&#x2F;cobbler&#x2F;settings) is still set to &#39;cobbler&#39; and should be changed, try: &quot;openssl passwd -1 -salt &#39;random-phrase-here&#39; &#39;your-password-here&#39;&quot; to generate new one</span><br></pre></td></tr></table></figure>
+<p>需要使用 openssl 生成加密密码来取代默认的密码。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">openssl passwd -1 -salt &#39;cobbler&#39; &#39;123456&#39;</span><br><span class="line">  passwd  表示生成密码</span><br><span class="line">  -1      表示使用MD5加密</span><br><span class="line">  -salt   表示使用后面提供的参数生成，后面跟上用户名和密码</span><br><span class="line">会生成一个加密密码，将这串字符替换掉原来的默认密码</span><br><span class="line">default_password_crypted: &quot;$1$cobbler$52QDrGSqGlT9d5qbjg7QY&#x2F;&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">6 : fencing tools were not found, and are required to use the (optional) power management features. install cman or fence-agents to use them</span><br></pre></td></tr></table></figure>
+<p>安装<code>cman</code>和<code>fence-agents</code>，<code>cman</code>可能会找不到这个包，但只安装<code>fence-agents</code>就够了。</p>
+<p>最后使用命令<code>cobbler sync</code>应用调整的参数或重启<code>cobblerd</code>服务，再执行一次<code>cobbler check</code>检查，若还有错就继续排错，若没有错误就会显示<code>No configuration problems found. All systems go.</code></p>
+<p>Cobbler 默认管理 tftp 服务，默认不管理 dhcp，因此 tftp 的根目录变为<code>/var/lib/tftpboot</code>。如果让 Cobbler 管理 DHCP，则 Cobbler 管理 DHCP 的模板文件<code>/etc/cobbler/dhcp.template</code>会覆盖<code>/etc/dhcp/dhcpd.conf</code>。</p>
+<p>将光盘挂载到本地，<code>mount /dev/cdrom /mnt/mirror</code>，然后执行<code>cobbler import --name=CentOS7 --path=/mnt/mirror</code>生成 distro，从本地导入的过程实际上是将系统镜像中的文件复制到<code>/var/www/cobbler/ks_mirror/CentOS7</code>中。在<code>/var/www/cobbler/images</code>中也会生成一个<code>CentOS7-x86_64</code>的目录，其中存放了<code>initrd.img</code>和<code>vmlinuz</code>文件。</p>
+<p>然后，需要提供 kickstart 文件，这里继续使用 Kickstart 实验用的<code>ks.cfg</code>文件，将文件移动到<code>/var/lib/cobbler/kickstarts</code>中，并改名为<code>CentOS7.ks</code>，需要修改以下内容。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#如果存在ignoredisk设置，一定要注释掉，cobbler编译时不支持此语法</span><br><span class="line">修改镜像安装源</span><br><span class="line">url  --url&#x3D;&quot;http:&#x2F;&#x2F;http:&#x2F;&#x2F;192.168.10.100&#x2F;cobbler&#x2F;ks_mirror&#x2F;CentOS7&#x2F;&quot;</span><br></pre></td></tr></table></figure>
+<p>在导入镜像生成 distro 的过程中，会自动生成一个 profile。使用<code>cobbler profile list</code>查看。使用<code>cobbler profile report --name=CentOS7-x86_64</code>查看 profile 信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># cobbler profile report --name&#x3D;CentOS7-x86_64</span><br><span class="line">其中profile默认使用的kickstart文件有误</span><br><span class="line">Kickstart                      : &#x2F;var&#x2F;lib&#x2F;cobbler&#x2F;kickstarts&#x2F;sample_end.ks</span><br></pre></td></tr></table></figure>
+<p>需要通过<code>cobbler profile edit --name=CentOS7-x86_64 --kickstart=/var/lib/cobbler/kickstarts/CentOS7.ks</code>修改。</p>
+<p>最好再修改内核启动参数<code>net.ifnames</code>和<code>biosdevname</code>使网卡名为<code>ethN</code>系列而不是用<code>enoXXXXXX</code>随机名。<code>cobbler profile edit --name=CentOS7-x86_64 --kopts=&quot;net.ifnames=0 biosdevname=0&quot;</code></p>
+<p>若要手动添加一个 profile，可使用<code>cobbler profile add --name=XXX --distro=distro名 --kickstart=ks文件路径</code>。每添加一个 profile，就是在<code>/var/lib/tftpboot/pxelinux.cfg/default</code>中添加一个 label，一个 label 就是开机启动时的引导选项。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">LABEL CentOS7-x86_64</span><br><span class="line">        kernel &#x2F;images&#x2F;CentOS7-x86_64&#x2F;vmlinuz</span><br><span class="line">        MENU LABEL CentOS7-x86_64</span><br><span class="line">        append initrd&#x3D;&#x2F;images&#x2F;CentOS7-x86_64&#x2F;initrd.img ksdevice&#x3D;bootif lang&#x3D;  text net.ifnames&#x3D;0 biosdevname&#x3D;0 kssendmac  ks&#x3D;http:&#x2F;&#x2F;192.168.10.100&#x2F;cblr&#x2F;svc&#x2F;op&#x2F;ks&#x2F;profile&#x2F;CentOS7-x86_64</span><br><span class="line">        ipappend 2</span><br></pre></td></tr></table></figure>
+<p>在配置完成后，执行<code>cobbler sync</code>同步设置。</p>
+<p>通过浏览器访问<code>default</code>文件中<code>ks</code>参数指定的 ks 文件路径，看是否能访问，若能显示文件内容，则配置没有问题。</p>
+<p>重启<code>xinetd</code>、<code>cobblerd</code>、<code>dhcpd</code>服务，以防配置未刷新。</p>
+<p>仍然使用一台裸机进行安装，会自动进入安装界面。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/20.png" class="">
+<h3 id="使用-cobbler-web-图形化配置"><a class="markdownIt-Anchor" href="#使用-cobbler-web-图形化配置"></a> 使用 cobbler-web 图形化配置</h3>
+<p>如果开启了防火墙，需要放行 443 端口和 https 服务，因为 Cobbler 在 CentOS7 只支持 https。</p>
+<p>在浏览器访问<code>https://IP地址/cobbler_web</code>即可，输入账号密码，均为<code>cobbler</code>。</p>
+<p>首先进行镜像的导入，左侧菜单的<code>Import DVD</code>选项配置。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/21.png" class="">
+<p>菜单的<code>Events</code>查看事件日志。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/22.png" class="">
+<p>进入<code>distros</code>配置，添加内核选项。也可以通过<code>profiles</code>配置。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/23.png" class="">
+<p>设置网卡名为 ethN 系列</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/24.png" class="">
+<p>修改或编写 ks 文件</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/25.png" class="">
+<p>也可进入菜单<code>system</code>进行 system 配置。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/26.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/27.png" class="">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/28.png" class="">
+<h1 id="参考文章"><a class="markdownIt-Anchor" href="#参考文章"></a> 参考文章</h1>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7342919.html">骏马金龙–无人值守 CentOS7</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7342022.html">kickstart 文件详解</a> &gt; <a target="_blank" rel="noopener" href="http://www.zyops.com/autoinstall-kickstart/">KICKSTART 无人值守安装</a> &gt; <a target="_blank" rel="noopener" href="http://blog.51cto.com/1767340368/2045496">Cobbler-自动化部署神器</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7347883.html">cobbler 无人值守批量安装 Linux 系统</a> &gt; <a target="_blank" rel="noopener" href="http://baijiahao.baidu.com/s?id=1601105969236933071&amp;wfr=spider&amp;for=pc">Cobbler 原理解析</a><br />
+Linux 就该这么学<br />
+Linux 运维之道（第二版）</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88/" rel="tag"><i class="fa fa-tag"></i> 无人值守</a>
+              <a href="/tags/PXE/" rel="tag"><i class="fa fa-tag"></i> PXE</a>
+              <a href="/tags/Kickstart/" rel="tag"><i class="fa fa-tag"></i> Kickstart</a>
+              <a href="/tags/Cobbler/" rel="tag"><i class="fa fa-tag"></i> Cobbler</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Rsync文件同步服务器学习笔记">
+      <i class="fa fa-chevron-left"></i> Rsync文件同步服务器学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Xinted%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Xinted学习笔记">
+      Xinted学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#pxe-%E6%A6%82%E8%BF%B0"><span class="nav-text"> PXE 概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#kickstart"><span class="nav-text"> Kickstart</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#kickstart-%E6%A6%82%E8%BF%B0"><span class="nav-text"> Kickstart 概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kickstart-%E5%87%86%E5%A4%87"><span class="nav-text"> Kickstart 准备</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#dhcp-%E9%85%8D%E7%BD%AE"><span class="nav-text"> DHCP 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tftp-%E9%85%8D%E7%BD%AE"><span class="nav-text"> TFTP 配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-vsftp-%E6%90%AD%E5%BB%BA%E9%95%9C%E5%83%8F%E6%BA%90"><span class="nav-text"> 使用 VSFTP 搭建镜像源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-http-%E6%90%AD%E5%BB%BA%E9%95%9C%E5%83%8F%E6%BA%90"><span class="nav-text"> 使用 HTTP 搭建镜像源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#syslinux-%E9%85%8D%E7%BD%AE"><span class="nav-text"> Syslinux 配置</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%AE%89%E8%A3%85%E8%AF%95%E9%AA%8C"><span class="nav-text"> 网络安装试验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kickstart-%E9%85%8D%E7%BD%AE"><span class="nav-text"> Kickstart 配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E9%85%8D%E7%BD%AE"><span class="nav-text"> 手动配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#system-config-kickstart-%E9%85%8D%E7%BD%AE"><span class="nav-text"> system-config-kickstart 配置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#cobbler"><span class="nav-text"> Cobbler</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#cobbler-%E5%AE%89%E8%A3%85"><span class="nav-text"> Cobbler 安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-cobbler-web-%E5%9B%BE%E5%BD%A2%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="nav-text"> 使用 cobbler-web 图形化配置</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="nav-text"> 参考文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Memcached 概述 Memcached 简单部署  安装与简单操作 部署在 LNMP 环境中   Memcached 架构优化 参考书目">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Memcached笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Memcached%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Memcached 概述 Memcached 简单部署  安装与简单操作 部署在 LNMP 环境中   Memcached 架构优化 参考书目">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Memcached%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/Memcached%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/Memcached%E7%AC%94%E8%AE%B0/3.png">
+<meta property="og:image" content="https://github.com/2018/Memcached%E7%AC%94%E8%AE%B0/4.png">
+<meta property="article:published_time" content="2018-11-05T08:21:08.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.526Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="Memcached">
+<meta property="article:tag" content="缓存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Memcached%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Memcached%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Memcached笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Memcached%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Memcached笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-11-05 16:21:08" itemprop="dateCreated datePublished" datetime="2018-11-05T16:21:08+08:00">2018-11-05</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#memcached-%e6%a6%82%e8%bf%b0">Memcached 概述</a></li>
+<li><a href="#memcached-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2">Memcached 简单部署</a>
+<ul>
+<li><a href="#%e5%ae%89%e8%a3%85%e4%b8%8e%e7%ae%80%e5%8d%95%e6%93%8d%e4%bd%9c">安装与简单操作</a></li>
+<li><a href="#%e9%83%a8%e7%bd%b2%e5%9c%a8-lnmp-%e7%8e%af%e5%a2%83%e4%b8%ad">部署在 LNMP 环境中</a></li>
+</ul>
+</li>
+<li><a href="#memcached-%e6%9e%b6%e6%9e%84%e4%bc%98%e5%8c%96">Memcached 架构优化</a></li>
+<li><a href="#%e5%8f%82%e8%80%83%e4%b9%a6%e7%9b%ae">参考书目</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="memcached-概述"><a class="markdownIt-Anchor" href="#memcached-概述"></a> Memcached 概述</h1>
+<p>Memcached 是一个高性能、支持高并发的分布式内存缓存系统，由 C 语言编写，是基于存储键值对的 hashmap，用于动态 web 应用，减轻后端服务器和数据库的负载。采用 C/S 架构，服务器端的程序叫 Memcached，客户端程序叫 Memcache。</p>
+<p>Memcached 通过事先规划好的系统内存空间中临时缓存数据库中的各类数据，达到减少前端业务服务对数据库的直接高并发访问。原理与缓存服务器一致。</p>
+<p><strong>Memcached 特点：</strong></p>
+<ul>
+<li>协议简单：采用基于文本行的协议，可通过 telnet 等命令直接操作数据</li>
+<li>支持 epoll/kqueue 异步 I/O 模型，使用 libevent 作为事件处理通知机制</li>
+<li>采用 key/value 键值对存储</li>
+<li>全内存缓存，效率高。无持久化存储设计。当重启系统或 Memcached 服务时，数据会全部丢失。若要持久化保存，需要使用 Redis。</li>
+<li>支持分布式集群，但不同服务器之间互不通信，每个节点独立存取数据。</li>
+<li>多线程处理时采用 pthread 线程模式。若要激活多线程，需在编译时指定<code>./configure --enable-threads</code>。</li>
+</ul>
+<p><strong>应用场景：</strong></p>
+<ul>
+<li>作为数据库的查询数据缓存
+<ul>
+<li>完全数据缓存：例如商品分类等一般不会改变的数据。若将这类缓存做成静态文件，然后在 web 前端缓存或用 CDN 加速效果更好。</li>
+<li>热点数据缓存：例如用户的商品等一直会变化的数据。用于缓存经常被访问的数据。可通过数据库插件或相关软件实现缓存与数据库同步。</li>
+</ul>
+</li>
+<li>作为集群节点的 session 会话共享存储<br />
+将用户请求产生的 session 信息统一存到缓存，提高速度。</li>
+</ul>
+<p><strong>网站更新 Memcached 数据时的工作流程</strong></p>
+<ol>
+<li>程序更新或删除数据时，首先处理后端数据库</li>
+<li>处理数据库的同时，会通知 Memcached，告知对应的数据失效，保证缓存数据与数据库一致。</li>
+<li>若是在高并发读写场合，除了以上操作，还需通过相关机制，例如在数据库上部署相关程序（如数据库中设置触发器使用 UDFs），实现当数据库有更新时就把数据更新到缓存中，实现数据预热，减少第一次查询对数据库的压力。甚至可以把缓存作为数据库的从库，实现主从复制。<img src="/2018/Memcached%E7%AC%94%E8%AE%B0/1.png" class="">
+</li>
+</ol>
+<p>Memcached 在企业常见架构中的位置：</p>
+<img src="/2018/Memcached%E7%AC%94%E8%AE%B0/2.png" class="">
+<p><strong>Memcached 内存管理机制：</strong></p>
+<ul>
+<li>采用 slab 内存分配机制：<br />
+全称 Slab Allocation。会提前将大内存分为若干 1M 的 slab，每个小对象称为 chunk，把相同尺寸的内存块分为组 chunks slab class，可重复利用。当新增数据对象时，会根据空闲 chunk 的表进行分配，避免了大量重复的初始化和清理，减轻内存管理器负担。存储在 chunk 中的数据项称为 item。<img src="/2018/Memcached%E7%AC%94%E8%AE%B0/3.png" class="">
+slab 分配器是基于对象（内核中的数据结构）进行管理的，每当要申请这样一个对象时，slab 分配器就从一个 slab 列表中分配一个 chunk 出去，而且是选择最适合数据大小的 slab 分配一个能存下这个数据的最小 chunk，而当要释放时，将其重新保存在该列表中，从而避免内部碎片。<img src="/2018/Memcached%E7%AC%94%E8%AE%B0/4.png" class="">
+slab 分配器并不丢弃已经分配的对象，而是释放并把它们保存在内存中。<br />
+slab 分配对象时，会使用最近释放的对象的内存块，因此其驻留在 cpu 高速缓存中的概率会大大提高。
+<blockquote>
+<p>早期使用的是 malloc，但会产生内存碎片，导致性能下降。</p>
+</blockquote>
+</li>
+<li>采用 LRU 对象清除机制：Least Recent Used，淘汰最不常使用的，即缓存中最长时间没有被访问的会被淘汰。</li>
+<li>采用 hash 机制快速检索 item：对 item 做 hash，建立 hash 表</li>
+</ul>
+<p><strong>Slab 机制的缺点：</strong> 在 chunk 分配时也会产生浪费，因为分配的是能存下这个数据的最小 chunk，所以几乎一定会有空间浪费。<br />
+避免浪费内存的方法：</p>
+<ol>
+<li>预先计算应用存入的数据大小，或把同一业务类型的数据存入一个 Memcached，确保存入数据大小相对均匀，以减少内存浪费。</li>
+<li>在启动缓存时指定 Growth Factor 因子，通过<code>-f</code>选项，可以在某种程度上控制每组 slab 之间的差异，默认为 1.25。</li>
+</ol>
+<p><strong>Memcached 预热：</strong> 当需要大规模重启 Memcached 时，要先在前端控制网站入口的访问流量，然后重启 Memcached 集群进行数据预热，再逐步放开前端的流量控制。在启动服务器集群前，一定要从网站的后端依次往前端启动，Memcached 要提前预热。</p>
+<p><strong>Memcached 检测过期与删除机制：<strong>Memcached <strong>不会主动检测 item 对象是否过期，而是在进行 get 操作时检查时间戳</strong> ，这种策略称为</strong>懒惰检测对象过期策略</strong>，这种策略不会在过期数据上浪费 CPU 资源。<strong>在删除 item 时，不会自动释放内存空间，而是做删除标记</strong> ，将指针放入 slot 回收槽，下次分配时直接使用。在分配内存时，会<strong>优先使用已过期的键值对空间，并采用 LRU 算法进行淘汰</strong>。若不希望系统使用 LRU 清除数据，可使用<code>-M</code>启动 Memcached。</p>
+<h1 id="memcached-简单部署"><a class="markdownIt-Anchor" href="#memcached-简单部署"></a> Memcached 简单部署</h1>
+<h2 id="安装与简单操作"><a class="markdownIt-Anchor" href="#安装与简单操作"></a> 安装与简单操作</h2>
+<p>安装 Memcached 前确保<code>libevent</code>和<code>libevent-devel</code>已安装。然后可通过 yum 或源码包安装。推荐使用 yum 安装，虽然版本会老一点。<br />
+<code>yum install -y memcached</code>或<code>apt install -y memcached</code></p>
+<p>源码包安装，进入解压目录。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;memcached \</span><br><span class="line">            --bindir&#x3D;&#x2F;usr&#x2F;bin \</span><br><span class="line">            --sbindir&#x3D;&#x2F;usr&#x2F;sbin \</span><br><span class="line">            --sysconfdir&#x3D;&#x2F;etc</span><br></pre></td></tr></table></figure>
+<p>然后<code>make &amp;&amp; make install</code></p>
+<p>服务器端<code>memcached</code>命令参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">memcached</span><br><span class="line">  -p    # TCP端口，默认为11211</span><br><span class="line">  -U    # UDP端口，默认0（未开启）</span><br><span class="line">  -d    # 后台运行</span><br><span class="line">  -u    # 指定验证用户</span><br><span class="line">  -m    # 内存限制，默认64MB</span><br><span class="line">  -c    # 连接限制，默认1024</span><br><span class="line">  -v    # 显示详细信息</span><br><span class="line">  -t    # 使用的线程数，默认4</span><br><span class="line">  -R    # 每个event最大请求数，默认20</span><br><span class="line">  -C    # 禁用CAS</span><br><span class="line">  -M    # 不使用LRU清除数据</span><br><span class="line">  -L    # 启用大内存页，可降低内存浪费</span><br></pre></td></tr></table></figure>
+<p>启动 Memcached 实例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">memcached -m 128m -d -u root -c 8192</span><br><span class="line"># 如果要使用root用户启动，必须要加-u</span><br></pre></td></tr></table></figure>
+<p>可使用 telnet 进入 Memcached 进行操作。<code>telnet 127.0.0.1 11211</code></p>
+<p>memcached 命令格式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;command&gt; &lt;key&gt; &lt;flags&gt; &lt;exptime&gt; &lt;bytes&gt;  # 命令</span><br><span class="line">&lt;datablock&gt; # 填数据</span><br><span class="line">&lt;status&gt;   # 返回的状态</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>command</td>
+<td>set\get\add\replace\append\prepend\cas</td>
+</tr>
+<tr>
+<td>key</td>
+<td>键名</td>
+</tr>
+<tr>
+<td>flags</td>
+<td>客户端用来标识数据格式的数值，如 json、xml 等</td>
+</tr>
+<tr>
+<td>exptime</td>
+<td>存活时间，0 为永远，单位秒（小于 30 天），unix 时间戳（大于 30 天）</td>
+</tr>
+<tr>
+<td>bytes</td>
+<td>字符个数，不包含\r\n</td>
+</tr>
+<tr>
+<td>datablock</td>
+<td>文本行，以\r\n 结尾</td>
+</tr>
+<tr>
+<td>status</td>
+<td>命令返回状态，STORED\NOT_STORED\NOT_FOUND\EXISTS\ERROR\CLIENT_ERROR\SERVER_ERROR</td>
+</tr>
+</tbody>
+</table>
+<p>常用操作</p>
+<ul>
+<li>
+<p>插入数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">set key1 0 0 5</span><br><span class="line">abcde</span><br><span class="line">STORED  &#x2F;&#x2F; 表示成功添加</span><br></pre></td></tr></table></figure>
+<p><strong>设置的多少字节，就必须是多少字节，不能多也不能少</strong> ，否则就会报错</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">CLIENT_ERROR bad data chunk</span><br><span class="line">ERROR</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>查询数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">get key1</span><br><span class="line">VALUE key1 0 5</span><br><span class="line">abcde</span><br><span class="line">END</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>删除数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">delete key1</span><br><span class="line">DELETED</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>关闭 Memcached：若启动了多个实例，使用<code>killall</code>或<code>pkill</code>会同时关闭这些实例，所以最好在启动时添加<code>-P</code>指定 pid 文件，便于管理不同实例。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">memcached -d -u root -p 11211 -P &#x2F;var&#x2F;run&#x2F;memcached-11211.pid</span><br><span class="line">memcached -d -u root -p 11212 -P &#x2F;var&#x2F;run&#x2F;memcached-11212.pid</span><br></pre></td></tr></table></figure>
+<p>然后通过 pid 停止指定 memcached</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kill &#96;cat &#x2F;var&#x2F;run&#x2F;memcached-11211.pid&#96;</span><br></pre></td></tr></table></figure>
+<p>也可以通过<code>nc</code>命令连接 memcached</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># printf &quot;stats\r\n&quot; | nc 127.0.0.1 11211</span><br><span class="line">STAT pid 5235</span><br><span class="line">STAT uptime 1283</span><br><span class="line">STAT time 1578635117</span><br><span class="line">STAT version 1.5.6 Ubuntu</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<h2 id="部署在-lnmp-环境中"><a class="markdownIt-Anchor" href="#部署在-lnmp-环境中"></a> 部署在 LNMP 环境中</h2>
+<p>需要获取 php 的 memcached 插件 memcache，在<a target="_blank" rel="noopener" href="http://pecl.php.net/package/memcache">php memcache 插件下载</a><br />
+解压后进入目录。先确保<code>php-devel</code>（centos）或<code>php-dev</code>（ubuntu）已安装。在该目录下运行<code>phpize</code>，生成<code>configure</code>文件。<br />
+然后执行<code>./configure --enable-memcache --with-php-config=/usr/bin/php-config</code>。若是 ubuntu，则<code>php-config</code>变为<code>php-config7.2</code>。<br />
+然后<code>make &amp;&amp; make install</code>。会提示安装到的路径，如<code>Installing shared extensions: /usr/lib/php/20170718/</code>，在该路径下可找到<code>memcache.so</code>，说明插件安装完成。</p>
+<h1 id="memcached-架构优化"><a class="markdownIt-Anchor" href="#memcached-架构优化"></a> Memcached 架构优化</h1>
+<h1 id="参考书目"><a class="markdownIt-Anchor" href="#参考书目"></a> 参考书目</h1>
+<ul>
+<li>跟老男孩学 Linux 运维 WEB 集群实战</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/Memcached/" rel="tag"><i class="fa fa-tag"></i> Memcached</a>
+              <a href="/tags/%E7%BC%93%E5%AD%98/" rel="tag"><i class="fa fa-tag"></i> 缓存</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/MongoDB%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" rel="prev" title="MongoDB基础笔记">
+      <i class="fa fa-chevron-left"></i> MongoDB基础笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Docker-Swarm%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Docker-Swarm学习笔记">
+      Docker-Swarm学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#memcached-%E6%A6%82%E8%BF%B0"><span class="nav-text"> Memcached 概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#memcached-%E7%AE%80%E5%8D%95%E9%83%A8%E7%BD%B2"><span class="nav-text"> Memcached 简单部署</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E7%AE%80%E5%8D%95%E6%93%8D%E4%BD%9C"><span class="nav-text"> 安装与简单操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2%E5%9C%A8-lnmp-%E7%8E%AF%E5%A2%83%E4%B8%AD"><span class="nav-text"> 部署在 LNMP 环境中</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#memcached-%E6%9E%B6%E6%9E%84%E4%BC%98%E5%8C%96"><span class="nav-text"> Memcached 架构优化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E4%B9%A6%E7%9B%AE"><span class="nav-text"> 参考书目</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

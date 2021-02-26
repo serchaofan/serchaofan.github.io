@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记 本篇主要包含以下内容  Docker 存储介绍 BindMount  bind-propagation 传播挂载 Selinux 标签   Volume 数据卷 Tmpfs 数据卷容器  数据卷备份、还原与迁移  备份一个容器 还原一个容器 删除一个数据卷     存储引擎 参考资料">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Docker存储学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记 本篇主要包含以下内容  Docker 存储介绍 BindMount  bind-propagation 传播挂载 Selinux 标签   Volume 数据卷 Tmpfs 数据卷容器  数据卷备份、还原与迁移  备份一个容器 还原一个容器 删除一个数据卷     存储引擎 参考资料">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/types-of-mounts.png">
+<meta property="og:image" content="https://github.com/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/beifen-1.jpg">
+<meta property="article:published_time" content="2018-07-06T05:33:01.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.409Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="存储">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/types-of-mounts.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Docker存储学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Docker存储学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-07-06 13:33:01" itemprop="dateCreated datePublished" datetime="2018-07-06T13:33:01+08:00">2018-07-06</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记</strong><br />
+本篇主要包含以下内容</p>
+<ul>
+<li><a href="#docker-%e5%ad%98%e5%82%a8%e4%bb%8b%e7%bb%8d">Docker 存储介绍</a></li>
+<li><a href="#bindmount">BindMount</a>
+<ul>
+<li><a href="#bind-propagation-%e4%bc%a0%e6%92%ad%e6%8c%82%e8%bd%bd">bind-propagation 传播挂载</a></li>
+<li><a href="#selinux-%e6%a0%87%e7%ad%be">Selinux 标签</a></li>
+</ul>
+</li>
+<li><a href="#volume-%e6%95%b0%e6%8d%ae%e5%8d%b7">Volume 数据卷</a></li>
+<li><a href="#tmpfs">Tmpfs</a></li>
+<li><a href="#%e6%95%b0%e6%8d%ae%e5%8d%b7%e5%ae%b9%e5%99%a8">数据卷容器</a>
+<ul>
+<li><a href="#%e6%95%b0%e6%8d%ae%e5%8d%b7%e5%a4%87%e4%bb%bd%e8%bf%98%e5%8e%9f%e4%b8%8e%e8%bf%81%e7%a7%bb">数据卷备份、还原与迁移</a>
+<ul>
+<li><a href="#%e5%a4%87%e4%bb%bd%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8">备份一个容器</a></li>
+<li><a href="#%e8%bf%98%e5%8e%9f%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8">还原一个容器</a></li>
+<li><a href="#%e5%88%a0%e9%99%a4%e4%b8%80%e4%b8%aa%e6%95%b0%e6%8d%ae%e5%8d%b7">删除一个数据卷</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%e5%ad%98%e5%82%a8%e5%bc%95%e6%93%8e">存储引擎</a></li>
+<li><a href="#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99">参考资料</a><span id="more"></span>
+</li>
+</ul>
+<h2 id="docker-存储介绍"><a class="markdownIt-Anchor" href="#docker-存储介绍"></a> Docker 存储介绍</h2>
+<p>Docker 为容器提供了两种存放数据的资源：</p>
+<ul>
+<li>storage driver：管理的镜像层和容器层<br />
+特点：Copy-on-Write。新数据会存放在最上层容器层，修改现有数据会先从镜像层复制到容器层，修改后的数据直接保存在容器中，镜像层保持不变。若多层中有同名文件，用户只能看到最上层的文件。<br />
+可通过 docker info 查看到。Docker 优先使用默认的 storage driver。</li>
+<li>data volume 数据卷<br />
+特点：是目录或文件，不是磁盘，volume 数据可以被永久的保存，即使使用它的容器已经销毁。<br />
+分为两种 volume：bind mount 和 docker managed volume</li>
+</ul>
+<p>**存储驱动：**目前 docker 支持五种存储驱动。详见<a href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E">存储引擎</a></p>
+<ol>
+<li>AUFS</li>
+<li>Btrfs</li>
+<li>Device Mapper</li>
+<li>Overlay</li>
+<li>ZFS</li>
+</ol>
+<p><strong>原理：</strong></p>
+<ol>
+<li>Copy-On-Write 写时复制<br />
+所有驱动都是用到 Cow 写时复制（copy-on-write），只在需要写时才复制。可以让所有容器都共享一个 image 文件系统，所有数据都从 image 读取，容器需要写操作时，才将要写的文件从 image 复制到自己的文件系统，即所有写操作都是对 image 中副本的修改。有效提高了磁盘利用率。</li>
+<li>allocate-on-demand 用时分配<br />
+在要写入一个文件时才按需分配空间</li>
+</ol>
+<p><strong>驱动：</strong></p>
+<ol>
+<li>AUFS：一种 Union FS 联合文件系统，文件级存储。支持将不同目录挂载到同一个虚拟文件系统，下层文件系统只可读，最上层可写。若要修改，AUFS 会创建一个该文件的副本，放在可写层，结果也保存在可写层。</li>
+<li>Overlay：一种 UnionFS，文件级存储。只有两层：upper 层和 lower 层</li>
+<li>Device Mapper：RHEL 下 Docker Engine 的默认存储驱动，基于同名级卷管理技术框架的存储引擎。</li>
+</ol>
+<p>默认情况下，在容器内创建的所有文件都存储在可写容器层中，仅存储在主机系统的内存中，即<code>tmpfs</code>方式，永远不会写入主机系统的文件系统，因此一旦容器停止，容器内所有文件的改动都会丢失，所以需要通过一些机制将文件保存以至于在容易停止后仍不会丢失。</p>
+<p>docker 有三种存储容器数据的方式：</p>
+<ul>
+<li><a href="#BindMount"><code>bind mount</code></a>：可将容器数据存放在宿主机的任何位置。</li>
+<li><a href="#Volume%E6%95%B0%E6%8D%AE%E5%8D%B7"><code>volumes</code></a>：通过创建数据卷将容器数据持久化到文件系统。</li>
+<li><a href="#Tmpfs"><code>tmpfs</code></a>：数据存放在内存中，不会写入文件系统。</li>
+</ul>
+<img src="/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/types-of-mounts.png" class="">
+<h2 id="bindmount"><a class="markdownIt-Anchor" href="#bindmount"></a> BindMount</h2>
+<p><code>bind mount</code>可使容器中的文件存储在主机系统的任何位置。Docker 主机或 Docker 容器上的非 Docker 进程可以随时修改它们。bind mount 非常高效，但它们依赖于具有特定目录结构的主机文件系统。</p>
+<p>docker 提供两种选项进行 bind mount。</p>
+<ul>
+<li><code>-v</code>或<code>--volume</code>：三个字段组成，冒号分隔。</li>
+</ul>
+<ol>
+<li>第一个字段：卷名，若是匿名卷，则可省略</li>
+<li>第二个字段：文件或目录在容器中安装的路径</li>
+<li>第三个字段：可选项，例如<code>ro</code>，默认是可读可写</li>
+</ol>
+<ul>
+<li><code>--mount</code>：由多个键值对组成，用逗号分隔，键和值用<code>=</code>连接。以下是提供的键：</li>
+</ul>
+<ol>
+<li><code>type</code>：挂载的类型，可以是 bind，volume 或 tmpfs。</li>
+<li><code>source</code>或<code>src</code>：挂载源，即卷名。匿名卷可省略。</li>
+<li><code>destination</code>或<code>dst</code>或<code>target</code>：挂载到的容器中的指定目录或文件路径</li>
+<li><code>readonly</code>：以只读方式挂载，可选。</li>
+<li><code>volume-opt</code>：卷选项，可指定多次，也是键值对形式</li>
+<li><code>bind-propagation</code>：绑定传播，有以下选择：<code>rprivate</code>，<code>private</code>，<code>rshared</code>，<code>shared</code>，<code>rslave</code>，<code>slave</code><br />
+注：–mount 不支持设置 selinux 的<code>z</code>或<code>Z</code>选项</li>
+</ol>
+<p><strong>如果使用<code>-v</code>或<code>--volume</code>绑定安装 Docker 主机上尚不存在的文件或目录，则-v 会为您创建端点。它始终作为目录创建。而如果使用<code>--mount</code>，Docker 不会自动为您创建它，但会生成错误。</strong></p>
+<p>**注：**bind mount 允许访问敏感文件<br />
+使用 bind mount 的一个副作用：可以通过容器中运行的进程更改主机文件系统，包括创建，修改或删除重要的系统文件或目录。这是一种强大的功能，可能会产生安全隐患，包括影响主机系统上的非 Docker 进程。</p>
+<p>当挂载一个 bind mount 或非空数据卷到容器中的一个非空目录，则该目录中原有的文件会被掩盖（并非删除），而只显示挂载的卷内容。当挂载一个空数据卷到容器中的一个非空目录，则该目录中的文件都会复制到该卷中。若启动容器时指定了一个不存在的数据卷，则会自动创建一个卷。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">使用-v挂载</span><br><span class="line">docker run -v &lt;源目录或文件&gt;:&lt;容器中目录或文件&gt;</span><br><span class="line"># 路径都需要绝对路径</span><br><span class="line"># 若添加单个文件，主机源文件必须存在，否则会当做一个新目录挂载到容器</span><br><span class="line">使用--mount挂载</span><br><span class="line">docker run --mount type&#x3D;bind,src&#x3D;&lt;源目录或文件&gt;,dst&#x3D;&lt;容器目录或文件&gt;</span><br></pre></td></tr></table></figure>
+<p><code>docker inspect 容器</code>查看是否挂载了数据卷</p>
+<h3 id="bind-propagation-传播挂载"><a class="markdownIt-Anchor" href="#bind-propagation-传播挂载"></a> bind-propagation 传播挂载</h3>
+<p>在指定的 bind mount 或数据卷上挂载是否能被复制到挂载的目录中去。用于做动态，可通过编排工具方便实现。</p>
+<p>有以下几种选项：</p>
+<ul>
+<li>shared：源挂载的子挂载会暴露给副本挂载，副本挂载的子挂载也会复制到源挂载。</li>
+<li>slave：类似于 shared，但只在一个方向上。如果源挂载暴露了子挂载，则副本挂载可以看到它。但是，如果副本挂载暴露了子挂载，则源装载无法看到它。</li>
+<li>private：此挂载是私人的。其中的子挂载不会暴露给副本挂载，副本挂载的子挂载不会暴露给源挂载。</li>
+<li>rshared：与 shared 相同，但传播也扩展到嵌套在任何源或副本挂载中的挂载点。</li>
+<li>rslave：与 slave 相同，但传播也扩展到嵌套在任何源或副本挂载中的挂载点。</li>
+<li>rprivate：默认值。与 private 相同，源或副本挂载中任何位置的挂载点都不会沿任一方向传播。</li>
+</ul>
+<h3 id="selinux-标签"><a class="markdownIt-Anchor" href="#selinux-标签"></a> Selinux 标签</h3>
+<p>如果使用 selinux，则可以添加<code>z</code>或<code>Z</code>选项以修改要挂载到容器的主机文件或目录的 selinux 标签。这会影响主机本身上的文件或目录，并且可能会影响到 Docker 外部。</p>
+<ul>
+<li><code>z</code>选项表示绑定装载内容在多个容器之间共享。</li>
+<li><code>Z</code>选项表示绑定装载内容是私有且非共享的。使用<code>Z</code>选项绑定安装系统目录（例如<code>/home</code>或<code>/usr</code>）会导致主机无法运行。</li>
+</ul>
+<p>当 bind mount 和 service 一起使用时，会自动忽略 selinux 标签（<code>z</code>和<code>Z</code>）还有<code>ro</code>。</p>
+<h2 id="volume-数据卷"><a class="markdownIt-Anchor" href="#volume-数据卷"></a> Volume 数据卷</h2>
+<p>卷是保存 Docker 容器生成和使用的数据的首选机制，并且卷完全由 Docker 管理。<br />
+写入容器的可写层需要存储驱动程序来管理文件系统，存储驱动程序使用 Linux 内核提供联合文件系统 UFS。而数据卷是经过特殊设计的目录，可以绕过联合文件系统，为多个容器提供访问。数据卷的目的在于数据永久化，完全独立于容器的生存周期，容器删除时挂载的数据卷不会被删除。</p>
+<p>特点：</p>
+<ul>
+<li>卷比 bind mount 更容易备份或迁移。</li>
+<li>卷适用于 Linux 和 Windows 容器。</li>
+<li>可以在多个容器之间更安全地共享卷。</li>
+<li>在容器启动时初始化，若挂载点已有数据，则会被拷贝到新初始化的数据卷中</li>
+<li>数据卷变化不会影响镜像更新</li>
+<li>卷驱动程序允许在远程主机或云提供程序上存储卷，加密卷的内容或添加其他功能。</li>
+</ul>
+<p>可通过<code>docker volume create 数据卷名</code>创建数据卷。每创建一个 volume，就会在<code>/var/lib/docker/volumes</code>中创建一个同名目录。若不指定数据卷名，就会随机生成一个 volume ID 作为数据卷名。</p>
+<p><code>docker volume</code>命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">create 创建数据卷</span><br><span class="line">inspect 查看数据卷信息</span><br><span class="line">ls 查看所有数据卷</span><br><span class="line">prune 删除未使用的数据卷</span><br><span class="line">rm 删除指定数据卷</span><br></pre></td></tr></table></figure>
+<p>在创建 volume 时或启动使用为创建卷的容器时，可以指定卷的驱动。<br />
+数据卷驱动可通过<code>docker plugin install [选项] 驱动名</code>。<br />
+<strong>如果卷驱动程序要求您传递选项，则必须使用<code>--mount</code>标志来装入卷</strong></p>
+<p>docker 提供<code>-v</code>和<code>--mount</code>选项进行挂载。使用与 bind mount 基本一致。<br />
+如果需要指定卷驱动程序选项，则必须使用<code>--mount</code>。将卷与服务一起使用时，仅支持<code>--mount</code>。</p>
+<p><strong>注：挂载数据卷不支持单个文件，只能是目录。且不权限控制，均为可读写。</strong><br />
+因为容器配置文件里的可以指定<code>docker inspect</code>查看，发现<code>Mounts</code>中的<code>Source</code>字段，其中已指定了源，源为：<code>/var/lib/docker/volumes/容器长ID/_data</code>。</p>
+<p>以上两种方法数据源其实还是宿主机中的，并不是真正放在 volume container 中，可以在通过 dockerfile 的<code>ADD</code>将数据打包进镜像并指定<code>VOLUME</code>，将<code>ADD</code>指定的目录与<code>VOLUME</code>设为一致，此法称为<code>data-packed volume container</code>。</p>
+<h2 id="tmpfs"><a class="markdownIt-Anchor" href="#tmpfs"></a> Tmpfs</h2>
+<p>使用<code>tmpfs mount</code>创建容器时，容器可以在容器的可写层之外创建文件。tmpfs 挂载是临时的，仅保留在主机内存中。当容器停止时，将删除 tmpfs 挂载，该数据不可被共享，Docker 默认使用 tmpfs 挂载。<br />
+<code>--tmpfs</code>：安装 tmpfs 挂载而不允许指定任何可配置选项，并且只能与独立容器一起使用。<br />
+也可以通过<code>--mount</code>指定<code>type=tmpfs</code>。</p>
+<h2 id="数据卷容器"><a class="markdownIt-Anchor" href="#数据卷容器"></a> 数据卷容器</h2>
+<p>容器挂载数据卷，其他容器通过挂载该容器实现数据共享，挂载数据卷的容器称为数据卷容器。</p>
+<p>创建容器时<code>--volumes-from 数据卷容器</code>创建数据卷容器<br />
+<strong>注：由于数据卷容器仅是提供数据，所以只要 create，不用 run</strong><br />
+<code>docker rm -v 容器</code> 在删除容器时一并删除数据卷。但是，只要有容器还在使用该数据卷，数据卷就不会删除。宿主机上的数据卷若删除，就真的没了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">&gt; docker volume create volume_1</span><br><span class="line">&gt; docker volume create volume_2</span><br><span class="line"># 创建数据卷容器，挂载volume_1，volume_2</span><br><span class="line">&gt; docker create \</span><br><span class="line">    -v volume_1:&#x2F;volume1 \</span><br><span class="line">    -v volume_2:&#x2F;volume2 \</span><br><span class="line">    --name vol_container \</span><br><span class="line">    alpine</span><br><span class="line"># 创建容器挂载数据卷容器</span><br><span class="line">&gt; docker run -it \</span><br><span class="line">    --volumes-from vol_container \</span><br><span class="line">    --name test \</span><br><span class="line">    alpine</span><br><span class="line">&#x2F; # ls</span><br><span class="line">bin       home      mnt       run       sys       var</span><br><span class="line">dev       lib       proc      sbin      tmp       volume1</span><br><span class="line">etc       media     root      srv       usr       volume2</span><br><span class="line"># 数据卷容器中挂载的数据卷也被挂载到新容器的根目录了，也可通过-v设置挂载点</span><br></pre></td></tr></table></figure>
+<h3 id="数据卷备份-还原与迁移"><a class="markdownIt-Anchor" href="#数据卷备份-还原与迁移"></a> 数据卷备份、还原与迁移</h3>
+<p>使用数据卷能方便地进行数据备份、迁移和还原。</p>
+<img src="/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/beifen-1.jpg" class="">
+<h4 id="备份一个容器"><a class="markdownIt-Anchor" href="#备份一个容器"></a> 备份一个容器</h4>
+<p>首先创建一个数据卷，用于存放备份数据。<br />
+<code>docker volume create vol_backup</code><br />
+然后创建一个数据卷容器，挂载该数据卷</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker create --name backup_container\</span><br><span class="line">     -v vol_backup:&#x2F;backup \</span><br><span class="line">     alpine</span><br></pre></td></tr></table></figure>
+<p>接着运行要备份容器，挂载数据卷容器 backup_container，并将要备份的数据打包放入数据卷。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docker run --rm \</span><br><span class="line">    --volumes-from backup_container \</span><br><span class="line">    -v &#x2F;backup \</span><br><span class="line">    alpine tar -cvf &#x2F;backup&#x2F;data.tar &#x2F;usr &#x2F;var</span><br></pre></td></tr></table></figure>
+<p>在主机的<code>/var/lib/docker/volumes/vol_backup/_data/</code>中出现了打包后的<code>data.tar</code></p>
+<h4 id="还原一个容器"><a class="markdownIt-Anchor" href="#还原一个容器"></a> 还原一个容器</h4>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">docker run --rm \</span><br><span class="line">    --volumes-from backup_container \</span><br><span class="line">    -v &#x2F;backup \</span><br><span class="line">    alpine \</span><br><span class="line">    bash -c &quot;cd &#x2F;dbdata &amp;&amp; tar xvf &#x2F;backup&#x2F;data.tar --strip 1&quot;</span><br></pre></td></tr></table></figure>
+<h4 id="删除一个数据卷"><a class="markdownIt-Anchor" href="#删除一个数据卷"></a> 删除一个数据卷</h4>
+<p>删除的数据卷有两种情况：</p>
+<ul>
+<li>命名卷在容器外部有指定源，删除了容器，数据卷并不会被删除</li>
+<li>匿名卷没有指定源，在删除容器时，该匿名卷也会被删除。也可在创建容器时，加上<code>--rm</code>参数，关闭时自动删除容器和匿名卷。</li>
+</ul>
+<h2 id="存储引擎"><a class="markdownIt-Anchor" href="#存储引擎"></a> 存储引擎</h2>
+<h2 id="参考资料"><a class="markdownIt-Anchor" href="#参考资料"></a> 参考资料</h2>
+<p><a href="#https://docs.docker.com/storage/">Docker 官方文档-存储</a><br />
+每天 5 分钟玩转 docker 容器技术</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"><i class="fa fa-tag"></i> docker</a>
+              <a href="/tags/%E5%AD%98%E5%82%A8/" rel="tag"><i class="fa fa-tag"></i> 存储</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/" rel="prev" title="常见VPN技术笔记">
+      <i class="fa fa-chevron-left"></i> 常见VPN技术笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Kubernetes%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Kubernetes学习笔记">
+      Kubernetes学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#docker-%E5%AD%98%E5%82%A8%E4%BB%8B%E7%BB%8D"><span class="nav-text"> Docker 存储介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bindmount"><span class="nav-text"> BindMount</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#bind-propagation-%E4%BC%A0%E6%92%AD%E6%8C%82%E8%BD%BD"><span class="nav-text"> bind-propagation 传播挂载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#selinux-%E6%A0%87%E7%AD%BE"><span class="nav-text"> Selinux 标签</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#volume-%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="nav-text"> Volume 数据卷</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#tmpfs"><span class="nav-text"> Tmpfs</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8"><span class="nav-text"> 数据卷容器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%A4%87%E4%BB%BD-%E8%BF%98%E5%8E%9F%E4%B8%8E%E8%BF%81%E7%A7%BB"><span class="nav-text"> 数据卷备份、还原与迁移</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8"><span class="nav-text"> 备份一个容器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%98%E5%8E%9F%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8"><span class="nav-text"> 还原一个容器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E4%B8%80%E4%B8%AA%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="nav-text"> 删除一个数据卷</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="nav-text"> 存储引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text"> 参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本篇笔记包含以下内容  LVS 原理  LVS 集群的通用体系结构 三种 IP 负载均衡技术 LVS 两种调度方式与八种算法 LVS 持久连接   KeepAlived 原理 LVS 与 KeepAlived 搭建  NAT 模式搭建 DR 模式搭建 持久化配置 Keepalived 配置 Keepalived 双实例双主模式配置 Nginx 负载均衡配合 Keepalived 解决服务监听网卡上">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LVS负载均衡学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="本篇笔记包含以下内容  LVS 原理  LVS 集群的通用体系结构 三种 IP 负载均衡技术 LVS 两种调度方式与八种算法 LVS 持久连接   KeepAlived 原理 LVS 与 KeepAlived 搭建  NAT 模式搭建 DR 模式搭建 持久化配置 Keepalived 配置 Keepalived 双实例双主模式配置 Nginx 负载均衡配合 Keepalived 解决服务监听网卡上">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/NAT-huanjing.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/NAT-baowen.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/TUN-huanjing.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/TUN-baowen.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/DR-baowen.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/3.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/5.png">
+<meta property="article:published_time" content="2018-05-27T15:21:51.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.507Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="负载均衡">
+<meta property="article:tag" content="LVS">
+<meta property="article:tag" content="keepalived">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>LVS负载均衡学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          LVS负载均衡学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-05-27 23:21:51" itemprop="dateCreated datePublished" datetime="2018-05-27T23:21:51+08:00">2018-05-27</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本篇笔记包含以下内容</p>
+<ul>
+<li><a href="#lvs-%e5%8e%9f%e7%90%86">LVS 原理</a>
+<ul>
+<li><a href="#lvs-%e9%9b%86%e7%be%a4%e7%9a%84%e9%80%9a%e7%94%a8%e4%bd%93%e7%b3%bb%e7%bb%93%e6%9e%84">LVS 集群的通用体系结构</a></li>
+<li><a href="#%e4%b8%89%e7%a7%8d-ip-%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e6%8a%80%e6%9c%af">三种 IP 负载均衡技术</a></li>
+<li><a href="#lvs-%e4%b8%a4%e7%a7%8d%e8%b0%83%e5%ba%a6%e6%96%b9%e5%bc%8f%e4%b8%8e%e5%85%ab%e7%a7%8d%e7%ae%97%e6%b3%95">LVS 两种调度方式与八种算法</a></li>
+<li><a href="#lvs-%e6%8c%81%e4%b9%85%e8%bf%9e%e6%8e%a5">LVS 持久连接</a></li>
+</ul>
+</li>
+<li><a href="#keepalived-%e5%8e%9f%e7%90%86">KeepAlived 原理</a></li>
+<li><a href="#lvs-%e4%b8%8e-keepalived-%e6%90%ad%e5%bb%ba">LVS 与 KeepAlived 搭建</a>
+<ul>
+<li><a href="#nat-%e6%a8%a1%e5%bc%8f%e6%90%ad%e5%bb%ba">NAT 模式搭建</a></li>
+<li><a href="#dr-%e6%a8%a1%e5%bc%8f%e6%90%ad%e5%bb%ba">DR 模式搭建</a></li>
+<li><a href="#%e6%8c%81%e4%b9%85%e5%8c%96%e9%85%8d%e7%bd%ae">持久化配置</a></li>
+<li><a href="#keepalived-%e9%85%8d%e7%bd%ae">Keepalived 配置</a></li>
+<li><a href="#keepalived-%e5%8f%8c%e5%ae%9e%e4%be%8b%e5%8f%8c%e4%b8%bb%e6%a8%a1%e5%bc%8f%e9%85%8d%e7%bd%ae">Keepalived 双实例双主模式配置</a></li>
+<li><a href="#nginx-%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e9%85%8d%e5%90%88-keepalived">Nginx 负载均衡配合 Keepalived</a></li>
+<li><a href="#%e8%a7%a3%e5%86%b3%e6%9c%8d%e5%8a%a1%e7%9b%91%e5%90%ac%e7%bd%91%e5%8d%a1%e4%b8%8a%e4%b8%8d%e5%ad%98%e5%9c%a8-ip-%e5%9c%b0%e5%9d%80%e7%9a%84%e9%97%ae%e9%a2%98">解决服务监听网卡上不存在 IP 地址的问题</a></li>
+<li><a href="#%e8%a7%a3%e5%86%b3%e9%ab%98%e5%8f%af%e7%94%a8%e6%9c%8d%e5%8a%a1%e5%8f%aa%e9%92%88%e5%af%b9%e7%89%a9%e7%90%86%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%9a%84%e9%97%ae%e9%a2%98">解决高可用服务只针对物理服务器的问题</a></li>
+<li><a href="#%e8%a7%a3%e5%86%b3%e5%a4%9a%e7%bb%84-keepalived-%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%9c%a8%e4%b8%80%e4%b8%aa%e5%b1%80%e5%9f%9f%e7%bd%91%e7%9a%84%e5%86%b2%e7%aa%81%e9%97%ae%e9%a2%98">解决多组 keepalived 服务器在一个局域网的冲突问题</a></li>
+<li><a href="#%e9%85%8d%e7%bd%ae%e6%8c%87%e5%ae%9a%e6%96%87%e4%bb%b6%e6%8e%a5%e5%8f%97-keepalived-%e6%97%a5%e5%bf%97">配置指定文件接受 Keepalived 日志</a></li>
+<li><a href="#%e5%bc%80%e5%8f%91%e7%9b%91%e6%b5%8b-keepalived-%e8%a3%82%e8%84%91%e8%84%9a%e6%9c%ac">开发监测 Keepalived 裂脑脚本</a></li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e6%96%87%e6%a1%a3">参考文档</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="lvs-原理"><a class="markdownIt-Anchor" href="#lvs-原理"></a> LVS 原理</h1>
+<p>LVS（Linux Virtual Server）Linux 虚拟服务器是由章文嵩于 1998 年开发的负载均衡软件，提供<strong>传输层</strong>和<strong>应用层</strong>的负载均衡，传输层的负载均衡工具为 IPVS，应用层的负载均衡工具为 KTCPVS。</p>
+<h2 id="lvs-集群的通用体系结构"><a class="markdownIt-Anchor" href="#lvs-集群的通用体系结构"></a> LVS 集群的通用体系结构</h2>
+<p>LVS 集群采用三层结构：</p>
+<ul>
+<li>
+<p>负载调度器（load balancer）：整个集群的前端机，将网络请求无缝调度到真实服务器上，使服务器集群的结构对客户透明。因为所有的操作都是在 Linux 内核完成的，调度开销很小，所以具有很高的吞吐率。</p>
+</li>
+<li>
+<p>服务器池（server pool）：是一组真正执行客户请求的服务器。服务器池的结点数目是可变的，可以在服务器池中增加服务器来满足不断增长的请求负载。对大多数网络服务来说，请求间不存在很强的相关性，请求可以在不同的结点上并行执行。</p>
+</li>
+<li>
+<p>共享存储（shared storage）：为服务器池提供一个共享的存储区，通常是数据库、网络文件系统或者分布式文件系统，这样很容易使得服务器池拥有相同的内容，提供相同的服务。需要一个分布式锁管理器（Distributed Lock Manager）来保证应用程序在不同结点上并发访问的一致性。</p>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/1.png" class="">
+</li>
+</ul>
+<p>前端负载均衡器称为 Director Server（DR），后端的实际服务器称为 Real Server(RS)，IP 虚拟服务器软件称为 IP Virtual Server（IPVS），IPVS 工作在 Linux 内核中。在调度器的实现技术中，IP 负载均衡技术的效率是最高的。</p>
+<p><strong>LVS 的几种 IP 地址</strong></p>
+<ul>
+<li>VIP：virtual IP，DR 上接收外网数据包的网卡 IP 地址</li>
+<li>DIP：director IP，DR 上转发数据包到 RS 的网卡 IP 地址</li>
+<li>RIP：real IP，RS 的 IP 地址</li>
+<li>CIP：client IP，客户端 IP 地址</li>
+</ul>
+<p><strong>为什么要用共享存储？</strong><br />
+共享存储是可选的，但若网络服务需要相同的内容，应该使用共享存储，否则无共享结构的代价会很大，每台服务器需要一样大的存储空间，任何更新需要涉及每一台服务器，系统的维护代价会非常高。分布式文件系统提供良好的<strong>伸缩性和可用性</strong>，分布式文件系统<strong>在每台服务器使用本地硬盘作 Cache</strong>，可以使得访问分布式文件系统的速度接近于访问本地硬盘。</p>
+<p><strong>如何实现高可用性？</strong><br />
+调度器上有资源监测进程时刻监视各个服务器结点的健康状况，当服务器对<strong>ICMP ping 不可达</strong>时或者网络服务在<strong>指定的时间内没有响应</strong>时，资源监测进程会通知内核将该服务器<strong>从调度列表中删除</strong>。一旦监测到服务器恢复工作，通知调度器将其加入调度列表，管理员也可通过命令随时向调度列表添加或移除服务器。<br />
+调度器存在单点故障问题，因此需要对调度器进行主从备份，并用 HeartBeat 机制进行主从故障监测。当从调度器不能听得主调度器的心跳时，从调度器通过 ARP 欺骗 （Gratuitous ARP）来接管集群对外的 VIP，同时接管主调度器的工作来提供负载调度服务。当主调度器恢复后，有两种<strong>恢复机制</strong>。第一种为<strong>主调度器自动变成从调度器（类似抢占）</strong>，另一种为<strong>从调度器释放 VIP，主调度器收回 VIP 继续提供负载调度服务</strong>。<br />
+当主调度器失效时，<strong>主调度器上所有已建立连接的状态信息将丢失，已有连接会中断。</strong> 客户需要重新连接从调度器，从调度器才会将新连接调度到各个服务器上。因此，调度器在内核中实现了一种高效同步机制，将主调度器的状态信息及时同步到从调度器。当从调度器接管时，绝大部分已建立的连接会持续下去。</p>
+<h2 id="三种-ip-负载均衡技术"><a class="markdownIt-Anchor" href="#三种-ip-负载均衡技术"></a> 三种 IP 负载均衡技术</h2>
+<ul>
+<li>
+<p><strong>VS/NAT</strong>：调度器重写请求报文的目标地址，根据预设算法，将请求分派给实际服务器，实际服务器在响应报文通过调度器时，报文的源地址被重写，再返回给客户。<br />
+<strong>优点：</strong> 节约 IP 地址，能对内部进行伪装<br />
+<strong>缺点：</strong> 效率低，返回给请求方的流量需经过 DR 且请求和响应报文都要 DR 进行地址的重写，当客户端请求增多时，DR 的处理能力会成为瓶颈<br />
+完整过程：</p>
+<ol>
+<li>PC 向调度器发送请求报文，调度器收到后根据调度算法选择后端的实际服务器，将报文中目的 IP 与目的端口改写为实际服务器的 IP 地址与端口，并进行转发。</li>
+<li>实际服务器收到后，进行处理，将结果返回给调度器</li>
+<li>调度器再将源 IP 地址与源端口改回为调度器的 IP 和端口，回复给 PC。</li>
+</ol>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/NAT-huanjing.png" class="">
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/NAT-baowen.png" class="">
+<p><strong>数据包流向：客户端–&gt;调度器–&gt;实际服务器–&gt;调度器–&gt;客户端</strong></p>
+</li>
+<li>
+<p><strong>VS/TUN</strong>（IP Tunneling）：调度器将请求报文通过 IP 隧道转发到实际服务器，实际服务器将响应报文直接回复给客户，调度器仅需处理请求报文，将请求报文的地址重写，无需重写响应报文的地址，极大解放了调度器，集群系统的最大吞吐量能提高 10 倍。</p>
+<p><strong>IP 隧道技术：<strong>又称为 IP 封装技术，可以将带有源和目标 IP 地址的数据报文使用新的源和目标 IP 进行</strong>第二次封装</strong>，这样这个报文就可以发送到一个指定的目标主机上</p>
+<p>由于多个 RS 都共享一个隧道 IP（为 VIP），所以需要通过 ARP 进行 IP 地址解析出 MAC，而为了不让 RS 响应 ARP 请求导致出现错误，必须对 RS 进行抑制操作，这样只有 DR 进行 ARP 响应，也就让 PC 认为 DR 就是实际服务器。</p>
+<p><strong>注：</strong> 由于调度器不会对 IP 报文进行修改，所以 TCP 报文中的目的端口也不会修改，因此要求 RS 与 DR 的端口号必须一致</p>
+<p>完整过程：</p>
+<ol>
+<li>PC 发送请求给调度器，调度器进行调度算法选择后端的实际服务器，将原报文进行第二次封装，源地址变为 DIP，目的地址变为 RIP，然后通过 IP 隧道发给指定实际服务器。</li>
+<li>实际服务器处理完数据后直接回复给 PC</li>
+</ol>
+<p>实际服务器的 RIP 和 DR 的 DIP 可以不处于同一物理网络中，且 RIP 必须可以和公网通信，即集群节点可以跨互联网实现。<br />
+实际服务器的隧道接口上需要配置 VIP 地址，以便接收 DR 转发的数据包，以及作为响应报文的源 IP。<br />
+DR 给 RS 时需要借助隧道，隧道外层的 IP 头部的源 IP 是 DIP，目标 IP 是 RIP。而 RS 响应给客户端的 IP 头部是根据隧道内层的 IP 头分析得到的，源 IP 是 VIP，目标 IP 是 CIP。这样客户端就无法区分这个 VIP 到底是 DR 的还是服务器组中的。</p>
+<p>VS/TUN 模式一般会用来负载调度缓存服务器组，这些缓存服务器一般放置在不同网络环境，可以就近返回数据给客户端。在请求对象不能在缓存服务器本地找到的情况下，缓存服务器要向源服务器发请求，将结果取回，最后将结果返回给客户。</p>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/TUN-huanjing.png" class="">
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/TUN-baowen.png" class="">
+<p><strong>数据包流向：客户端–&gt;调度器–&gt;实际服务器–&gt;客户端</strong></p>
+</li>
+<li>
+<p><strong>VS/DR</strong>（Direct Routing）：与 VS/TUN 类似，但调度器改写的是数据包的目的 MAC 地址，通过链路层进行负载分担。此法没有 IP 隧道的开销，但要求调度器与实际服务器<strong>必须在同一网段</strong>，也就是说 RIP 可用公网地址。</p>
+<p>完整过程：</p>
+<ol>
+<li>PC 向调度器发送请求，调度器根据调度算法选择后端实际服务器，将数据帧的目的 MAC 改写为该实际服务器的 MAC 地址，并转发。</li>
+<li>实际服务器收到后处理完数据后直接将结果回复给 PC</li>
+</ol>
+<p><strong>注：<strong>因为与 VS/TUN 类似，直接修改以太网帧，所以对于 IP 报文不会做修改，因此</strong>RS 的端口号必须与 DR 一致</strong>。且<strong>RS 上必须配置 VIP（通过配置环回口 IP 地址），VIP 为网卡别名的 IP 地址，仅用于回复数据包时使用作为源地址，不能用于通信</strong>。由于流出接口为 RIP 所在网卡接口，因此源 MAC 地址为 RIP 所在接口的 MAC 地址。且<strong>并不支持端口映射。</strong></p>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/DR-baowen.png" class="">
+<p><strong>数据包流向：客户端–&gt;调度器–&gt;实际服务器–&gt;客户端</strong></p>
+</li>
+</ul>
+<p><strong>三种模式的比较</strong><br />
+DR 和 TUN 模式的性能高于 NAT，因为不需要 DR 对响应报文的操作<br />
+DR 性能高于 TUN，因为不需要维护 IP 隧道<br />
+DR 中调度器和实际服务器必须在同一个网段中，TUN 可实现跨网段负载均衡。</p>
+<p>只有 NAT 支持端口映射，DR 与 TUN 都不支持。</p>
+<p><strong>为什么 VS/TUN 与 VS/DR 要在环回口 L0 上配置 VIP，能不能在出口网卡上配置 VIP？</strong><br />
+在环回口上配置 VIP 使得 RS 能通过路由收到请求数据包，并将结果返回给客户。不可以将 VIP 配置在出口网卡上，否则真实服务器会响应客户端的 ARP 请求，客户端上的 ARP 表就会记录真实服务器的 MAC，造成混乱，LB 就失效了。必须保证路由器只保存 DR 上的 VIP 对应的 MAC，即只允许 DR 进行 ARP 响应。<br />
+在环回口配置 VIP 后，还需要设置<code>arp_ignore=1</code>和<code>arp_announce=2</code>来隐藏 RS 上的 VIP。<strong>应该在配置 VIP 之前就设置 arp 参数，防止配置 VIP 后、设置 arp 抑制之前被外界主机发现。</strong></p>
+<blockquote>
+<p><code>arp_ignore</code>：接收到 ARP 请求时的响应级别。默认为 0。</p>
+<ul>
+<li>0：响应目的地址是本地任意网卡上的所有 IP 地址的包</li>
+<li>1：只响应目的地址恰好是入网卡的 IP 地址的包</li>
+</ul>
+<p><code>arp_announce</code>：将自己的地址向外通告时的通告级别。默认为 0。</p>
+<ul>
+<li>0：使用本地任意接口上的任意地址向外通告</li>
+<li>1：尽量避免使用本地属于对方子网的 IP 地址向外通告</li>
+<li>2：总是使用最佳本地地址向外通告</li>
+</ul>
+<p><strong>arp_announce 为 2 的含义</strong>：在此模式下将<strong>忽略这个 IP 数据包的源地址</strong>并尝试选择<strong>能与该地址通信的本地地址</strong>。<strong>首要</strong>是选择所有网络接口的子网中包含该数据包目标 IP 地址的本地地址，如果没有发现合适的地址，将选择当前的发送网络接口或其他有可能接收到该 ARP 回应的网络接口来进行发送。</p>
+<p>且这两项<strong>对所有参与集群调度的网卡都要设置</strong></p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sysctl -w net.ipv4.conf.all.arp_ignore&#x3D;1</span><br><span class="line">sysctl -w net.ipv4.conf.ens33.arp_ignore&#x3D;1</span><br><span class="line">sysctl -w net.ipv4.conf.lo.arp_ignore&#x3D;1</span><br><span class="line">sysctl -w net.ipv4.conf.all.arp_announce&#x3D;2</span><br><span class="line">sysctl -w net.ipv4.conf.ens33.arp_announce&#x3D;2</span><br><span class="line">sysctl -w net.ipv4.conf.lo.arp_announce&#x3D;2</span><br></pre></td></tr></table></figure>
+<p><strong>IPVS 如何解决 HTTPS 连接问题？</strong><br />
+当客户访问 HTTPS 服务时，会先建立一个 SSL 连接，来交换对称公钥加密的证书并协商一个 SSL Key，来加密以后的会话。<strong>在 SSL Key 的生命周期内，后续的所有 HTTPS 连接都使用这个 SSL Key，所以同一客户的不同 HTTPS 连接也存在相关性</strong>。IPVS 调度器提供了持久服务的功能，使得在设定的时间内，来自同一 IP 地址的不同连接会被发送到集群中同一个服务器结点，可以很好地解决客户连接的相关性问题。</p>
+<p><strong>可伸缩的缓存服务</strong><br />
+调度器一般使用 IP 隧道方法（VS/TUN）来架构缓存集群，因为缓存服务器可能在不同地方，而调度器与缓存服务器池可能不在同一个物理网段。若请求对象不能在本地找到，缓存服务器会向源服务器发请求，将结果取回并返回给客户。<br />
+使用此方法，调度器只调度网页缓存服务器，而缓存服务器将响应数据直接返回给客户，调度器只需要调度一次请求，其余三次都由缓存服务器直接访问 Web 服务器完成。<br />
+缓存服务器间有专用的组播通道，通过 ICP（Internet Cache Protocol）协议交互信息。当一台 Cache 服务器在本地硬盘中未命中当前请求时，它可以通过 ICP 查询其他 Cache 服务器是否有请求对象的副本，若存在，则从邻近的 Cache 服务器取该对象的副本，这样可以进一步提高 Cache 服务的命中率。</p>
+<p><strong>可伸缩邮件服务</strong><br />
+服务器池有 LDAP 服务器和一组邮件服务器，调度器将 SMTP、POP3、IMAP4 和 HTTP/HTTPS 请求流负载较均衡地分发到各邮件服务器上。系统中可能的瓶颈是 LDAP 服务器，可对 LDAP 服务中 B+树的参数进行优化。<br />
+若分布式文件系统没有多个存储结点间的负载均衡机制，则需要相应的邮件迁移机制来避免邮件访问的倾斜。</p>
+<h2 id="lvs-两种调度方式与八种算法"><a class="markdownIt-Anchor" href="#lvs-两种调度方式与八种算法"></a> LVS 两种调度方式与八种算法</h2>
+<p><strong>两种调度方式</strong></p>
+<ul>
+<li>静态调度：仅根据调度算法进行调度，不管实际服务器的系统负载</li>
+<li>动态反馈调度：会根据实际服务器的系统负载及性能，计算出可以调度的服务器对象</li>
+</ul>
+<p><strong>八种算法</strong></p>
+<ul>
+<li>静态调度
+<ul>
+<li><strong>轮询</strong>（Round Robin）：调度器将请求根据调度算法按顺序轮流分配到实际服务器。调度器均等地对待每一台服务器，不管服务器上实际的连接数和系统负载。</li>
+<li><strong>加权轮询</strong>（Weighted Round Robin）：根据实际服务器的不同处理能力调度访问请求。使处理能力强的服务器处理更多访问流量，调度器自动询问实际服务器负载情况，并动态调整权值。</li>
+<li><strong>目标地址散列</strong>（Destination Hashing）：将请求的目标地址作为散列键，从静态分配的散列表中找出对应的服务器。</li>
+<li><strong>源地址散列</strong>（Source Hashing）：将请求的源地址作为散列键，从静态分配的散列表中找出对应服务器。</li>
+</ul>
+</li>
+<li>动态反馈调度
+<ul>
+<li><strong>最少连接</strong>（Least Connections）：动态将网络请求调度到已建立的连接数最少的服务器上。计算方法：活跃连接数 active*256+非活跃连接数 inactive</li>
+<li><strong>加权最少连接</strong>（Weighted Least Connections）：当集群中服务器性能差异较大的情况下使用。具有较高权值的服务器将承受较大比例的活动连接负载。调度器可以自动问询真实服务器的负载情况并动态调整权值。<strong>此算法为默认调度算法。</strong> 计算方法：(active*256+inactive)/weight</li>
+<li><strong>基于局部性最少连接</strong>（Locality-Based Least Connections）：针对 IP 地址的负载均衡，用于缓存集群系统。根据请求的 IP 地址找出该目标 IP 地址最近使用的服务器，若该服务器不可用，则用最少连接原则选出一个可用的服务器。该算法维护的是从一个目标 IP 地址到<strong>一台</strong>服务器的映射。</li>
+<li><strong>带复制的基于局部性最少连接</strong>（Locality-Based Least Connections with Replication）：针对 IP 地址的负载均衡，根据请求的目标 IP 地址找出与之对应的服务器组，按最小连接原则选出一台服务器。若该服务器超载，就在集群中按最小连接原则选出一台服务器，添加到服务器组中。该算法维护的是从一个目标 IP 地址到<strong>一组</strong>服务器的映射。</li>
+</ul>
+</li>
+</ul>
+<h2 id="lvs-持久连接"><a class="markdownIt-Anchor" href="#lvs-持久连接"></a> LVS 持久连接</h2>
+<p>无论使用哪种算法，LVS 持久化都能实现在一定时间内，将来自 统一客户端请求派发到此前访问过的 RS。</p>
+<p>需要持久连接的原因：若连接是基于 SSL 的，则在建立连接时需要交换密钥，认证 CA 等操作，若每次刷新就又分配别的 RS，则会造成资源浪费，速度变慢，因此需要持久连接。</p>
+<p>每一次建立连接后，DR 会在内存缓冲区中为每一个客户端与 RS 建立映射关系（该记录也称 <strong>“持久连接模板”</strong> ），并且能做到对同一客户端的所有请求（不局限于一个服务）都定位到一台 RS。</p>
+<p>持久连接分类：</p>
+<ul>
+<li>
+<p><strong>PPC（Persistent Port Connections）持久端口连接</strong>：将来自同一客户端对同一个集群的请求（同一端口）都定向到先前访问的 RS 上。</p>
+</li>
+<li>
+<p><strong>PCC（Persistent Client Connections）持久客户端连接</strong>：将来自同一客户端对同一个集群所有端口（即所有服务）的请求都定向到先前访问的 RS 上。</p>
+</li>
+<li>
+<p><strong>PNMPP（Persitent Netfilter Marked Packet Persistence）持久防火墙标记连接</strong>：通过防火墙策略，将对<strong>某类服务几个不同端口的访问</strong>定义成一类。</p>
+<p>先对某一特定类型的数据包打上标记，然后再将基于某一类标记的服务送到后台的 RS 上去，后台的 RS 并不识别这些标记。<strong>将持久和防火墙标记结合起来就能够实现端口姻亲功能</strong>，只要是来自某一客户端的对某一特定服务（可以是不同端口）的访问都定向到同一台 RS 上。</p>
+</li>
+</ul>
+<h1 id="keepalived-原理"><a class="markdownIt-Anchor" href="#keepalived-原理"></a> KeepAlived 原理</h1>
+<p>KeepAlived 用于 RS 的健康状态检查与 LB 主从之间的故障转移（Failover）实现。 Keepalived 实现了一组健康检查器，<strong>根据其健康状况动态自适应地维护和管理负载平衡的服务器池</strong>，支持<strong>4、5、7 层协议</strong>的健康检查。使用<strong>VRRP 实现高可用性</strong>，VRRP 是路由器故障转移的基础实现方法。此外，keepalived 实现了一组到 VRRP 有限状态机的挂钩，提供低级别的高速协议交互。每个 Keepalived 框架可以独立使用或一起使用，以提供弹性基础设施。</p>
+<p>Keepalived 采用纯 ANSI/ISO C 编写，围绕一个中央 I/O 多路复用器提供实时网络设计（Realtime Networking Design）。设计重点是在<strong>所有元素之间提供均匀的模块化功能</strong>。</p>
+<p>为了确保鲁棒性和稳定性，守护进程 keepalived 分为 3 个不同的进程：</p>
+<ul>
+<li>一个精简的<strong>父进程负责分支子进程的监控</strong></li>
+<li>两个子进程，一个负责<strong>VRRP 框架</strong>，另一个负责<strong>健康检查</strong></li>
+</ul>
+<p>每个子进程都有自己的调度 I/O 多路复用器，这样 VRRP 调度抖动得到了优化，因为 VRRP 调度比健康检查更关键。这种拆分设计可最小化健康检查外部库的使用情况，并将其自身行为降至最低，使主机闲置，从而避免由其本身造成的故障。</p>
+<p>父进程监视框架称为<strong>Watchdog</strong>，每个子进程打开一个套接字，当守护进程引导时，父进程连接到套接字并向子进程周期（5s）发送 hello 包。若父进程无法向子进程套接字发送 hello，则只要重启子进程即可。</p>
+<p>Watchdog 设计的优点：<br />
+从父进程发送到子进程的 hello 数据包通过 I/O 多路复用器调度程序完成，这样可以检测到子进程调度框架中的死循环并能通过使用 sysV 信号来检测死亡的子进程。</p>
+<p>Keepalived 使用四个 Linux 内核组件：</p>
+<ul>
+<li>LVS 框架：使用 getsockopt 和 setsockopt 调用来获取和设置套接字上的选项。</li>
+<li>Netfilter 框架：支持 NAT 和伪装（Masquerading）的 IPVS 代码。</li>
+<li>Netlink 接口：设置和删除网络接口上的 VRRP 虚拟 IP。</li>
+<li>组播：通过组播地址<strong>224.0.0.18</strong>发送 VRRP 通告。</li>
+</ul>
+<h1 id="lvs-与-keepalived-搭建"><a class="markdownIt-Anchor" href="#lvs-与-keepalived-搭建"></a> LVS 与 KeepAlived 搭建</h1>
+<p>首先在 DR 上安装依赖工具包<code>libnl3-devel</code>、<code>popt-static</code>，然后安装<code>ipvsadm</code>。<br />
+<code>ipvsadm</code>是 ipvs 的命令行管理工具，可以定义、删除、查看 virtual service 和 Real Server 的属性。</p>
+<p>可通过<code>grep -i 'ip_vs' /boot/config-内核版本号</code>查看是否内核中编译了 IPVS 功能</p>
+<p><a target="_blank" rel="noopener" href="http://www.linuxvirtualserver.org/software/index.html">ipvsadm 的下载地址</a><br />
+也可以通过 yum 安装，安装完成后启动并设置开机自启<br />
+<code>systemctl enable ipvsadm</code>,<code>systemctl start ipvsadm</code></p>
+<p>ipvsadm 命令</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm选项中，大写选项管理虚拟服务virtual service，小写选项管理关联了虚拟服务的真实服务器RealServer</span><br><span class="line">1. 管理virtual service</span><br><span class="line">    -A --add-service    # 添加virtual service</span><br><span class="line">        -t --tcp-service 服务器IP[:端口]    # TCP服务</span><br><span class="line">        -u --udp-service 服务器IP[:端口]    # UDP服务</span><br><span class="line">        -f --fwmark-service 防火墙标记      # 防火墙标记</span><br><span class="line">        -s --scheduler 算法                # 指定算法</span><br><span class="line">    -E   # 修改，参数与-A一致</span><br><span class="line">    -D   # 删除，参数与-A一致</span><br><span class="line">        -t|-u|-f</span><br><span class="line">    -C   # 清空所有虚拟服务（IPVS规则）</span><br><span class="line">    -L   # 查看所有虚拟服务</span><br><span class="line">        -n 数字格式显示主机地址和端口</span><br><span class="line">        --stats 显示更详细的统计信息（连接数、入站包、出站包量等）</span><br><span class="line">        --rate  显示速率（每秒连接数CPS、每秒入站包个数InPPS、出站包个数OutPPS等）且是实时的</span><br><span class="line">        --timeout 显示会话超时时间（tcp、tcpfin、udp）</span><br><span class="line">        -p    设置持久化连接时长</span><br><span class="line">        --persistent-conn  查看持久化连接情况</span><br><span class="line">        -c    显示当前IPVS的连接状况，实时的</span><br><span class="line">        --sort   排序，是实时的</span><br><span class="line">    -S   # 保存IPVS规则，并输出到屏幕。可通过 &gt;文件，导入到文件</span><br><span class="line">    -R   #载入之前的规则（要指定规则文件）。一般通过 &lt;文件，导入规则</span><br><span class="line"></span><br><span class="line">2. 管理RealServer</span><br><span class="line">    -a   # 添加real server</span><br><span class="line">        -r 指定RS的IP地址和端口</span><br><span class="line">        -g DR模式</span><br><span class="line">        -i TUN模式</span><br><span class="line">        -m NAT模式</span><br><span class="line">        -t|-u|-f</span><br><span class="line">        -w 权重</span><br><span class="line">    -e   # 编辑real server</span><br><span class="line">    -d   # 删除real server</span><br></pre></td></tr></table></figure>
+<h2 id="nat-模式搭建"><a class="markdownIt-Anchor" href="#nat-模式搭建"></a> NAT 模式搭建</h2>
+<p>实验环境：</p>
+<ul>
+<li>Client：192.168.205.151</li>
+<li>VIP：192.168.205.152</li>
+<li>DIP：172.16.184.130</li>
+<li>RIP1：172.16.184.131</li>
+<li>RIP2：172.16.184.132</li>
+</ul>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>Client 和 RS 都采用单网卡，但非同一网段。DR 采用双网卡，一张连接 Client，一张连接 RS。且此实验 RS 要用 host-only 网卡，需要设置网关</p>
+<p><code>route add default gw 172.16.184.130</code></p>
+<p>确保 Server3 和 Server4 的网关配置生效，否则无法给 Client 连接。</p>
+<p><strong>注：一定要将网卡配置为静态 IP 地址，不能使用 DHCP 获取，否则配置的网关会自动消失。</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># route -n</span><br><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">0.0.0.0         172.16.184.130  0.0.0.0         UG    0      0        0 ens36</span><br><span class="line">172.16.184.0    0.0.0.0         255.255.255.0   U     100    0        0 ens36</span><br><span class="line"># ip route</span><br><span class="line">default via 172.16.184.130 dev ens36</span><br><span class="line">172.16.184.0&#x2F;24 dev ens36  proto kernel  scope link  src 172.16.184.131  metric 100</span><br></pre></td></tr></table></figure>
+<p>Client 请求过程：Client 向 DR 发请求包，VIP 接收，经过 ip_forward 转发到 DIP，然后根据算法选择 RS，将数据包发往 RS。<br />
+RS 响应过程：RS 向 DR 发响应包，DR 的 DIP 接收响应包，经过 ip_forward 转发到 VIP，最后将包回复给 Client。<br />
+<strong>因为 VIP 与 DIP 不是一个网段，所以 DR 上要开启 ip_forward</strong>，并且要注意 iptables 与 ipvs 不可同时配置。</p>
+<p><code>echo &quot;net.ipv4.ip_forward=1&quot; &gt;&gt; /etc/sysctl.conf &amp;&amp; sysctl -p</code></p>
+<p>在 Server2 上配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm -A -t 192.168.205.152:80 -s rr</span><br><span class="line">ipvsadm -a -t 192.168.205.152:80 -r 172.16.184.131 -m</span><br><span class="line">ipvsadm -a -t 192.168.205.152:80 -r 172.16.184.131 -m</span><br></pre></td></tr></table></figure>
+<p>通过<code>ipvsadm -nL</code>查看 LVS 服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># ipvsadm -Ln</span><br><span class="line">IP Virtual Server version 1.2.1 (size&#x3D;4096)</span><br><span class="line">Prot LocalAddress:Port Scheduler Flags</span><br><span class="line">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span><br><span class="line">TCP  192.168.205.152:80 rr</span><br><span class="line">  -&gt; 172.16.184.131:80            Masq    1      0          0</span><br><span class="line">  -&gt; 172.16.184.132:80            Masq    1      0          0</span><br></pre></td></tr></table></figure>
+<p>LVS 需要服务器间的时间同步，因此需要在 Server2 上配置 chronyd 服务。修改<code>/etc/chronyd.conf</code>，添加更新源。然后<code>chronyc sources -v</code>自动同步。</p>
+<p>然后在 Server3 和 Server4 的 chronyd 配置文件中修改更新源<code>server 192.168.205.152 iburst</code>并自动更新。</p>
+<p>在 Client 上多次访问<code>192.168.205.152</code>，因为选择的算法是轮询，所以会有以下现象。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># curl 192.168.205.152</span><br><span class="line">Server 3</span><br><span class="line"># curl 192.168.205.152</span><br><span class="line">Server 4</span><br><span class="line"># curl 192.168.205.152</span><br><span class="line">Server 3</span><br><span class="line"># curl 192.168.205.152</span><br><span class="line">Server 4</span><br></pre></td></tr></table></figure>
+<p>在 Server2 上查看<code>ipvsadm -L --stats</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># ipvsadm -L --stats</span><br><span class="line">IP Virtual Server version 1.2.1 (size&#x3D;4096)</span><br><span class="line">Prot LocalAddress:Port               Conns   InPkts  OutPkts  InBytes OutBytes</span><br><span class="line">  -&gt; RemoteAddress:Port</span><br><span class="line">TCP  server2:http                        7       34       20     2235     2240</span><br><span class="line">  -&gt; server3:http                        3       14        8      918      896</span><br><span class="line">  -&gt; server4:http                        4       20       12     1317     1344</span><br></pre></td></tr></table></figure>
+<p>修改为 wrr 算法。在 Server2 上修改 IPVS 规则：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm -E -t 192.168.205.152:80 -s wrr</span><br><span class="line">ipvsadm -e -t 192.168.205.152:80 -r 172.16.184.131:80 -m -w 5</span><br><span class="line">ipvsadm -e -t 192.168.205.152:80 -r 172.16.184.132:80 -m -w 3</span><br></pre></td></tr></table></figure>
+<p>Client 上访问几次，再在 Server2 上查看，可发现访问 Server3 和 Server4 的包数量比例大约为 5:3</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># ipvsadm -L -n</span><br><span class="line">IP Virtual Server version 1.2.1 (size&#x3D;4096)</span><br><span class="line">Prot LocalAddress:Port Scheduler Flags</span><br><span class="line">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span><br><span class="line">TCP  192.168.205.152:80 wrr</span><br><span class="line">  -&gt; 172.16.184.131:80            Masq    5      0          22</span><br><span class="line">  -&gt; 172.16.184.132:80            Masq    3      0          13</span><br></pre></td></tr></table></figure>
+<h2 id="dr-模式搭建"><a class="markdownIt-Anchor" href="#dr-模式搭建"></a> DR 模式搭建</h2>
+<p>环境：</p>
+<ul>
+<li>DR 的 VIP：172.16.246.140</li>
+<li>DIP：172.16.246.134</li>
+<li>RIP1：172.16.246.135</li>
+<li>RS1 的 VIP：172.16.246.140</li>
+<li>RIP2：172.16.246.136</li>
+<li>RS2 的 VIP：172.16.246.140</li>
+</ul>
+<p>一定要确保 DR 和 RS 在同一个交换机上，即都在同一个网段，以及 VIP 都要在同一个网段。</p>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/3.png" class="">
+<p>首先在 DR 上配置，创建网卡别名<code>ens33:0</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># ifconfig ens33:0 172.16.246.140 netmask 255.255.255.0 broadcast 172.16.246.255 up  # 这是临时的，切要确保地址都是静态的，否则过一段时间配的地址会自动删除</span><br><span class="line"></span><br><span class="line"># ifconfig</span><br><span class="line">ens33: flags&#x3D;4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.16.246.134  netmask 255.255.255.0  broadcast 172.16.246.255</span><br><span class="line">......</span><br><span class="line">ens33:0: flags&#x3D;4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.16.246.140  netmask 255.255.255.0  broadcast 172.16.246.255</span><br><span class="line">        ether 00:0c:29:bf:f9:0c  txqueuelen 1000  (Ethernet)</span><br></pre></td></tr></table></figure>
+<p>在两个后端 RS 服务器上<code>ping</code>DR 上的这两个地址，测试能够联通</p>
+<p>然后在 RS 上配置 IP 地址，也确保为静态 IP。并且需要将 RS 的内核参数<code>arp_ignore</code>和<code>arp_announce</code>分别调整。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sysctl -w net.ipv4.conf.all.arp_ignore&#x3D;1</span><br><span class="line">sysctl -w net.ipv4.conf.ens33.arp_ignore&#x3D;1</span><br><span class="line">sysctl -w net.ipv4.conf.lo.arp_ignore&#x3D;1</span><br><span class="line">sysctl -w net.ipv4.conf.all.arp_announce&#x3D;2</span><br><span class="line">sysctl -w net.ipv4.conf.ens33.arp_announce&#x3D;2</span><br><span class="line">sysctl -w net.ipv4.conf.lo.arp_announce&#x3D;2</span><br></pre></td></tr></table></figure>
+<p>然后在环回口上配置 VIP，保证 DR、RS 的 VIP 相同。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ifconfig lo:0 172.16.246.140 netmask 255.255.255.255 boardcast 172.16.246.140 up</span><br><span class="line"># 一定要设置netmask为255.255.255.255，否则连接可能出问题</span><br></pre></td></tr></table></figure>
+<p>并且配置路由</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">route add -host 172.16.246.140 dev lo:0</span><br><span class="line"></span><br><span class="line"># route</span><br><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">172.16.246.0    0.0.0.0         255.255.255.0   U     100    0        0 ens33</span><br><span class="line">s3              0.0.0.0         255.255.255.255 UH    0      0        0 lo</span><br></pre></td></tr></table></figure>
+<p>在 DR 上篇配置路由<code>route add -host 172.16.246.140 dev ens33:0</code></p>
+<p>确保 RS 与 DR 的防火墙都放行了 http 以及对应端口。</p>
+<p>在 DR 上配置 LVS</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm -A -t 172.16.246.140:80 -s wlc</span><br><span class="line">ipvsadm -a -t 172.16.246.140:80 -r 172.16.246.135 -g -w 3</span><br><span class="line">ipvsadm -a -t 172.16.246.140:80 -r 172.16.246.136 -g -w 4</span><br></pre></td></tr></table></figure>
+<p>在宿主机上测试</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># curl 172.16.246.140</span><br><span class="line"></span><br><span class="line"># ipvsadm -L</span><br><span class="line">....</span><br><span class="line">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span><br><span class="line">TCP  s1:http wlc</span><br><span class="line">  -&gt; rs1:http                     Route   3      0          13</span><br><span class="line">  -&gt; rs2:http                     Route   4      0          17</span><br></pre></td></tr></table></figure>
+<h2 id="持久化配置"><a class="markdownIt-Anchor" href="#持久化配置"></a> 持久化配置</h2>
+<p><em>仍使用 DR 配置的实验环境</em></p>
+<p>只需要配置一条<code>ipvsadm -E -t 172.16.246.140:80 -p 600</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm -L -n</span><br><span class="line">.....</span><br><span class="line">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span><br><span class="line">TCP  172.16.246.140:80 wlc persistent 600</span><br><span class="line">  -&gt; 172.16.246.135:80            Route   3      0          0</span><br><span class="line">  -&gt; 172.16.246.136:80            Route   4      0          0</span><br></pre></td></tr></table></figure>
+<p>在宿主机上访问<code>172.16.246.140</code>，访问到的是 RS2（即<code>172.16.246.136</code>），在查看 DR 上信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ipvsadm -L -n --persistent-conn</span><br><span class="line">Prot LocalAddress:Port            Weight    PersistConn ActiveConn InActConn</span><br><span class="line">  -&gt; RemoteAddress:Port</span><br><span class="line">TCP  172.16.246.140:80 wlc persistent 600</span><br><span class="line">  -&gt; 172.16.246.135:80            3         0           0          0</span><br><span class="line">  -&gt; 172.16.246.136:80            4         1           0          4</span><br><span class="line">  # 可知RS2已有一个持久化连接</span><br></pre></td></tr></table></figure>
+<h2 id="keepalived-配置"><a class="markdownIt-Anchor" href="#keepalived-配置"></a> Keepalived 配置</h2>
+<p>实验环境：</p>
+<ul>
+<li>DR：<code>172.16.246.134</code></li>
+<li>DR-Backup：<code>172.16.246.133</code></li>
+<li>RS1：<code>172.16.246.135</code></li>
+<li>RS2：<code>172.16.246.136</code></li>
+</ul>
+<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/4.png" class="">
+<p>需要在 DR 和 DR-backup 上安装 keepalived，可直接通过 yum 安装。</p>
+<p>设置独立的 keepalived 日志，因为默认 keepalived 日志是记录在<code>/var/log/messages</code>中的。修改<code>/etc/sysconfig/keepalived</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># 有以下配置项</span><br><span class="line"># --vrrp               -P    只运行vrrp子进程</span><br><span class="line"># --check              -C    只运行健康检查子进程</span><br><span class="line"># --dont-release-vrrp  -V    不会在守护进程停止时删除VIP和路由</span><br><span class="line"># --dont-release-ipvs  -I    不会在守护进程停止时删除IPVS拓扑</span><br><span class="line"># --dump-conf          -d    备份日志配置文件</span><br><span class="line"># --log-detail         -D    记录详细日志信息</span><br><span class="line"># --log-facility       -S    syslog的号码0-7</span><br><span class="line"></span><br><span class="line"># 默认配置是只有-D</span><br><span class="line">KEEPALIVED_OPTIONS&#x3D;&quot;-D&quot;</span><br><span class="line"># 添加-S 0</span><br><span class="line">KEEPALIVED_OPTIONS&#x3D;&quot;-D -S 0&quot;</span><br></pre></td></tr></table></figure>
+<p>然后在<code>/etc/rsyslog.conf</code>中添加<code>local0</code>的配置<code>local0.* /var/log/keepalived.log</code>，重启 rsyslog 服务即可。</p>
+<p>keepalived 的配置文件<code>/etc/keepalived/keepalived.conf</code>，修改前最好备份。配置文件分为是三个部分：全局配置、VRRPd 配置、LVS 配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"># 此配置截取自默认配置，仅用于说明参数</span><br><span class="line"># 全局配置</span><br><span class="line">global_defs &#123;</span><br><span class="line">   # 邮件报警功能，可以不要</span><br><span class="line">   notification_email &#123;</span><br><span class="line">     acassen@firewall.loc</span><br><span class="line">   &#125;</span><br><span class="line">   notification_email_from Alexandre.Cassen@firewall.loc  # 告警邮箱地址</span><br><span class="line">   smtp_server 127.0.0.1</span><br><span class="line">   smtp_connect_timeout 30</span><br><span class="line">   router_id LVS_DEVEL       # 标识keepalived服务器的字符串</span><br><span class="line">   vrrp_skip_check_adv_addr</span><br><span class="line">   vrrp_strict</span><br><span class="line">   vrrp_garp_interval 0</span><br><span class="line">   vrrp_gna_interval 0</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># VRRP实例配置</span><br><span class="line">vrrp_instance VI_1 &#123;</span><br><span class="line">    state MASTER       # 角色状态，master或backup</span><br><span class="line">    interface eth0     # 定义vrrp绑定的接口，此网卡是面向集群的网卡</span><br><span class="line">    virtual_router_id 51   # VRID，同实例的该值必须相同</span><br><span class="line">    priority 100           # 优先级，值越大越高</span><br><span class="line">    advert_int 1           # 心跳信息发送间隔，单位秒</span><br><span class="line">    authentication &#123;       # 认证方式</span><br><span class="line">        auth_type PASS     # 密码认证</span><br><span class="line">        auth_pass 1111     # 密码，最多8个字符</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;    # VIP地址设置，只要master节点设置</span><br><span class="line">        192.168.200.16</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># LVS虚拟服务配置</span><br><span class="line">virtual_server 10.10.10.2 1358 &#123;  # VIP与端口</span><br><span class="line">    delay_loop 6              # 健康检查时间间隔</span><br><span class="line">    lb_algo rr                # LB算法</span><br><span class="line">    lb_kind NAT               # LB类型</span><br><span class="line">    persistence_timeout 50    # 持久化时长</span><br><span class="line">    protocol TCP</span><br><span class="line"></span><br><span class="line">    sorry_server 192.168.200.200 1358  # 当所有RS都宕机时，请求发送到的服务器，一般就设为DR或本节点</span><br><span class="line"></span><br><span class="line">    real_server 192.168.200.2 1358 &#123;  # RS的配置</span><br><span class="line">        weight 1           # 权重</span><br><span class="line">        HTTP_GET &#123;         # 健康状况检查的检查方式</span><br><span class="line">        # 常见的有HTTP_GET|SSL_GET|TCP_CHECK|DNS_CHECK|MISC_CHECK</span><br><span class="line">            url &#123;</span><br><span class="line">              path &#x2F;testurl&#x2F;test.jsp   # 状态检查url路径的是否健康</span><br><span class="line">              digest 640205b7b0fc66c1ea91c463fac6334d</span><br><span class="line">              #健康状况需要状态码，可以是status_code、digest或digest+status_code</span><br><span class="line">              #digest值用keepalived的genhash命令生成，一般使用status_code即可</span><br><span class="line">              status_code 200</span><br><span class="line">            &#125;</span><br><span class="line">            connect_timeout 3    # 连接超时时间，若超时则认为RS可能宕机</span><br><span class="line">            nb_get_retry 3       # 重试次数，防止误判</span><br><span class="line">            delay_before_retry 3 # 重试时间间隔</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>在 DR 上的配置</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line">global_defs &#123;</span><br><span class="line">   notification_email &#123;</span><br><span class="line">     sysadmin@firewall.loc</span><br><span class="line">   &#125;</span><br><span class="line">   notification_email_from Alexandre.Cassen@firewall.loc</span><br><span class="line">   smtp_server 127.0.0.1</span><br><span class="line">   smtp_connect_timeout 30</span><br><span class="line">   router_id LVS_DEVEL</span><br><span class="line">   vrrp_skip_check_adv_addr</span><br><span class="line">   vrrp_strict</span><br><span class="line">   vrrp_garp_interval 0</span><br><span class="line">   vrrp_gna_interval 0</span><br><span class="line">&#125;</span><br><span class="line">vrrp_instance VI_1 &#123;</span><br><span class="line">    state MASTER</span><br><span class="line">    interface ens33</span><br><span class="line">    virtual_router_id 51</span><br><span class="line">    priority 120</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;         # 不同实例的认证密码最好不同，以确保接管正常</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        172.16.246.141       # 虚拟IP，不能和真实IP一致，随便写就行</span><br><span class="line">        172.16.246.142</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">virtual_server 172.16.246.140 80 &#123;       # 虚拟主机</span><br><span class="line">    delay_loop 6</span><br><span class="line">    lb_algo wlc</span><br><span class="line">    lb_kind DR           # LVS类型为DR</span><br><span class="line">    persistence_timeout 50</span><br><span class="line">    protocol TCP</span><br><span class="line">    sorry_server 172.16.246.134 80    # 配置RS全部挂掉后访问的服务器</span><br><span class="line">    real_server 172.16.246.135 80 &#123;       # 后端RS</span><br><span class="line">        weight 1</span><br><span class="line">        HTTP_GET &#123;</span><br><span class="line">            url &#123;</span><br><span class="line">              path &#x2F;</span><br><span class="line">              status_code 200</span><br><span class="line">            &#125;</span><br><span class="line">            connect_timeout 3</span><br><span class="line">            nb_get_retry 3</span><br><span class="line">            delay_before_retry 3</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    real_server 172.16.246.136 80 &#123;</span><br><span class="line">        weight 1</span><br><span class="line">        HTTP_GET &#123;</span><br><span class="line">            url &#123;</span><br><span class="line">              path &#x2F;</span><br><span class="line">              status_code 200</span><br><span class="line">            &#125;</span><br><span class="line">            connect_timeout 3</span><br><span class="line">            nb_get_retry 3</span><br><span class="line">            delay_before_retry 3</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以将 DR 上的该配置文件传到 Backup 上，修改配置。还要修改<code>router_id</code>的配置，因为<code>router_id</code>用于标识不同服务器</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 只要修改以下配置</span><br><span class="line">vrrp_instance VI_1 &#123;</span><br><span class="line">  state BACKUP</span><br><span class="line">  priority 100</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>都启动 keepalived，使用命令<code>keepalived</code>或者<code>systemctl start keepalived</code>即可</p>
+<p>可查看日志文件<code>/var/log/keepalived.log</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">s1 Keepalived[42451]: Starting Healthcheck child process, pid&#x3D;42452</span><br><span class="line">s1 Keepalived[42451]: Starting VRRP child process, pid&#x3D;42453</span><br><span class="line">s1 Keepalived_healthcheckers[42452]: Initializing ipvs</span><br><span class="line">s1 Keepalived_healthcheckers[42452]: Opening file &#39;&#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf&#39;.</span><br><span class="line">s1 Keepalived_vrrp[42453]: Registering Kernel netlink reflector</span><br><span class="line">s1 Keepalived_vrrp[42453]: Registering Kernel netlink command channel</span><br><span class="line">s1 Keepalived_vrrp[42453]: Registering gratuitous ARP shared channel</span><br><span class="line">s1 Keepalived_vrrp[42453]: Opening file &#39;&#x2F;etc&#x2F;keepalived&#x2F;keepalived.conf&#39;.</span><br><span class="line">s1 Keepalived_healthcheckers[42452]: Activating healthchecker for service [172.16.246.140]:80</span><br><span class="line">s1 Keepalived_healthcheckers[42452]: Activating healthchecker for service [172.16.246.140]:80</span><br></pre></td></tr></table></figure>
+<p>Keepalived 配置会自动创建 ipvs 策略，此时看<code>ipvsadm -L</code>已是 keepalived 的配置了</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># ipvsadm -L -n</span><br><span class="line">IP Virtual Server version 1.2.1 (size&#x3D;4096)</span><br><span class="line">Prot LocalAddress:Port Scheduler Flags</span><br><span class="line">  -&gt; RemoteAddress:Port           Forward Weight ActiveConn InActConn</span><br><span class="line">TCP  172.16.246.140:80 wlc persistent 50</span><br><span class="line">  -&gt; 172.16.246.135:80            Route   1      0          0</span><br><span class="line">  -&gt; 172.16.246.136:80            Route   1      0          0</span><br></pre></td></tr></table></figure>
+<p>宿主机上访问服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&gt; curl 172.16.246.140</span><br><span class="line">RS2</span><br><span class="line">&gt; curl 172.16.246.140</span><br><span class="line">RS2</span><br><span class="line">&gt; curl 172.16.246.140</span><br><span class="line">RS2</span><br><span class="line"># 因为设置了持久化，一直访问RS2</span><br></pre></td></tr></table></figure>
+<p>此时停止 RS2 的 httpd 服务，再访问服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&gt; curl 172.16.246.140</span><br><span class="line">RS1</span><br><span class="line">&gt; curl 172.16.246.140</span><br><span class="line">RS1</span><br><span class="line"># 成功切换到RS1</span><br></pre></td></tr></table></figure>
+<p>恢复 RS2 服务，在 DR 上停止 keepalived。再访问服务，仍能访问，keepalived 配置成功。</p>
+<p>将后端 RS 的 httpd 全部关闭，然后再次访问，就会访问到 DR 的页面。</p>
+<p><strong>几种时间间隔：</strong></p>
+<ul>
+<li><code>advert_int</code>：vrrp 主备间发送和接收心跳信息的时间间隔</li>
+<li><code>delay_loop</code>：健康状态检查的时间间隔</li>
+<li><code>connect_timeout</code>：连接 RS 的超时时间</li>
+<li><code>nb_get_retry</code>：一个节点不健康的判定重试次数</li>
+<li><code>delay_before_retry</code>：判定某节点可能宕机后等待的时间，之后重试连接</li>
+</ul>
+<p><strong>几种健康检查：</strong></p>
+<ul>
+<li><code>TCP_CHECK</code>：TCP 连接来检查后端 RS 是否健康</li>
+<li><code>HTTP_GET</code>：获取指定页面检查 RS 是否健康（通过匹配 digest、status_code）</li>
+<li><code>SSL_GET</code>：类似 HTTP_GET，但使用的 HTTPS</li>
+<li><code>MISC_CHECK</code>：加载自定义健康状态检查脚本来检查对象是否健康（脚本的返回值需要是 0 或 1）</li>
+<li><code>DNS_CHECK</code>：通过 DNS 检查 RS 是否健康</li>
+</ul>
+<p><strong>若出现两台服务器争抢同一 IP 资源时，要先排查两个地方：</strong></p>
+<ul>
+<li>主备两台服务器之间是否正常通信，如果不正常是否有 iptables 防火墙阻挡</li>
+<li>主备两台服务器对应的 keepalived.conf 配置是否出错</li>
+</ul>
+<p><strong>解决裂脑的常见方案：</strong></p>
+<ul>
+<li>如果开启防火墙，一定要放行心跳信息，一般通过允许 IP 段解决</li>
+<li>拉一条以太网网线作心跳线冗余</li>
+<li>通过监控软件监测裂脑</li>
+<li>若备节点出现 VIP，且主节点完好正常，则说明发生裂脑了。</li>
+</ul>
+<h2 id="keepalived-双实例双主模式配置"><a class="markdownIt-Anchor" href="#keepalived-双实例双主模式配置"></a> Keepalived 双实例双主模式配置</h2>
+<p>多实例，即业务 A 在 hostA 上是主模式，在 hostB 上是备模式，而业务 B 在 hostA 上是备模式，在 hostB 上是主模式。</p>
+<p>实验环境：</p>
+<ul>
+<li><code>172.17.1.128</code>：业务 A 的 master，业务 B 的 backup</li>
+<li><code>172.17.1.129</code>：业务 A 的 backup，业务 B 的 master</li>
+<li>业务 A 的 VIP：<code>172.17.1.100</code></li>
+<li>业务 B 的 VIP：<code>172.17.1.200</code></li>
+</ul>
+<p>172,17.1.128 的配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">vrrp_instance BusinessA &#123;</span><br><span class="line">    state MASTER</span><br><span class="line">    interface ens32</span><br><span class="line">    virtual_router_id 100</span><br><span class="line">    priority 120</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        172.16.1.100&#x2F;24 dev ens32 label ens32:1</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">vrrp_instance BusinessB &#123;</span><br><span class="line">    state BACKUP</span><br><span class="line">    interface ens32</span><br><span class="line">    virtual_router_id 200</span><br><span class="line">    priority 100</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        172.16.1.200&#x2F;24 dev ens32 label ens32:2</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>172.17.1.129 的配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">vrrp_instance BusinessA &#123;</span><br><span class="line">    state BACKUP</span><br><span class="line">    interface ens32</span><br><span class="line">    virtual_router_id 100</span><br><span class="line">    priority 100</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        172.16.1.100&#x2F;24 dev ens32 label ens32:1</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">vrrp_instance BusinessB &#123;</span><br><span class="line">    state MASTER</span><br><span class="line">    interface ens32</span><br><span class="line">    virtual_router_id 200</span><br><span class="line">    priority 120</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        172.16.1.200&#x2F;24 dev ens32 label ens32:2</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>重新启动 keepalived，查看<code>ip addr</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ens32: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UP group default qlen 1000</span><br><span class="line">    link&#x2F;ether 00:0c:29:05:bd:c3 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 172.16.1.128&#x2F;24 brd 172.16.1.255 scope global dynamic noprefixroute ens32</span><br><span class="line">       valid_lft 1800sec preferred_lft 1800sec</span><br><span class="line">    inet 172.16.1.100&#x2F;24 scope global secondary ens32:1</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet 172.16.1.200&#x2F;24 scope global secondary ens32:2</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line"></span><br><span class="line">ens32: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq_codel state UP group default qlen 1000</span><br><span class="line">    link&#x2F;ether 00:0c:29:74:d9:f9 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 172.16.1.129&#x2F;24 brd 172.16.1.255 scope global dynamic noprefixroute ens32</span><br><span class="line">       valid_lft 1722sec preferred_lft 1722sec</span><br><span class="line">    inet 172.16.1.200&#x2F;24 scope global secondary ens32:2</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet 172.16.1.100&#x2F;24 scope global secondary ens32:1</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+<h2 id="nginx-负载均衡配合-keepalived"><a class="markdownIt-Anchor" href="#nginx-负载均衡配合-keepalived"></a> Nginx 负载均衡配合 Keepalived</h2>
+<p>实验环境：</p>
+<ul>
+<li>LB 1: <code>172.16.1.128</code></li>
+<li>LB 2: <code>172.16.1.129</code></li>
+<li>业务 A VIP：172.16.1.100</li>
+<li>业务 B VIP：172.16.1.200</li>
+<li>web RS1：172.17.0.2
+<ul>
+<li>业务 A：80 端口</li>
+<li>业务 B：81 端口</li>
+</ul>
+</li>
+<li>web RS2：172.17.0.3
+<ul>
+<li>业务 A：80 端口</li>
+<li>业务 B：81 端口<img src="/2018/LVS%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AC%94%E8%AE%B0/5.png" class="">
+</li>
+</ul>
+</li>
+</ul>
+<p>RS1 上的 nginx 配置 server 块：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80;</span><br><span class="line">    server_name  business-a-2;</span><br><span class="line">    root         &#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html;</span><br><span class="line">    include &#x2F;etc&#x2F;nginx&#x2F;default.d&#x2F;*.conf;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">      index index.html;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen       81;</span><br><span class="line">    server_name  business-b-2;</span><br><span class="line">    root         &#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html-1;</span><br><span class="line">    include &#x2F;etc&#x2F;nginx&#x2F;default.d&#x2F;*.conf;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">      index index.html;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>RS2 上的 nginx 配置 server 块：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       80;</span><br><span class="line">    server_name  business-a-3;</span><br><span class="line">    root         &#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html;</span><br><span class="line">    include &#x2F;etc&#x2F;nginx&#x2F;default.d&#x2F;*.conf;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">       index index.html;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">server &#123;</span><br><span class="line">    listen     81;</span><br><span class="line">    server_name  business-b-3;</span><br><span class="line">    root       &#x2F;usr&#x2F;share&#x2F;nginx&#x2F;html-1;</span><br><span class="line">    include &#x2F;etc&#x2F;nginx&#x2F;default.d&#x2F;*.conf;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">        index index.html;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>LB1 和 LB2 的 nginx 上配置负载均衡：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">upstream business-a-pool &#123;</span><br><span class="line">    server 172.17.0.2:80 weight&#x3D;1;</span><br><span class="line">    server 172.17.0.3:80 weight&#x3D;1;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">upstream business-b-pool &#123;</span><br><span class="line">    server 172.17.0.2:81 weight&#x3D;1;</span><br><span class="line">    server 172.17.0.3:81 weight&#x3D;1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>LB 上的 keepalived 配置沿用上面双实例的配置。</p>
+<p>LB1 和 LB2 的 nginx 的 server 块一致，配置如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen       172.16.1.100:80;</span><br><span class="line">    server_name  business-a;</span><br><span class="line">    include &#x2F;etc&#x2F;nginx&#x2F;default.d&#x2F;*.conf;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">        proxy_pass http:&#x2F;&#x2F;business-a-pool;</span><br><span class="line">        proxy_set_header Host $host;</span><br><span class="line">        proxy_set_header X-Forwarded-For $remote_addr;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">server &#123;</span><br><span class="line">    listen       172.16.1.200:80;</span><br><span class="line">    server_name  business-b;</span><br><span class="line">    include &#x2F;etc&#x2F;nginx&#x2F;default.d&#x2F;*.conf;</span><br><span class="line"></span><br><span class="line">    location &#x2F; &#123;</span><br><span class="line">        proxy_pass http:&#x2F;&#x2F;business-b-pool;</span><br><span class="line">        proxy_set_header Host $host;</span><br><span class="line">        proxy_set_header X-Forwarded-For $remote_addr;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>依次访问两个业务，实现了多实例的负载均衡与高可用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ curl 172.16.1.100</span><br><span class="line">business-a 172.17.0.2:80</span><br><span class="line"></span><br><span class="line">$ curl 172.16.1.100</span><br><span class="line">business-a 172.17.0.3:80</span><br><span class="line"></span><br><span class="line">$ curl 172.16.1.200</span><br><span class="line">business-b 172.17.0.3:81</span><br><span class="line"></span><br><span class="line">$ curl 172.16.1.200</span><br><span class="line">business-b 172.17.0.2:81</span><br></pre></td></tr></table></figure>
+<h2 id="解决服务监听网卡上不存在-ip-地址的问题"><a class="markdownIt-Anchor" href="#解决服务监听网卡上不存在-ip-地址的问题"></a> 解决服务监听网卡上不存在 IP 地址的问题</h2>
+<p>若在 nginx 配置中 server 块的 listen 配置一个本机没有的 ip 地址，则会报错<br />
+解决方法：在<code>/etc/sysctl.conf</code>添加配置<code>net.ipv4.ip_nonlocal_bind = 1</code>或通过命令<code>sysctl -w net.ipv4.ip_nonlocal_bind=1</code><br />
+然后<code>sysctl -p</code>使配置生效。</p>
+<h2 id="解决高可用服务只针对物理服务器的问题"><a class="markdownIt-Anchor" href="#解决高可用服务只针对物理服务器的问题"></a> 解决高可用服务只针对物理服务器的问题</h2>
+<p>若出现机器未宕机且 keepalived 正常工作，然而是服务挂了，keepalived 则无法进行切换。有两种方法解决当服务挂掉的时候也能实现 keepalived 的 IP 漂移切换。</p>
+<ul>
+<li>写守护进程脚本处理。当本地 nginx 业务出现问题，就强制停掉 keepalived 以实现 IP 漂移。<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">while true</span><br><span class="line">do</span><br><span class="line">  if [ `netstat -lntup | grep nginx | wc -l` ne 1 ]; then</span><br><span class="line">    systemctl stop keepalived</span><br><span class="line">  fi</span><br><span class="line">  sleep 5</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+</li>
+<li>使用监测脚本，然后配置在 keepalived 的配置文件中。脚本与上面类似，但是去掉<code>sleep 5</code>，然后在配置文件中添加：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">vrrp_script chk_nginx_proxy &#123;</span><br><span class="line">  script &quot;脚本路径&quot;</span><br><span class="line">  interval 2   &#x2F;&#x2F;当nginx挂掉时，keepalived在2秒内就会按照脚本停止</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+并在 vrrp 实例中添加<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">track_script &#123;</span><br><span class="line">  chk_nginx_proxy</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="解决多组-keepalived-服务器在一个局域网的冲突问题"><a class="markdownIt-Anchor" href="#解决多组-keepalived-服务器在一个局域网的冲突问题"></a> 解决多组 keepalived 服务器在一个局域网的冲突问题</h2>
+<p>若同一个局域网内存在多组 keepalived 服务器对，就会造成 IP 多播地址冲突问题，导致接管错乱，不同组 keepalived 都会默认使用<code>224.0.0.18</code>作为多播地址。<br />
+解决方法：每个 keepalived 对指定唯一多播地址。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">global_defs &#123;</span><br><span class="line">  ......</span><br><span class="line">  vrrp_mcast_group4  224.0.0.19    &#x2F;&#x2F;指定多播地址</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="配置指定文件接受-keepalived-日志"><a class="markdownIt-Anchor" href="#配置指定文件接受-keepalived-日志"></a> 配置指定文件接受 Keepalived 日志</h2>
+<p>keepalived 默认日志输出到<code>/var/log/messages</code>，所以最好单独记录该日志。<br />
+修改<code>/etc/sysconfig/keepalived</code>，</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">KEEPALIVED_OPTIONS&#x3D;&quot;-D -d -S 0&quot;</span><br></pre></td></tr></table></figure>
+<p>选项含义：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># --vrrp               -P    只与vrrp子系统运行</span><br><span class="line"># --check              -C    只与健康检查子系统运行</span><br><span class="line"># --dont-release-vrrp  -V    在keepalived进程停止时不移除VIP和VIP的路由</span><br><span class="line"># --dont-release-ipvs  -I    在keepalived进程停止时不移除ipvs策略</span><br><span class="line"># --dump-conf          -d    导出配置数据</span><br><span class="line"># --log-detail         -D    输出详细日志</span><br><span class="line"># --log-facility       -S    本地syslog设备（0-7，默认为LOG_DAEMON）</span><br></pre></td></tr></table></figure>
+<p>然后在<code>/etc/rsyslog.conf</code>中添加 keepalived 配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">local0.*        &#x2F;var&#x2F;log&#x2F;keepalived.log</span><br></pre></td></tr></table></figure>
+<p>并在<code>*.info;mail.none;authpriv.none;cron.none</code>后添加<code>local0.none</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*.info;mail.none;authpriv.none;cron.none;local0.none     &#x2F;var&#x2F;log&#x2F;messages</span><br></pre></td></tr></table></figure>
+<p>重启 rsyslog 服务 <code>systemctl restart rsyslog.service</code></p>
+<h2 id="开发监测-keepalived-裂脑脚本"><a class="markdownIt-Anchor" href="#开发监测-keepalived-裂脑脚本"></a> 开发监测 Keepalived 裂脑脚本</h2>
+<p>在备服务器上执行脚本，若能 ping 通主节点且备节点有 VIP，就报警。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/bash</span></span><br><span class="line">VIP=172.16.1.100</span><br><span class="line">LB1_IP=172.16.1.128</span><br><span class="line">while true</span><br><span class="line">do</span><br><span class="line">  ping -c 2 -W 3 $LB1_IP &amp;&gt;/dev/null</span><br><span class="line">  if [ $? -eq 0 -a `ip addr | grep &quot;$LB1_IP&quot;|wc -l` -eq 1 ];then</span><br><span class="line">    echo &quot;split brain ....&quot;</span><br><span class="line">  sleep 5</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+<h1 id="参考文档"><a class="markdownIt-Anchor" href="#参考文档"></a> 参考文档</h1>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="http://www.linuxvirtualserver.org/zh/index.html">LVS 中文官方文档</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/8451982.html#1-lvs-">骏马金龙 LVS 系列文章</a> &gt; <a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzIxMjE5MTE1Nw==&amp;mid=2653193749&amp;idx=1&amp;sn=9321bf2c628b8d60913336ff6592f823&amp;chksm=8c99f4cfbbee7dd9e580eac24a5d481993a09bc93720dddc70d602e38e923012e1d7b245a76e&amp;mpshare=1&amp;scene=23&amp;srcid=0528GJKDr5wutmhQnNTVwG1H#rd">负载均衡的原理</a><br />
+高性能网站构建实战<br />
+<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzA4NzQzMzU4Mg==&amp;mid=2652921952&amp;idx=1&amp;sn=c9e4cee313f9052095d499d5be41c2dd&amp;chksm=8bed4861bc9ac1778610eace025dfa685e661f04b53b539666b597d649e3429be01048242010&amp;mpshare=1&amp;scene=23&amp;srcid=0710bpqIBIAZyCVTrxFmag58#rd">Linux 之虚拟服务器 LVS 搭建</a></p>
+<p><a target="_blank" rel="noopener" href="http://blog.51cto.com/manito/590937">lvs arp 问题配置误区</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.linuxidc.com/Linux/2013-08/88524.htm">LVS 集群中持久连接详解（PPC+PCC+PNMPP）</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="tag"><i class="fa fa-tag"></i> 负载均衡</a>
+              <a href="/tags/LVS/" rel="tag"><i class="fa fa-tag"></i> LVS</a>
+              <a href="/tags/keepalived/" rel="tag"><i class="fa fa-tag"></i> keepalived</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/wireshark%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Wireshark学习笔记">
+      <i class="fa fa-chevron-left"></i> Wireshark学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Ansible%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Ansible基础学习笔记">
+      Ansible基础学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#lvs-%E5%8E%9F%E7%90%86"><span class="nav-text"> LVS 原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#lvs-%E9%9B%86%E7%BE%A4%E7%9A%84%E9%80%9A%E7%94%A8%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84"><span class="nav-text"> LVS 集群的通用体系结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E7%A7%8D-ip-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E6%8A%80%E6%9C%AF"><span class="nav-text"> 三种 IP 负载均衡技术</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lvs-%E4%B8%A4%E7%A7%8D%E8%B0%83%E5%BA%A6%E6%96%B9%E5%BC%8F%E4%B8%8E%E5%85%AB%E7%A7%8D%E7%AE%97%E6%B3%95"><span class="nav-text"> LVS 两种调度方式与八种算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lvs-%E6%8C%81%E4%B9%85%E8%BF%9E%E6%8E%A5"><span class="nav-text"> LVS 持久连接</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#keepalived-%E5%8E%9F%E7%90%86"><span class="nav-text"> KeepAlived 原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#lvs-%E4%B8%8E-keepalived-%E6%90%AD%E5%BB%BA"><span class="nav-text"> LVS 与 KeepAlived 搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#nat-%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA"><span class="nav-text"> NAT 模式搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dr-%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA"><span class="nav-text"> DR 模式搭建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="nav-text"> 持久化配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#keepalived-%E9%85%8D%E7%BD%AE"><span class="nav-text"> Keepalived 配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#keepalived-%E5%8F%8C%E5%AE%9E%E4%BE%8B%E5%8F%8C%E4%B8%BB%E6%A8%A1%E5%BC%8F%E9%85%8D%E7%BD%AE"><span class="nav-text"> Keepalived 双实例双主模式配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#nginx-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E9%85%8D%E5%90%88-keepalived"><span class="nav-text"> Nginx 负载均衡配合 Keepalived</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%9C%8D%E5%8A%A1%E7%9B%91%E5%90%AC%E7%BD%91%E5%8D%A1%E4%B8%8A%E4%B8%8D%E5%AD%98%E5%9C%A8-ip-%E5%9C%B0%E5%9D%80%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-text"> 解决服务监听网卡上不存在 IP 地址的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9C%8D%E5%8A%A1%E5%8F%AA%E9%92%88%E5%AF%B9%E7%89%A9%E7%90%86%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-text"> 解决高可用服务只针对物理服务器的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E5%A4%9A%E7%BB%84-keepalived-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%9C%A8%E4%B8%80%E4%B8%AA%E5%B1%80%E5%9F%9F%E7%BD%91%E7%9A%84%E5%86%B2%E7%AA%81%E9%97%AE%E9%A2%98"><span class="nav-text"> 解决多组 keepalived 服务器在一个局域网的冲突问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E6%8C%87%E5%AE%9A%E6%96%87%E4%BB%B6%E6%8E%A5%E5%8F%97-keepalived-%E6%97%A5%E5%BF%97"><span class="nav-text"> 配置指定文件接受 Keepalived 日志</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%80%E5%8F%91%E7%9B%91%E6%B5%8B-keepalived-%E8%A3%82%E8%84%91%E8%84%9A%E6%9C%AC"><span class="nav-text"> 开发监测 Keepalived 裂脑脚本</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-text"> 参考文档</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

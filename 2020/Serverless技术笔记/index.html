@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Serverless 简介 Serverless 技术特点">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Serverless技术笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Serverless 简介 Serverless 技术特点">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/0.png">
+<meta property="og:image" content="https://github.com/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/3.png">
+<meta property="og:image" content="https://github.com/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/4.png">
+<meta property="article:published_time" content="2020-02-13T11:19:50.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.606Z">
+<meta property="article:author" content="TianyiGu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/0.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Serverless技术笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Serverless技术笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-02-13 19:19:50" itemprop="dateCreated datePublished" datetime="2020-02-13T19:19:50+08:00">2020-02-13</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#serverless-%e7%ae%80%e4%bb%8b">Serverless 简介</a></li>
+<li><a href="#serverless-%e6%8a%80%e6%9c%af%e7%89%b9%e7%82%b9">Serverless 技术特点</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="serverless-简介"><a class="markdownIt-Anchor" href="#serverless-简介"></a> Serverless 简介</h1>
+<p>Serverless（无服务器架构）指的是服务端逻辑由开发者实现，运行在无状态的计算容器中，由事件触发，完全被第三方管理，而业务层面的状态则记录在数据库或存储资源中。用户无需管理服务器等基础设施，只需编写代码和选择触发器（trigger)，比如 RPC 请求、定时器等并上传，其余的工作（如实例选择、扩缩容、部署、容灾、监控、日志、安全补丁等）全部由 serverless 系统托管。用户只需要为代码实际运行消耗的资源付费——代码未运行则不产生费用（Pay as you go）。</p>
+<img src="/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/0.png" class="">
+<p>Serverless 相比 Serverful，有以下 3 个改变：</p>
+<ul>
+<li><strong>弱化了存储和计算之间的联系</strong>。服务的储存和计算被分开部署和收费，存储不再是服务本身的一部分，而是演变成了独立的云服务，这使得计算变得无状态化，更容易调度和扩缩容，同时也降低了数据丢失的风险。</li>
+<li><strong>代码的执行不再需要手动分配资源</strong>。不需要为服务的运行指定需要的资源（比如使用几台机器、多大的带宽、多大的磁盘等），只需要提供一份代码，剩下的交由 serverless 平台去处理就行了。当前阶段的实现平台分配资源时还需要用户方提供一些策略，例如单个实例的规格和最大并发数，单实例的最大 CPU 使用率。理想的情况是通过某些学习算法来进行完全自动的自适应分配。</li>
+<li><strong>按使用量计费</strong>。Serverless 按照服务的使用量（调用次数、时长等）计费，而不是像传统的 serverful 服务那样，按照使用的资源（ECS 实例、VM 的规格等）计费。</li>
+</ul>
+<img src="/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/3.png" class="">
+<p>Serverless 两个重要的产品：</p>
+<ul>
+<li>FaaS（Function as a Service， 函数即服务，也称为云函数）：FaaS 提供了一个计算平台，在这个平台上，应用以一个或多个函数的形式开发、运行和管理。FaaS 平台提供了函数式应用的运行环境，一般支持多种主流的编程语言，如 Java、PHP 及 Python 等。FaaS 可以根据实际的访问量进行应用的自动化动态加载和资源的自动化动态分配。大多数 FaaS 平台基于事件驱动（Event Driven）的思想，可以根据预定义的事件触发指定的函数应用逻辑。</li>
+<li>BaaS（Backend as a Service，后端即服务）：通过 BaaS 平台将应用所依赖的第三方服务，如数据库、消息队列及存储等服务化并发布出来，用户通过向 BaaS 平台申请所需要的服务进行消费，而不需要关心这些服务的具体运维。</li>
+</ul>
+<img src="/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>FaaS 与 PaaS 的比较：大部分 PaaS 应用无法针对每个请求启动和停止整个应用程序，而 FaaS 平台生来就是为了实现这样的目的。FaaS 和 PaaS 在运维方面最大的差异在于缩放能力。对于大部分 PaaS 平台，用户依然需要考虑缩放。但是对于 FaaS 应用，这种问题完全是透明的。就算将 PaaS 应用设置为自动缩放，依然无法在具体请求的层面上进行缩放，而 FaaS 应用在成本方面效益就高多了。</p>
+<img src="/2020/Serverless%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/4.png" class="">
+<p><strong>Serverless 架构的优点</strong></p>
+<ul>
+<li>降低运营成本：Serverless 是非常简单的外包解决方案。它可以让您委托服务提供商管理服务器、数据库和应用程序甚至逻辑，否则您就不得不自己来维护。由于这个服务使用者的数量会非常庞大，于是就会产生规模经济效应。在降低成本上包含了两个方面，即基础设施的成本和人员（运营/开发）的成本。</li>
+<li>降低运维需求：Serverless 使得应用与服务器解耦，业务上线前无需预估资源，无需进行服务器购买、配置 Serverless 也使得底层运维工作量进一步降低，业务上线后，也无需担忧服务器运维，而是全部交给了云平台或云厂商</li>
+<li>降低开发成本：IaaS 和 PaaS 存在的前提是，服务器和操作系统管理可以商品化。Serverless 作为另一种服务的结果是整个应用程序组件被商品化。</li>
+<li>缩短迭代周期、上线时间：Serverless 架构带来的是进一步的业务解耦，应用功能被解构成若干个细颗粒度的无状态函数，开发可以聚焦在单功能的快速开发和上线。同时，拆解后的云函数，也都可以进行独立的迭代升级，更快速的实现业务迭代，缩减功能的上线时间</li>
+<li>扩展能力：Serverless 架构一个显而易见的优点即“横向扩展是完全自动的、有弹性的、且由服务提供者所管理”。从基本的基础设施方面受益最大的好处是，您只需支付您所需要的计算能力。</li>
+<li>更简单的管理：Serverless 架构明显比其他架构更简单。更少的组件，就意味着您的管理开销会更少。</li>
+<li>快速试错：利用 Serverless 架构的简单运维、低成本及快速上线能力，可以来快速尝试业务的新形态、新功能，利用 Serverless 产品的强弹性扩容能力，在业务获得成功时，也无需为资源扩容而担心</li>
+<li>“绿色”的计算：按照《福布斯》杂志的统计，在商业和企业数据中心的典型服务器仅提供 5%～ 15%的平均最大处理能力的输出。这无疑是一种资源的巨大浪费。随着 Serverless 架构的出现，让服务提供商提供我们的计算能力最大限度满足实时需求。这将使我们更有效地利用计算资源。</li>
+</ul>
+<p><strong>Serverless 架构的缺点</strong></p>
+<ul>
+<li>状态管理：要想实现自由的缩放，无状态是必须的，而对于有状态的服务，使用 serverless 这就丧失了灵活性，有状态服务需要与存储交互就不可避免的增加了延迟和复杂性。</li>
+<li>延迟：应用程序中不同组件的访问延迟是一个大问题，我们可以通过使用专有的网络协议、RPC 调用、数据格式来优化，或者是将实例放在同一个机架内或同一个主机实例上来优化以减少延迟。而 serverless 应用程序是高度分布式、低耦合的，这就意味着延迟将始终是一个问题，单纯使用 serverless 的应用程序是不太现实的。</li>
+<li>本地测试：Serverless 应用的本地测试困难是一个很棘手的问题。虽然可以在测试环境下使用各种数据库和消息队列来模拟生产环境，但是对于无服务应用的集成或者端到端测试尤其困难，很难在本地模拟应用程序的各种连接，并与性能和缩放的特性结合起来测试，并且 serverless 应用本身也是分布式的，简单的将无数的 FaaS 和 BaaS 组件粘合起来也是有挑战性的。</li>
+</ul>
+<p>Serverless 适用的场景：</p>
+<ul>
+<li>异步的并发，组件可独立部署和扩展</li>
+<li>应对突发或服务使用量不可预测（主要是为了节约成本，因为 Serverless 应用在不运行时不收费）</li>
+<li>短暂、无状态的应用，对冷启动时间不敏感</li>
+<li>需要快速开发迭代的业务（因为无需提前申请资源，因此可以加快业务上线速度）</li>
+</ul>
+<p>Serverless 常见的应用：</p>
+<ol>
+<li>
+<p>WEB 及移动后端<br />
+通过结合使用云函数和 API 网关或 HTTP 触发器，可以对外提供 URL 访问地址，成为 Web、小程序、或移动应用等的后端服务。Serverless 架构既可以直接用于构建后台来服务应用，也可以通过类似 BFF 模式，构建中台和应用间的桥梁。<br />
+Serverless 架构提供的强弹性能力，使得可以支撑业务或应用的暴涨；而提供的低运维需求，使得开发者可以专注于业务实现和优化；同时，按实际使用量的付费方式，使得开发者无需预配置资源，无需担心预配置资源的浪费。</p>
+</li>
+<li>
+<p>消息处理<br />
+Serverles 架构的应用本身是由事件触发的，因此极其适合于进行消息处理。无论是消息队列中传递的业务消息，还是 Kafka 中采集应用日志，均可以对接到云函数上，进行实时的消息处理、分析。</p>
+</li>
+<li>
+<p>对象存储文件处理<br />
+在 Serverless 应用场景中，由对象存储中的文件上传事件，来触发云函数的运行，也是一种常见场景。<br />
+针对图片文件的上传，可以借助云函数完成图片的缩略图生成、二维码或水印标记、图片优化处理；而针对数据文件的上传，可以启动数据的自动化分析</p>
+</li>
+<li>
+<p>物联网<br />
+物联网意味着成千上万的设备会连入网络，时刻在不断的产生数据，这对数据的分析、处理的及时性提出了很高的挑战。通过使用 Serverless 架构，物联网设备所采集的数据将可以作为云函数的触发事件，而实现数据的实时处理、分析和应用。<br />
+随着物联网设备计算能力的进一步提升，云函数作为最小粒度的计算单元，有机会被调度到设备端运行，实现边缘计算，达到「端 - 云」联合的 Serverless 架构。</p>
+</li>
+<li>
+<p>运维及集成<br />
+通过对接云函数以及云上的各个产品、日志服务、监控告警系统，云时代的运维也都可以用云函数来构建。定时触发的云函数，将可以方便地替代需要在主机上来运行的定时任务；而日志或告警触发的云函数，将可以对云中的事件作出立刻回应及处理。</p>
+</li>
+</ol>
+<h1 id="serverless-技术特点"><a class="markdownIt-Anchor" href="#serverless-技术特点"></a> Serverless 技术特点</h1>
+<ol>
+<li>
+<p>事件驱动</p>
+<ul>
+<li>云函数的运行，是由事件驱动起来的，在有事件到来时，云函数会启动运行</li>
+<li>Serverless 应用不会类似于原有的「监听 - 处理」类型的应用一直在线，而是按需启动</li>
+<li>事件的定义可以很丰富，一次 http 请求，一个文件上传，一次数据库条目修改，一条消息发送，都可以定义为事件</li>
+</ul>
+</li>
+<li>
+<p>单事件处理</p>
+<ul>
+<li>云函数由事件触发，而触发启动的一个云函数实例，一次仅处理一个事件</li>
+<li>无需在代码内考虑高并发高可靠性，代码可以专注于业务，开发更简单</li>
+<li>通过云函数实例的高并发能力，实现业务高并发</li>
+</ul>
+</li>
+<li>
+<p>自动弹性伸缩</p>
+<ul>
+<li>由于云函数事件驱动及单事件处理的特性，云函数通过自动的伸缩来支持业务的高并发</li>
+<li>针对业务的实际事件或请求数，云函数自动弹性合适的处理实例来承载实际业务量</li>
+<li>在没有事件或请求时，无实例运行，不占用资源</li>
+</ul>
+</li>
+<li>
+<p>无状态开发</p>
+<ul>
+<li>云函数运行时根据业务弹性，可能伸缩到 0，无法在运行环境中保存状态数据</li>
+<li>分布式应用开发中，均需要保持应用的无状态，以便于水平伸缩</li>
+<li>可以利用外部服务、产品，例如数据库或缓存，实现状态数据的保存</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>参考文档</p>
+<p><a target="_blank" rel="noopener" href="https://china.serverless.com/blog/2019-08-01-serverless-basic-concept">Serverless 基本概念入门</a></p>
+<p><a target="_blank" rel="noopener" href="https://china.serverless.com/blog/2019-08-21-serverless-operation-architecture">Serverless 的运行原理与组件架构</a></p>
+<p><a target="_blank" rel="noopener" href="https://cloud.tencent.com/document/product/1154/38787">Serverless Framework 产品概述</a></p>
+<p><a target="_blank" rel="noopener" href="https://serverless.ink/#serverless-%E6%9E%B6%E6%9E%84%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97">Serverless 架构应用开发指南</a></p>
+<p><a target="_blank" rel="noopener" href="https://aws.amazon.com/cn/blogs/china/iaas-faas-serverless/">从 IaaS 到 FaaS—— Serverless 架构的前世今生</a></p>
+<p><a target="_blank" rel="noopener" href="https://jimmysong.io/serverless-handbook/">Serverless Handbook——无服务架构实践手册</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.im/post/5d42945ff265da03a715b2f0">Serverless（无服务）基础知识</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/Prometheus-python-API%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/" rel="prev" title="Prometheus-python-API使用笔记">
+      <i class="fa fa-chevron-left"></i> Prometheus-python-API使用笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/PostgreSQL%E7%AC%94%E8%AE%B0/" rel="next" title="PostgreSQL笔记">
+      PostgreSQL笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#serverless-%E7%AE%80%E4%BB%8B"><span class="nav-text"> Serverless 简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#serverless-%E6%8A%80%E6%9C%AF%E7%89%B9%E7%82%B9"><span class="nav-text"> Serverless 技术特点</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

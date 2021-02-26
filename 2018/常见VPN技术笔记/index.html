@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="华三网络学习笔记（理论） 本篇包含以下知识点   VPN 概述   GRE-VPN   L2TP-VPN   IPSEC-VPN  IPSec SA IKE IPSec 包处理流程 安全协议 GRE-OVER-IPSEC IPSEC-OVER-GRE    MPLS   BGP-MPLS-VPN  多 VPF 组网 MP-BGP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="常见VPN技术笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="华三网络学习笔记（理论） 本篇包含以下知识点   VPN 概述   GRE-VPN   L2TP-VPN   IPSEC-VPN  IPSec SA IKE IPSec 包处理流程 安全协议 GRE-OVER-IPSEC IPSEC-OVER-GRE    MPLS   BGP-MPLS-VPN  多 VPF 组网 MP-BGP">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/3.jpg">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/5.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/6.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/7.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/8.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/13.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/14.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/9.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/10.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/11.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/12.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/15.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/16.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/17.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/18.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/20.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/21.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/22.png">
+<meta property="og:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/23.png">
+<meta property="article:published_time" content="2018-06-18T01:00:37.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.725Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="vpn">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>常见VPN技术笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          常见VPN技术笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-06-18 09:00:37" itemprop="dateCreated datePublished" datetime="2018-06-18T09:00:37+08:00">2018-06-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>华三网络学习笔记（理论）</strong></p>
+<p>本篇包含以下知识点</p>
+<ul>
+<li>
+<p><a href="#vpn-%e6%a6%82%e8%bf%b0">VPN 概述</a></p>
+</li>
+<li>
+<p><a href="#gre-vpn">GRE-VPN</a></p>
+</li>
+<li>
+<p><a href="#l2tp-vpn">L2TP-VPN</a></p>
+</li>
+<li>
+<p><a href="#ipsec-vpn">IPSEC-VPN</a></p>
+<ul>
+<li><a href="#ipsec-sa">IPSec SA</a></li>
+<li><a href="#ike">IKE</a></li>
+<li><a href="#ipsec-%e5%8c%85%e5%a4%84%e7%90%86%e6%b5%81%e7%a8%8b">IPSec 包处理流程</a></li>
+<li><a href="#%e5%ae%89%e5%85%a8%e5%8d%8f%e8%ae%ae">安全协议</a></li>
+<li><a href="#gre-over-ipsec">GRE-OVER-IPSEC</a></li>
+<li><a href="#ipsec-over-gre">IPSEC-OVER-GRE</a></li>
+</ul>
+</li>
+<li>
+<p><a href="#mpls">MPLS</a></p>
+</li>
+<li>
+<p><a href="#bgp-mpls-vpn">BGP-MPLS-VPN</a></p>
+<ul>
+<li><a href="#%e5%a4%9a-vpf-%e7%bb%84%e7%bd%91">多 VPF 组网</a></li>
+<li><a href="#mp-bgp">MP-BGP</a></li>
+</ul>
+<span id="more"></span>
+</li>
+</ul>
+<h2 id="vpn-概述"><a class="markdownIt-Anchor" href="#vpn-概述"></a> VPN 概述</h2>
+<p>Virtual Private Network 虚拟私有网，利用共享公共网络仿真 WAN 设施，构建私有的专用网络。基于 IP 的 VPN 体系的核心是使用 Tunnel 隧道技术。</p>
+<p><strong>VPN 的优势</strong></p>
+<ul>
+<li>快速构建，降低部署周期</li>
+<li>与私有网络一样的安全性、可靠性与可管理性</li>
+<li>提高了基础资源的利用率</li>
+<li>简化了用户端的配置和维护工作</li>
+</ul>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/1.png" class="">
+<p><strong>概念术语</strong></p>
+<ul>
+<li>承载协议：在公网传输时使用的协议</li>
+<li>封装协议：用于标识承载协议中封装的数据包，放置在承载协议头与载荷协议头间</li>
+<li>载荷协议：最初封装数据包的协议</li>
+<li>隧道协议：决定如何实现隧道的协议</li>
+</ul>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/2.png" class="">
+<p><strong>主要 VPN 技术</strong><br />
+L2 VPN 技术</p>
+<ul>
+<li>L2TP VPN：二层隧道协议，可实现拨号 VPN 与专线 VPN</li>
+<li>PPTP VPN：点到点隧道协议，支持 PPP 在 IP 网络上的隧道封装，使用增强 GRE 技术为传输的 PPP 报文提供流控与拥塞控制的封装</li>
+<li>MPLS L2 VPN：多协议标签交换<br />
+L3 VPN 技术</li>
+<li>GRE VPN：通用路由封装，可在任意协议中封装任意协议的封装方法</li>
+<li>IPSEC VPN：IP 安全，并不是单个协议，而是一系列协议组成的数据安全体系，包括 AH、ESP、IKE 等，实现对数据私密性、完整性保护与源校验</li>
+<li>BGP/MPLS VPN：多协议 BGP，利用 MPLS 与 MP-BGP 技术</li>
+<li>SSL VPN：安全套接字层，使用 SSL 协议实现远程 VPN</li>
+</ul>
+<h2 id="gre-vpn"><a class="markdownIt-Anchor" href="#gre-vpn"></a> GRE-VPN</h2>
+<p>Generic Routing Encapsulation 通用路由封装，是一种能在任意协议中封装任意协议的封装方法，可以直接使用 GRE 封装建立 GRE 隧道，为 IP 协议，协议号 47。以下为<br />
+GRE 封装包的格式。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/3.jpg" class="">
+<p>GRE 头包含了 2 字节的<code>Protocol Type</code>，用于指示载荷协议类型，<code>IP</code>协议为<code>0x0800</code>。此外还有扩展 GRE 头，增加了<code>Key</code>和<code>Sequence Number</code>，具备标识数据流和分组次序的能力。<br />
+IP 协议使用协议号 47 标识 GRE 头，说明 IP 头后跟着 GRE 头。而 GRE 头中 protocol type 若为 0x0800，说明 GRE 头后跟着 IP 头。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/4.png" class="">
+<p>双方通过 Tunnel 接口（逻辑接口）建立隧道，再通过实际物理接口进行转发。tunnel 口为载荷协议服务，物理口为承载协议服务。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/5.png" class="">
+<p>GRE 隧道通信过程：</p>
+<ol>
+<li>隧道起点路由查找：隧道两端的路由器必须是私网边界路由器。收到数据包时查找 ip 路由表</li>
+<li>加封装：查找路由表确认下一跳为 tunnel 口，则进行 GRE 封装。</li>
+<li>承载协议路由转发：对封装后的包进行公网路由查询。</li>
+<li>中途转发：即公网转发</li>
+<li>解封装：到达对端私网边界路由器后，该路由器检查 IP 地址，若是自己则解开 IP 头，发现有 GRE 头，就交给目标 Tunnel 口，tunnel 口解开 GRE 头</li>
+<li>隧道终点路由转发：解开 GRE 头后，发现私网 IP 目的地址，然后查表转发。</li>
+</ol>
+<p>每个运行 GRE 的路由器只有一个路由表，公网和私网之间只能通过不同的路由加以区分，因此公网私网 IP 地址能重复，且公网私网必须采用不同策略。</p>
+<ul>
+<li>连接到私网的物理接口和 Tunnel 口属于私网路由 AS，采用一致的私网路由策略。</li>
+<li>连接到公网的物理接口属于公网路由 AS，必须和公网采用一致的路由策略。</li>
+</ul>
+<p>优点：</p>
+<ol>
+<li>支持多种协议</li>
+<li>支持 IP 路由协议和组播</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>点对点隧道</li>
+<li>静态配置隧道</li>
+<li>缺乏安全性</li>
+<li>不可分配地址空间</li>
+<li>部署复杂</li>
+</ol>
+<p>静态路由配置：配置到达目的 IP 的私网网段路由，下一跳为对端 Tunnel 口的地址。<br />
+动态路由配置：将隧道和私网作为一个 AS 看待，动态路由需要将 Tunnel 口和私网都包括。</p>
+<p>Tunnel 口虚假状态：GRE 本身不对隧道状态维护，系统默认根据接口状态设置 Tunnel 状态，即若物理链路中出现故障，物理口仍为 UP，则隧道口也为 UP，而此时隧道却不通。只存在于静态配置时。<br />
+解决：tunnel 口 keepalive 机制：允许路由器探测隧道口的实际状态。路由器会从 tunnel 口周期发 keepalive 消息，默认周期 10s，若连续 3 次未收到，则认为隧道不通，会自动删除该 tunnel 口为出接口的静态路由。</p>
+<h2 id="l2tp-vpn"><a class="markdownIt-Anchor" href="#l2tp-vpn"></a> L2TP-VPN</h2>
+<p>对 PPP 协议链路提供隧道，允许二层链路端点和 PPP 会话点驻留在不同设备上，并采用分组交换技术进行信息交互。使用 PSTN/ISDN 拨号、xDSL 直接连接到 ISP 位于本地的 POP（存在点），或直接连接到 Internet 获得 IP 通信服务，然后 ISP 设备或用户设备建立 L2TP 通道连接对端。</p>
+<p>L2TP 特点：</p>
+<ul>
+<li>L2TP 支持对用户和隧道的验证，和对客户端的动态地址分配。可使用 PPP 验证，也可使用 LAC 提供的 AAA 验证</li>
+<li>具备点到网络特性。适合单个或少量接入</li>
+<li>不提供加密，但可结合 IPSec 等加密</li>
+<li>面向连接，为信息提供一定的可靠性</li>
+</ul>
+<p>L2TP 组件：</p>
+<ul>
+<li>LAC：L2TP 访问集中器，隧道就在 LAC 和 LNS 间建立</li>
+<li>LNS：L2TP 网络服务器</li>
+<li>NAS：网络访问服务器，抽象概念，是远程访问的接入点，可以是 LAC 或 LNS</li>
+</ul>
+<p>两种拓扑方式：</p>
+<ol>
+<li>独立 LAC：ISP 提供 LAC，不依赖 IP 接入点。<br />
+条件：ISP 支持 L2TP，验证系统支持 VPDN 属性<br />
+特点：终端用户不需要配置 VPN 拨号软件，只需要执行普通拨号，登录一次就可以接入企业网。</li>
+<li>客户 LAC：远程系统安装 VPDN 客户端，直接对 LNS 发起连接请求。不依赖 LAC，验证只能由 LNS 执行<br />
+条件：远程系统必须接入 Internet，远程系统需要安装专用客户端软件并配置<br />
+特点：只需配置 VPN 软件即可与企业网建立 VPN 连接。对用户的验证只能由 LNS 端执行。</li>
+</ol>
+<p>L2TP 封装：<br />
+L2TP 以 UDP/IP 为承载协议，UDP 端口号为 1701。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/6.png" class="">
+<p>L2TP 头中<code>Type</code>字段标识消息类型，若为 1 表示控制消息，若为 0 表示数据消息。<br />
+<code>Tunnel ID</code>字段标识 L2TP 控制连接，即隧道标识符，是在隧道建立时通过<code>Assigned Tunnel ID AVP</code>交换的。<br />
+<code>Session ID</code>字段用于标识一个隧道中的各个会话，是在隧道建立时通过<code>Assigned Session ID AVP</code>交换的。</p>
+<blockquote>
+<p>控制连接：在 L2TP 隧道内部，建立维护和释放会话与隧道<br />
+控制消息：LAC 与 LNS 间交换的隧道内消息，用于对隧道操作。包含 AVP（属性值对，通过发送 AVP 对隧道建立维护或释放，即管理隧道和会话）</p>
+</blockquote>
+<p>L2TP 协议操作：</p>
+<ol>
+<li>建立控制连接：由 PPP 触发<br />
+（1）LAC 使用任意 UDP 端口向 LNS 的 UDP1701 端口发起连接（<code>SCCRQ</code>打开控制连接请求）<br />
+（2）LNS 将连接重定向到一个随机 UDP 端口并回应（<code>SCCRP</code>打开控制连接应答）<br />
+（3）LAC 收到后返回确认（<code>SCCCN</code>打开控制连接已确认）<br />
+（4）LNS 收到后再确认，隧道建立（<code>ZLB</code>零长度体）<br />
+若要执行隧道验证，可在<code>SCCRQ</code>或<code>SCCRP</code>中加上<code>Challenge AVP</code>（挑战 AVP）发起验证，接收方要在回应中加上<code>Challenge Response AVP</code>（挑战响应 AVP）。</li>
+<li>建立会话：前提为控制连接的建立。由 PPP 模块触发<br />
+LAC 发起：<br />
+（1）LAC 向 LNS 发送<code>ICRQ</code>（入呼叫请求）发起会话建立<br />
+（2）LNS 收到请求后返回<code>ICRP</code>（入呼叫应答）<br />
+（3）LAC 收到应答后返回<code>ICCN</code>（入连接已连接）<br />
+（4）LNS 再回应<code>ZLB</code>，会话建立<br />
+LNS 发起：<br />
+（1）LNS 发送<code>OCRQ</code>（出呼叫请求）发起会话建立<br />
+（2）LAC 收到后返回<code>OCRP</code>（出呼叫应答）<br />
+（3）LAC 执行呼叫，返回<code>OCCN</code>（出呼叫已连接）<br />
+（4）LNS 收到后回应<code>ZLB</code>，会话建立<br />
+会使用<code>Tunnel ID</code>和<code>Session ID</code>区分不同隧道和会话</li>
+<li>隧道状态维护<br />
+LAC 与 LNS 互发<code>Hello</code>消息维持会话，默认周期 60s，若三次未收到对方的 Hello 消息，则认为隧道断开。</li>
+<li>关闭会话与控制链接<br />
+关闭会话：<br />
+（1）LAC 发送<code>CDN</code>（呼叫断开通知），通知 LNS 关闭会话<br />
+（2）LNS 收到后返回<code>ZLB</code>，并关闭会话<br />
+关闭控制连接：<br />
+（1）LAC 发送<code>StopCCN</code>（停止控制连接通知），通知 LNS 关闭控制连接<br />
+（2）LNS 收到后回应<code>ZLB</code>，并关闭控制连接</li>
+<li>L2TP 验证 1.对拨入的远程系统 PPP 验证<br />
+2.LAC 与 LNS 间隧道验证<br />
+3.LNS 对远程系统再次 PPP 验证。方式分为三种：<br />
+1）代理验证：LAC 将从远程系统得到的验证信息和自身的验证信息都发给 LNS<br />
+2）强制 CHAP 验证：LNS 直接对远程系统进行 CHAP 验证<br />
+3）LCP 重协商：LNS 与远程系统重新进行 LCP 协商，采用相应虚拟模板接口上配置的验证方式进行验证</li>
+</ol>
+<p>LAC 端对远程系统用户的 AAA 验证包括：</p>
+<ul>
+<li>本地验证：需要 LAC 端配置本地用户名、密码、服务类型等信息，与用户输入的通过对比进行验证。</li>
+<li>远程验证：需要与 RADIUS 或 TACACS 服务器协同验证，需要在 RADIUS 或 TACACS 服务器上配置用户验证信息，LAC 将用户输入的信息发送给验证服务器进行验证。</li>
+</ul>
+<center>下图为：独立LAC隧道会话建立</center>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/7.png" class="">
+<center>下图为：客户LAC隧道会话建立</center>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/8.png" class="">
+<h2 id="ipsec-vpn"><a class="markdownIt-Anchor" href="#ipsec-vpn"></a> IPSEC-VPN</h2>
+<p>一种网络层安全保障机制。可实现访问控制、机密性、完整性校验、数据源校验、拒绝重播报文等。IPSec 是可扩展的体系，不受限于任何一种特定算法，可引入多种验证算法、加密算法、密钥管理机制。<br />
+缺点：复杂，消耗大量资源、数据延迟、点对点、不支持组播</p>
+<h3 id="ipsec-sa"><a class="markdownIt-Anchor" href="#ipsec-sa"></a> IPSec SA</h3>
+<p>IPSec SA：IPSec 安全联盟，安全服务通过 SA 实现。<br />
+SA 是双方的安全协定，包括协议、算法、密钥。SA 是单向的，入站和出站数据流分别由入站 SA 和出站 SA 处理。</p>
+<p>SA 的三元组：</p>
+<ol>
+<li>SPI：安全参数索引，32 位数值</li>
+<li>IP 目的地址：对方 IP 地址</li>
+<li>安全协议标识符：标识 AH 或 ESP</li>
+</ol>
+<p>SA 建立方式：</p>
+<ol>
+<li>手工配置：两端手动设置参数</li>
+<li>自动协商：双方通过 IKE 生成维护</li>
+</ol>
+<p>SA 具有生存时间，有两种方式：</p>
+<ol>
+<li>时间：每隔定时长更新 SA</li>
+<li>流量：每传输一定流量更新 SA</li>
+</ol>
+<p>SA 协商信息存放在 SPD（安全策略数据库），SPD 的项指向 SAD（安全联盟数据库）相应项</p>
+<h3 id="ike"><a class="markdownIt-Anchor" href="#ike"></a> IKE</h3>
+<p>IKE：因特网密钥交换。基于 UDP 协议，端口号 500，为 IPSec 提供自动协商交换密钥、建立 SA 服务，实际提供安全服务的是 IPSec，采用 DH 算法交换密钥（精髓）。且可以定时更新密钥和 SA，提供了完善的前向安全性。可以为 IPSec 自动重新建立 SA，允许 IPSec 提供抗重播服务（通过 SPI 值）。</p>
+<p>采用 ISAKMP 的密钥交换框架体系<br />
+<strong>IKE 安全机制：</strong></p>
+<ol>
+<li>身份验证：预共享密钥（默认）、RSA 数字签名、DES 数字签名</li>
+<li>DH 密钥交换</li>
+<li>PFS 完善前向安全性：通过在第二阶段再进行一次 DH 交换，使 IKE SA 密钥与 IPSec SA 密钥无派生关系</li>
+</ol>
+<p><strong>协商两个阶段：</strong></p>
+<ul>
+<li>阶段 1：建立一个 IKE SA，为阶段 2 提供保护<br />
+分为主模式 main 和野蛮模式 aggressive</li>
+</ul>
+<p>主模式：强制实现的阶段 1 交换模式。共三步，六条消息</p>
+<ol>
+<li>策略协商：A 向 B 发送本地 IKE 策略，B 查找匹配的策略，并确认<br />
+其中协商属性包括：加密算法，散列算法（MD5、SHA 等），验证方法（预共享密钥、DSS、RSA），DH 组信息（默认 MODP 768），DH 公共值，IKE 生存时间，身份信息</li>
+<li>DH 交换：A 向 B 发起密钥生成信息，B 生成密钥并回应。</li>
+<li>ID 交换验证：A 向 B 发送身份和验证数据，B 回应身份验证。<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/13.png" class="">
+</li>
+</ol>
+<p>野蛮模式：远程拨号时，由于拨号用户 IP 无法确定，可以使用野蛮模式</p>
+<ol>
+<li>A 向 B 发送本地 IKE 策略，开始 DH 交换</li>
+<li>B 查找匹配策略，回应验证信息</li>
+<li>A 接收确认信息并验证，生成密钥，向 B 发送验证载荷</li>
+<li>B 验证<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/14.png" class="">
+</li>
+</ol>
+<ul>
+<li>阶段 2：在 IKE SA 的保护下完成 IPSec SA 的协商。采用快速模式</li>
+</ul>
+<blockquote>
+<p>野蛮模式安全性差于主模式，但过程简单快速。<br />
+在不知道对端 IP 且需要使用预共享密钥的情况下，必须用野蛮模式。</p>
+</blockquote>
+<h3 id="ipsec-包处理流程"><a class="markdownIt-Anchor" href="#ipsec-包处理流程"></a> IPSec 包处理流程</h3>
+<p><strong>出站包处理：</strong></p>
+<ol>
+<li>查找 SPD，三种结果：丢弃、旁路安全服务：直接转发、提供安全服务：查找 IPSec SA</li>
+<li>若第一步结果是提供安全服务，就在 SAD 中找 IPsec SA，若找到就根据参数提供安全服务，若找不到就查找 IKE SA</li>
+<li>若找到 IKE SA，就只要创建 IPSec SA，若找不到 IKE SA，就要先创建 IKE SA，再创建 IPSec SA。</li>
+</ol>
+<p><strong>入站包处理：</strong></p>
+<ol>
+<li>检查目的地址是否本地，若是则检查数据包是否被 IPSec 保护</li>
+<li>若被 IPSec 保护，则查找 IPSec SA，若不被 IPSec 保护，则交给上层</li>
+<li>若找到 IPSec SA，则解封装，若未找到则丢弃</li>
+</ol>
+<h3 id="安全协议"><a class="markdownIt-Anchor" href="#安全协议"></a> 安全协议</h3>
+<ul>
+<li>AH：验证头，提供完整性保护、数据源验证、抗重播服务。不支持机密性保护。IP 协议，协议号 51。<br />
+AH 头格式：<br />
+<code>Next Header</code>：8 位，指示 AH 头后的载荷协议类型<br />
+<code>Payload Length</code>：8 位，指示 AH 的长度并减 2，单位为 32 位<br />
+<code>SPI</code>：32 位任意数值，用于和目的 IP 地址和安全协议标识结合，唯一标示一个 SA<br />
+<code>Sequence Number</code>：32 位无符号整数，SA 建立时为 0，随着数据包发送而增大，接收方通过该值确定数据包的序列<br />
+<code>Authentication Data</code>：包含该数据包的完整性校验值<code>ICV</code>（使用 HMAC 算法对 IP 头+AH 头+载荷+共享密钥加密计算），变长且必须是 32 位的整数倍。AH 强制实现<code>HMAC-MD5-96</code>和<code>HMAC-SHA-1-96</code>两种验证算法</li>
+<li>ESP：封装安全载荷，有 AH 所有功能且支持加密。包含 ESP 头和 ESP 尾。IP 协议，协议号 50。<br />
+ESP 头格式：<br />
+<code>Next Header</code>：同上。强制包含。<br />
+<code>SPI</code>：同上<br />
+<code>Sequence Number</code>：同上<br />
+<code>Payload Data</code>：<code>Next Header</code>描述的数据，即载荷数据，长度为字节的整数倍。若加密，ESP 强制实现了基础加密算法 DES-CBC。强制包含。<br />
+<code>Padding</code>：填充，使载荷数据达到指定长度。<br />
+<code>Pad Length</code>：填充长度，范围为 0 到 255。强制包含。<br />
+<code>Authentication Data</code>：ICV，长度由验证算法决定。可选，验证服务开启时才包含。同样强制实现<code>HMAC-MD5-96</code>和<code>HMAC-SHA-1-96</code><br />
+ESP 尾格式：<code>Padding</code>、<code>Pad Length</code>、<code>Next Header</code></li>
+</ul>
+<p>IPSec 有两种工作模式：</p>
+<ul>
+<li>传输模式：保护端到端安全，两个终端间直接运行 IPSec，所有加解密、协商都是<strong>端系统</strong>完成，网络设备完全不参与 IPSec，只进行正常路由转发。</li>
+<li>隧道模式：保护站点到站点安全，两个<strong>安全网关</strong>间运行 IPSec，整个数据包都计算 AH 或 ESP 头，AH 或 ESP 头加上数据都被封装在一个新的 IP 包中。所有加解密、协商都是安全网关完成，终端主机不参与。</li>
+</ul>
+<p>因此 AH 和 ESP 对两种工作模式分别有封装的方式：</p>
+<ul>
+<li>
+<p><strong>AH</strong></p>
+<ul>
+<li>
+<p><strong>传输模式</strong><br />
+原 IP 包、AH 头与密钥通过散列函数（如 RSA）生成校验值。<br />
+将校验值封装在 AH 头中，再由 TCP 和原 IP 头封装。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/9.png" class="">
+</li>
+<li>
+<p><strong>隧道模式</strong><br />
+新 IP 头（根据隧道起点终点建立隧道 IP 头）、AH 头与原 IP 包生成校验值。<br />
+将校验值封装在 AH 头中，封装原 IP 包，再用新 IP 头封装。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/10.png" class="">
+</li>
+</ul>
+</li>
+<li>
+<p><strong>ESP</strong></p>
+<ul>
+<li>
+<p><strong>传输模式</strong><br />
+原 IP 包（不包括原 IP 头）、ESP 尾与密钥加密（通过 DES 等算法）生成密文。<br />
+将生成的密文与 ESP 头和验证密钥通过数字签名算法（通过 RSA）生成校验值。<br />
+最后将用 ESP 头和原 IP 头封装密文和校验值。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/11.png" class="">
+</li>
+<li>
+<p><strong>隧道模式</strong><br />
+将整个原 IP 包、ESP 尾、加密密钥通过加密算法（如 DES）生成密文。<br />
+将密文与 ESP 头和验证密钥通过散列函数（如 RSA）生成校验值。<br />
+用 ESP 头和新 IP 头封装密文和校验值。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/12.png" class="">
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="gre-over-ipsec"><a class="markdownIt-Anchor" href="#gre-over-ipsec"></a> GRE-OVER-IPSEC</h3>
+<p>使用<code>Gre Over IPsec</code>的原因：GRE 不保证数据机密性与完整性，不能数据源验证。</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>GRE</th>
+<th>IPSec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>多协议</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>虚接口</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>组播</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>路由协议</td>
+<td>支持</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>IP 协议族</td>
+<td>支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>机密性</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>完整性</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td>数据源验证</td>
+<td>不支持</td>
+<td>支持</td>
+</tr>
+</tbody>
+</table>
+<p>封装：原始 IP 包被封装在 GRE 隧道包中。GRE 隧道包被封装在 IPSec 包中。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/15.png" class="">
+<h3 id="ipsec-over-gre"><a class="markdownIt-Anchor" href="#ipsec-over-gre"></a> IPSEC-OVER-GRE</h3>
+<h2 id="mpls"><a class="markdownIt-Anchor" href="#mpls"></a> MPLS</h2>
+<p>Multi Protocol Labal Switching：多协议标签交换<br />
+MPLS 使用定长标签封装网络层分组。标签位于数据链路层和网络层之间，称为 2.5 层。<br />
+多协议指：MPLS 被多种二层协议封装，也可封装多种三层协议</p>
+<p>两种工作模式：</p>
+<ol>
+<li>帧模式：用于 PPP、以太网、帧中继</li>
+<li>信元模式：作用于 ATM</li>
+</ol>
+<p>组成：</p>
+<ol>
+<li>LSR：位于 MPLS 内部的核心交换机或路由器，提供标签交换和分发</li>
+<li>LER：位于 MPLS 网络边缘，提供标签映射、移除和分发</li>
+</ol>
+<p>FEC：转发等价类，转发过程中以等价方式处理的一组数据分组，可根据 IP 地址、隧道、COS 标识创建 FEC<br />
+LSP：标签交换通道，属于同一个 FEC 的数据流在每个节点赋予一个确定的标签，按照一个确定的标签转发表项进行转发，每个 FEC 流会有固定的转发路径，该路径就成为该 FEC 的 LSP</p>
+<p>MPLS 标签：4 个字节。分为四个字段</p>
+<ol>
+<li>Label：标签值，20 位，标签转发表的关键索引</li>
+<li>EXP：标识 QoS 优先级，3 位</li>
+<li>S：栈底标识，1 位，若为 1 说明是最后一个标签，若为 0 说明后面还有 MPLS 标签。可实现多层 MPLS 标签嵌套</li>
+<li>TTL：存活时间，8 位，每经过一台 LSR，TTL 就减 1<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/16.png" class="">
+</li>
+</ol>
+<p>链路层协议为 MPLS 分配的标识：</p>
+<ol>
+<li>PPP：0x0281</li>
+<li>以太网或 HDLC：0x8847</li>
+<li>帧中继：0x0080</li>
+</ol>
+<p>标签分配协议：用于在 LSR 间分配标签，建立 LSP。有以下四种：</p>
+<ol>
+<li>LDP 标签分发协议：最通用</li>
+<li>CR-LDP 基于路由受限的标签分发协议：可进行路由约束、QoS，用于流量工程</li>
+<li>RSVP-TE 基于流量工程扩展的资源预留协议：用于流量工程中 MPLS 标签分配</li>
+<li>MP-BGP 多协议扩展 BGP 协议：为 BGP 路由分配 MPLS 标签</li>
+</ol>
+<p>LDP 消息类型：</p>
+<ol>
+<li>发现<code>Discover</code>消息：LDP 邻居的发现维护</li>
+<li>会话<code>Session</code>消息：LDP 邻居会话的建立维持与终止</li>
+<li>通告<code>Advertisement</code>消息：向 LDP 邻居宣告 Label、地址等信息</li>
+<li>通知<code>Notification</code>消息：向 LDP 邻居通知事件或错误</li>
+</ol>
+<blockquote>
+<p>所有 LDP 消息都采用 TLV 结构，具有扩展性（TLV：Type-Length-Value 类型-长度-值）</p>
+</blockquote>
+<p>LDP 会话建立维护：</p>
+<ol>
+<li>邻居发现：互发<code>Hello</code>消息，组播地址<code>224.0.0.2</code>，UDP 端口 646</li>
+<li>TCP 连接：LSR-ID 大的，即 IP 地址大的一方主动发起，TCP 端口 646</li>
+<li>会话建立：Master 发出初始化 Initialization 消息，携带协商参数。协商成功 Session 建立</li>
+<li>会话维持：互发 Keepalive 消息维持会话。LSR 之间发送 Label mapping 消息，形成标签转发表。期间若收到任何差错消息都会关闭会话，断开 TCP 连接。</li>
+</ol>
+<p>LDP 邻居状态机：<br />
+<strong>两台 LDP 邻居间建立<code>LDP Session</code>后，状态会维持在<code>Operational</code></strong></p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/17.png" class="">
+<p>标签分配过程：<br />
+上下游根据数据转发方向而定。<code>LDP Session</code>建立后路由器根据路由表分配标签，生成 MPLS 标签转发表<br />
+标签转发表包含：入标签<code>IN</code>，出标签<code>OUT</code>，出接口<code>next-hop</code><br />
+标签为随机生成，16 以下系统保留</p>
+<p>标签分配模式：</p>
+<ol>
+<li>DOD 下游按需标记分配：上游 LSR 向下游 LSR 发送标签请求信息。下游 LSR 为此 FEC 分配标签，通过标签映射消息反馈给上游 LSR。原则：下游设备需要收到上游的标签请求才能分配标签</li>
+<li>DU 下游自主标记分配：下游 LSR 在 LDP 会话建立后主动向上游 LSR 发布标签映射消息，不需等待上游请求</li>
+</ol>
+<p>标签控制模式：</p>
+<ol>
+<li>有序：只有最下游设备能分发标签，上游设备只有收到了下游的标签映射消息，才能再向上游发送标签映射信息。使得 MPLS 的转发是端到端的</li>
+<li>独立：不管是不是最下游，不管是否收到下游的标签映射信息，都向上游发送标签映射信息。任何的数据流经过 MPLS 网络都可进行 MPLS 转发</li>
+</ol>
+<p>标签保持方式：收到下游的标签映射后，是否记录标签信息的原则</p>
+<ol>
+<li>保守：只保留下一跳邻居的标签，丢弃所有非下一跳邻居发来的标签<br />
+优点：节约空间<br />
+缺点：当网络故障时，LSP 收敛较慢</li>
+<li>自由：保留来自邻居的所有标签。<br />
+优点：网络故障后，路由切换时收敛快<br />
+缺点：消耗空间</li>
+</ol>
+<blockquote>
+<p>常用组合：DU + 有序 + 自由</p>
+</blockquote>
+<p><strong>MPLS 转发：</strong><br />
+第一阶段：标签 PUSH：报文进入 MPLS 网络，LER 设备发现报文目的 IP 地址有关联的标签，对报文进行压标签。该报文就变为了 MPLS 报文<br />
+第二阶段：标签 SWAP：报文在 MPLS 网络内进行标签交换。<br />
+第三阶段：标签 POP：报文转出 MPLS 网络时，在最后一跳弹出标签。倒数第二跳的设备上标签表的出标签为 3，说明此为倒数第二跳。一旦包查找到出标签为 3，就直接弹出标签。</p>
+<h2 id="bgp-mpls-vpn"><a class="markdownIt-Anchor" href="#bgp-mpls-vpn"></a> BGP-MPLS-VPN</h2>
+<p>解决了传统 VPN 的问题：1.实现隧道动态建立 2.解决本地地址冲突问题 3.VPN 私网路由易于控制</p>
+<h3 id="多-vpf-组网"><a class="markdownIt-Anchor" href="#多-vpf-组网"></a> 多 VPF 组网</h3>
+<p>多 VRF 技术用于解决同一台设备（PE）上地址冲突问题。<br />
+存在以下路由器角色：</p>
+<ul>
+<li>CE：直接与 ISP 相连的用户设备</li>
+<li>PE：公网边缘路由器，与 CE 相连，负责 VPN 接入</li>
+<li>P：公网核心路由器，负责路由与快速转发</li>
+</ul>
+<p>实现：将一台路由器划分为多个 VRF，每个 VRF 相互独立，拥有各自的路由表、端口、协议，每个 VRF 类似一台虚拟路由器。未划分 VRF 的路由在公网路由表中。各个 VRF 与各自的网络运行一个实例，该实例学到的路由只能加入该 VPN 路由表。实例与所属 VPN 进行绑定。并且，端口与 VPN 绑定，与 VRF 绑定的接口只会出现在该 VRF 对应的路由表中，当报文从该接口进入路由器后只能查询该 VRF 对应的路由表。确保了不同 VRF 数据间不会冲突。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/18.png" class="">
+<p>多 VRF 与路由协议多实例：各 VRF 与各自用户网络之间运行一个路由实验，该路由实例学习到的路由只能加入该 VPN 的路由表。各个路由实例与所属 VPN 绑定，互相独立，只能学到各自的邻居信息。</p>
+<h3 id="mp-bgp"><a class="markdownIt-Anchor" href="#mp-bgp"></a> MP-BGP</h3>
+<p>MP-BGP（Multi 　 Protocol BGP，多协议 BGP）是对 BGP 根据特性（TCP 连接、TLV 扩展属性位）进行扩展的协议。<br />
+MP-BGP 相对于 BGP 的新增特性：</p>
+<ul>
+<li>普通 BGP 只能传递 IPv4 信息，MP-BGP 能承载多个协议路由信息。</li>
+<li>新增了<code>MP_REACH_NLRI</code>和<code>MP_UNREACH_NLRI</code>两个属性，并新增了扩展团体属性（Extended_Communities）。</li>
+<li>MP-BGP 可传递 BGP MPLS VPN、L2VPN、6PE 等路由信息。</li>
+</ul>
+<blockquote>
+<p><code>MP_REACH_NLRI</code>和<code>MP_UNREACH_NLRI</code>两个属性都是路由更新消息属性。<br />
+<code>MP_REACH_NLRI</code>代替了原 BGP 更新消息中的<code>NLRI</code>和<code>Next-hop</code>。增加了地址族的描述 Address-Family、私网 Label 和 RD，包含原有的 Next-hop。<br />
+若地址族描述为 VPNv4，则 NLRI 包含两个部分，一个是私网标签（一个 MPLS 标签），第二部分是 VPNv4 地址（RD+IPv4 地址）<br />
+<code>MP_UNREACH_NLRI</code>代替了原 BGP 更新消息中的<code>Withdrawn Routes</code>。可撤销通过<code>MP_REACH_NLRI</code>发布的各种地址族的路由。包含<code>Address-Family</code>和<code>Withdrawn Routes</code>。</p>
+</blockquote>
+<p><strong>VPNv4 地址族主要用于 PE 路由器间传递 VPN 路由，并只存在于 MP-BGP 路由信息和 PE 设备的私网路由表中，即只出现在路由的发布学习过程中，在穿越 ISP 公网时，数据包头是没有 VPNv4 地址的。</strong></p>
+<center>下图为MP_REACH_NLRI属性</center>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/20.png" class="">
+<center>下图为MP_UNREACH_NLRI属性</center>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/21.png" class="">
+<p>BGP 的扩展团体属性：RT（Route Target）路由目标。本质是每个 VPN 实例表达自己的路由取舍方式。<br />
+RT 的格式有三种，都表示 RT。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/22.png" class="">
+<ul>
+<li><code>0x0002</code>：2 字节的 AS 号，加上 4 字节的用户自定义数字，如<code>100:1</code>、<code>200:1</code></li>
+<li><code>0x0102</code>：4 字节的 IP 地址，加上 2 字节的用户自定义数字，如<code>192.168.1.1:1</code>、<code>10.1.1.1:2</code></li>
+<li><code>0x0202</code>：4 字节的 AS 号，加上 2 字节的用户自定义数字</li>
+</ul>
+<blockquote>
+<p>通常设置为冒号后的数字设置为 VPN 实例编号。</p>
+</blockquote>
+<p>RT 由两个部分组成：<code>Export Target</code>和<code>Import Target</code>。MP-BGP 在 PE 间交互私网路由时，需要遵循以下规则：</p>
+<ul>
+<li>在 PE 设备上，发送某一个 VPN 用户的私网路由给 BGP 邻居时，需要在扩展团体属性区域中增加该 VPN 的<code>Export Target</code>属性。</li>
+<li>在 PE 设备上，需要将收到的 MP-BGP 路由的扩展团体属性中携带的 RT 值与本地每个 VPN 的<code>Import Target</code>对比，若存在交集，则可以将该路由添加进实例的路由表。</li>
+</ul>
+<p>通过对 RT 的操作可实现两种模式：<code>Hub-Spoke</code>和<code>Extranet</code>。<br />
+<code>Hub-Spoke</code>模式：用户总部可与每个分布互通，但每个 VPN 分布之间禁止互通。<br />
+<code>Extranet</code>模式：使指定的节点可以与其他节点互通。</p>
+<img src="/2018/%E5%B8%B8%E8%A7%81VPN%E6%8A%80%E6%9C%AF%E7%AC%94%E8%AE%B0/23.png" class="">
+<p>RD（Route Distinguisher）路由区分。本质就是用于私网路由的撤销，因为在撤销路由时是不能携带属性值的（包括 RT），PE 在删除路由时无法判断撤销哪个 VPN 的路由。长度 6 字节。<br />
+RD 有两种格式：</p>
+<ul>
+<li>2 字节的 AS 号，加上 4 字节用户自定义数，如<code>100:1</code></li>
+<li>4 字节的 IP 地址，加上 2 字节用户自定义数，如<code>192.168.1.1:1</code></li>
+</ul>
+<p>只要保证存在相同地址的两个 VPN 实例的 RD 不同即可，但最好为每个 VPN 实例配置一个 RD。若两个 VPN 实例中存在相同 IP 地址，则这两个实例一定不能互访，间接互访也不行。</p>
+<p>私网标签 Label，用于帮助 PE 判断该报文前往的 VPN，是通过 MPLS 的多标签嵌套实现的。</p>
+<p>BGP MPLS VPN 实现分为以下步骤：</p>
+<ul>
+<li>公网隧道建立：公网 IGP 协议开启，PE 间互通。</li>
+<li>本地 VPN 建立：PE 上设置本地 VPN 并设置 RD、RT 属性，然后将 VPN 与接口绑定，即配置 VRF。</li>
+<li>私网路由的学习：PE 与 CE 间运行路由协议多实例，各 VPN 实例进行路由学习。PE 间建立 MP-BGP 邻居，下游 LSR 分配标签，建立标签转发表。并会生成一条 MP-BGP 更新消息，包含 VPNv4 路由前缀（即 IP 地址）、下一跳地址、RT 属性、私网标签。PE 设备会对比 RT 值，若通过就会记录该路由信息并发布给本地 VPN。</li>
+<li>私网数据转发：数据会根据标签转发表进行转发。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag"><i class="fa fa-tag"></i> 网络</a>
+              <a href="/tags/vpn/" rel="tag"><i class="fa fa-tag"></i> vpn</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/FTP%E7%AC%94%E8%AE%B0/" rel="prev" title="FTP笔记">
+      <i class="fa fa-chevron-left"></i> FTP笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Docker%E5%AD%98%E5%82%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Docker存储学习笔记">
+      Docker存储学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#vpn-%E6%A6%82%E8%BF%B0"><span class="nav-text"> VPN 概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gre-vpn"><span class="nav-text"> GRE-VPN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#l2tp-vpn"><span class="nav-text"> L2TP-VPN</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ipsec-vpn"><span class="nav-text"> IPSEC-VPN</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ipsec-sa"><span class="nav-text"> IPSec SA</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ike"><span class="nav-text"> IKE</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ipsec-%E5%8C%85%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B"><span class="nav-text"> IPSec 包处理流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E5%85%A8%E5%8D%8F%E8%AE%AE"><span class="nav-text"> 安全协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gre-over-ipsec"><span class="nav-text"> GRE-OVER-IPSEC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ipsec-over-gre"><span class="nav-text"> IPSEC-OVER-GRE</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mpls"><span class="nav-text"> MPLS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#bgp-mpls-vpn"><span class="nav-text"> BGP-MPLS-VPN</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%9A-vpf-%E7%BB%84%E7%BD%91"><span class="nav-text"> 多 VPF 组网</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mp-bgp"><span class="nav-text"> MP-BGP</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="消息队列 Kafka 介绍  架构   搭建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kafka基础笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="消息队列 Kafka 介绍  架构   搭建">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-01-07T14:45:38.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.466Z">
+<meta property="article:author" content="TianyiGu">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kafka基础笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kafka基础笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-01-07 22:45:38" itemprop="dateCreated datePublished" datetime="2020-01-07T22:45:38+08:00">2020-01-07</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#%e6%b6%88%e6%81%af%e9%98%9f%e5%88%97">消息队列</a></li>
+<li><a href="#kafka-%e4%bb%8b%e7%bb%8d">Kafka 介绍</a>
+<ul>
+<li><a href="#%e6%9e%b6%e6%9e%84">架构</a></li>
+</ul>
+</li>
+<li><a href="#%e6%90%ad%e5%bb%ba">搭建</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="消息队列"><a class="markdownIt-Anchor" href="#消息队列"></a> 消息队列</h1>
+<p>消息队列（Message Queue）是一种进程间通信或同一进程的不同线程间的通信方式，软件的队列用来处理一系列的输入，通常是来自用户。<br />
+消息队列提供了异步的通信协议，每一个队列中的纪录包含详细说明的数据，包含发生的时间，输入设备的种类，以及特定的输入参数，也就是说：消息的发送者和接收者不需要同时与消息队列交互。消息会保存在队列中，直到接收者取回它。</p>
+<p>消息队列各个角色：</p>
+<ul>
+<li>Producer：消息生产者。负责产生和发送消息到 Broker</li>
+<li>Broker：消息处理中心。负责消息存储、确认、重试等，一般其中会包含多个 queue</li>
+<li>Consumer：消息消费者。负责从 Broker 中获取消息，并进行相应处理</li>
+</ul>
+
+<p>消息队列种类：</p>
+<ul>
+<li>
+<p>Peer—To-Peer：消息生产者生产消息发送到 queue 中，然后消息消费者从 queue 中取出并且消费消息。消息被消费以后，queue 中不再有存储，所以消息消费者不可能消费到已经被消费的消息。queue 支持存在多个消费者，但是对一个消息而言，只会有一个消费者可以消费。</p>
+<ul>
+<li>一般基于 Pull 或 Polling 接收消息</li>
+<li>支持异步”即发即弃“的消息传送方式，支持同步请求/应答传送方式</li>
+<li>支持一对一、一对多、多对多、多对一等多种配置方式，支持树状、网状等多种拓扑结构。
+</li>
+</ul>
+</li>
+<li>
+<p>发布/订阅：消息生产者将消息发布到 topic 中，同时有多个消息消费者消费该消息。和点对点方式不同，发布到 topic 的消息会被所有订阅者消费。</p>
+<ul>
+<li>发布到一个主题的信息，可被多个订阅者所接收</li>
+<li>发布/订阅可基于 Push 消费数据，也可基于 Polling 消费数据</li>
+<li>解耦能力比 P2P 模型更强
+</li>
+</ul>
+</li>
+<li>
+<p>多点广播：能够将消息发送到多个目标站点 (Destination List)。可以使用一条 MQ 指令将单一消息发送到多个目标站点，并确保为每一站点可靠地提供信息。</p>
+<ul>
+<li>MQ 不仅提供了多点广播的功能，而且还拥有智能消息分发功能，在将一条消息发送到同一系统上的多个用户时，MQ 将消息的一个复制版本和该系统上接收者的名单发送到目标 MQ 系统。目标 MQ 系统在本地复制这些消息，并将它们发送到名单上的队列，从而尽可能减少网络的传输量。</li>
+</ul>
+</li>
+<li>
+<p>群集 (Cluster)：为了简化点对点通讯模式中的系统配置，MQ 提供 Cluster(群集) 的解决方案。群集类似于一个域 (Domain)，群集内部的队列管理器之间通讯时，不需要两两之间建立消息通道，而是采用群集 (Cluster) 通道与其它成员通讯，从而大大简化了系统配置。</p>
+<ul>
+<li>此外，群集中的队列管理器之间能够自动进行负载均衡，当某一队列管理器出现故障时，其它队列管理器可以接管它的工作，从而大大提高系统的高可靠性。</li>
+</ul>
+</li>
+</ul>
+<p>消息队列特性：</p>
+<ul>
+<li>异步性：将耗时的同步操作，通过以发送消息的方式，进行了<strong>异步化处理。减少了同步等待的时间</strong>。</li>
+<li>松耦合：<strong>消息队列减少了服务之间的耦合性</strong>，不同的服务可以通过消息队列进行通信，而不用关心彼此的实现细节，只要定义好消息的格式就行。</li>
+<li>分布式：通过<strong>对消费者的横向扩展</strong>，降低了消息队列阻塞的风险，以及单个消费者产生单点故障的可能性（当然消息队列本身也可以做成分布式集群）。</li>
+<li>可靠性：消息队列一般会<strong>把接收到的消息存储到本地硬盘上</strong>（当消息被处理完之后，存储信息根据不同的消息队列实现，有可能将其删除），这样即使应用挂掉或者消息队列本身挂掉，消息也能够重新加载。</li>
+<li>可恢复性：系统的一部分组件失效时，不会影响到整个系统。消息队列降低了进程间的耦合度，所以<strong>即使一个处理消息的进程挂掉，加入队列中的消息仍然可以在系统恢复后被处理。</strong></li>
+<li>顺序保证：在大多使用场景下，数据处理的顺序都很重要。<strong>大部分消息队列本来就是排序的，并且能保证数据会按照特定的顺序来处理。</strong></li>
+<li>缓冲：在任何重要的系统中，都会有需要不同的处理时间的元素。例如，加载一张图片比应用过滤器花费更少的时间。消息队列通过一个缓冲层来帮助任务最高效率的执行———写入队列的处理会尽可能的快速。该缓冲有助于控制和优化数据流经过系统的速度。</li>
+</ul>
+<h1 id="kafka-介绍"><a class="markdownIt-Anchor" href="#kafka-介绍"></a> Kafka 介绍</h1>
+<p>Kafka 最初是由 LinkedIn 采用 scala 编写的多分区、多副本且基于 Zookeeper 协调的分布式消息系统，目前为 Apache 的项目。<br />
+目前，kafka 定位为一个分布式流式处理平台，可提供消息持久化，即使 TB 级别的消息存储也能保持长时间的稳定性能，以高吞吐、可持久化、可水平扩展、支持流数据处理等特性被广泛使用。</p>
+<p>Kafka 扮演了三大角色：</p>
+<ul>
+<li>消息系统：Kafka 和传统的消息系统（消息中间件）都具备系统解耦、冗余存储、流量削峰、缓存、异步通信、扩展性、可恢复性等功能。同时，kafka 还提供大多数消息系统难以实现的消息顺序性保障及回溯消费功能</li>
+<li>存储系统：Kafka 把消息持久化到磁盘，相比于其他基于内存存储的系统而言，有效降低了数据丢失的风险，得益于 Kafka 的消息持久化和多副本，可以把 Kafka 作为长期的数据存储系统来使用，只需要把对应的数据保留策略设置为永久或启动主题的日志压缩功能即可。</li>
+<li>流式处理平台：Kafka 不仅为每个流行的流式处理框架提供了可靠的数据来源，还提供了一个完整的流式处理类库，如窗口、连接、变换和聚合等操作。</li>
+</ul>
+<p>Kafka 设计目标：</p>
+<ul>
+<li>高吞吐率：在廉价的商用机器上单机可支持每秒 100 万条消息的读写</li>
+<li>消息持久化：所有消息均被持久化到磁盘，无消息丢失，支持消息重放</li>
+<li>完全分布式：Producer，Broker，Consumer 均支持水平扩展</li>
+<li>同时适应在线流处理和离线批处理</li>
+</ul>
+<h2 id="架构"><a class="markdownIt-Anchor" href="#架构"></a> 架构</h2>
+
+<p>常见术语：</p>
+<ul>
+<li>Topic：主题，特指 Kafka 处理的消息源（feeds of messages）的不同分类，Kafka 中消息以主题为单位进行归类，生产者负责将消息发送到特定的主题，然后消费者负责订阅主题并消费。物理上不同 topic 的消息分开存储，逻辑上一个 topic 的消息虽然保存于一个或多个 broker 上但用户只需指定消息的 topic 即可生产或消费数据而不必关心数据存于何处。</li>
+<li>Partition：分区，Topic 物理上的分组，一个 topic 可以分为多个 partition，每个 partition 是一个有序的队列。
+<ul>
+<li>分区在存储层面可以看作一个可追加的日志文件，消息被追加到分区日志文件时都会分配一个特定的偏移量（offset），offset 是消息在分区中的唯一标识，Kafka 通过它保证消息在分区内的有序性，且 offset 不跨分区，就是说 Kafka 保证分区有序而不是主题有序。</li>
+<li>创建 topic 时可指定 parition 数量。每个 partition 对应于一个文件夹，该文件夹下存储该 partition 的数据和索引文件。</li>
+<li>Kafka 的分区可分布在不同的服务器（Broker）上，也就是说，一个主题可横跨多个 Broker，一次提供比单个 Broker 更强大的性能。</li>
+</ul>
+</li>
+<li>Message：消息，是通信的基本单位，每个 producer 可以向一个 topic（主题）发布一些消息。</li>
+<li>Producers：一个动词，向 Kafka 的一个 topic 发布消息的过程叫做 producers。</li>
+<li>Consumers：一个动词，订阅 topics 并处理其发布的消息的过程叫做 consumers。</li>
+<li>Consumer Group：消费者组，可以并行消费 Topic 中 partition 的消息</li>
+</ul>
+<p>每条消息被发送到 Broker 前，会根据分区规划选择存储到哪个具体分区。若分区规则设置地合理，则所有消息都可均匀地分配到不同分区中。若一个主题只对应一个文件，那么这个文件所在的机器 I/O 将会成为这个主题的性能瓶颈，而分区解决了这个问题。</p>
+<h1 id="搭建"><a class="markdownIt-Anchor" href="#搭建"></a> 搭建</h1>
+<p>需要先安装 JAVA 环境</p>
+<p>从官网下载最新的 Kafka 的 tar 包，解压放到<code>/usr/local/</code>下。</p>
+<p>先配置启动 Zookeeper，Kafka 包简易集成了 Zookeeper。首先修改<code>config/</code>中的<code>&quot;zookeeper.properties&quot;</code>配置文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">dataDir&#x3D;&#x2F;data&#x2F;zookeeper    # zookeeper的数据存放，最好专门放一个目录</span><br><span class="line">clientPort&#x3D;2181       # 启动端口，默认2181</span><br></pre></td></tr></table></figure>
+<p>kafka 包的<code>bin/</code>中有一个脚本启动 zookeeper，为<code>zookeeper-server-start.sh</code>。<br />
+在 kafka 包中，执行以下命令即可启动单机 zookeeper</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin&#x2F;zookeeper-server-start.sh config&#x2F;zookeeper.properties</span><br></pre></td></tr></table></figure>
+<p>查看 zookeeper 是否启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># lsof -i:2181</span><br><span class="line">COMMAND   PID USER   FD   TYPE DEVICE SIZE&#x2F;OFF NODE NAME</span><br><span class="line">java    21999 root  116u  IPv6 771206      0t0  TCP *:eforward (LISTEN)</span><br></pre></td></tr></table></figure>
+<p>然后启动 kafka，先配置文件<code>config/server.properties</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">broker.id&#x3D;0    # Broker的id</span><br><span class="line">listeners&#x3D;PLAINTEXT:&#x2F;&#x2F;localhost:9092   # 监听端口，默认9092</span><br><span class="line">log.dirs&#x3D;&#x2F;data&#x2F;kafka-logs   # 将数据持久化到哪个目录</span><br><span class="line">num.partitions&#x3D;3    # 默认的partition数量</span><br></pre></td></tr></table></figure>
+<p>然后通过脚本<code>kafka-server-start.sh</code>启动 Kafka，并指定<code>-daemon</code>后台启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bin&#x2F;kafka-server-start.sh -daemon config&#x2F;server.properties</span><br></pre></td></tr></table></figure>
+<p>再查看一下 Kafka 是否启动</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># lsof -i:9092</span><br><span class="line">COMMAND  PID USER   FD   TYPE DEVICE SIZE&#x2F;OFF NODE NAME</span><br><span class="line">java    5199 root  121u  IPv6  81847      0t0  TCP localhost:XmlIpcRegSvc (LISTEN)</span><br><span class="line">java    5199 root  137u  IPv6  82158      0t0  TCP localhost:54104-&gt;localhost:XmlIpcRegSvc (ESTABLISHED)</span><br><span class="line">java    5199 root  138u  IPv6  82159      0t0  TCP localhost:XmlIpcRegSvc-&gt;localhost:54104 (ESTABLISHED)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># lsof -i:2181</span><br><span class="line">COMMAND  PID USER   FD   TYPE DEVICE SIZE&#x2F;OFF NODE NAME</span><br><span class="line">java    3080 root  116u  IPv6  72020      0t0  TCP *:eforward (LISTEN)</span><br><span class="line">java    3080 root  122u  IPv6  82155      0t0  TCP localhost:eforward-&gt;localhost:55208 (ESTABLISHED)</span><br><span class="line">java    5199 root  116u  IPv6  82154      0t0  TCP localhost:55208-&gt;localhost:eforward (ESTABLISHED)</span><br><span class="line"></span><br><span class="line"># Zookeeper和Kafka也建立了连接</span><br></pre></td></tr></table></figure>
+<p>创建一个 Topic</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># bin&#x2F;kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test</span><br><span class="line"></span><br><span class="line">--bootstrap-server 指定Kafka位置（也可以 --zookeeper 指定zookeeper的位置，两者只能选一个）</span><br><span class="line">--create   创建topic</span><br><span class="line">--topic 指定topic的名字</span><br><span class="line">--partitions  指定分区数量</span><br><span class="line">--replication-factor  指定复制因子</span><br><span class="line"></span><br><span class="line">查看该topic</span><br><span class="line"># bin&#x2F;kafka-topics.sh --describe --bootstrap-server localhost:9092</span><br><span class="line">Topic: test     PartitionCount: 1       ReplicationFactor: 1    Configs: segment.bytes&#x3D;1073741824</span><br><span class="line">        Topic: test     Partition: 0    Leader: 0       Replicas: 0     Isr: 0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">必须指定zookeeper和topic名</span><br><span class="line">--describe 查看具体topic的情况</span><br></pre></td></tr></table></figure>
+<p>启动一个 Console Consumer，是一个挂起状态的监听 Consumer</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"># bin&#x2F;kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning</span><br></pre></td></tr></table></figure>
+<p>然后在另一个终端启动一个 Console Producer，是一个消息的发送端</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># bin&#x2F;kafka-console-producer.sh --broker-list localhost:9092 --topic test</span><br><span class="line">&gt;hello  # 发送一个hello消息</span><br><span class="line"></span><br><span class="line">于是，consumer也能接受到这个消息</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>参考资料<br />
+<a target="_blank" rel="noopener" href="https://www.infoq.cn/article/kafka-analysis-part-1">Kafka 设计解析（一）：Kafka 背景及架构介绍</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.jasongj.com/2015/01/02/Kafka%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/">Kafka 深度解析</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/cn/opensource/os-cn-kafka/index.html">Apache kafka 工作原理介绍</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/RabbitMQ%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" rel="prev" title="RabbitMQ基础笔记">
+      <i class="fa fa-chevron-left"></i> RabbitMQ基础笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="分布式系统架构及服务器集群架构笔记">
+      分布式系统架构及服务器集群架构笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97"><span class="nav-text"> 消息队列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#kafka-%E4%BB%8B%E7%BB%8D"><span class="nav-text"> Kafka 介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84"><span class="nav-text"> 架构</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA"><span class="nav-text"> 搭建</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

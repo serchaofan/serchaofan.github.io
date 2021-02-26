@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="PPP 协议基础，根据华三网络整理  PPP 协议概述  PPP MP PPPOE   华三 PPP 环境搭建  PAP 单向验证配置 PAP 双向验证配置 CHAP 验证配置 IP 地址协商  直接指定对端 IP 地址 配置地址池供对端选择 ISP 域关联 IP 地址池 PPP 常见配置项   MP 配置  虚拟模板接口配置 MP  将链路直接绑定到 VT 上 按用户名查找 VT   MP-gr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PPP协议基础笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="PPP 协议基础，根据华三网络整理  PPP 协议概述  PPP MP PPPOE   华三 PPP 环境搭建  PAP 单向验证配置 PAP 双向验证配置 CHAP 验证配置 IP 地址协商  直接指定对端 IP 地址 配置地址池供对端选择 ISP 域关联 IP 地址池 PPP 常见配置项   MP 配置  虚拟模板接口配置 MP  将链路直接绑定到 VT 上 按用户名查找 VT   MP-gr">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/1.jpg">
+<meta property="og:image" content="https://github.com/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/4.png">
+<meta property="article:published_time" content="2019-03-21T11:40:08.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.571Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="华三">
+<meta property="article:tag" content="PPP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/1.jpg">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>PPP协议基础笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PPP协议基础笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-03-21 19:40:08" itemprop="dateCreated datePublished" datetime="2019-03-21T19:40:08+08:00">2019-03-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>PPP 协议基础，根据华三网络整理</p>
+<ul>
+<li><a href="#ppp-%e5%8d%8f%e8%ae%ae%e6%a6%82%e8%bf%b0">PPP 协议概述</a>
+<ul>
+<li><a href="#ppp-mp">PPP MP</a></li>
+<li><a href="#pppoe">PPPOE</a></li>
+</ul>
+</li>
+<li><a href="#%e5%8d%8e%e4%b8%89-ppp-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba">华三 PPP 环境搭建</a>
+<ul>
+<li><a href="#pap-%e5%8d%95%e5%90%91%e9%aa%8c%e8%af%81%e9%85%8d%e7%bd%ae">PAP 单向验证配置</a></li>
+<li><a href="#pap-%e5%8f%8c%e5%90%91%e9%aa%8c%e8%af%81%e9%85%8d%e7%bd%ae">PAP 双向验证配置</a></li>
+<li><a href="#chap-%e9%aa%8c%e8%af%81%e9%85%8d%e7%bd%ae">CHAP 验证配置</a></li>
+<li><a href="#ip-%e5%9c%b0%e5%9d%80%e5%8d%8f%e5%95%86">IP 地址协商</a>
+<ul>
+<li><a href="#%e7%9b%b4%e6%8e%a5%e6%8c%87%e5%ae%9a%e5%af%b9%e7%ab%af-ip-%e5%9c%b0%e5%9d%80">直接指定对端 IP 地址</a></li>
+<li><a href="#%e9%85%8d%e7%bd%ae%e5%9c%b0%e5%9d%80%e6%b1%a0%e4%be%9b%e5%af%b9%e7%ab%af%e9%80%89%e6%8b%a9">配置地址池供对端选择</a></li>
+<li><a href="#isp-%e5%9f%9f%e5%85%b3%e8%81%94-ip-%e5%9c%b0%e5%9d%80%e6%b1%a0">ISP 域关联 IP 地址池</a></li>
+<li><a href="#ppp-%e5%b8%b8%e8%a7%81%e9%85%8d%e7%bd%ae%e9%a1%b9">PPP 常见配置项</a></li>
+</ul>
+</li>
+<li><a href="#mp-%e9%85%8d%e7%bd%ae">MP 配置</a>
+<ul>
+<li><a href="#%e8%99%9a%e6%8b%9f%e6%a8%a1%e6%9d%bf%e6%8e%a5%e5%8f%a3%e9%85%8d%e7%bd%ae-mp">虚拟模板接口配置 MP</a>
+<ul>
+<li><a href="#%e5%b0%86%e9%93%be%e8%b7%af%e7%9b%b4%e6%8e%a5%e7%bb%91%e5%ae%9a%e5%88%b0-vt-%e4%b8%8a">将链路直接绑定到 VT 上</a></li>
+<li><a href="#%e6%8c%89%e7%94%a8%e6%88%b7%e5%90%8d%e6%9f%a5%e6%89%be-vt">按用户名查找 VT</a></li>
+</ul>
+</li>
+<li><a href="#mp-group-%e6%8e%a5%e5%8f%a3%e9%85%8d%e7%bd%ae-mp">MP-group 接口配置 MP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h1 id="ppp-协议概述"><a class="markdownIt-Anchor" href="#ppp-协议概述"></a> PPP 协议概述</h1>
+<p>Point to Point Protocol 点对点协议</p>
+<p>特点：</p>
+<ol>
+<li>支持动态分配 IP 地址，允许连接时协商 IP 地址。</li>
+<li>支持同步与异步线路。支持多种网络层协议（TCP/IP 等）</li>
+<li>支持错误检测及纠错，支持数据压缩</li>
+<li>支持身份验证。无重传机制，网络开销小</li>
+</ol>
+<p>组成：</p>
+<ul>
+<li>链路控制协议 LCP：用于建立、配置、测试管理数据链路连接</li>
+<li>网络控制协议 NCP：协商链路上所传输的数据包格式等参数，建立配置不同网络层协议</li>
+<li>认证协议：用于对用户进行认证，包括 PAP（Password Authentication Protocol 密码认证协议）、CHAP（Challenge Handshake Authentication Protocol 质询握手认证协议）、MS-CHAP（Microsoft CHAP 微软 CHAP 协议）</li>
+</ul>
+<p>PPP 会话过程：PPP 的初始状态为不活动（dead）状态</p>
+<ol>
+<li>链路建立阶段：当物理层可用时，进入 Establish 阶段，发送 LCP 报文检测链路可用情况（LCP 协商），若可用（协商成功）就成功建立，LCP 进入 Opened 状态并上报 up 事件，否则失败，上报 fail 事件，进入 Dead 阶段。</li>
+<li>验证阶段（若配置了验证）：根据 PPP 帧中验证选项字段确定是否验证，若配置了验证，就进入 Authenticate 阶段，选择 PAP 或 CHAP 等验证。该阶段仅支持 LCP 和验证协议报文，其他报文都被丢弃。若验证失败进入 Terminate 状态，链路拆除，LCP 变为 Down。若成功就进入 Network 阶段</li>
+<li>网络层协商阶段（若配置了网络层协议）：PPP 双方发送 NCP 报文协商网络层协议（如 IPCP）及地址，NCP 状态从 Initial 变为 Request。协商成功后 NCP 状态变为 Opened，链路建立成功。</li>
+<li>此后，PPP 链路将一直保持通信，直至有明确的 LCP 或 NCP 消息关闭这条链路，或发生了某些外部事件（例如用户的干预）。</li>
+</ol>
+<img src="/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/1.jpg" class="">
+<p>两种验证：</p>
+<ul>
+<li>
+<p>PAP：两次握手。被验证方发起验证请求，向对端发送用户名和密码（明文），主验证方通过查询本地用户列表或 RADIUS 服务器，然后回应通过或拒绝。</p>
+<p>PAP 支持双向认证。</p>
+</li>
+<li>
+<p>CHAP：三次握手。主验证方发起验证请求 Challenge，发送本端主机名和随机报文。被验证方收到后查询本地密码，若本端配置了 CHAP 默认密码，就选用此密码。否则在用户表查找主验证方用户名对应的密码，并选用。被验证方通过 MD5 对报文 ID、被验证方密码、原随机数生成一个摘要，回复 Response。主验证方对本端密码、相同随机数、报文 ID 进行 MD5 摘要，并进行比对，若相同则验证成功，回复 Acknowledge，否则回复失败。</p>
+<p>CHAP 不直接传输用户密码，而是传输通过 MD5 将密码与随机报文 ID 一起计算的结果，安全性高。认证方最多允许被认证方重传 3 次。</p>
+</li>
+</ul>
+<p>PPP 帧格式：</p>
+<img src="/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/2.png" class="">
+<h2 id="ppp-mp"><a class="markdownIt-Anchor" href="#ppp-mp"></a> PPP MP</h2>
+<p>MP 是 MultiLink PPP 的简写。将多条 PPP 链路捆绑后当作一条链路，实现<strong>带宽增加，负载分担</strong>，降低报文延时，备份。</p>
+<p>MP 会将报文分片（小于最小分片包长时不分片）后，从 MP 链路下的多个 PPP 通道发送到对端，对端将这些分片组装起来传递给网络层处理。</p>
+<p>通过配置虚拟模板（virtual-template）（华三设备）实现。可用用户名捆绑或通过一个 VT 口派生多个捆绑，也可通过 MP-Group 实现。MP-Group 是 MP 专用接口，一个 MP-Group 只能对应一个绑定</p>
+<h2 id="pppoe"><a class="markdownIt-Anchor" href="#pppoe"></a> PPPOE</h2>
+<p>PPPoE 描述了在以太网上建立 PPPoE 会话及封装 PPP 报文的方法。要求通信双方建立的是点到点关系，而不是在以太网中所出现的点到多点关系。</p>
+<p>PPPoE 利用以太网将大量主机组成网络，然后<strong>通过一个远端接入设备为以太网上的主机提供互联网接入服务，并对接入的每台主机实现控制、计费功能</strong>。由于很好地结合了以太网的经济性及 PPP 良好的可扩展性与管理控制功能，PPPoE 被广泛应用于小区组网等环境中。</p>
+<p>PPPoE 协议将 PPP 报文封装在以太网帧之内，在以太网上提供点对点的连接。</p>
+<p>PPPoE 使用 Client/Server 模型。PPPoE Client 向 PPPoE Server 发起连接请求，两者之间会话协商通过后，就建立 PPPoE 会话，此后 PPPoE Server 向 PPPoE Client 提供接入控制、认证等功能。</p>
+<p>根据 PPPoE 会话的起点所在位置的不同，有两种组网结构：</p>
+<ul>
+<li>第一种方式是在<strong>两台路由器之间建立 PPPoE 会话，所有主机通过同一个 PPPoE 会话传送数据，主机上不用安装 PPPoE 客户端拨号软件</strong>，一般是一个企业共用一个账号接入网络（图中 PPPoE Client 位于企业/公司内部，PPPoE Server 是运营商的设备）。</li>
+<li>第二种方式是<strong>将 PPPoE 会话建立在 Host 和运营商的路由器之间，为每一个 Host 建立一个 PPPoE 会话，每个 Host 都是 PPPoE Client，每个 Host 使用一个帐号</strong>，方便运营商对用户进行计费和控制。Host 上必须安装 PPPoE 客户端拨号软件。</li>
+</ul>
+<h1 id="华三-ppp-环境搭建"><a class="markdownIt-Anchor" href="#华三-ppp-环境搭建"></a> 华三 PPP 环境搭建</h1>
+<p>实验环境：两台路由器 RT1 和 RT2，RT1 为主验证方，RT2 为被验证方</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]interface Serial 1&#x2F;0</span><br><span class="line">[RT1-Serial1&#x2F;0]ip address 192.168.1.1 24</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2]interface Serial 1&#x2F;0</span><br><span class="line">[RT2-Serial1&#x2F;0]ip address 192.168.1.2 24</span><br></pre></td></tr></table></figure>
+<h2 id="pap-单向验证配置"><a class="markdownIt-Anchor" href="#pap-单向验证配置"></a> PAP 单向验证配置</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1-Serial1&#x2F;0]link-protocol ppp       # 在串口配置封装的链路层协议为PPP</span><br><span class="line"># 缺省情况下，除以太网接口、VLAN接口、ATM接口外，其它接口封装的链路层协议均为PPP</span><br><span class="line"># 所以在串口可以不配这条</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp authentication-mode pap   # 设置验证方式为pap</span><br><span class="line">[RT1]local-user zhangsan class network # 为RT2添加验证用户zhangsan</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp   # 设置服务类型为ppp</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1&#x2F;0]link-protocol ppp</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp pap local-user zhangsan password simple 123  # 在串口配置验证信息</span><br></pre></td></tr></table></figure>
+<p>查看串口的端口信息，检查是否配置成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">[RT1]display interface Serial</span><br><span class="line">Serial1&#x2F;0</span><br><span class="line">Current state: UP            # 端口状态UP</span><br><span class="line">Line protocol state: UP      # 链路协议UP</span><br><span class="line">Description: Serial1&#x2F;0 Interface</span><br><span class="line">Bandwidth: 64kbps</span><br><span class="line">Maximum Transmit Unit: 1500</span><br><span class="line">Hold timer: 10 seconds, retry times: 5</span><br><span class="line">Internet Address is 192.168.1.1&#x2F;24 Primary</span><br><span class="line">Link layer protocol: PPP</span><br><span class="line">LCP: opened, IPCP: opened   # LCP和IPCP都开启了</span><br><span class="line">Output queue - Urgent queuing: Size&#x2F;Length&#x2F;Discards 0&#x2F;100&#x2F;0</span><br><span class="line">Output queue - Protocol queuing: Size&#x2F;Length&#x2F;Discards 0&#x2F;500&#x2F;0</span><br><span class="line">Output queue - FIFO queuing: Size&#x2F;Length&#x2F;Discards 0&#x2F;75&#x2F;0</span><br><span class="line">Last link flapping: 0 hours 45 minutes 27 seconds</span><br><span class="line">Last clearing of counters: Never</span><br></pre></td></tr></table></figure>
+<p>此时互相 ping，能够 ping 通</p>
+<h2 id="pap-双向验证配置"><a class="markdownIt-Anchor" href="#pap-双向验证配置"></a> PAP 双向验证配置</h2>
+<p>互相配置验证用户</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2]local-user lisi class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-lisi]password simple 321</span><br><span class="line">[RT2-luser-network-lisi]service-type ppp</span><br></pre></td></tr></table></figure>
+<p>双方都要在串口配置 PPP 验证</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp authentication-mode pap</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp pap local-user zhangsan password simple 123</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp authentication-mode pap</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp pap local-user lisi password simple 321</span><br></pre></td></tr></table></figure>
+<p>同理检查串口状态，并互相 ping 检查。</p>
+<h2 id="chap-验证配置"><a class="markdownIt-Anchor" href="#chap-验证配置"></a> CHAP 验证配置</h2>
+<p>CHAP 认证分为两种：认证方配置了用户名和认证方没有配置用户名。</p>
+<p>当认证方配置了用户名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">RT1（验证方）:</span><br><span class="line"># 配置对端的验证用户zhangsan</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT1-Serial1&#x2F;0]ppp authentication-mode chap</span><br><span class="line"># 配置对端验证本端的用户，即RT1对应了用户lisi</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp chap user lisi</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp chap password simple 321  # 密码，可选</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line"># 配置对端验证用户lisi</span><br><span class="line">[RT2]local-user lisi class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-lisi]password simple 321</span><br><span class="line">[RT2-luser-network-lisi]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT2-Serial1&#x2F;0]ppp authentication-mode chap</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp chap user zhangsan</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp chap password simple 123</span><br><span class="line"></span><br><span class="line">即：RT1的本地用户zhangsan是给RT2来验证的，RT2的本地用户lisi是给RT1来验证的</span><br></pre></td></tr></table></figure>
+<p>当验证方没有配置用户名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT1-Serial1&#x2F;0]ppp authentication-mode chap</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp chap user zhangsan</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp chap password simple 123</span><br></pre></td></tr></table></figure>
+<h2 id="ip-地址协商"><a class="markdownIt-Anchor" href="#ip-地址协商"></a> IP 地址协商</h2>
+<h3 id="直接指定对端-ip-地址"><a class="markdownIt-Anchor" href="#直接指定对端-ip-地址"></a> 直接指定对端 IP 地址</h3>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1-Serial1&#x2F;0]remote address 192.168.1.2</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1&#x2F;0]ip address ppp-negotiate</span><br></pre></td></tr></table></figure>
+<p>然后查看 RT2 的串口端口 IP</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[RT2-Serial1&#x2F;0]display interface Serial 1&#x2F;0 brief</span><br><span class="line">Brief information on interface(s) under route mode:</span><br><span class="line">Link: ADM - administratively down; Stby - standby</span><br><span class="line">Protocol: (s) - spoofing</span><br><span class="line">Interface            Link Protocol Main IP         Description</span><br><span class="line">Ser1&#x2F;0               UP   UP       192.168.1.2</span><br></pre></td></tr></table></figure>
+<h3 id="配置地址池供对端选择"><a class="markdownIt-Anchor" href="#配置地址池供对端选择"></a> 配置地址池供对端选择</h3>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]ip pool pool-1 192.168.1.10 192.168.1.20</span><br><span class="line">[RT1-Serial1&#x2F;0]remote address pool pool-1</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1&#x2F;0]ip address ppp-negotiate</span><br></pre></td></tr></table></figure>
+<p>可在 RT1 上查看地址池的分配情况</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[RT1]display ip pool pool-1</span><br><span class="line">Group name: default</span><br><span class="line">  Pool name           Start IP address    End IP address      Free   In use</span><br><span class="line">  pool-1              192.168.1.10        192.168.1.20        10     1</span><br><span class="line">In use IP addresses:</span><br><span class="line">  IP address          Interface</span><br><span class="line">  192.168.1.10        Ser1&#x2F;0</span><br></pre></td></tr></table></figure>
+<h3 id="isp-域关联-ip-地址池"><a class="markdownIt-Anchor" href="#isp-域关联-ip-地址池"></a> ISP 域关联 IP 地址池</h3>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]ip pool pool-1 192.168.1.10 192.168.1.20</span><br><span class="line">[RT1]local-user zhangsan class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-zhangsan]password simple 123</span><br><span class="line">[RT1-luser-network-zhangsan]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT1]domain domain-1</span><br><span class="line">[RT1-isp-domain-1]authorization-attribute ip-pool pool-1</span><br><span class="line">[RT1-Serial1&#x2F;0]ip address 192.168.1.1 24</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp authentication-mode pap domain domain-1</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp pap local-user zhangsan password simple 123</span><br><span class="line">[RT2-Serial1&#x2F;0]ip address ppp-negotiate</span><br></pre></td></tr></table></figure>
+<p>之后链路会断开，等待一段时间后会再次 up，RT2 的 IP 也会分配好。</p>
+<h3 id="ppp-常见配置项"><a class="markdownIt-Anchor" href="#ppp-常见配置项"></a> PPP 常见配置项</h3>
+<p>PPP 协议可以为每条 PPP 链路提供基于流量的计费统计功能，具体统计内容包括出入两个方向上流经本链路的报文数和字节数。AAA 可以获取这些流量统计信息用于计费控制。</p>
+<p>缺省情况下，PPP 计费统计功能处于关闭状态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ppp account-statistics enable</span><br></pre></td></tr></table></figure>
+<p>轮询时间间隔指的是接口发送 keepalive 报文的周期。当接口上封装的链路层协议为 PPP 时，链路层会周期性地向对端发送 keepalive 报文。如果接口在<strong>10 个 keepalive 周期内无法收到对端发来的 keepalive 报文</strong>，链路层会认为对端故障，上报链路层 Down。</p>
+<p>用户可以通过**<code>timer-hold</code>**命令修改 keepalive 报文轮询的时间间隔。<strong>如果将轮询时间间隔配置为 0 秒，则不发送 keepalive 报文。</strong></p>
+<p>在速率非常低的链路上，轮询时间间隔不能配置过小。因为在低速链路上，大报文可能会需要很长的时间才能传送完毕，这样就会延迟 keepalive 报文的发送与接收。而接口如果在 10 个 keepalive 周期之后仍然无法收到对端的 keepalive 报文，它就会认为链路发生故障。如果 keepalive 报文被延迟的时间超过接口的这个限制，链路就会被认为发生故障而被关闭。</p>
+<p>缺省情况下，轮询时间间隔为 10 秒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">timer-hold [period]</span><br></pre></td></tr></table></figure>
+<h2 id="mp-配置"><a class="markdownIt-Anchor" href="#mp-配置"></a> MP 配置</h2>
+<p>MP 的配置主要有两种方式，一种是通过虚拟模板（Virtual Template，VT）接口，一种是通过 MP-group 接口。</p>
+<ul>
+<li>
+<p>通过虚拟模板接口配置 MP</p>
+<p>VT 是用于配置一个 VA（Virtual Access，虚拟访问）接口的模板。将多个 PPP 链路捆绑成 MP 链路之后，需要创建一个 VA 接口与对端交换数据。此时，系统将选择一个 VT，以便动态地创建一个 VA 接口。</p>
+<p>虚拟模板接口配置方式<strong>可以与认证相结合，可以根据对端的用户名找到指定的虚拟模板接口，从而利用模板上的配置，创建相应的捆绑（Bundle），以对应一条 MP 链路。</strong></p>
+<p>由一个虚拟模板接口可以派生出若干个捆绑，每个捆绑对应一条 MP 链路。从网络层看来，这若干条 MP 链路会形成一个点对多点的网络拓扑。系统可以根据接口接收到的认证用户名或终端标识符来进行 MP 捆绑，并以此来区分虚模板接口下的多个捆绑（对应多条 MP 链路）。</p>
+<p>系统支持 3 种绑定方式：</p>
+<ul>
+<li><strong>authentication</strong>：根据 PPP 的认证用户名进行 MP 捆绑，每个认证用户名对应一个捆绑。认证用户名是指 PPP 链路进行 PAP、CHAP、MS-CHAP 或 MS-CHAP-V2 认证时所接收到的对端用户名。</li>
+<li><strong>descriptor</strong>：根据 PPP 的终端描述符进行 MP 捆绑，每个终端描述符对应一个捆绑。终端标识符是用来唯一标识一台设备的标志，是指进行 LCP 协商时所接收到的对端终端标识符。</li>
+<li><strong>both</strong>：同时根据 PPP 的认证用户名和终端描述符进行 MP 捆绑。</li>
+</ul>
+</li>
+<li>
+<p>通过 MP-group 接口配置 MP</p>
+<p>MP-group 接口是 MP 的专用接口，不支持其它应用，也不能利用对端的用户名来指定捆绑，同时也不能派生多个捆绑。与虚拟模板接口配置方式相比，MP-group 接口配置方式更加快速高效、配置简单、容易理解。</p>
+</li>
+</ul>
+<h3 id="虚拟模板接口配置-mp"><a class="markdownIt-Anchor" href="#虚拟模板接口配置-mp"></a> 虚拟模板接口配置 MP</h3>
+<p>通过虚拟模板接口配置 MP 时，又可以细分为两种配置方式：</p>
+<ul>
+<li>
+<p>将物理接口与虚拟模板接口直接关联：使用命令**<code>ppp mp virtual-template</code>**直接将链路绑定到指定的虚拟模板接口上，这时可以配置认证也可以不配置认证。如果不配置认证，系统将通过对端的终端描述符捆绑出 MP 链路；如果配置了认证，系统将通过用户名和/或对端的终端描述符捆绑出 MP 链路。</p>
+</li>
+<li>
+<p>将用户名与虚拟模板接口关联：根据认证通过后的用户名查找相关联的虚拟模板接口，然后根据用户名和对端终端描述符捆绑出 MP 链路。这种方式需在要绑定的接口下配置**<code>ppp mp</code>**及双向认证（PAP、CHAP、MS-CHAP 或 MS-CHAP-V2），否则链路协商不通。</p>
+</li>
+</ul>
+<p>配置时需要注意：</p>
+<ul>
+<li>
+<p><strong><code>ppp mp</code><strong>和</strong><code>ppp mp virtual-template</code><strong>命令互斥，即</strong>同一个接口只能采用一种配置方式。</strong></p>
+</li>
+<li>
+<p>对于需要绑在一起的接口，必须采用同样的配置方式。</p>
+</li>
+<li>
+<p>实际使用中也可以配置单向认证，即一端直接将物理接口绑定到虚拟模板接口，另一端则通过用户名查找虚拟模板接口。</p>
+</li>
+<li>
+<p>不推荐使用同一个虚拟模板接口配置多种业务（如 MP、L2TP、PPPoE 等）。</p>
+</li>
+</ul>
+<p>实验环境：两台路由器，连着两根串口线</p>
+<img src="/2019/PPP%E5%8D%8F%E8%AE%AE%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/4.png" class="">
+<h4 id="将链路直接绑定到-vt-上"><a class="markdownIt-Anchor" href="#将链路直接绑定到-vt-上"></a> 将链路直接绑定到 VT 上</h4>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]interface Virtual-Template 1   # 进入虚模板，号码可选1-8</span><br><span class="line">[RT1-Virtual-Template1]ip address 192.168.1.1 24</span><br><span class="line"></span><br><span class="line">[RT1-Serial1&#x2F;0]link-protocol ppp</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp mp Virtual-Template 1</span><br><span class="line"></span><br><span class="line">[RT1-Serial2&#x2F;0]link-protocol ppp</span><br><span class="line">[RT1-Serial2&#x2F;0]ppp mp Virtual-Template 1</span><br><span class="line"></span><br><span class="line">在端口配置完后就会自动重启端口</span><br><span class="line">同理在RT2上:</span><br><span class="line">[RT2]interface Virtual-Template 1</span><br><span class="line">[RT2-Virtual-Template1]ip address 192.168.1.2 24</span><br><span class="line"></span><br><span class="line">[RT2-Serial1&#x2F;0]link-protocol ppp</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp mp Virtual-Template 1</span><br><span class="line"></span><br><span class="line">[RT2-Serial2&#x2F;0]link-protocol ppp</span><br><span class="line">[RT2-Serial2&#x2F;0]ppp mp Virtual-Template 1</span><br></pre></td></tr></table></figure>
+<p>可以查看 ppp mp 的状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis ppp mp</span><br><span class="line">----------------------Slot0----------------------</span><br><span class="line">Template: Virtual-Template1</span><br><span class="line">max-bind: 16, fragment: enabled, min-fragment: 128</span><br><span class="line">  Master link: Virtual-Access0, Active members: 2, Bundle RT2</span><br><span class="line">  Peer&#39;s endPoint descriptor: RT2</span><br><span class="line">  Sequence format: long (rcv)&#x2F;long (sent)</span><br><span class="line">  Bundle Up Time: 2019&#x2F;03&#x2F;24  04:55:11:467</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)&#x2F;0 (sent)</span><br><span class="line">  Active member channels: 2 members</span><br><span class="line">        Serial1&#x2F;0                 Up-Time:2019&#x2F;03&#x2F;24  04:55:11:467</span><br><span class="line">        Serial2&#x2F;0                 Up-Time:2019&#x2F;03&#x2F;24  04:55:21:892</span><br></pre></td></tr></table></figure>
+<p>查看 VA 状态</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis interface Virtual-Access</span><br><span class="line">Virtual-Access0</span><br><span class="line">Current state: UP</span><br><span class="line">Line protocol state: UP</span><br><span class="line">Description: Virtual-Access0 Interface</span><br><span class="line">Bandwidth: 128kbps</span><br><span class="line">Maximum Transmit Unit: 1500</span><br><span class="line">Hold timer: 10 seconds, retry times: 5</span><br><span class="line">Internet Address is 192.168.1.1&#x2F;24 Primary</span><br><span class="line">Link layer protocol: PPP</span><br><span class="line">LCP: opened, MP: opened, IPCP: opened</span><br><span class="line">Physical: MP, baudrate: 128000 bps</span><br><span class="line">Main interface: Virtual-Template1</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<h4 id="按用户名查找-vt"><a class="markdownIt-Anchor" href="#按用户名查找-vt"></a> 按用户名查找 VT</h4>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line"># 创建用户供RT2认证，需要为每个线路创一个</span><br><span class="line">[RT1]local-user rt2-user1 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-rt2-user1]password simple rt2-user1</span><br><span class="line">[RT1-luser-network-rt2-user1]service-type ppp</span><br><span class="line">[RT1]local-user rt2-user2 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT1-luser-network-rt2-user2]password simple rt2-user2</span><br><span class="line">[RT1-luser-network-rt2-user2]service-type ppp</span><br><span class="line"></span><br><span class="line"># 用户绑定虚模板</span><br><span class="line">[RT1]ppp mp user rt2-user1 bind Virtual-Template 1</span><br><span class="line">[RT1]ppp mp user rt2-user2 bind Virtual-Template 1</span><br><span class="line"># 虚模板配置</span><br><span class="line">[RT1]interface Virtual-Template 1</span><br><span class="line">[RT1-Virtual-Template1]ip address 192.168.1.1 24</span><br><span class="line">[RT1-Virtual-Template1]ppp mp binding-mode authentication</span><br><span class="line"></span><br><span class="line"># 串口配置，填写对端提供给本端的用户</span><br><span class="line"># s1&#x2F;0指定rt1-user1，s2&#x2F;0指定rt1-user2</span><br><span class="line">[RT1-Serial1&#x2F;0]link-protocol ppp</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp authentication-mode pap</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp pap local-user rt1-user1 password simple rt1-user1</span><br><span class="line">[RT1-Serial1&#x2F;0]ppp mp</span><br><span class="line"></span><br><span class="line">[RT1-Serial2&#x2F;0]link-protocol ppp</span><br><span class="line">[RT1-Serial2&#x2F;0]ppp authentication-mode pap</span><br><span class="line">[RT1-Serial2&#x2F;0]ppp pap local-user rt1-user2 password simple rt1-user2</span><br><span class="line">[RT1-Serial2&#x2F;0]ppp mp</span><br><span class="line"></span><br><span class="line">同理RT2配置:</span><br><span class="line">[RT2]local-user rt1-user1 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-rt1-user1]password simple rt1-user1</span><br><span class="line">[RT2-luser-network-rt1-user1]service-type ppp</span><br><span class="line">[RT2]local-user rt1-user2 class network</span><br><span class="line">New local user added.</span><br><span class="line">[RT2-luser-network-rt1-user2]password simple rt1-user2</span><br><span class="line">[RT2-luser-network-rt1-user2]service-type ppp</span><br><span class="line"></span><br><span class="line">[RT2]ppp mp user rt1-user1 bind Virtual-Template 1</span><br><span class="line">[RT2]ppp mp user rt1-user2 bind Virtual-Template 1</span><br><span class="line"></span><br><span class="line">[RT2]int Virtual-Template 1</span><br><span class="line">[RT2-Virtual-Template1]ip address 192.168.1.2 24</span><br><span class="line">[RT2-Virtual-Template1]ppp mp binding-mode authentication</span><br><span class="line"></span><br><span class="line">[RT2-Serial1&#x2F;0]ppp authentication-mode pap</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp pap local-user rt2-user1 password simple rt2-user1</span><br><span class="line">[RT2-Serial1&#x2F;0]ppp mp</span><br><span class="line">[RT2-Serial2&#x2F;0]ppp authentication-mode pap</span><br><span class="line">[RT2-Serial2&#x2F;0]ppp pap local-user rt2-user2 password simple rt2-user2</span><br><span class="line">[RT2-Serial2&#x2F;0]ppp mp</span><br></pre></td></tr></table></figure>
+<p>查看 ppp mp 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis ppp mp</span><br><span class="line">----------------------Slot0----------------------</span><br><span class="line">Template: Virtual-Template1</span><br><span class="line">max-bind: 16, fragment: enabled, min-fragment: 128</span><br><span class="line">  Master link: Virtual-Access0, Active members: 1, Bundle rt2-user1  # VA0，用户绑定</span><br><span class="line">  Peer&#39;s endPoint descriptor: RT2</span><br><span class="line">  Sequence format: long (rcv)&#x2F;long (sent)</span><br><span class="line">  Bundle Up Time: 2019&#x2F;03&#x2F;24  05:27:20:244</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)&#x2F;0 (sent)</span><br><span class="line">  Active member channels: 1 members</span><br><span class="line">        Serial1&#x2F;0                 Up-Time:2019&#x2F;03&#x2F;24  05:27:20:244</span><br><span class="line">  Master link: Virtual-Access1, Active members: 1, Bundle rt2-user2  # VA1</span><br><span class="line">  Peer&#39;s endPoint descriptor: RT2</span><br><span class="line">  Sequence format: long (rcv)&#x2F;long (sent)</span><br><span class="line">  Bundle Up Time: 2019&#x2F;03&#x2F;24  05:27:48:932</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)&#x2F;0 (sent)</span><br><span class="line">  Active member channels: 1 members</span><br><span class="line">        Serial2&#x2F;0                 Up-Time:2019&#x2F;03&#x2F;24  05:27:48:932</span><br></pre></td></tr></table></figure>
+<h3 id="mp-group-接口配置-mp"><a class="markdownIt-Anchor" href="#mp-group-接口配置-mp"></a> MP-group 接口配置 MP</h3>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">RT1:</span><br><span class="line">[RT1]interface MP-group 1</span><br><span class="line">[RT1-MP-group1]ip address 192.168.1.1 24</span><br><span class="line"></span><br><span class="line">[RT1-Serial1&#x2F;0]ppp mp MP-group 1</span><br><span class="line">[RT1-Serial2&#x2F;0]ppp mp MP-group 1</span><br><span class="line"></span><br><span class="line">RT2:</span><br><span class="line">[RT2]interface MP-group 1</span><br><span class="line">[RT2-MP-group1]ip address 192.168.1.2 24</span><br><span class="line"></span><br><span class="line">[RT2-Serial1&#x2F;0]ppp mp MP-group 1</span><br><span class="line">[RT2-Serial2&#x2F;0]ppp mp MP-group 1</span><br></pre></td></tr></table></figure>
+<p>查看 PPP MP 信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[RT1]dis ppp mp</span><br><span class="line">----------------------Slot0----------------------</span><br><span class="line">Template: MP-group1</span><br><span class="line">max-bind: 16, fragment: enabled, min-fragment: 128</span><br><span class="line">  Master link: MP-group1, Active members: 2, Bundle Multilink</span><br><span class="line">  Peer&#39;s endPoint descriptor: MP-group1</span><br><span class="line">  Sequence format: long (rcv)&#x2F;long (sent)</span><br><span class="line">  Bundle Up Time: 2019&#x2F;03&#x2F;24  05:41:40:229</span><br><span class="line">  0 lost fragments, 0 reordered, 0 unassigned, 0 interleaved</span><br><span class="line">  Sequence: 0 (rcv)&#x2F;0 (sent)</span><br><span class="line">  Active member channels: 2 members</span><br><span class="line">        Serial1&#x2F;0                 Up-Time:2019&#x2F;03&#x2F;24  05:41:40:229</span><br><span class="line">        Serial2&#x2F;0                 Up-Time:2019&#x2F;03&#x2F;24  05:41:49:213</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag"><i class="fa fa-tag"></i> 网络</a>
+              <a href="/tags/%E5%8D%8E%E4%B8%89/" rel="tag"><i class="fa fa-tag"></i> 华三</a>
+              <a href="/tags/PPP/" rel="tag"><i class="fa fa-tag"></i> PPP</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/IPv6%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" rel="prev" title="IPv6基础笔记">
+      <i class="fa fa-chevron-left"></i> IPv6基础笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/VLAN%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" rel="next" title="VLAN基础笔记">
+      VLAN基础笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ppp-%E5%8D%8F%E8%AE%AE%E6%A6%82%E8%BF%B0"><span class="nav-text"> PPP 协议概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ppp-mp"><span class="nav-text"> PPP MP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pppoe"><span class="nav-text"> PPPOE</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8D%8E%E4%B8%89-ppp-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-text"> 华三 PPP 环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#pap-%E5%8D%95%E5%90%91%E9%AA%8C%E8%AF%81%E9%85%8D%E7%BD%AE"><span class="nav-text"> PAP 单向验证配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pap-%E5%8F%8C%E5%90%91%E9%AA%8C%E8%AF%81%E9%85%8D%E7%BD%AE"><span class="nav-text"> PAP 双向验证配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#chap-%E9%AA%8C%E8%AF%81%E9%85%8D%E7%BD%AE"><span class="nav-text"> CHAP 验证配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ip-%E5%9C%B0%E5%9D%80%E5%8D%8F%E5%95%86"><span class="nav-text"> IP 地址协商</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B4%E6%8E%A5%E6%8C%87%E5%AE%9A%E5%AF%B9%E7%AB%AF-ip-%E5%9C%B0%E5%9D%80"><span class="nav-text"> 直接指定对端 IP 地址</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E5%9C%B0%E5%9D%80%E6%B1%A0%E4%BE%9B%E5%AF%B9%E7%AB%AF%E9%80%89%E6%8B%A9"><span class="nav-text"> 配置地址池供对端选择</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#isp-%E5%9F%9F%E5%85%B3%E8%81%94-ip-%E5%9C%B0%E5%9D%80%E6%B1%A0"><span class="nav-text"> ISP 域关联 IP 地址池</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ppp-%E5%B8%B8%E8%A7%81%E9%85%8D%E7%BD%AE%E9%A1%B9"><span class="nav-text"> PPP 常见配置项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mp-%E9%85%8D%E7%BD%AE"><span class="nav-text"> MP 配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E6%A8%A1%E6%9D%BF%E6%8E%A5%E5%8F%A3%E9%85%8D%E7%BD%AE-mp"><span class="nav-text"> 虚拟模板接口配置 MP</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B0%86%E9%93%BE%E8%B7%AF%E7%9B%B4%E6%8E%A5%E7%BB%91%E5%AE%9A%E5%88%B0-vt-%E4%B8%8A"><span class="nav-text"> 将链路直接绑定到 VT 上</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%89%E7%94%A8%E6%88%B7%E5%90%8D%E6%9F%A5%E6%89%BE-vt"><span class="nav-text"> 按用户名查找 VT</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#mp-group-%E6%8E%A5%E5%8F%A3%E9%85%8D%E7%BD%AE-mp"><span class="nav-text"> MP-group 接口配置 MP</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

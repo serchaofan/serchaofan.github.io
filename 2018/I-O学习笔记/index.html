@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="本篇包含以下知识点：  同、异步 五种 Unix I&#x2F;O 模型 同步 I&#x2F;O 模型 异步 I&#x2F;O 模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="I&#x2F;O学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="本篇包含以下知识点：  同、异步 五种 Unix I&#x2F;O 模型 同步 I&#x2F;O 模型 异步 I&#x2F;O 模型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/iomoxing.bmp">
+<meta property="og:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/zuseio.jpg">
+<meta property="og:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/feizuseio.jpg">
+<meta property="og:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/iofuyong.jpg">
+<meta property="og:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/xinxiqudongio.jpg">
+<meta property="og:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/yibuio.jpg">
+<meta property="article:published_time" content="2018-04-29T01:26:12.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.447Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="网络">
+<meta property="article:tag" content="I&#x2F;O">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/iomoxing.bmp">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>I/O学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          I/O学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-04-29 09:26:12" itemprop="dateCreated datePublished" datetime="2018-04-29T09:26:12+08:00">2018-04-29</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本篇包含以下知识点：</p>
+<ul>
+<li><a href="#%e5%90%8c%e5%bc%82%e6%ad%a5">同、异步</a></li>
+<li><a href="#%e4%ba%94%e7%a7%8d-unix-io-%e6%a8%a1%e5%9e%8b">五种 Unix I/O 模型</a></li>
+<li><a href="#%e5%90%8c%e6%ad%a5-io-%e6%a8%a1%e5%9e%8b">同步 I/O 模型</a></li>
+<li><a href="#%e5%bc%82%e6%ad%a5-io-%e6%a8%a1%e5%9e%8b">异步 I/O 模型</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="同-异步"><a class="markdownIt-Anchor" href="#同-异步"></a> 同、异步</h1>
+<p><strong>同步：</strong> 指的是在两个或多个数据库、文件、模块、线程之间用来保持数据内容一致性的机制。<br><br />
+同步处理过程：提交请求-&gt;等待服务器处理（期间客户端浏览器不能干任何事）-&gt;处理完毕返回<br><br />
+<strong>异步：</strong> 异步处理不用阻塞当前线程来等待处理完成，而是允许后续操作，直至其它线程将处理完成，并回调通知此线程。<br><br />
+异步处理过程：请求通过事件触发-&gt;服务器处理（这是浏览器仍然可以作其他事情）-&gt;处理完毕</p>
+<blockquote>
+<p>同步、异步关注的是消息通知机制，针对的是客户端。</p>
+</blockquote>
+<p><strong>阻塞与非阻塞</strong><br><br />
+阻塞：调用结果返回之前，调用者会被挂起（不可中断），调用者只有在得到返回结果后才能继续。<br />
+非阻塞：调用结果返回前，不会被挂起，调用不会阻塞调用者。在内核的数据还未准备好时，会立即返回，进程可以去干其他事情。</p>
+<blockquote>
+<p>阻塞、非阻塞关注的是调用者等待被调用者返回结果时的状态，针对的是服务器端。</p>
+</blockquote>
+<p><strong>阻塞、非阻塞与同步、异步的区别</strong><br><br />
+<strong>同步是在 I/O 中的一系列操作都是调用者（用户进程）自己完成（自己去问内核）。而异步是调用者在发起调用后，自己不管了，等内核数据准备好了以后，内核自己告诉进程，即让内核去通知进程，实现回调。</strong> <br><br />
+<strong>至于阻塞与非阻塞，是决定是否让调用者挂起。</strong></p>
+<p>网络 I/O 的本质是 socket 的读取，socket 在 linux 系统被抽象为流，I/O 可以理解为对流的操作。这个操作又分为两个阶段：</p>
+<pre><code>1.等待流数据准备，即等待网络上的数据分组到达，然后被复制到内核的某个缓冲区
+2.从内核向进程复制数据，把数据从内核缓冲区复制到应用进程缓冲区
+</code></pre>
+<h1 id="五种-unix-io-模型"><a class="markdownIt-Anchor" href="#五种-unix-io-模型"></a> 五种 Unix I/O 模型</h1>
+<p><strong>I/O 模型：</strong><br />
+进程是无法直接操作 I/O 设备的，其必须通过系统调用请求内核来协助完成 I/O 动作，而内核会为每个 I/O 设备维护一个 buffer。 用户进程发起请求，内核接受到请求后，从 I/O 设备中获取数据到 buffer 中，再将 buffer 中的数据 copy 到用户进程的地址空间，该用户进程获取到数据后再响应客户端。<br />
+如下图中，真正称为 I/O 的就是<strong>内核内存与与进程内存间的过程</strong><br></p>
+<img src="/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/iomoxing.bmp" class="" title="iomoxing">
+<h1 id="同步-io-模型"><a class="markdownIt-Anchor" href="#同步-io-模型"></a> 同步 I/O 模型</h1>
+<p><strong>阻塞 I/O（Blocking I/O）：</strong> 当用户进程进行系统调用 read()时，进程发起 recvform 系统调用，内核就开始了 I/O 的第一个阶段，准备数据到缓冲区中，当数据都准备完成后，则将数据从内核缓冲区中拷贝到用户进程的内存中，这时用户进程才解除 block 的状态重新运行。整个过程中用户进程都是阻塞的。不会消耗 CPU 时间，执行效率高。<br></p>
+<img src="/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/zuseio.jpg" class="" title="zuseio">
+<p><strong>非阻塞 I/O（Non-Blocking I/O）：</strong> 用户进程只有在第二个阶段被阻塞了，而第一个阶段没有阻塞。在第一个阶段中，recvform 系统调用调用之后，内核马上返回给进程，如果数据还没准备好，此时会返回一个 error，进程在返回之后，可以干点别的事情，然后再发起 recvform 系统调用，用户进程需要盲等，不停的去轮询内核，看数据是否准备好了。在拷贝数据整个过程，进程仍然是属于阻塞的状态。由于用户进程轮询内核，所以该模型是比较消耗 CPU 的，效率较低。<br></p>
+<img src="/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/feizuseio.jpg" class="" title="feizuseio">
+<p>** I/O 复用（I/O Multiplexing）：** I/O 执行的两个阶段都是用户进程都是阻塞的，但是两个阶段是独立的，在一次完整的 I/O 操作中，该用户进程是发起了两次系统调用。使用 select()、poll()或 epoll()（poll 的改进版）进行调用，可支持两路调用。相比于多进程和多线程技术，I/O 复用不需要进程线程创建和切换的开销，系统开销更小。</p>
+<blockquote>
+<p>select 调用是内核级别的，select 轮询可以等待多个 socket，当其中任何一个 socket 的数据准备好了（通过内核监视），就能返回进行可读，然后进程再进行 recvform 系统调用。select 在此模式下最多只支持 1024 个并发。</p>
+</blockquote>
+<img src="/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/iofuyong.jpg" class="" title="iofuyong">
+<p><strong>I/O 复用应用场景：</strong> <br></p>
+<ul>
+<li>服务器需要同时处理多个处于监听状态或多个连接状态的套接字。</li>
+<li>服务器需要同时处理多种网络协议的套接字。</li>
+</ul>
+<p><strong>信号驱动 I/O（Signal Driven I/O）：</strong> 也称基于事件的 I/O。只有在 I/O 执行的第二阶段阻塞了用户进程，而在第一阶段是没有阻塞的。在 I/O 执行的第一阶段，当数据准备完成之后，内核会主动的通知用户进程数据已经准备完成（通过返回一个 SIGIO 信号），即对用户进程做一个回调。该通知分为两种，一为水平触发，即如果用户进程不响应则会一直发送通知，二为边缘触发，即只通知一次。</p>
+<blockquote>
+<p>注：需要先开启套接字的信号驱动 I/O 功能，并使系统调用 sigaction 安装一个信号处理函数</p>
+</blockquote>
+<img src="/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/xinxiqudongio.jpg" class="" title="xinxiqudongio">
+<h1 id="异步-io-模型"><a class="markdownIt-Anchor" href="#异步-io-模型"></a> 异步 I/O 模型</h1>
+<p><strong>异步 I/O（Asynchrnous I/O）：</strong> 当用户进程发起系统调用后，立刻就可以开始去做其它的事情，然后直到 I/O 执行的两个阶段都完成之后，内核会给用户进程发送通知，告诉用户进程操作已经完成了。由于在调用后进程会立刻返回，所以在整个输入操作的等待和复制期间，进程都不会阻塞。</p>
+<blockquote>
+<p>异步 I/O 不需要 select 或 poll 主动询问，也没有询问描述符的数量限制。</p>
+</blockquote>
+<img src="/2018/I-O%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/yibuio.jpg" class="" title="yibuio">
+<blockquote>
+<p>参考文章：<br />
+<a target="_blank" rel="noopener" href="https://www.jianshu.com/p/55eb83d60ab1">简明网络 I/O 模型—同步异步阻塞非阻塞之惑</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/chy2055/p/5220793.html">浅谈 Linux 下的五种 I/O 模型</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/anxpp/article/details/51503329">Linux 网络 I/O 模型简介（图文）</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/7ac69db65a0e">socket 和 网络 I/O 模型</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BD%91%E7%BB%9C/" rel="tag"><i class="fa fa-tag"></i> 网络</a>
+              <a href="/tags/I-O/" rel="tag"><i class="fa fa-tag"></i> I/O</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/Docker%E7%BD%91%E7%BB%9C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="Docker网络学习笔记">
+      <i class="fa fa-chevron-left"></i> Docker网络学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/YAML%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="YAML学习笔记">
+      YAML学习笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8C-%E5%BC%82%E6%AD%A5"><span class="nav-text"> 同、异步</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%94%E7%A7%8D-unix-io-%E6%A8%A1%E5%9E%8B"><span class="nav-text"> 五种 Unix I&#x2F;O 模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%90%8C%E6%AD%A5-io-%E6%A8%A1%E5%9E%8B"><span class="nav-text"> 同步 I&#x2F;O 模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5-io-%E6%A8%A1%E5%9E%8B"><span class="nav-text"> 异步 I&#x2F;O 模型</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

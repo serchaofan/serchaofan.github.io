@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="InfluxDB 是一个开源时间序列平台，包括用于存储和查询数据，在后台处理数据以实现 ETL 或监视和警报目的的 API，用户仪表板以及可视化和探索数据的 API 等。 本笔记根据 influxdb v1.7 文档作翻译整理，跳过一些难点，仅作基础的一些应用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Influxdb基础笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2019/Influxdb%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="InfluxDB 是一个开源时间序列平台，包括用于存储和查询数据，在后台处理数据以实现 ETL 或监视和警报目的的 API，用户仪表板以及可视化和探索数据的 API 等。 本笔记根据 influxdb v1.7 文档作翻译整理，跳过一些难点，仅作基础的一些应用">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-12-15T06:37:59.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.456Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="influxdb">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2019/Influxdb%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Influxdb基础笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2019/Influxdb%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Influxdb基础笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-12-15 14:37:59" itemprop="dateCreated datePublished" datetime="2019-12-15T14:37:59+08:00">2019-12-15</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>InfluxDB 是一个开源时间序列平台，包括用于存储和查询数据，在后台处理数据以实现 ETL 或监视和警报目的的 API，用户仪表板以及可视化和探索数据的 API 等。<br />
+本笔记根据 influxdb v1.7 文档作翻译整理，跳过一些难点，仅作基础的一些应用</p>
+<span id="more"></span>
+<ul>
+<li><a href="#%e5%ae%89%e8%a3%85%e4%b8%8e%e5%90%af%e5%8a%a8">安装与启动</a></li>
+<li><a href="#%e6%a6%82%e5%bf%b5">概念</a></li>
+<li><a href="#%e7%89%b9%e6%80%a7">特性</a></li>
+<li><a href="#%e8%ae%be%e8%ae%a1%e8%a7%81%e8%a7%a3%e4%b8%8e%e6%9d%83%e8%a1%a1">设计见解与权衡</a></li>
+<li><a href="#influx-%e5%91%bd%e4%bb%a4%e8%a1%8c">influx 命令行</a></li>
+<li><a href="#%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86">配置管理</a>
+<ul>
+<li><a href="#%e5%85%a8%e5%b1%80%e9%85%8d%e7%bd%ae">全局配置</a></li>
+<li><a href="#%e5%85%83%e5%ad%98%e5%82%a8">元存储</a></li>
+<li><a href="#%e6%95%b0%e6%8d%ae">数据</a></li>
+<li><a href="#%e8%af%b7%e6%b1%82%e7%ae%a1%e7%90%86">请求管理</a></li>
+<li><a href="#%e4%bf%9d%e7%95%99%e7%ad%96%e7%95%a5">保留策略</a></li>
+<li><a href="#%e7%a2%8e%e7%89%87%e9%a2%84%e5%88%9b%e5%bb%ba">碎片预创建</a></li>
+<li><a href="#%e7%9b%91%e6%8e%a7">监控</a></li>
+<li><a href="#http-%e7%ab%af%e7%82%b9">HTTP 端点</a></li>
+<li><a href="#%e6%97%a5%e5%bf%97">日志</a></li>
+</ul>
+</li>
+<li><a href="#influxql-%e8%a6%81%e7%82%b9%e6%95%b4%e7%90%86">InfluxQL 要点整理</a>
+<ul>
+<li><a href="#%e6%95%b0%e6%8d%ae%e5%ba%93%e7%9b%91%e6%8e%a7">数据库监控</a></li>
+</ul>
+</li>
+<li><a href="#httpapi-%e6%9f%a5%e8%af%a2">HTTP_API 查询</a>
+<ul>
+<li><a href="#debug">debug</a></li>
+<li><a href="#ping">ping</a></li>
+<li><a href="#query">query</a></li>
+<li><a href="#write">write</a></li>
+</ul>
+</li>
+<li><a href="#%e8%ae%a4%e8%af%81%e6%8e%88%e6%9d%83">认证授权</a></li>
+<li><a href="#%e6%97%a5%e5%bf%97%e8%bf%bd%e8%b8%aa">日志追踪</a></li>
+<li><a href="#%e5%a4%87%e4%bb%bd%e4%b8%8e%e6%81%a2%e5%a4%8d">备份与恢复</a></li>
+</ul>
+<h1 id="安装与启动"><a class="markdownIt-Anchor" href="#安装与启动"></a> 安装与启动</h1>
+<p>首先，安装 influxdb 需要 root 权限，TCP 8086 和 8088 端口需要开启且空闲。</p>
+<ul>
+<li>TCP 端口 8086 可用于使用 InfluxDB API 的客户端-服务器通信。</li>
+<li>TCP 端口 8088 可用于 RPC 服务执行备份和还原操作。</li>
+</ul>
+<p>除了上面的端口外，InfluxDB 还提供了多个插件，这些插件可能需要自定义端口。 可以通过配置文件修改所有端口映射，对于默认安装，该文件位于<code>/etc/influxdb/influxdb.conf</code>中。</p>
+<p>需要安装 NTP 或 chrony 服务同步计算机时间，InfluxDB 使用主机 UTC 本地时间为数据分配时间戳。使用 NTP 在主机之间同步时间，如果主机的时钟未与 NTP 同步，则写入 InfluxDB 的数据上的时间戳可能不准确。</p>
+<p>ubuntu 安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget -qO- https:&#x2F;&#x2F;repos.influxdata.com&#x2F;influxdb.key | sudo apt-key add -</span><br><span class="line">source &#x2F;etc&#x2F;lsb-release</span><br><span class="line">echo &quot;deb https:&#x2F;&#x2F;repos.influxdata.com&#x2F;$&#123;DISTRIB_ID,,&#125; $&#123;DISTRIB_CODENAME&#125; stable&quot; | sudo tee &#x2F;etc&#x2F;apt&#x2F;sources.list.d&#x2F;influxdb.list</span><br></pre></td></tr></table></figure>
+<p>debian 安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">wget -qO- https:&#x2F;&#x2F;repos.influxdata.com&#x2F;influxdb.key | sudo apt-key add -</span><br><span class="line">source &#x2F;etc&#x2F;os-release</span><br><span class="line">echo &quot;deb https:&#x2F;&#x2F;repos.influxdata.com&#x2F;debian $(lsb_release -cs) stable&quot; | sudo tee &#x2F;etc&#x2F;apt&#x2F;sources.list.d&#x2F;influxdb.list</span><br></pre></td></tr></table></figure>
+<p>然后：<code>sudo apt-get update &amp;&amp; sudo apt-get install influxdb</code></p>
+<p>centos 安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">cat &lt;&lt;EOF | sudo tee &#x2F;etc&#x2F;yum.repos.d&#x2F;influxdb.repo</span><br><span class="line">[influxdb]</span><br><span class="line">name &#x3D; InfluxDB Repository - RHEL \$releasever</span><br><span class="line">baseurl &#x3D; https:&#x2F;&#x2F;repos.influxdata.com&#x2F;rhel&#x2F;\$releasever&#x2F;\$basearch&#x2F;stable</span><br><span class="line">enabled &#x3D; 1</span><br><span class="line">gpgcheck &#x3D; 1</span><br><span class="line">gpgkey &#x3D; https:&#x2F;&#x2F;repos.influxdata.com&#x2F;influxdb.key</span><br><span class="line">EOF</span><br></pre></td></tr></table></figure>
+<p>然后<code>yum install influxdb</code></p>
+<p>系统对每个配置文件设置都有内部默认值。 使用<code>influxd config</code>命令查看默认配置设置。<br />
+启动 influxdb 也可使用指定配置文件<code>influxd -config &lt;configfile&gt;</code><br />
+也可配置环境变量<code>INFLUXDB_CONFIG_PATH</code>进行设置</p>
+<p>确保存储数据和预写日志（WAL）的目录对于运行 Influxd 服务的用户是可写的。如果 data 和 WAL 目录不可写，那么 influxd 服务将不会启动。</p>
+<h1 id="概念"><a class="markdownIt-Anchor" href="#概念"></a> 概念</h1>
+<p>在 influxdb 中所有数据都会有一列 time，用于存储时间戳，时间戳以<code>RFC3339 UTC</code>的形式显示。</p>
+<p>字段（field）由字段键和字段值组成。字段键是字符串。字段值是数据，它们可以是字符串，浮点数，整数或布尔值，并且<strong>字段值始终与时间戳关联</strong>。字段键和字段值对的集合构成了一个字段集（field set）。</p>
+<p>字段是 InfluxDB 数据结构必不可少的部分，如果没有字段，则 InfluxDB 中就不会有数据。同时要注意，<strong>字段未编入索引</strong>。使用字段值作为过滤器的查询一定会扫描与查询中其他条件匹配的所有值，对比标签查询来说性能不高。所以，通常字段不应包含常用查询的元数据。</p>
+<p>标签（tag）由标签键和标签值组成。标记键和标记值都存储为字符串并记录元数据。标签集（tag set）是所有标签键值对的不同组合。标签是可选的，无需在数据结构中包含标签，但通常最好使用它们，因为与字段不同，标签是被索引的，这意味着对标签的查询速度更快，并且标签非常适合存储常见查询的元数据。为了优化查询，建议重新安排架构，使字段成为标签，而标签成为字段，这样当 InfluxDB 执行查询时，不必扫描字段的每个值，查询会更快。</p>
+<p>度量（measurement）充当标签、字段和时间列的容器，度量名称是对关联字段中存储的数据的描述。度量名称是字符串，度量在概念上类似于 SQL 的表。单个度量可以属于不同的保留策略（retention policies）。保留策略描述 InfluxDB 保留数据多长时间（DURATION），以及该数据在集群中存储多少副本（REPLICATION）。</p>
+<blockquote>
+<p>复制因子（replication factors）不适用于单节点实例。</p>
+</blockquote>
+<p>InfluxDB 自动创建保留策略，它具有无限的持续时间，并且复制因子设置为 1。</p>
+<p>序列（series）是共享保留策略、度量和标记集的数据集合。序列包含四列：<code>Arbitrary series number</code>、<code>Retention policy</code>、<code>Measurement</code>、<code>Tag set</code>，在设计架构以及在 InfluxDB 中处理数据时，了解序列的概念至关重要。</p>
+<p>点（point）代表具有四个组成部分的单个数据记录：测量，标签集，字段集和时间戳。点由其序列和时间戳唯一标识。</p>
+<h1 id="特性"><a class="markdownIt-Anchor" href="#特性"></a> 特性</h1>
+<p>数据库可以具有多个用户，连续查询，保留策略和度量。InfluxDB 是无模式（schemaless）的数据库，这意味着可以随时轻松添加新的度量，标签和字段。</p>
+<p>在 InfluxDB 中，时间戳标识任何给定数据序列中的单个点。这就像一个 SQL 数据库表，其中主键由系统预先设置，并且始终为时间。</p>
+<p>InfluxDB 还认识到架构首选项可能会随着时间而改变，因此在 InfluxDB 中无需预先定义架构。数据点可以具有度量中的一个字段、所有字段或介于两者之间的任何数字，只需为新字段编写一个点即可将其添加到度量中。</p>
+<p>Influxdb 与 SQL 比对</p>
+<ul>
+<li>InfluxDB 度量类似于 SQL 数据库表。</li>
+<li>InfluxDB 标签类似于 SQL 数据库中的索引列。</li>
+<li>InfluxDB 字段类似于 SQL 数据库中的未索引列。</li>
+<li>InfluxDB 点类似于 SQL 行。</li>
+<li>InfluxDB 连续查询和保留策略类似于 SQL 数据库中的存储过程。</li>
+</ul>
+<p>SQL JOIN 不适用于 InfluxDB 度量，架构设计应反映出这种差异。而且，度量就像一个 SQL 表，其中主索引始终被预设为时间，InfluxDB 时间戳必须采用 UNIX 纪元（GMT）或格式化为在 RFC3339 下有效的日期时间字符串。</p>
+<p>InfluxQL 是一种类似于 SQL 的查询语言，用于与 InfluxDB 进行交互。<br />
+InfluxQL 允许在 WHERE 子句中指定查询的时间范围。可以使用用单引号引起来的日期时间字符串，其格式为<code>YYYY-MM-DD HH：MM：SS.mmm</code>（mmm 是毫秒，是可选的，还可以指定微秒或纳秒）。还可以使用<code>now()</code>获取计算机当前时间戳。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">时间单位</th>
+<th style="text-align:center">单位</th>
+<th style="text-align:center">时间单位</th>
+<th style="text-align:center">单位</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">ns</td>
+<td style="text-align:center">纳秒</td>
+<td style="text-align:center">m</td>
+<td style="text-align:center">分</td>
+</tr>
+<tr>
+<td style="text-align:center">u or µ</td>
+<td style="text-align:center">微秒</td>
+<td style="text-align:center">h</td>
+<td style="text-align:center">时</td>
+</tr>
+<tr>
+<td style="text-align:center">ms</td>
+<td style="text-align:center">毫秒</td>
+<td style="text-align:center">d</td>
+<td style="text-align:center">天</td>
+</tr>
+<tr>
+<td style="text-align:center">s</td>
+<td style="text-align:center">秒</td>
+<td style="text-align:center">w</td>
+<td style="text-align:center">周</td>
+</tr>
+</tbody>
+</table>
+<p>InfluxQL 还支持正则表达式，表达式中的算术，<code>SHOW</code>语句和<code>GROUP BY</code>语句。</p>
+<p>时间序列数据通常只写入一次，很少更新。因此，InfluxDB 不是完整的 CRUD 数据库，而是更像 CR-ud，将创建和读取数据的性能置于更新和销毁之上，并阻止某些更新和销毁行为来使创建和读取性能更高。</p>
+<ul>
+<li>若要更新一个点，需插入一个具有相同测量值，标签集和时间戳的点</li>
+<li>可以删除或删除序列，但不能删除或删除基于字段值的单个点。解决方法是：可以搜索字段值，检索时间，然后根据时间字段删除</li>
+<li>还不能更新或重命名标签，要修改一点序列的标签，先找到带有问题的标签值的点，将值更改为所需的点，将点写回，然后删除具有旧标签值的序列</li>
+<li>无法通过标签键（而不是值）删除标签</li>
+</ul>
+<h1 id="设计见解与权衡"><a class="markdownIt-Anchor" href="#设计见解与权衡"></a> 设计见解与权衡</h1>
+<p>InfluxDB 是一个时间序列数据库。为此用例进行优化需要权衡取舍，主要是以功能为代价来提高性能。</p>
+<ol>
+<li>
+<p>假设多次发送相同的数据，则它仅是客户端刚刚发送几次的完全相同的数据。<br />
+优点：简化的冲突解决方案可提高写入性能。<br />
+缺点：无法存储重复数据，在极少数情况下可能会覆盖数据。</p>
+</li>
+<li>
+<p>删除很少见。当删除确实发生时，几乎总是会遇到大量旧数据，这些旧数据对于写入而言是无用的。<br />
+优点：限制对删除的访问可以提高查询和写入性能。<br />
+缺点：删除功能受到严重限制。</p>
+</li>
+<li>
+<p>对现有数据的更新很少发生，而有争议的更新则永远不会发生。时间序列数据主要是永远不会更新的新数据。<br />
+优点：限制对更新的访问可以提高查询和写入性能。<br />
+缺点：更新功能受到严重限制。</p>
+</li>
+<li>
+<p>绝大多数写操作是针对具有最近时间戳记的数据，并且数据按时间升序添加。<br />
+优点：<strong>按时间升序添加数据的性能明显更高。</strong><br />
+缺点：用随机时间或不按升序排列的时间写点的性能明显降低。</p>
+</li>
+<li>
+<p>规模（scale，或者说性能）至关重要。数据库必须能够处理大量的读写操作。<br />
+优点：数据库可以处理大量的读写操作。<br />
+缺点：InfluxDB 开发团队被迫进行权衡以提高性能。</p>
+</li>
+<li>
+<p>能够写入和查询数据比拥有高度一致的视图更为重要。<br />
+优点：编写和查询数据库可以由多个客户端以高负载完成。<br />
+缺点：如果数据库负载沉重，查询返回可能不包含最新点。</p>
+</li>
+<li>
+<p>许多时间序列都是短暂的。通常，时间序列只会出现几个小时，然后消失，例如：一个新的主机，该主机开始启动并报告一段时间，然后关闭。<br />
+优点：InfluxDB 擅长管理不连续的数据。<br />
+缺点：无模式设计意味着某些数据库功能不受支持，例如：没有交叉表联接。</p>
+</li>
+<li>
+<p>点（point）是不太重要的。<br />
+优点：InfluxDB 具有非常强大的工具来处理聚合数据和大型数据集。<br />
+缺点：点没有传统意义上的 ID，它们通过时间戳和序列来区分。</p>
+</li>
+</ol>
+<h1 id="influx-命令行"><a class="markdownIt-Anchor" href="#influx-命令行"></a> influx 命令行</h1>
+<p><code>influx</code>是 influxDB 的 shell API，在启动了<code>influxd</code>后，通过<code>influx</code>进入 influx shell。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">influx [选项]</span><br><span class="line">  -host &lt;hostname&gt;       # 指定主机，默认localhost</span><br><span class="line">  -username &lt;username&gt;   # 指定数据库用户</span><br><span class="line">  -password &lt;password&gt;   # 指定该用户密码</span><br><span class="line">  -version   # 查看版本</span><br><span class="line">  -type      # 指定交互的shell，默认为influxql，也可以设为flux</span><br><span class="line">  -pretty    # 将json格式的输出进行格式化，需要-format设为json</span><br><span class="line">  -format &#39;json|csv|column&#39; # 指定输出格式，默认为column</span><br><span class="line">  -execute &lt;command&gt;   # 直接执行influxql命令</span><br><span class="line">  -port &lt;port&gt;  # 指定连接端口，默认为8086</span><br><span class="line">  -database &lt;database&gt;  # 指定数据库</span><br><span class="line">  -precision &#39;rfc3339|h|m|s|ms|u|ns&#39;   # 指定时间的输出格式，rfc3339会比较好看</span><br><span class="line">  -import  # 从文件中导入一个库</span><br><span class="line">  -path &lt;path&gt;   # 导入的文件路径，与-import一起用</span><br><span class="line">  -compressed  # 若import的文件是压缩的就加上这个，与-import一起用</span><br><span class="line">  -pps     # 每秒导入的点的个数，默认为0，不限流，与-import一起用</span><br><span class="line">  -consistency &#39;any|one|quorum|all&#39;  # 设置写的一致性等级</span><br><span class="line">  -ssl  # 使用https请求</span><br><span class="line">  -unsafeSsl  # 禁用ssl的证书验证，使用自验证</span><br></pre></td></tr></table></figure>
+<p>导入文件分为两部分：</p>
+<ul>
+<li>DDL（数据定义语言）：包含 InfluxQL 命令，用于创建相关数据库和管理保留策略。如果数据库和保留策略已经存在，则文件可以跳过此部分。</li>
+<li>DML（数据操作语言）：列出相关的数据库和（如果需要）保留策略，并包含在线协议中的数据。</li>
+</ul>
+<blockquote>
+<p>对于大型数据集，influx 每 10 万个点写出一条状态消息。<br />
+如果在导入期间保持活动状态的 InfluxDB Enterprise 群集上使用此命令，则建议将每秒的点数（<code>-pps</code>）限制为 5000 至 10000。<br />
+导入可处理<code>.gz</code>文件，只需在命令中包含<code>-compressed</code>。<br />
+在数据文件中包括时间戳。InfluxDB 将为没有时间戳的点分配相同的时间戳。这可能会导致意外的覆盖行为。<br />
+如果数据文件具有 5000 个以上的点，则可能有必要将该文件拆分为几个文件，以便将数据批量写入 InfluxDB。建议分 5000 至 10000 分写作分数。较小的批次和更多的 HTTP 请求将导致次优性能。默认情况下，HTTP 请求在 5 秒钟后超时。超时后，InfluxDB 仍将尝试写入这些点，但是不会确认它们已成功写入。<br />
+可以在导入命令后加上<code>2&gt; failure.log</code> 生成错误日志，方便排错</p>
+</blockquote>
+<p>进入 influxdb shell 后的命令，很多都是可以直接通过上面的选项直接设置的</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">auth   # 提示输入用户名和密码。Influx在查询数据库时使用这些凭据。</span><br><span class="line">       # 或使用INFLUX_USERNAME和INFLUX_PASSWORD环境变量设置CLI的用户名和密码。</span><br><span class="line">connect &lt;host:port&gt;  # 连接指定的数据库</span><br><span class="line">use [&lt;database_name&gt; | &lt;database_name&gt;.&lt;retention policy_name&gt;]</span><br><span class="line">       # 设置当前数据库and&#x2F;or保留策略。</span><br><span class="line">       # 一旦Influx设置了当前数据库和&#x2F;或保留策略，就无需在查询中指定该数据库和&#x2F;或保留策略</span><br><span class="line">       # 若未指定保留策略，那么Influx会自动查询使用的数据库的DEFAULT保留策略</span><br><span class="line">insert   # 插入数据，类似SQL</span><br><span class="line">consistency &lt;level&gt;  # 一致性等级，参考上面</span><br><span class="line">format &lt;format&gt;     # 输出格式，同上</span><br><span class="line">precision &lt;format&gt;  # 时间格式，同上</span><br><span class="line">pretty     # 格式化json</span><br><span class="line">settings   # 输出设置信息</span><br><span class="line">history    # 显示指令历史</span><br><span class="line">chunked    # 开启块响应，默认已开启</span><br><span class="line">chunk &lt;size&gt;  # 设置块响应的大小。 默认大小为10000，设置为0会将块大小重置为其默认值。</span><br><span class="line">clear [database| db| retention policy| rp]   # 清除数据库或保留策略的当前上下文。</span><br></pre></td></tr></table></figure>
+<h1 id="配置管理"><a class="markdownIt-Anchor" href="#配置管理"></a> 配置管理</h1>
+<h2 id="全局配置"><a class="markdownIt-Anchor" href="#全局配置"></a> 全局配置</h2>
+<ul>
+<li><code>reporting-disabled = false</code> 把数据报告给 influxData，默认关</li>
+<li><code>bind-address = &quot;127.0.0.1:8088&quot;</code> 用于备份和恢复的端口，也可通过环境变量<code>INFLUXDB_BIND_ADDRESS</code>设置</li>
+</ul>
+<h2 id="元存储"><a class="markdownIt-Anchor" href="#元存储"></a> 元存储</h2>
+<p><code>[meta]</code>本部分控制 InfluxDB 元存储的参数，该元存储存储有关用户，数据库，保留策略，分片和连续查询的信息。</p>
+<ul>
+<li><code>dir = &quot;/var/lib/influxdb/meta&quot;</code><br />
+元数据数据库的存储目录。 元目录中的文件包括<code>meta.db</code>（InfluxDB 元存储文件）。环境变量<code>INFLUXDB_META_DIR</code></li>
+<li><code>reserved-autocreate = true</code><br />
+创建数据库时启用默认保留策略自动生成的自动创建。保留策略自动生成具有无限的持续时间，并且还被设置为数据库的 DEFAULT 保留策略，当写入或查询未指定保留策略时使用。禁用此设置以防止在创建数据库时创建此保留策略。环境变量<code>INFLUXDB_META_RETENTION_AUTOCREATE</code></li>
+<li><code>logging-enabled = true</code><br />
+启用元服务消息的日志记录。环境变量<code>INFLUXDB_META_LOGGING_ENABLED</code></li>
+</ul>
+<h2 id="数据"><a class="markdownIt-Anchor" href="#数据"></a> 数据</h2>
+<p><code>[data]</code>设置控制 InfluxDB 的实际分片数据在何处以及如何从预写日志（WAL）中清除。 <code>dir</code>可能需要更改为适合系统的位置，但是 WAL 设置是高级配置。默认值适用于大多数系统。</p>
+<ul>
+<li><code>dir = &quot;/var/lib/influxdb/data&quot;</code><br />
+TSM 引擎存储 TSM 文件的 InfluxDB 目录。 此目录可能会更改。环境变量<code>INFLUXDB_DATA_DIR</code></li>
+<li><code>wal-dir = &quot;/var/lib/influxdb/wal&quot;</code><br />
+预写日志（WAL）文件的目录位置。环境变量<code>INFLUXDB_DATA_WAL_DIR</code></li>
+<li><code>query-log-enabled = true</code><br />
+在执行之前启用已解析查询的日志记录。查询日志对于故障排除很有用，但会记录查询中包含的所有敏感数据。环境变量<code>INFLUXDB_DATA_QUERY_LOG_ENABLED</code></li>
+</ul>
+<h2 id="请求管理"><a class="markdownIt-Anchor" href="#请求管理"></a> 请求管理</h2>
+<p><code>[coordinator]</code></p>
+<ul>
+<li><code>write-timeout = &quot;10s&quot;</code> 写入请求等待直到“超时”错误返回给调用方的持续时间。默认值为 10 秒。环境变量：<code>INFLUXDB_COORDINATOR_WRITE_TIMEOUT</code></li>
+<li><code>max-concurrent-queries = 0</code> 实例上允许的最大运行查询数。 默认设置为 0，允许无限数量的查询。环境变量：<code>INFLUXDB_COORDINATOR_MAX_CONCURRENT_QUERIES</code></li>
+<li><code>query-timeout = &quot;0s&quot;</code> 终止查询之前，允许执行查询的最大持续时间。 默认设置 0，允许查询不受时间限制地运行。环境变量：<code>INFLUXDB_COORDINATOR_QUERY_TIMEOUT</code></li>
+<li><code>max-select-point = 0</code> SELECT 语句可以处理的最大点数。 默认设置 0，允许 SELECT 语句处理无限数量的点。环境变量：<code>INFLUXDB_COORDINATOR_MAX_SELECT_POINT</code></li>
+<li><code>max-select-series = 0</code> SELECT 语句可以处理的最大序列数。默认设置 0，允许 SELECT 语句处理无限数量的序列。环境变量：<code>INFLUXDB_COORDINATOR_MAX_SELECT_SERIES</code></li>
+<li><code>max-select-buckets = 0</code> 查询可以处理的 GROUP BY time()存储桶的最大数量。默认设置 0，允许查询处理无限数量的存储桶。环境变量：<code>INFLUXDB_COORDINATOR_MAX_SELECT_BUCKETS</code></li>
+</ul>
+<h2 id="保留策略"><a class="markdownIt-Anchor" href="#保留策略"></a> 保留策略</h2>
+<p><code>[retention]</code>设置控制用于收回旧数据的保留策略的实施。</p>
+<ul>
+<li><code>enabled = true</code> 设置为 false 可以防止 InfluxDB 强制执行保留策略。环境变量：<code>INFLUXDB_RETENTION_ENABLED</code></li>
+<li><code>check-interval = &quot;30m0s&quot;</code> InfluxDB 检查以强制执行保留策略的时间间隔。环境变量：<code>INFLUXDB_RETENTION_CHECK_INTERVAL</code></li>
+</ul>
+<h2 id="碎片预创建"><a class="markdownIt-Anchor" href="#碎片预创建"></a> 碎片预创建</h2>
+<p><code>[shard-precreation]</code>设置控制分片的增量，以便在数据到达之前可以使用分片。只有在创建后将在未来具有开始时间和结束时间的分片才会被创建。永远不会预先创建全部或部分过去的碎片。</p>
+<ul>
+<li><code>enabled = true</code> 确定是否启用碎片预创建服务。环境变量：<code>INFLUXDB_SHARD_PRECREATION_ENABLED</code></li>
+<li><code>check-interval = &quot;10m&quot;</code> 运行检查以预创建新分片的时间间隔。环境变量：<code>INFLUXDB_SHARD_PRECREATION_CHECK_INTERVAL</code></li>
+<li><code>advance-period = &quot;30m&quot;</code> 预先为其创建碎片的最长期限。 默认的 30m 应该适用于大多数系统。 将来将此设置增加太多会导致效率低下。环境变量：<code>INFLUXDB_SHARD_PRECREATION_ADVANCE_PERIOD</code></li>
+</ul>
+<h2 id="监控"><a class="markdownIt-Anchor" href="#监控"></a> 监控</h2>
+<p><code>[monitor]</code><br />
+默认情况下，InfluxDB 将数据写入<code>_internal</code>数据库。如果该数据库不存在，InfluxDB 会自动创建它。 <code>_internal</code>数据库上的 DEFAULT 保留策略为 7 天。如果要使用 7 天保留策略以外的保留策略，则必须创建它。</p>
+<ul>
+<li><code>store-enabled = true</code><br />
+设置为 false 可在内部禁用记录统计信息。 如果设置为 false，将大大增加诊断安装问题的难度。环境变量：<code>INFLUXDB_MONITOR_STORE_ENABLED</code></li>
+<li><code>store-database = &quot;_internal&quot;</code><br />
+记录的统计信息的目标数据库。环境变量：<code>INFLUXDB_MONITOR_STORE_DATABASE</code></li>
+<li><code>store-interval = &quot;10s&quot;</code><br />
+InfluxDB 记录统计信息的时间间隔。 默认值为每十秒钟（10 秒）。环境变量：<code>INFLUXDB_MONITOR_STORE_INTERVAL</code></li>
+</ul>
+<h2 id="http-端点"><a class="markdownIt-Anchor" href="#http-端点"></a> HTTP 端点</h2>
+<p><code>[http]</code>控制 InfluxDB 如何配置 HTTP 端点。</p>
+<ul>
+<li><code>enabled = true</code> 确定是否启用 HTTP 端点。环境变量：<code>INFLUXDB_HTTP_ENABLED</code></li>
+<li><code>bind-address = &quot;:8086&quot;</code> HTTP 服务使用的绑定地址（端口）。环境变量：<code>INFLUXDB_HTTP_BIND_ADDRESS</code></li>
+<li><code>auth-enabled = false</code> 确定是否通过 HTTP 和 HTTPS 启用用户身份验证。 要要求身份验证，请将值设置为 true。环境变量：<code>INFLUXDB_HTTP_AUTH_ENABLED</code></li>
+<li><code>log-enabled = true</code> 确定是否启用 HTTP 请求日志记录。环境变量：<code>INFLUXDB_HTTP_LOG_ENABLED</code></li>
+<li><code>access-log-path = &quot;&quot;</code> 访问日志的路径。 如果未指定或无法访问指定的路径，将退回到 stderr，这会将 HTTP 日志与内部 InfluxDB 日志混合在一起。</li>
+<li><code>max-connection-limit = 0</code> 一次可打开的最大连接数。超出限制的新连接将被删除。默认值 0 将禁用该限制。</li>
+</ul>
+<h2 id="日志"><a class="markdownIt-Anchor" href="#日志"></a> 日志</h2>
+<p><code>[logging]</code>控制记录器如何将日志发送到输出。</p>
+<ul>
+<li><code>format = &quot;auto&quot;</code> 确定要用于日志的日志编码器。 可选 auto（默认），logfmt 和 json。 使用默认的自动选项，如果输出是输出到 TTY 设备（例如终端），则使用更加用户友好的控制台编码。 如果输出是文件，则 auto 选项使用 logfmt 编码。 logfmt 和 json 选项对于与外部工具集成很有用。环境变量：<code>INFLUXDB_LOGGING_FORMAT</code></li>
+<li><code>level = &quot;info&quot;</code> 要发出的日志级别。 可选为 error、warn、info(默认值)和 debug。等于或高于指定级别的日志将被发出。环境变量：<code>INFLUXDB_LOGGING_LEVEL</code></li>
+</ul>
+<h1 id="influxql-要点整理"><a class="markdownIt-Anchor" href="#influxql-要点整理"></a> InfluxQL 要点整理</h1>
+<h2 id="数据库监控"><a class="markdownIt-Anchor" href="#数据库监控"></a> 数据库监控</h2>
+<p>InfluxDB 可以显示有关每个节点的统计和诊断信息。</p>
+<ul>
+<li>
+<p>要查看节点统计信息，可执行命令<code>SHOW STATS</code>，返回的统计信息仅存储在内存中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&gt; show stats</span><br><span class="line">name: runtime</span><br><span class="line">-------------</span><br><span class="line">Alloc   Frees   HeapAlloc       HeapIdle        HeapInUse       HeapObjects     HeapReleased    HeapSys         Lookups Mallocs NumGC   NumGoroutine    PauseTotalNs    Sys             TotalAlloc</span><br><span class="line">4136056 6684537 4136056         34586624        5816320         49412           0               40402944        110     6733949 83      44              36083006        46692600        439945704</span><br><span class="line"></span><br><span class="line">name: graphite</span><br><span class="line">tags: proto&#x3D;tcp</span><br><span class="line">batches_tx bytes_rx connections_active connections_handled points_rx points_tx</span><br><span class="line"></span><br><span class="line">  ---</span><br><span class="line"></span><br><span class="line">  159 3999750 0 1 158110 158110</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>要查看节点诊断信息，可执行命令<code>SHOW DIAGNOSTICS</code>，返回诸如构建信息，正常运行时间，主机名，服务器配置，内存使用情况和 Go 运行时诊断之类的信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">name: build</span><br><span class="line">Branch Build Time Commit Version</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">1.7 23bc63d43a8dc05f53afa46e3526ebb5578f3d88 1.7.9</span><br><span class="line"></span><br><span class="line">name: config</span><br><span class="line">bind-address reporting-disabled</span><br><span class="line"></span><br><span class="line">---</span><br><span class="line"></span><br><span class="line">127.0.0.1:8088 false</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>InfluxDB 还将统计和诊断信息写入名为<code>_internal</code>的数据库，该数据库记录有关内部运行时和服务性能的指标。可以像其他任何 InfluxDB 数据库一样查询和操作<code>_internal</code>数据库。<br />
+其中有以下度量：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">cq</span><br><span class="line">database</span><br><span class="line">httpd</span><br><span class="line">queryExecutor</span><br><span class="line">runtime</span><br><span class="line">shard</span><br><span class="line">subscriber</span><br><span class="line">tsm1_cache</span><br><span class="line">tsm1_engine</span><br><span class="line">tsm1_filestore</span><br><span class="line">tsm1_wal</span><br><span class="line">write</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>可通过 HTTP API 访问 8086 端口<code>/metrics</code>，获取当前信息</p>
+</li>
+</ul>
+<h1 id="http_api-查询"><a class="markdownIt-Anchor" href="#http_api-查询"></a> HTTP_API 查询</h1>
+<h2 id="debug"><a class="markdownIt-Anchor" href="#debug"></a> debug</h2>
+<p><code>/debug/pprof</code>：运行时的一些参数信息。包含以下参数：</p>
+<ul>
+<li>allocs：过去所有内存分配的样本</li>
+<li>block：导致跟踪原语阻塞的堆栈跟踪</li>
+<li>cmdline：当前程序的命令行调用</li>
+<li>goroutine：所有当前 goroutine 的堆栈跟踪</li>
+<li>heap：活动对象的内存分配的采样。可以指定 gc GET 参数以在获取堆样本之前运行 GC。</li>
+<li>mutex：竞争互斥锁持有人的堆栈痕迹</li>
+<li>profile：CPU 配置文件。 可以在 GET 参数中指定持续时间。 获取概要文件后，使用<code>go tool pprof</code>命令调查概要文件。</li>
+<li>threadcreate：堆栈跟踪，导致创建新的 OS 线程</li>
+<li>trace：当前程序执行的跟踪。可以在 GET 参数中指定持续时间。 获取跟踪文件后，使用<code>go tool trace</code>命令调查跟踪。</li>
+</ul>
+<p>可直接通过<code>/debug/pprof</code>访问，或<code>/debug/pprof/&lt;profile&gt;</code>查看指定参数，或 go tool 命令查看<code>go tool pprof http://localhost:8086/debug/pprof/heap</code><br />
+还可以通过<code>/debug/pprof/all</code>获取信息的 tar.gz 包，包含所有参数信息的 txt 文本，<code>curl -o profiles.tar.gz &quot;http://localhost:8086/debug/pprof/all&quot;</code></p>
+<p><code>/debug/requests</code>：可跟踪对<code>/write</code>和<code>/query</code>的 HTTP 客户端请求，会按用户名和 IP 地址返回写入和查询的次数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:8086&#x2F;debug&#x2F;requests</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;user1:123.45.678.91&quot;: &#123;&quot;writes&quot;:1,&quot;queries&quot;:0&#125;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可设置<code>seconds</code>设置客户端收集信息的持续时间（以秒为单位）。默认持续时间为 10 秒。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:8086&#x2F;debug&#x2F;requests?seconds&#x3D;60</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;user1:123.45.678.91&quot;: &#123;&quot;writes&quot;:3,&quot;queries&quot;:0&#125;,</span><br><span class="line">  &quot;user1:000.0.0.0&quot;: &#123;&quot;writes&quot;:0,&quot;queries&quot;:16&#125;,</span><br><span class="line">  &quot;user2:xx.xx.xxx.xxx&quot;: &#123;&quot;writes&quot;:4,&quot;queries&quot;:0&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>/debug/vars</code>可获取统计信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:8086&#x2F;debug&#x2F;vars</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;system&quot;: &#123;&quot;currentTime&quot;:&quot;2019-12-19T09:11:19.458636472Z&quot;,&quot;started&quot;:&quot;2019-12-16T08:46:03.377469744Z&quot;,&quot;uptime&quot;:260716&#125;,</span><br><span class="line">  &quot;cmdline&quot;: [&quot;&#x2F;usr&#x2F;bin&#x2F;influxd&quot;,&quot;-config&quot;,&quot;&#x2F;etc&#x2F;influxdb&#x2F;influxdb.conf&quot;],</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="ping"><a class="markdownIt-Anchor" href="#ping"></a> ping</h2>
+<p><code>/ping</code>可获取当前 Influxdb 的实例信息，默认情况下，<code>/ping</code>返回一个简单的 HTTP 204 状态响应，以使客户端知道服务器正在运行。<br />
+当 verbose 选项设置为 true 时（<code>/ping？verbose=true</code>）（默认 erbose 为 false），返回 HTTP 200 状态。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl http:&#x2F;&#x2F;localhost:8086&#x2F;ping?verbose&#x3D;true</span><br><span class="line"></span><br><span class="line">&#123;&quot;version&quot;:&quot;1.7.9&quot;&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="query"><a class="markdownIt-Anchor" href="#query"></a> query</h2>
+<p><code>/query</code>可用于查询数据和管理数据库、保留策略和用户。支持 GET 和 POST</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -G &#39;http:&#x2F;&#x2F;localhost:8086&#x2F;query?db&#x3D;mydb&#39; --data-urlencode &#39;q&#x3D;SELECT * FROM &quot;mymeas&quot;&#39;</span><br><span class="line"></span><br><span class="line">&#123;&quot;results&quot;:[&#123;&quot;statement_id&quot;:0,&quot;series&quot;:[&#123;&quot;name&quot;:&quot;mymeas&quot;,&quot;columns&quot;:[&quot;time&quot;,&quot;myfield&quot;,&quot;mytag1&quot;,&quot;mytag2&quot;],&quot;values&quot;:[[&quot;2017-03-01T00:16:18Z&quot;,33.1,null,null],[&quot;2017-03-01T00:17:18Z&quot;,12.4,&quot;12&quot;,&quot;14&quot;]]&#125;]&#125;]&#125;</span><br></pre></td></tr></table></figure>
+<p>若要使用带插入的<code>INTO</code>语句，则需要使用 POST</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST &#39;http:&#x2F;&#x2F;localhost:8086&#x2F;query?db&#x3D;mydb&#39; --data-urlencode &#39;q&#x3D;SELECT * INTO &quot;newmeas&quot; FROM &quot;mymeas&quot;&#39;</span><br><span class="line"></span><br><span class="line">&#123;&quot;results&quot;:[&#123;&quot;statement_id&quot;:0,&quot;series&quot;:[&#123;&quot;name&quot;:&quot;result&quot;,&quot;columns&quot;:[&quot;time&quot;,&quot;written&quot;],&quot;values&quot;:[[&quot;1970-01-01T00:00:00Z&quot;,2]]&#125;]&#125;]&#125;</span><br></pre></td></tr></table></figure>
+<p>若要创建数据库</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST &#39;http:&#x2F;&#x2F;localhost:8086&#x2F;query&#39; --data-urlencode &#39;q&#x3D;CREATE DATABASE &quot;mydb&quot;&#39;</span><br><span class="line"></span><br><span class="line">&#123;&quot;results&quot;:[&#123;&quot;statement_id&quot;:0&#125;]&#125;</span><br></pre></td></tr></table></figure>
+<p>一些请求参数：</p>
+<ul>
+<li><code>db=</code>：查询（大部分 select 和 show）需要此参数，设置数据库</li>
+<li><code>epoch=</code>：返回具有指定精度的纪元时间戳。 默认情况下，InfluxDB 以 RFC3339 格式返回时间戳（以纳秒为单位）。</li>
+<li><code>p=</code>：设置登录密码（若开启了验证）</li>
+<li><code>u=</code>：设置登录用户（若开启了验证）</li>
+<li><code>pretty=true</code>：开启美化过的 json 格式输出</li>
+<li><code>q=</code>：InfluxQL 查询语句</li>
+</ul>
+<p>若要一次上传多个请求，查询语句间用<code>;</code>分隔</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -G http:&#x2F;&#x2F;localhost:8086&#x2F;query\?db\&#x3D;test</span><br><span class="line">    --data-urlencode &quot;q&#x3D;select * from go_info;select * from node_cpu_seconds_total&quot;</span><br></pre></td></tr></table></figure>
+<p>若要返回 csv 格式，可加上参数<code>-H &quot;Accept: application/csv&quot;</code>，系统以纪元格式返回时间戳而不是 RFC3339 格式。</p>
+<p>若要读取文件中的查询语句，可加上参数<code>-F &quot;q=@&lt;path_to_file&gt;&quot; -F &quot;async=true&quot;</code>，文件中的语句必须以<code>;</code>分隔。</p>
+<h2 id="write"><a class="markdownIt-Anchor" href="#write"></a> write</h2>
+<p><code>/write</code>写入数据库，支持 POST<br />
+建议在写入时，将时间的精度降低，例如设为<code>precision=s</code>，这会在压缩方面有所改善。</p>
+<p>写入一个点</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST &quot;http:&#x2F;&#x2F;localhost:8086&#x2F;write?db&#x3D;mydb&amp;precision&#x3D;s&quot; --data-binary &#39;mymeas,mytag&#x3D;1 myfield&#x3D;90 1463683075&#39;</span><br></pre></td></tr></table></figure>
+<p>写入一个点并指定保留策略，可使用参数<code>rp</code>指定策略</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -XPOST &quot;http:&#x2F;&#x2F;localhost:8086&#x2F;write?db&#x3D;mydb&amp;rp&#x3D;myrp&quot; --data-binary &#39;mymeas,mytag&#x3D;1 myfield&#x3D;90&#39;</span><br></pre></td></tr></table></figure>
+<p>其余参数与 query 类似，可参照 query 的参数<br />
+从文件读入指令需要用参数<code>--data-binary @data.txt</code>，要注意文件中的指令间要用换行分隔</p>
+<h1 id="认证授权"><a class="markdownIt-Anchor" href="#认证授权"></a> 认证授权</h1>
+<h1 id="日志追踪"><a class="markdownIt-Anchor" href="#日志追踪"></a> 日志追踪</h1>
+<h1 id="备份与恢复"><a class="markdownIt-Anchor" href="#备份与恢复"></a> 备份与恢复</h1>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+              <a href="/tags/influxdb/" rel="tag"><i class="fa fa-tag"></i> influxdb</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/influxdb-python-API%E4%BD%BF%E7%94%A8%E7%AC%94%E8%AE%B0/" rel="prev" title="influxdb-python-API使用笔记">
+      <i class="fa fa-chevron-left"></i> influxdb-python-API使用笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/JVM%E5%8E%9F%E7%90%86%E4%B8%8E%E4%BC%98%E5%8C%96%E7%AC%94%E8%AE%B0/" rel="next" title="JVM原理与优化笔记">
+      JVM原理与优化笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E5%90%AF%E5%8A%A8"><span class="nav-text"> 安装与启动</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82%E5%BF%B5"><span class="nav-text"> 概念</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%89%B9%E6%80%A7"><span class="nav-text"> 特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E8%A7%81%E8%A7%A3%E4%B8%8E%E6%9D%83%E8%A1%A1"><span class="nav-text"> 设计见解与权衡</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#influx-%E5%91%BD%E4%BB%A4%E8%A1%8C"><span class="nav-text"> influx 命令行</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86"><span class="nav-text"> 配置管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%A8%E5%B1%80%E9%85%8D%E7%BD%AE"><span class="nav-text"> 全局配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%83%E5%AD%98%E5%82%A8"><span class="nav-text"> 元存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE"><span class="nav-text"> 数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E7%AE%A1%E7%90%86"><span class="nav-text"> 请求管理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%9D%E7%95%99%E7%AD%96%E7%95%A5"><span class="nav-text"> 保留策略</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A2%8E%E7%89%87%E9%A2%84%E5%88%9B%E5%BB%BA"><span class="nav-text"> 碎片预创建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%91%E6%8E%A7"><span class="nav-text"> 监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#http-%E7%AB%AF%E7%82%B9"><span class="nav-text"> HTTP 端点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%BF%97"><span class="nav-text"> 日志</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#influxql-%E8%A6%81%E7%82%B9%E6%95%B4%E7%90%86"><span class="nav-text"> InfluxQL 要点整理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9B%91%E6%8E%A7"><span class="nav-text"> 数据库监控</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#http_api-%E6%9F%A5%E8%AF%A2"><span class="nav-text"> HTTP_API 查询</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#debug"><span class="nav-text"> debug</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ping"><span class="nav-text"> ping</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#query"><span class="nav-text"> query</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#write"><span class="nav-text"> write</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83"><span class="nav-text"> 认证授权</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E8%BF%BD%E8%B8%AA"><span class="nav-text"> 日志追踪</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="nav-text"> 备份与恢复</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

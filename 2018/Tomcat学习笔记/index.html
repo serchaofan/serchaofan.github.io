@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="tomcat9.0.13，jdk1.8  Tomcat 概述  Tomcat 结构  Tomcat 与 HTTP 的通信方式 Connector Container Tomcat 连接器     Tomcat 环境搭建  Tomcat 目录结构  server.xml webapp 结构   配置 WEB 应用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tomcat学习笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="tomcat9.0.13，jdk1.8  Tomcat 概述  Tomcat 结构  Tomcat 与 HTTP 的通信方式 Connector Container Tomcat 连接器     Tomcat 环境搭建  Tomcat 目录结构  server.xml webapp 结构   配置 WEB 应用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/3.png">
+<meta property="og:image" content="https://github.com/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png">
+<meta property="article:published_time" content="2018-08-01T13:04:02.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.638Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="Tomcat">
+<meta property="article:tag" content="web">
+<meta property="article:tag" content="java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Tomcat学习笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Tomcat学习笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-08-01 21:04:02" itemprop="dateCreated datePublished" datetime="2018-08-01T21:04:02+08:00">2018-08-01</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>tomcat9.0.13，jdk1.8</p>
+<ul>
+<li><a href="#tomcat-%e6%a6%82%e8%bf%b0">Tomcat 概述</a>
+<ul>
+<li><a href="#tomcat-%e7%bb%93%e6%9e%84">Tomcat 结构</a>
+<ul>
+<li><a href="#tomcat-%e4%b8%8e-http-%e7%9a%84%e9%80%9a%e4%bf%a1%e6%96%b9%e5%bc%8f">Tomcat 与 HTTP 的通信方式</a></li>
+<li><a href="#connector">Connector</a></li>
+<li><a href="#container">Container</a></li>
+<li><a href="#tomcat-%e8%bf%9e%e6%8e%a5%e5%99%a8">Tomcat 连接器</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#tomcat-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba">Tomcat 环境搭建</a>
+<ul>
+<li><a href="#tomcat-%e7%9b%ae%e5%bd%95%e7%bb%93%e6%9e%84">Tomcat 目录结构</a>
+<ul>
+<li><a href="#serverxml">server.xml</a></li>
+<li><a href="#webapp-%e7%bb%93%e6%9e%84">webapp 结构</a></li>
+</ul>
+</li>
+<li><a href="#%e9%85%8d%e7%bd%ae-web-%e5%ba%94%e7%94%a8">配置 WEB 应用</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+<h1 id="tomcat-概述"><a class="markdownIt-Anchor" href="#tomcat-概述"></a> Tomcat 概述</h1>
+<p>Tomcat 是 Apache 基金会下的一个核心项目，是一个轻量级的 web 应用服务器，主要用于作为 JSP 应用与 Servlet 的后端服务器。最早项目名叫 catalina，后改名为 tomcat。</p>
+<p>Tomcat 注重于 servlet 引擎，对静态页面的加载不如 apache，因此常常 tomcat 与 apache 组网，apache 用于静态页面生成，动态请求会转发给 tomcat 处理。</p>
+<h2 id="tomcat-结构"><a class="markdownIt-Anchor" href="#tomcat-结构"></a> Tomcat 结构</h2>
+<img src="/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="">
+<p>Server 为 Tomcat 的一个实例，一个 JVM 只能包含一个 Tomcat 实例。Server 的端口号为 8005，监听的是 shutdown 命令，若接收到 shutdown 信息，则关闭 tomcat。可在<code>server.xml</code>中看到</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;Server port&#x3D;&quot;8005&quot; shutdown&#x3D;&quot;SHUTDOWN&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>Service 包含两个部分：</p>
+<ul>
+<li>Connector：处理连接相关事务，提供 socket 与（request 和 response）的转化</li>
+<li>Container：封装和管理 servlet，具体处理 request 请求</li>
+</ul>
+<p>一个 Service 只有一个 Container，可有多个 Connector。</p>
+<p>有两个默认的 service：</p>
+<ul>
+<li>一个端口为 8080，负责建立 http 连接</li>
+<li>一个端口为 8009，负责与其他 http 服务器建立连接</li>
+</ul>
+<h3 id="tomcat-与-http-的通信方式"><a class="markdownIt-Anchor" href="#tomcat-与-http-的通信方式"></a> Tomcat 与 HTTP 的通信方式</h3>
+<p>有两种方式：</p>
+<ol>
+<li>Tomcat 提供专门的插件 JK，负责 Tomcat 与 HTTP 服务通信，把 JK 插件安装在对方 HTTP 服务器上，当 http 服务器收到请求会先通过 JK 过滤 URL，决定是否把请求发送到 Tomcat。</li>
+<li>AJP 协议（Apache JServ Protocol）。Tomcat 为实现与 HTTP 通信而定制的协议，有很高效率。过程如下：
+<ol>
+<li>请求到达 Tomcat，经过 Service 交给 Connector，将请求封装为 Request 和 Response 处理</li>
+<li>封装后交给 Container 处理</li>
+<li>再返回给 Container，Connector 通过 Socket 将结果返回给客户端</li>
+</ol>
+</li>
+</ol>
+<h3 id="connector"><a class="markdownIt-Anchor" href="#connector"></a> Connector</h3>
+<img src="/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="">
+<p>Connector 使用 ProtocolHandler 处理请求，不同 ProtocolHandler 代表不同连接类型</p>
+<p>ProtocolHandler 包含三个部件：</p>
+<ol>
+<li>Endpoint：处理底层 socket 连接，用来实现 TCP/IP。Endpoint 的抽象实现 AbstractEndpoint 定义了两个内部类 Acceptor 和 AsyncTimeout，以及一个接口 Handler
+<ul>
+<li>Acceptor 用于监听请求</li>
+<li>AsyncTimeout 用于检查异步 Request 超时</li>
+<li>Handler 用于处理接收到的 socket，交给 Processor</li>
+</ul>
+</li>
+<li>Processor：将 Endpoint 收到的 socket 封装成 Request，用来实现 HTTP</li>
+<li>Adapter：将 Request 交给 Container（Servlet 容器）进行具体处理</li>
+</ol>
+<img src="/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/3.png" class="">
+<h3 id="container"><a class="markdownIt-Anchor" href="#container"></a> Container</h3>
+<p>Container 用于封装 Servlet 以及具体处理 Request 请求</p>
+<img src="/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png" class="">
+<p>Container 包含四个子容器：</p>
+<ol>
+<li>Engine：用于管理多个站点，一个 Service 最多一个 Engine</li>
+<li>Host：站点，每个 Host 代表一个虚拟主机，可通过配置 Host 添加站点</li>
+<li>Context：应用，对应程序或一个 （WEB-INF 目录以及下面的 web.xml 文件）</li>
+<li>Wrapper：Servlet</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">webapps</span><br><span class="line">|-- ROOT</span><br><span class="line">|-- docs</span><br><span class="line">|-- examples</span><br><span class="line">|-- host-manager</span><br><span class="line">&#96;-- manager</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>webapps 目录下每个文件夹都是一个 context，ROOT 存放主应用，其他目录存放子应用，整个 webaapps 就是一个 Host 站点。<br />
+ROOT 下可直接通过域名访问，其他子应用通过域名+路径访问</p>
+<p>Container 使用的 pipeline-valve 处理请求。Pipeline-Valve 是责任链模式</p>
+<blockquote>
+<p>责任链模式：在一个请求处理过程中有很多处理者（handler）依次对请求处理，每个处理者负责自己相应的处理，处理完后将处理后的请求返回，依次让下一个处理者处理。</p>
+</blockquote>
+<p>Pipeline-valve 与普通责任链不同的地方：</p>
+<ul>
+<li>每个 pipeline 都有特定 valve，而且在管道的最后一个执行，称为 Basevalve，该 valve 不可删除</li>
+<li>上层容器的管道 Basevalve 会调用下层容器的管道</li>
+</ul>
+<p>四个子容器的 Basevalve 分别在：</p>
+<ul>
+<li>StandardEngineValve</li>
+<li>StandardHostValve</li>
+<li>StandardContextValve</li>
+<li>StandardWrapperValve</li>
+</ul>
+<img src="/2018/Tomcat%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png" class="">
+<p>Connector 接收的请求会传给最上层的 EnginePipeline，依次执行最终到 StandardWrapperValve。<br />
+此时 StandardWrapperValve 会创建 Filterchain，调用其 doFilter 方法处理请求，Filterchain 包含配置的与请求匹配的 Filter 和 Servlet，doFilter 会依次调用所有的 Filter 的 doFilter 和 Servlet 的 service 方法，请求即被处理。<br />
+所有的 PipelineValve 执行完成后，将结果返回给 Connector，Connector 再通过 socket 将结果返回给客户端。</p>
+<h3 id="tomcat-连接器"><a class="markdownIt-Anchor" href="#tomcat-连接器"></a> Tomcat 连接器</h3>
+<p>Tomcat 连接器分为两类：</p>
+<ol>
+<li>HTTP 连接器</li>
+<li>Web 服务器连接器</li>
+</ol>
+<p>HTTP 连接器有三种：</p>
+<ul>
+<li>基于 java 的 HTTP/1.1 连接器：Tomcat 默认使用的连接器，即 Coyote；它是 Tomcat 作为 standalone 模式工作时所用到的连接器，可直接响应来自用户浏览器的关于 JSP、servlet 和 HTML 的请求；此连接器是一个 Java 类，定义在 server.xml 当中，默认使用 8080 端口</li>
+<li>高性能 NIO HTTP/1.1 连接器（java 开发）：支持非阻塞式 IO 和 Comnet，在基于库向 tomcat 发起请求时，此连接器表现不俗</li>
+<li>native APR HTTP/1.1 连接器（C++开发）：在负载较大的场景中，此连接器可以提供非常好的性能</li>
+</ul>
+<h1 id="tomcat-环境搭建"><a class="markdownIt-Anchor" href="#tomcat-环境搭建"></a> Tomcat 环境搭建</h1>
+<p>搭建 Tomcat，首先要配置 JAVA 环境，下载 jdk，解压<code>/usr/local/jdk8</code>。<br />
+或者直接安装 openjdk，选择版本 1.8</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">debian&#x2F;ubuntu：</span><br><span class="line">apt-get install openjdk-8-jre openjdk-8-jdk</span><br><span class="line"></span><br><span class="line">设置JAVA_HOME为&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-8-openjdk-amd64&#x2F;</span><br><span class="line"></span><br><span class="line">centos&#x2F;redhat&#x2F;fedora：</span><br><span class="line">yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel</span><br><span class="line"></span><br><span class="line">设置JAVA_HOME为&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-1.8.0-openjdk&#x2F;</span><br></pre></td></tr></table></figure>
+<p>然后在<code>/etc/profile</code>配置环境变量</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">export JAVA_HOME&#x3D;&#x2F;usr&#x2F;local&#x2F;jdk8</span><br><span class="line">export CLASSPATH&#x3D;$JAVA_HOME&#x2F;lib</span><br><span class="line">export PATH&#x3D;$JAVA_HOME&#x2F;bin:$PATH</span><br></pre></td></tr></table></figure>
+<p>使用<code>java -version</code>和<code>javac -version</code>检查是否安装及配置成功</p>
+<h2 id="tomcat-目录结构"><a class="markdownIt-Anchor" href="#tomcat-目录结构"></a> Tomcat 目录结构</h2>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># tree -d -L 1</span><br><span class="line">.</span><br><span class="line">├── bin         # 存放启动和关闭Tomcat的脚本文件</span><br><span class="line">├── conf        # 存放配置文件</span><br><span class="line">├── lib         # 存放服务器支撑jar包</span><br><span class="line">├── logs        # 存放日志文件</span><br><span class="line">├── temp        # 存放临时文件</span><br><span class="line">├── webapps     # web应用目录</span><br><span class="line">└── work        # Tomcat工作目录</span><br></pre></td></tr></table></figure>
+<p><strong><code>bin</code>目录</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">├── catalina.sh        # Tomcat的核心脚本文件，用于启动、停止tomcat等操作</span><br><span class="line">├── ciphers.sh</span><br><span class="line">├── configtest.sh</span><br><span class="line">├── daemon.sh</span><br><span class="line">├── digest.sh</span><br><span class="line">├── makebase.sh</span><br><span class="line">├── setclasspath.sh</span><br><span class="line">├── shutdown.sh        # Tomcat停止脚本</span><br><span class="line">├── startup.sh         # Tomcat启动脚本，相当于catalina.sh run，而且是后台运行</span><br><span class="line">├── tool-wrapper.sh</span><br><span class="line">└── version.sh         # 显示Tomcat版本信息</span><br></pre></td></tr></table></figure>
+<p><strong><code>conf</code>目录</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">conf&#x2F;</span><br><span class="line">|-- catalina.policy</span><br><span class="line">|-- catalina.properties</span><br><span class="line">|-- context.xml</span><br><span class="line">|-- jaspic-providers.xml</span><br><span class="line">|-- jaspic-providers.xsd</span><br><span class="line">|-- logging.properties</span><br><span class="line">|-- server.xml</span><br><span class="line">|-- tomcat-users.xml</span><br><span class="line">|-- tomcat-users.xsd</span><br><span class="line">&#96;-- web.xml</span><br></pre></td></tr></table></figure>
+<ul>
+<li>server.xml：Tomcat 的主配置文件，包含 Service, Connector, Engine, Realm, Valve, Hosts 主组件的相关配置信息；</li>
+<li>web.xml：遵循 Servlet 规范标准的配置文件，用于配置 servlet，并为所有的 Web 应用程序提供包括 MIME 映射等默认配置信息；</li>
+<li>context.xml：所有 host 的默认配置信息；</li>
+<li>tomcat-users.xml：Realm 认证时用到的相关角色、用户和密码等信息；Tomcat 自带的 manager 默认情况下会用到此文件；在 Tomcat 中添加/删除用户，为用户指定角色等将通过编辑此文件实现；</li>
+<li>catalina.policy：Java 相关的安全策略配置文件，在系统资源级别上提供访问控制的能力；</li>
+<li>catalina.properties：Tomcat 内部 package 的定义及访问相关的控制，也包括对通过类装载器装载的内容的控制；Tomcat6 在启动时会事先读取此文件的相关设置；</li>
+</ul>
+<p>Tomcat 以面向对象的方式运行，它可以在运行时动态加载配置文件中定义的对象结构，这有点类似于 apache 的 httpd 模块的调用方式。server.xml 中定义的每个主元素都会被创建为对象，并以某特定的层次结构将这些对象组织在一起。</p>
+<h3 id="serverxml"><a class="markdownIt-Anchor" href="#serverxml"></a> server.xml</h3>
+<p>配置层次：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&lt;server&gt;</span><br><span class="line">  &lt;service&gt;</span><br><span class="line">    &lt;connector &#x2F;&gt;</span><br><span class="line">    &lt;engine&gt;</span><br><span class="line">      &lt;host&gt;</span><br><span class="line">        &lt;context&gt;</span><br><span class="line">        &lt;&#x2F;context&gt;</span><br><span class="line">      &lt;&#x2F;host&gt;</span><br><span class="line">      &lt;host&gt;</span><br><span class="line">      .....</span><br><span class="line">      &lt;&#x2F;host&gt;</span><br><span class="line">    &lt;&#x2F;engine&gt;</span><br><span class="line">  &lt;&#x2F;service&gt;</span><br><span class="line">&lt;&#x2F;server&gt;</span><br></pre></td></tr></table></figure>
+<p>组件类别：</p>
+<ul>
+<li>顶级组件：位于配置顶层
+<ul>
+<li>server</li>
+</ul>
+</li>
+<li>容器类组件：可包含其他组件
+<ul>
+<li>service：</li>
+<li>engine：</li>
+<li>host：</li>
+<li>context：</li>
+<li>webapp：</li>
+</ul>
+</li>
+<li>连接器组件：连接用户请求到 tomcat
+<ul>
+<li>connector</li>
+</ul>
+</li>
+<li>嵌套类组件：位于容器中，不包含其他组件
+<ul>
+<li>valve：</li>
+<li>access log valve：</li>
+<li>remote address filter valve：</li>
+<li>logger：</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Server<br />
+示例：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;Server port&#x3D;&quot;8005&quot; shutdown&#x3D;&quot;SHUTDOWN&quot;&gt;</span><br><span class="line">    &lt;Listener className&#x3D;&quot;org.apache.catalina.startup.VersionLoggerListener&quot; &#x2F;&gt;</span><br><span class="line">    ......</span><br><span class="line">&lt;&#x2F;Server&gt;</span><br></pre></td></tr></table></figure>
+相关属性：<br />
+<code>className</code>: 用于实现此 Server 容器的完全限定类的名称；<br />
+<code>port</code>: 接收 shutdown 指令的端口，默认仅允许通过本机访问，默认为 8005；<br />
+<code>shutdown</code>: 发往此 Server 用于实现关闭 tomcat 实例的命令字符串，默认为 SHUTDOWN；</li>
+<li>Service<br />
+示例：<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;Service name&#x3D;&quot;Catalina&quot;&gt;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="webapp-结构"><a class="markdownIt-Anchor" href="#webapp-结构"></a> webapp 结构</h3>
+<p>webapp 有特定的组织格式，是一种层次型目录结构；通常包含了 servlet 代码文件、jsp 页面文件、类文件、部署描述符文件等等，一般会打包成归档格式</p>
+<p>示例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">examples&#x2F;</span><br><span class="line">|-- WEB-INF</span><br><span class="line">|   |-- classes</span><br><span class="line">|   |-- jsp</span><br><span class="line">|   |-- jsp2</span><br><span class="line">|   |-- lib</span><br><span class="line">|   |-- tags</span><br><span class="line">|   &#96;-- web.xml</span><br><span class="line">|-- index.html</span><br><span class="line">|-- jsp</span><br><span class="line">|   |--......</span><br><span class="line">|   |-- images</span><br><span class="line">|   |-- include</span><br><span class="line">|   |-- index.html</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>/</code>：web 应用的根目录，ROOT 为根目录内容</li>
+<li><code>/WEB-INF</code>：包含当前 webapp 的 deploy 描述符，如所有的 servlets 和 JSP 等动态文件的详细信息，会话超时时间和数据源等；通常用于定义当前 webapp 特有的资源，通常 web.xml 和 context.xml 均放置于此目录</li>
+<li><code>/WEB-INF/classes</code>：包含所有服务器端类及当前应用程序相关的其它第三方类等</li>
+<li><code>/WEB-INF/lib</code>：包含 JSP 所用到的 JAR 文件，此 webapp 自有能够被打包为 jar 格式的类</li>
+</ul>
+<h2 id="配置-web-应用"><a class="markdownIt-Anchor" href="#配置-web-应用"></a> 配置 WEB 应用</h2>
+<p>有五种方法配置 web 应用</p>
+<ul>
+<li>在<code>conf</code>目录中<code>context.xml</code>中配置，配置会被所有 web 应用加载</li>
+<li>在<code>conf</code>目录中引擎目录(<code>catalina</code>)的主机目录(<code>localhost</code>)下新建<code>server.xml.default</code>配置，会被主机的所有 web 应用加载</li>
+<li>在<code>conf</code>目录中<code>catalina</code>的<code>localhost</code>目录中创建任意一个<code>.xml</code>文件，在文件中添加上下文，而文件名会被用作 web 应用的名称（虚拟站点名）。一个 web 应用可以映射多个虚拟目录。</li>
+<li>在主机目录下<code>META-INF/</code>中<code>context.xml</code></li>
+<li>在<code>conf</code>目录下<code>server.xml</code>中在<code>&lt;Host&gt;</code>中添加上下文（就是 web 应用路径）</li>
+</ul>
+<blockquote>
+<p>参考文章<br />
+<a target="_blank" rel="noopener" href="https://dbaplus.cn/news-134-1930-1.html">四张图带你了解 Tomcat 系统架构</a> &gt; <a target="_blank" rel="noopener" href="http://www.ttlsa.com/tomcat/tomcat-install-and-configure/">Tomcat 安装及配置详解</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/server/" rel="tag"><i class="fa fa-tag"></i> server</a>
+              <a href="/tags/Tomcat/" rel="tag"><i class="fa fa-tag"></i> Tomcat</a>
+              <a href="/tags/web/" rel="tag"><i class="fa fa-tag"></i> web</a>
+              <a href="/tags/java/" rel="tag"><i class="fa fa-tag"></i> java</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="SSH与SSL协议学习笔记">
+      <i class="fa fa-chevron-left"></i> SSH与SSL协议学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/Postfix%E9%82%AE%E4%BB%B6%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="next" title="Postfix邮件服务器笔记">
+      Postfix邮件服务器笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#tomcat-%E6%A6%82%E8%BF%B0"><span class="nav-text"> Tomcat 概述</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tomcat-%E7%BB%93%E6%9E%84"><span class="nav-text"> Tomcat 结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#tomcat-%E4%B8%8E-http-%E7%9A%84%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F"><span class="nav-text"> Tomcat 与 HTTP 的通信方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#connector"><span class="nav-text"> Connector</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#container"><span class="nav-text"> Container</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#tomcat-%E8%BF%9E%E6%8E%A5%E5%99%A8"><span class="nav-text"> Tomcat 连接器</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#tomcat-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="nav-text"> Tomcat 环境搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#tomcat-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="nav-text"> Tomcat 目录结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#serverxml"><span class="nav-text"> server.xml</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#webapp-%E7%BB%93%E6%9E%84"><span class="nav-text"> webapp 结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-web-%E5%BA%94%E7%94%A8"><span class="nav-text"> 配置 WEB 应用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

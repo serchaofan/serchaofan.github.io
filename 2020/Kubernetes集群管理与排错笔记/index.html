@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="Node 管理  Node 隔离与恢复 Node 扩容   更新 Label Namespace 资源管理 Pod 驱逐机制 Pod Disruption Budget 集群高可用 集群监控 集群日志管理 审计机制 Dashboard Helm 查看系统 Event 查看容器日志 查看服务日志 常见问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes集群管理与排错笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="Node 管理  Node 隔离与恢复 Node 扩容   更新 Label Namespace 资源管理 Pod 驱逐机制 Pod Disruption Budget 集群高可用 集群监控 集群日志管理 审计机制 Dashboard Helm 查看系统 Event 查看容器日志 查看服务日志 常见问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-04-05T11:06:01.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.501Z">
+<meta property="article:author" content="TianyiGu">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Kubernetes集群管理与排错笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86%E4%B8%8E%E6%8E%92%E9%94%99%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kubernetes集群管理与排错笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-05 19:06:01" itemprop="dateCreated datePublished" datetime="2020-04-05T19:06:01+08:00">2020-04-05</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#node-%e7%ae%a1%e7%90%86">Node 管理</a>
+<ul>
+<li><a href="#node-%e9%9a%94%e7%a6%bb%e4%b8%8e%e6%81%a2%e5%a4%8d">Node 隔离与恢复</a></li>
+<li><a href="#node-%e6%89%a9%e5%ae%b9">Node 扩容</a></li>
+</ul>
+</li>
+<li><a href="#%e6%9b%b4%e6%96%b0-label">更新 Label</a></li>
+<li><a href="#namespace">Namespace</a></li>
+<li><a href="#%e8%b5%84%e6%ba%90%e7%ae%a1%e7%90%86">资源管理</a></li>
+<li><a href="#pod-%e9%a9%b1%e9%80%90%e6%9c%ba%e5%88%b6">Pod 驱逐机制</a></li>
+<li><a href="#pod-disruption-budget">Pod Disruption Budget</a></li>
+<li><a href="#%e9%9b%86%e7%be%a4%e9%ab%98%e5%8f%af%e7%94%a8">集群高可用</a></li>
+<li><a href="#%e9%9b%86%e7%be%a4%e7%9b%91%e6%8e%a7">集群监控</a></li>
+<li><a href="#%e9%9b%86%e7%be%a4%e6%97%a5%e5%bf%97%e7%ae%a1%e7%90%86">集群日志管理</a></li>
+<li><a href="#%e5%ae%a1%e8%ae%a1%e6%9c%ba%e5%88%b6">审计机制</a></li>
+<li><a href="#dashboard">Dashboard</a></li>
+<li><a href="#helm">Helm</a></li>
+<li><a href="#%e6%9f%a5%e7%9c%8b%e7%b3%bb%e7%bb%9f-event">查看系统 Event</a></li>
+<li><a href="#%e6%9f%a5%e7%9c%8b%e5%ae%b9%e5%99%a8%e6%97%a5%e5%bf%97">查看容器日志</a></li>
+<li><a href="#%e6%9f%a5%e7%9c%8b%e6%9c%8d%e5%8a%a1%e6%97%a5%e5%bf%97">查看服务日志</a></li>
+<li><a href="#%e5%b8%b8%e8%a7%81%e9%97%ae%e9%a2%98">常见问题</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="node-管理"><a class="markdownIt-Anchor" href="#node-管理"></a> Node 管理</h1>
+<h2 id="node-隔离与恢复"><a class="markdownIt-Anchor" href="#node-隔离与恢复"></a> Node 隔离与恢复</h2>
+<p>将 Node 纳入或脱离调度范围</p>
+<p>创建 node 类型的 yaml，并设置<code>unschedulable: true</code></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Node</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kubenode2</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">kubernetes.io/hostname:</span> <span class="string">kubenode2</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">unschedulable:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>然后<code>kubectl replace -f</code>应用该配置，查看 nodes</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># kubectl get nodes</span><br><span class="line">NAME        STATUS                     ROLES    AGE   VERSION</span><br><span class="line">kubenode1   Ready                      master   18d   v1.18.0</span><br><span class="line">kubenode2   Ready,SchedulingDisabled   &lt;none&gt;   18d   v1.18.0</span><br><span class="line">kubenode3   Ready                      &lt;none&gt;   18d   v1.18.0</span><br></pre></td></tr></table></figure>
+<p>对于后续创建的 Pod 就不会再调度到该 Node 了。<br />
+若要重新将该节点纳入调度范围，只要将该参数改为 false 并应用即可。</p>
+<p>也可以直接通过命令<code>cordon</code>和<code>uncordon</code>进行设置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># kubectl cordon kubenode3</span><br><span class="line">node&#x2F;kubenode3 cordoned</span><br><span class="line"></span><br><span class="line"># kubectl get nodes kubenode3</span><br><span class="line">NAME        STATUS                     ROLES    AGE   VERSION</span><br><span class="line">kubenode3   Ready,SchedulingDisabled   &lt;none&gt;   18d   v1.18.0</span><br><span class="line"></span><br><span class="line"># kubectl uncordon kubenode3</span><br><span class="line">node&#x2F;kubenode3 uncordoned</span><br></pre></td></tr></table></figure>
+<h2 id="node-扩容"><a class="markdownIt-Anchor" href="#node-扩容"></a> Node 扩容</h2>
+<p>只需在新的 Node 上安装 docker、kubelet 和 kube-proxy，并配置启动参数，将 Master URL 指定为当前 k8s 集群 master 的地址。通过 kubelet 默认注册机制，新的 node 就会自动加入到 k8s 集群中。</p>
+<h1 id="更新-label"><a class="markdownIt-Anchor" href="#更新-label"></a> 更新 Label</h1>
+<p>创建一个 deployment，标签为<code>app=nginx</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># kubectl get pods --show-labels</span><br><span class="line">NAME                            READY   STATUS    RESTARTS   AGE     LABELS</span><br><span class="line">nginx-deploy-5bf87f5f59-6r67l   1&#x2F;1     Running   0          2m24s   app&#x3D;nginx,pod-template-hash&#x3D;5bf87f5f59</span><br><span class="line">nginx-deploy-5bf87f5f59-lt6v2   1&#x2F;1     Running   0          2m24s   app&#x3D;nginx,pod-template-hash&#x3D;5bf87f5f59</span><br><span class="line">nginx-deploy-5bf87f5f59-sqrs6   1&#x2F;1     Running   0          2m24s   app&#x3D;nginx,pod-template-hash&#x3D;5bf87f5f59</span><br></pre></td></tr></table></figure>
+<p>可通过<code>-L&lt;label_name&gt;</code>查看指定标签的值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># kubectl get pods -Lapp</span><br><span class="line">NAME                            READY   STATUS    RESTARTS   AGE     APP</span><br><span class="line">nginx-deploy-5bf87f5f59-6r67l   1&#x2F;1     Running   0          3m26s   nginx</span><br><span class="line">nginx-deploy-5bf87f5f59-lt6v2   1&#x2F;1     Running   0          3m26s   nginx</span><br><span class="line">nginx-deploy-5bf87f5f59-sqrs6   1&#x2F;1     Running   0          3m26s   nginx</span><br></pre></td></tr></table></figure>
+<p>若要更新标签，则通过<code>kubectl label</code>进行修改</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># kubectl get deployments.apps --show-labels</span><br><span class="line">NAME           READY   UP-TO-DATE   AVAILABLE   AGE     LABELS</span><br><span class="line">nginx-deploy   3&#x2F;3     3            3           8m10s   app&#x3D;nginx_1.17</span><br></pre></td></tr></table></figure>
+<p>若要删除该标签，则通过<code>&lt;label_name&gt;-</code>即可</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># kubectl label deployments.apps nginx-deploy app-</span><br><span class="line">deployment.apps&#x2F;nginx-deploy labeled</span><br><span class="line"></span><br><span class="line"># kubectl get deployments.apps --show-labels</span><br><span class="line">NAME           READY   UP-TO-DATE   AVAILABLE   AGE     LABELS</span><br><span class="line">nginx-deploy   3&#x2F;3     3            3           9m22s   &lt;none&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="namespace"><a class="markdownIt-Anchor" href="#namespace"></a> Namespace</h1>
+<p>K8s 通过命名空间和 Context 设置对不同工作组进行区分，使得它们互不干扰。</p>
+<p>namespace 的创建</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Namespace</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">dev</span></span><br></pre></td></tr></table></figure>
+<p>context 运行环境的创建</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建集群</span></span><br><span class="line"><span class="comment"># kubectl config set-cluster nginx-cluster-1 --server=http://192.168.60.3:8080</span></span><br><span class="line"><span class="string">Cluster</span> <span class="string">&quot;nginx-cluster-1&quot;</span> <span class="string">set.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置运行环境</span></span><br><span class="line"><span class="comment"># kubectl config set-context dev --namespace=dev --cluster=nginx-cluster-1 --user=dev</span></span><br><span class="line"><span class="string">Context</span> <span class="string">&quot;dev&quot;</span> <span class="string">created.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看已定义的context</span></span><br><span class="line"><span class="comment"># kubectl config view</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">clusters:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">cluster:</span></span><br><span class="line">    <span class="attr">certificate-authority-data:</span> <span class="string">DATA+OMITTED</span></span><br><span class="line">    <span class="attr">server:</span> <span class="string">https://192.168.60.3:6443</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">cluster:</span></span><br><span class="line">    <span class="attr">server:</span> <span class="string">http://192.168.60.3:8080</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-cluster-1</span></span><br><span class="line"><span class="attr">contexts:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">context:</span></span><br><span class="line">    <span class="attr">cluster:</span> <span class="string">nginx-cluster-1</span></span><br><span class="line">    <span class="attr">namespace:</span> <span class="string">dev</span></span><br><span class="line">    <span class="attr">user:</span> <span class="string">dev</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">dev</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">context:</span></span><br><span class="line">    <span class="attr">cluster:</span> <span class="string">kubernetes</span></span><br><span class="line">    <span class="attr">user:</span> <span class="string">kubernetes-admin</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kubernetes-admin@kubernetes</span></span><br><span class="line"><span class="attr">current-context:</span> <span class="string">kubernetes-admin@kubernetes</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Config</span></span><br><span class="line"><span class="attr">preferences:</span> &#123;&#125;</span><br><span class="line"><span class="attr">users:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">kubernetes-admin</span></span><br><span class="line">  <span class="attr">user:</span></span><br><span class="line">    <span class="attr">client-certificate-data:</span> <span class="string">REDACTED</span></span><br><span class="line">    <span class="attr">client-key-data:</span> <span class="string">REDACTED</span></span><br></pre></td></tr></table></figure>
+<p><code>kubectl config</code>会在<code>$&#123;HOME&#125;/.kube/</code>下生成一个名为 config 的文件，内容就是以上<code>kubectl config view</code>的内容。</p>
+<p>若要将工作组设置在指定 context 环境下工作，则通过<code>kubectl config use-context</code>指定</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"># kubectl config use-context dev</span><br><span class="line">Switched to context &quot;dev&quot;.</span><br></pre></td></tr></table></figure>
+<p>此后创建的资源都使用的是该环境。</p>
+<h1 id="资源管理"><a class="markdownIt-Anchor" href="#资源管理"></a> 资源管理</h1>
+<p>若对于 Pod 不定义 CPU Request 和 Memory Request，则 K8s 会认为该 Pod 所需资源很少，可调度到任意可用 Node 上，当集群的计算资源不充足时，就会使某个 Node 资源严重不足。为了避免系统挂掉，Node 会自动清理 pod 释放资源，但有的 Pod 十分重要，无论资源是否充足，也要保障 这些 Pod 的存活。对此 K8s 有以下保障机制：</p>
+<ul>
+<li>通过资源配额确保不同 Pod 只占用指定资源</li>
+<li>允许集群的资源被超额分配，提高资源利用率</li>
+<li>为 Pod 分级，确保不同等级 Pod 有不同的 QoS。资源不足时低等级的 Pod 被清理以确保高等级 Pod 正常运行。</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;128Mi&quot;</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;500m&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">my-name</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;20m&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;55M&quot;</span></span><br></pre></td></tr></table></figure>
+<h1 id="pod-驱逐机制"><a class="markdownIt-Anchor" href="#pod-驱逐机制"></a> Pod 驱逐机制</h1>
+<h1 id="pod-disruption-budget"><a class="markdownIt-Anchor" href="#pod-disruption-budget"></a> Pod Disruption Budget</h1>
+<h1 id="集群高可用"><a class="markdownIt-Anchor" href="#集群高可用"></a> 集群高可用</h1>
+<h1 id="集群监控"><a class="markdownIt-Anchor" href="#集群监控"></a> 集群监控</h1>
+<h1 id="集群日志管理"><a class="markdownIt-Anchor" href="#集群日志管理"></a> 集群日志管理</h1>
+<h1 id="审计机制"><a class="markdownIt-Anchor" href="#审计机制"></a> 审计机制</h1>
+<h1 id="dashboard"><a class="markdownIt-Anchor" href="#dashboard"></a> Dashboard</h1>
+<h1 id="helm"><a class="markdownIt-Anchor" href="#helm"></a> Helm</h1>
+<h1 id="查看系统-event"><a class="markdownIt-Anchor" href="#查看系统-event"></a> 查看系统 Event</h1>
+<h1 id="查看容器日志"><a class="markdownIt-Anchor" href="#查看容器日志"></a> 查看容器日志</h1>
+<h1 id="查看服务日志"><a class="markdownIt-Anchor" href="#查看服务日志"></a> 查看服务日志</h1>
+<h1 id="常见问题"><a class="markdownIt-Anchor" href="#常见问题"></a> 常见问题</h1>
+<blockquote>
+<p>参考文档<br />
+Kubernetes 权威指南</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8%E7%AC%94%E8%AE%B0/" rel="prev" title="Kubernetes集群安全笔记">
+      <i class="fa fa-chevron-left"></i> Kubernetes集群安全笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8%E7%AC%94%E8%AE%B0/" rel="next" title="Kubernetes共享存储笔记">
+      Kubernetes共享存储笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#node-%E7%AE%A1%E7%90%86"><span class="nav-text"> Node 管理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#node-%E9%9A%94%E7%A6%BB%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="nav-text"> Node 隔离与恢复</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#node-%E6%89%A9%E5%AE%B9"><span class="nav-text"> Node 扩容</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9B%B4%E6%96%B0-label"><span class="nav-text"> 更新 Label</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#namespace"><span class="nav-text"> Namespace</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86"><span class="nav-text"> 资源管理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#pod-%E9%A9%B1%E9%80%90%E6%9C%BA%E5%88%B6"><span class="nav-text"> Pod 驱逐机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#pod-disruption-budget"><span class="nav-text"> Pod Disruption Budget</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="nav-text"> 集群高可用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E7%9B%91%E6%8E%A7"><span class="nav-text"> 集群监控</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9B%86%E7%BE%A4%E6%97%A5%E5%BF%97%E7%AE%A1%E7%90%86"><span class="nav-text"> 集群日志管理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%A1%E8%AE%A1%E6%9C%BA%E5%88%B6"><span class="nav-text"> 审计机制</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#dashboard"><span class="nav-text"> Dashboard</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#helm"><span class="nav-text"> Helm</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E7%B3%BB%E7%BB%9F-event"><span class="nav-text"> 查看系统 Event</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E5%AE%B9%E5%99%A8%E6%97%A5%E5%BF%97"><span class="nav-text"> 查看容器日志</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E6%9C%8D%E5%8A%A1%E6%97%A5%E5%BF%97"><span class="nav-text"> 查看服务日志</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="nav-text"> 常见问题</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

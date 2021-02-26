@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="重新学习 Docker 整理，docker 版本 18.06  Docker 安装注意事项 Docker 基础命令集 Docker 核心原理  namespace cgroups  层级规则 子系统 cgroups 实现原理  cgroups 如何判断资源超限并做出措施 cgroup 与任务之间的关联关系 使用注意     Docker 架构  镜像管理 存储管理 数据卷 网络管理 容器安全">
+<meta property="og:type" content="article">
+<meta property="og:title" content="重学Docker笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="重新学习 Docker 整理，docker 版本 18.06  Docker 安装注意事项 Docker 基础命令集 Docker 核心原理  namespace cgroups  层级规则 子系统 cgroups 实现原理  cgroups 如何判断资源超限并做出措施 cgroup 与任务之间的关联关系 使用注意     Docker 架构  镜像管理 存储管理 数据卷 网络管理 容器安全">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/0.png">
+<meta property="og:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/1.png">
+<meta property="og:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/2.png">
+<meta property="og:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/3.png">
+<meta property="og:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/4.png">
+<meta property="og:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/5.png">
+<meta property="article:published_time" content="2018-10-12T04:21:24.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.819Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="云计算">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/0.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>重学Docker笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          重学Docker笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-10-12 12:21:24" itemprop="dateCreated datePublished" datetime="2018-10-12T12:21:24+08:00">2018-10-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>重新学习 Docker 整理，docker 版本 18.06</p>
+<ul>
+<li><a href="#docker-%e5%ae%89%e8%a3%85%e6%b3%a8%e6%84%8f%e4%ba%8b%e9%a1%b9">Docker 安装注意事项</a></li>
+<li><a href="#docker-%e5%9f%ba%e7%a1%80%e5%91%bd%e4%bb%a4%e9%9b%86">Docker 基础命令集</a></li>
+<li><a href="#docker-%e6%a0%b8%e5%bf%83%e5%8e%9f%e7%90%86">Docker 核心原理</a>
+<ul>
+<li><a href="#namespace">namespace</a></li>
+<li><a href="#cgroups">cgroups</a>
+<ul>
+<li><a href="#%e5%b1%82%e7%ba%a7%e8%a7%84%e5%88%99">层级规则</a></li>
+<li><a href="#%e5%ad%90%e7%b3%bb%e7%bb%9f">子系统</a></li>
+<li><a href="#cgroups-%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86">cgroups 实现原理</a>
+<ul>
+<li><a href="#cgroups-%e5%a6%82%e4%bd%95%e5%88%a4%e6%96%ad%e8%b5%84%e6%ba%90%e8%b6%85%e9%99%90%e5%b9%b6%e5%81%9a%e5%87%ba%e6%8e%aa%e6%96%bd">cgroups 如何判断资源超限并做出措施</a></li>
+<li><a href="#cgroup-%e4%b8%8e%e4%bb%bb%e5%8a%a1%e4%b9%8b%e9%97%b4%e7%9a%84%e5%85%b3%e8%81%94%e5%85%b3%e7%b3%bb">cgroup 与任务之间的关联关系</a></li>
+<li><a href="#%e4%bd%bf%e7%94%a8%e6%b3%a8%e6%84%8f">使用注意</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#docker-%e6%9e%b6%e6%9e%84">Docker 架构</a>
+<ul>
+<li><a href="#%e9%95%9c%e5%83%8f%e7%ae%a1%e7%90%86">镜像管理</a></li>
+<li><a href="#%e5%ad%98%e5%82%a8%e7%ae%a1%e7%90%86">存储管理</a></li>
+<li><a href="#%e6%95%b0%e6%8d%ae%e5%8d%b7">数据卷</a></li>
+<li><a href="#%e7%bd%91%e7%bb%9c%e7%ae%a1%e7%90%86">网络管理</a></li>
+<li><a href="#%e5%ae%b9%e5%99%a8%e5%ae%89%e5%85%a8">容器安全</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99">参考资料</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="docker-安装注意事项"><a class="markdownIt-Anchor" href="#docker-安装注意事项"></a> Docker 安装注意事项</h1>
+<p><a target="_blank" rel="noopener" href="https://docs.docker.com/install/linux/docker-ce/centos/">官方安装说明页面</a></p>
+<p>若要使普通用户也能有直接操作 Docker 命令的权限（不需要 sudo），可将该用户添加到 docker 组内。先要确保<code>/var/run/docker.sock</code>所属组为 docker。</p>
+<p><a target="_blank" rel="noopener" href="https://www.daocloud.io/mirror#accelerator-doc">DaoCloud 加速</a></p>
+<p>之后<code>systemctl daemon-reload</code>以及重启 docker</p>
+<h1 id="docker-基础命令集"><a class="markdownIt-Anchor" href="#docker-基础命令集"></a> Docker 基础命令集</h1>
+<p>环境信息：</p>
+<ul>
+<li><code>docker info</code>：显示 docker 配置信息</li>
+<li><code>docker version</code>：显示 docker 版本号</li>
+</ul>
+<p>容器生命周期管理：</p>
+<ul>
+<li><code>docker create</code>：创建容器</li>
+<li><code>docker exec</code>：对运行的容器执行一条命令</li>
+<li><code>docker kill</code>：杀死容器</li>
+<li><code>docker pause</code>：停止指定容器的所有进程</li>
+<li><code>docker restart</code>：重启容器</li>
+<li><code>docker rm</code>：删除容器</li>
+<li><code>docker run</code>：创建并运行容器。run 就是 create 和 start 的组合</li>
+<li><code>docker start</code>：启动一个或多个停止的容器</li>
+<li><code>docker stop</code>：停止一个或多个容器</li>
+<li><code>docker unpause</code>：恢复指定容器的所有进程继续运行</li>
+</ul>
+<p>镜像仓库管理：</p>
+<ul>
+<li><code>docker login</code>：登录到 Docker 仓库</li>
+<li><code>docker logout</code>：登出 Docker 仓库</li>
+<li><code>docker pull</code>：拉取镜像</li>
+<li><code>docker push</code>：上传镜像</li>
+<li><code>docker search</code>：搜索镜像</li>
+</ul>
+<p>镜像管理：</p>
+<ul>
+<li><code>docker build</code>：用 Dockerfile 构建一个镜像</li>
+<li><code>docker images</code>：查看镜像</li>
+<li><code>docker import</code>：</li>
+<li><code>docker load</code>：</li>
+<li><code>docker rmi</code>：</li>
+<li><code>docker save</code>：</li>
+<li><code>docker tag</code>：</li>
+<li><code>docker commit</code>：因为容器的变化而构建一个新的镜像</li>
+</ul>
+<p>容器运维管理：</p>
+<ul>
+<li><code>docker attach</code>：连接进入一个容器</li>
+<li><code>docker export</code>：</li>
+<li><code>docker inspect</code>：</li>
+<li><code>docker port</code>：</li>
+<li><code>docker ps</code>：列出容器</li>
+<li><code>docker rename</code>：重命名一个容器</li>
+<li><code>docker stats</code>：</li>
+<li><code>docker top</code>：</li>
+<li><code>docker wait</code>：</li>
+<li><code>docker cp</code>：</li>
+<li><code>docker diff</code>：</li>
+<li><code>docker update</code>：</li>
+</ul>
+<p>容器资源管理：</p>
+<ul>
+<li><code>docker volume</code>：管理数据卷</li>
+<li><code>docker network</code>：管理网络</li>
+</ul>
+<p>系统日志信息：</p>
+<ul>
+<li><code>docker events</code>：获取一个容器的实时信息</li>
+<li><code>docker history</code>：显示一个镜像的构建历史信息</li>
+<li><code>docker logs</code>：获取一个容器的日志</li>
+</ul>
+<p>常用命令调用过程：</p>
+<img src="/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/0.png" class="">
+<h1 id="docker-核心原理"><a class="markdownIt-Anchor" href="#docker-核心原理"></a> Docker 核心原理</h1>
+<h2 id="namespace"><a class="markdownIt-Anchor" href="#namespace"></a> namespace</h2>
+<p><strong>Linux 内核虚拟化容器技术（LXC Kernel Namespace）</strong>，将某个特定的全局系统资源通过抽象方法使得 namespace 中的进程看起来拥有自己的隔离的全局系统资源实例。LXC 提供以下六种隔离的系统调用。</p>
+<table>
+<thead>
+<tr>
+<th>namespace</th>
+<th>隔离的资源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UTS</td>
+<td>主机名和域名</td>
+</tr>
+<tr>
+<td>IPC</td>
+<td>进程间通信资源（信号量、消息队列、共享内存）</td>
+</tr>
+<tr>
+<td>PID</td>
+<td>进程编号</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>网络相关资源（网络设备、网络栈、端口等）</td>
+</tr>
+<tr>
+<td>Mount</td>
+<td>挂载点（文件系统）</td>
+</tr>
+<tr>
+<td>User</td>
+<td>用户与用户组</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cgroups"><a class="markdownIt-Anchor" href="#cgroups"></a> cgroups</h2>
+<p>cgroups 全称<strong>control groups</strong>，是 Linux 内核的一种机制，可根据需求把一系列系统任务及子任务整合到<strong>按资源划分等级的不同组</strong>内，从而为系统资源管理提供一个统一的框架。即 cgroups 可以限制、记录任务组所使用的物理资源。</p>
+<p>本质上，cgroups 是内核附加在程序上的一系列钩子 hook，通过程序运行时对资源的调度，触发相应的 hook 函数，以达到资源追踪和限制的目的。</p>
+<p>cgroups 特点：</p>
+<ul>
+<li>cgroups 的 API 以一个伪文件系统实现，用户态的程序可以通过文件操作实现 cgroups 的组织管理</li>
+<li>cgroups 的组织<strong>操作单元的细粒度可达到线程级别</strong>，用户可创建销毁 cgroups，实现资源再分配和管理</li>
+<li>所有资源管理功能都以子系统方式实现，接口统一</li>
+<li>子任务创建之初与父任务处于同一个 cgroups 控制组</li>
+</ul>
+<p>cgroups 功能：</p>
+<ul>
+<li>资源限制：对任务使用的<strong>资源总额</strong>进行限制。一旦超出配额就发出<strong>OOM</strong>（out of memory）的警告</li>
+<li>优先级分配：通过分配的<strong>CPU 时间片数量及磁盘 IO 带宽大小</strong>，实际上就相当于控制了任务运行的优先级</li>
+<li>资源统计：统计系统的资源使用量，适合于计费</li>
+<li>任务控制：可对任务执行挂起、恢复等操作</li>
+</ul>
+<p>cgroups 术语：</p>
+<ul>
+<li>task：任务，表示系统的一个进程或线程</li>
+<li>cgroup：控制组，cgroups 中资源控制都是以 cgroup 为单位，表示按某种资源控制标准划分而成的任务组，包含一个或多个子系统。任务可在 cgroup 间迁移</li>
+<li>subsystem：子系统，是一个资源调度控制器</li>
+<li>hierarchy：层级，由一系列 cgroup 以一个树状结构排列，每个层级通过绑定对应的子系统进行资源控制，并且子节点能继承父节点挂载的子系统。</li>
+</ul>
+<h3 id="层级规则"><a class="markdownIt-Anchor" href="#层级规则"></a> 层级规则</h3>
+<ul>
+<li>
+<p>规则 1：同一个层级可附加一个或多个子系统。事例如图，CPU 和 Memory 子系统附加到一个层级上</p>
+<img src="/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/1.png" class="">
+</li>
+<li>
+<p>规则 2：一个子系统可附加到多个层级上（仅当目标层级只有唯一一个子系统时），一个已经附加在某个层级上的子系统不能附加到其他含有别的子系统的层级上。</p>
+<img src="/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/2.png" class="">
+</li>
+<li>
+<p>规则 3：每新建一个层级时，该系统上所有任务默认加入这个新建层级的初始化 cgroup，称为 root cgroup。一个任务不能存在于同一个层级的不同 cgroup，但可以存在于不同层级的多个 cgroup 中。若将一个任务添加到同一层级的另一个 cgroup，则会自动将其从第一个 cgroup 中移除。</p>
+<img src="/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/3.png" class="">
+</li>
+<li>
+<p>规则 4：任务在 fork/clone 自身时创建的子任务默认与原任务在同一个 cgroup，但完成后，父子任务间在 cgroup 方面互不影响。</p>
+<img src="/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/4.png" class="">
+</li>
+</ul>
+<h3 id="子系统"><a class="markdownIt-Anchor" href="#子系统"></a> 子系统</h3>
+<p>子系统是 cgroups 的资源控制系统，每种子系统独立控制一种资源。Docker 有以下子系统：</p>
+<ul>
+<li>blkio：限制块设备输入输出</li>
+<li>cpu：控制对 CPU 的使用</li>
+<li>cpuacct：对 CPU 资源使用情况的报告</li>
+<li>cpuset：分配独立的 CPU 和内存</li>
+<li>devices：开启/关闭任务对设备的访问</li>
+<li>freezer：挂起/恢复任务</li>
+<li>memory：限定任务的内存使用量，并生成内存资源使用报告</li>
+<li>perf_event：可进行统一的性能测试</li>
+<li>net_cls：控制网络流量，识别数据包</li>
+</ul>
+<p>Linux 中 cgroup 表现为一个文件系统，需要 mount 才能使用。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"># mount -t cgroup</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;systemd type cgroup (rw,nosuid,nodev,noexec,relatime,xattr,release_agent&#x3D;&#x2F;usr&#x2F;lib&#x2F;systemd&#x2F;systemd-cgroups-agent,name&#x3D;systemd)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;memory type cgroup (rw,nosuid,nodev,noexec,relatime,memory)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;net_cls,net_prio type cgroup (rw,nosuid,nodev,noexec,relatime,net_prio,net_cls)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;perf_event type cgroup (rw,nosuid,nodev,noexec,relatime,perf_event)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;pids type cgroup (rw,nosuid,nodev,noexec,relatime,pids)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,cpuset)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;devices type cgroup (rw,nosuid,nodev,noexec,relatime,devices)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;freezer type cgroup (rw,nosuid,nodev,noexec,relatime,freezer)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;hugetlb type cgroup (rw,nosuid,nodev,noexec,relatime,hugetlb)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;blkio type cgroup (rw,nosuid,nodev,noexec,relatime,blkio)</span><br><span class="line">cgroup on &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,cpuacct,cpu)</span><br></pre></td></tr></table></figure>
+<p>子系统文件都存放在<code>/sys/fs/cgroup</code>目录中。Docker daemon 会在每个子系统的控制组目录中创建一个 docker 控制组，并在其中为每个容器创建一个以容器 ID（长 ID）为名称的容器控制组，该容器中所有任务的 TID（进程或线程的 ID）都会写入该控制组的 tasks 文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"># tree &#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;cpu&#x2F;docker&#x2F;</span><br><span class="line">&#x2F;sys&#x2F;fs&#x2F;cgroup&#x2F;cpu&#x2F;docker&#x2F;</span><br><span class="line">├── c146b9740725896dca61d96788acecd80c3bb7f80aedd22359cd78adbfda4fdc</span><br><span class="line">│   ├── cgroup.clone_children</span><br><span class="line">│   ├── cgroup.procs</span><br><span class="line">│   ├── cpuacct.stat</span><br><span class="line">|   |......</span><br><span class="line">│   └── tasks</span><br><span class="line">├── cgroup.clone_children</span><br><span class="line">├── cgroup.procs</span><br><span class="line">├── cpuacct.stat</span><br><span class="line">......</span><br><span class="line">└── tasks</span><br></pre></td></tr></table></figure>
+<h3 id="cgroups-实现原理"><a class="markdownIt-Anchor" href="#cgroups-实现原理"></a> cgroups 实现原理</h3>
+<h4 id="cgroups-如何判断资源超限并做出措施"><a class="markdownIt-Anchor" href="#cgroups-如何判断资源超限并做出措施"></a> cgroups 如何判断资源超限并做出措施</h4>
+<p>对于不同系统资源，cgroups 提供了统一的接口对资源进行控制和统计。会有描述子系统资源状态的结构体记录所属 cgroup，当进程申请更多资源时，会触发 cgroup 用量检测，若超出限额，则拒绝，否则就给予相应资源并记录在统计信息中，不仅要考虑资源的分配和回收，还要考虑不同类型的资源等。</p>
+<p>在超出限额后，会根据信号（如果设置的话）（如内存的 OOM 信号）决定进程是否挂起或继续执行。</p>
+<h4 id="cgroup-与任务之间的关联关系"><a class="markdownIt-Anchor" href="#cgroup-与任务之间的关联关系"></a> cgroup 与任务之间的关联关系</h4>
+<p>cgroup 与任务间是多对多关系，并不直接关联，而是通过一个中间结构将双向的关联信息记录。每个任务结构体能通过指针查询对应 group 的情况，也能查询各个子系统的情况，结构体把子系统状态指针包含进来，并由内核通过 container_of 宏定义获取对应结构体，关联到任务，实现资源限制。</p>
+<h4 id="使用注意"><a class="markdownIt-Anchor" href="#使用注意"></a> 使用注意</h4>
+<p>Docker 需要挂载 cgroup 文件系统新建一个层级结构，挂载时指定要绑定的系统。除 cgroup 文件系统外，内核没有为 cgroups 的访问和操作添加任何系统调用。</p>
+<p>无法将一个新的子系统绑定到一个已激活的层级，或从一个层级解除某个子系统的绑定。</p>
+<p>只有递归卸载层级中的所有 cgroup，该层级才会被真正删除，否则即使上层的层级删除了，后代的 cgroup 中的配置也会依然生效。</p>
+<p>在容器目录下，会有以下固定文件，描述 cgroup 相应信息。</p>
+<ul>
+<li>tasks：在该 cgroup 中任务的进程或线程 ID（无序），意味着把这个任务加入这个 cgroup。</li>
+<li>cgroup.procs：记录所有在 cgroup 的 TGID（线程组 ID，是线程组中第一个进程的 ID），意味着将与其相关的线程都加到这个 cgroup 中。</li>
+<li>notify_on_release：是否在 cgroup 中最后一个任务退出时通知运行 release agent，默认为 0，不运行。若为 1 则表示运行</li>
+</ul>
+<h2 id="docker-架构"><a class="markdownIt-Anchor" href="#docker-架构"></a> Docker 架构</h2>
+<p>采用 C/S 架构，用户通过 Docker client 与 Docker daemon 建立通信。</p>
+<img src="/2018/%E9%87%8D%E5%AD%A6Docker%E7%AC%94%E8%AE%B0/5.png" class="">
+<ul>
+<li>docker daemon 是 docker 的核心后台进程，响应 client 的请求，然后调度给容器操作。</li>
+<li>docker client 向 daemon 发送请求，可以是命令<code>docker</code>，也可以是使用了 docker API 的应用。</li>
+<li>image management：docker 通过 distribution、registry、layer、image、reference 等模块实现 docker 镜像管理。
+<ul>
+<li>distribution：与 docker registry 交互，上传下载镜像及存储 registry 的元数据</li>
+<li>registry：与 docker registry 有关的身份验证、镜像查找、镜像验证等操作</li>
+<li>image：与镜像元数据相关的存储、查找、镜像层索引、镜像 tar 包导入导出的交互操作</li>
+<li>reference：存储本地所有镜像的 repository 和 tag 名，维护与镜像 ID 间的映射关系</li>
+<li>layer：与镜像层、容器层元数据有关的增删改查，将镜像层操作映射到实际存储镜像层文件系统的 graphdriver 模块</li>
+</ul>
+</li>
+<li>docker daemon 包含的三个主要模块：execdriver（容器执行驱动）、volumedriver（volume 存储驱动）、graphdriver（镜像存储驱动）
+<ul>
+<li>execdriver：是对 namespaces、cgroups、selinux 等系统操作的二次封装，比 LXC 功能更全面。默认实现是官方的 libcontainer 库</li>
+<li>volumedriver：是 volume 存储操作的执行者，负责 volume 增删改查。默认实现是 local，默认将文件存放在 docker 根目录下 volume 目录</li>
+<li>graphdriver：是所有与容器镜像相关操作的执行者，会在 docker 工作目录下维护一组与镜像层对应的目录，存放镜像层关系和元数据。主要支持的 graphdriver：aufs、btrfs、zfs、devicemapper、overlay、vfs</li>
+</ul>
+</li>
+<li>libnetwork：抽象出了容器网络模型（Container Network Model），提供统一接口。抽象除了 sandbox、endpoint、network 对象，由具体网络驱动操作对象，通过网络控制器的统一接口供调用者管理网络。主要实现：创建网络、创建 network namespace、虚拟网卡和所有网络相关配置等</li>
+</ul>
+<h3 id="镜像管理"><a class="markdownIt-Anchor" href="#镜像管理"></a> 镜像管理</h3>
+<p>Docker 镜像的文件内容以及一些运行 Docker 容器的配置文件组成了 Docker 容器的静态文件系统运行环境——rootfs。</p>
+<p>rootfs 是 Docker 容器在启动时内部进程可见的文件系统，即 Docker 容器的根目录。docker daemon 为 Docker 容器挂载 rootfs 时，先将 rootfs 设为只读（read-only），在挂载完毕后，利用联合挂载（union mount）在 rootfs 上再挂载一个读写层，使得读写层位于 Docker 容器文件系统的最顶层，下面是多个只读层。</p>
+<p>Docker 镜像的特点：</p>
+<ul>
+<li>分层</li>
+<li>写时复制（copy-on-write）：在多个容器间共享镜像，只有 Docker 容器运行时文件系统变化时，才会把变化的文件写到可读写层。写时复制减少了镜像对磁盘空间的占用和容器启动时间。</li>
+<li>内容寻址存储（content-addressable storage）：该机制根据文件内容索引镜像和镜像层。会对镜像层生成内容哈希值，作为镜像层唯一标识。提高了镜像安全性，并能检测数据完整性。</li>
+<li>联合挂载：可以在一个挂载点同时挂载多个文件系统，将挂载点的原目录与被挂载内容进行整合。实现联合挂载的文件系统称为联合文件系统（union filesystem）。</li>
+</ul>
+<h3 id="存储管理"><a class="markdownIt-Anchor" href="#存储管理"></a> 存储管理</h3>
+<h3 id="数据卷"><a class="markdownIt-Anchor" href="#数据卷"></a> 数据卷</h3>
+<h3 id="网络管理"><a class="markdownIt-Anchor" href="#网络管理"></a> 网络管理</h3>
+<h3 id="容器安全"><a class="markdownIt-Anchor" href="#容器安全"></a> 容器安全</h3>
+<h1 id="参考资料"><a class="markdownIt-Anchor" href="#参考资料"></a> 参考资料</h1>
+<ul>
+<li>《Docker 开发指南》</li>
+<li>《Docker 容器与容器云》</li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/">Docker 官方文档 版本 18.03</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"><i class="fa fa-tag"></i> docker</a>
+              <a href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/" rel="tag"><i class="fa fa-tag"></i> 云计算</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/KVM%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="KVM学习笔记">
+      <i class="fa fa-chevron-left"></i> KVM学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/MongoDB%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/" rel="next" title="MongoDB基础笔记">
+      MongoDB基础笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-%E5%AE%89%E8%A3%85%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-text"> Docker 安装注意事项</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-%E5%9F%BA%E7%A1%80%E5%91%BD%E4%BB%A4%E9%9B%86"><span class="nav-text"> Docker 基础命令集</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#docker-%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86"><span class="nav-text"> Docker 核心原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#namespace"><span class="nav-text"> namespace</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cgroups"><span class="nav-text"> cgroups</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B1%82%E7%BA%A7%E8%A7%84%E5%88%99"><span class="nav-text"> 层级规则</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%90%E7%B3%BB%E7%BB%9F"><span class="nav-text"> 子系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#cgroups-%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-text"> cgroups 实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroups-%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD%E8%B5%84%E6%BA%90%E8%B6%85%E9%99%90%E5%B9%B6%E5%81%9A%E5%87%BA%E6%8E%AA%E6%96%BD"><span class="nav-text"> cgroups 如何判断资源超限并做出措施</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#cgroup-%E4%B8%8E%E4%BB%BB%E5%8A%A1%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E8%81%94%E5%85%B3%E7%B3%BB"><span class="nav-text"> cgroup 与任务之间的关联关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%B3%A8%E6%84%8F"><span class="nav-text"> 使用注意</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#docker-%E6%9E%B6%E6%9E%84"><span class="nav-text"> Docker 架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%95%9C%E5%83%8F%E7%AE%A1%E7%90%86"><span class="nav-text"> 镜像管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AD%98%E5%82%A8%E7%AE%A1%E7%90%86"><span class="nav-text"> 存储管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="nav-text"> 数据卷</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E7%AE%A1%E7%90%86"><span class="nav-text"> 网络管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%AE%89%E5%85%A8"><span class="nav-text"> 容器安全</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-text"> 参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>

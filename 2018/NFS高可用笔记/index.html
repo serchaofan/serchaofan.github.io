@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/avatar.jpg">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/avatar.jpg">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto Mono:300,300italic,400,400italic,700,700italic|Rock Salt:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="/lib/pace/pace-theme-minimal.min.css">
+  <script src="/lib/pace/pace.min.js"></script>
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('https://github.com/serchaofan/serchaofan.github.io').hostname,
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.6.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","padding":18,"offset":8,"onmobile":false},
+    copycode: {"enable":true,"show_result":true,"style":"flat"},
+    back2top: {"enable":true,"sidebar":true,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: true,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="NFS 高可用概述 NFS+Keepalived+DRBD 搭建">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NFS高可用笔记">
+<meta property="og:url" content="https://github.com/serchaofan/serchaofan.github.io/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="TianyiGu&#39;s Blog">
+<meta property="og:description" content="NFS 高可用概述 NFS+Keepalived+DRBD 搭建">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://github.com/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/1.png">
+<meta property="article:published_time" content="2018-11-27T00:27:27.000Z">
+<meta property="article:modified_time" content="2021-02-22T05:18:07.547Z">
+<meta property="article:author" content="TianyiGu">
+<meta property="article:tag" content="高可用">
+<meta property="article:tag" content="nfs">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://github.com/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/1.png">
+
+<link rel="canonical" href="https://github.com/serchaofan/serchaofan.github.io/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>NFS高可用笔记 | TianyiGu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="TianyiGu's Blog" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">TianyiGu's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-分类">
+
+    <a href="/guide/" rel="section"><i class="fa fa-fw fa-bookmark"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/serchaofan" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://github.com/serchaofan/serchaofan.github.io/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="TianyiGu">
+      <meta itemprop="description" content="要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TianyiGu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          NFS高可用笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-11-27 08:27:27" itemprop="dateCreated datePublished" datetime="2018-11-27T08:27:27+08:00">2018-11-27</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <ul>
+<li><a href="#nfs-%e9%ab%98%e5%8f%af%e7%94%a8%e6%a6%82%e8%bf%b0">NFS 高可用概述</a></li>
+<li><a href="#nfskeepaliveddrbd-%e6%90%ad%e5%bb%ba">NFS+Keepalived+DRBD 搭建</a></li>
+</ul>
+<span id="more"></span>
+<h1 id="nfs-高可用概述"><a class="markdownIt-Anchor" href="#nfs-高可用概述"></a> NFS 高可用概述</h1>
+<p>NFS 的物理磁盘往往做 RAID10 或 RAID0，再通过 DRBD 同步 NFS，以及设置 VIP 进行主从热备。若主 NFS 宕机后，默认情况在几秒内，新的主 NFS 就可以启动同步程序自动把数据同步到所有从 NFS 中。</p>
+<img src="/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/1.png" class="">
+<h1 id="nfskeepaliveddrbd-搭建"><a class="markdownIt-Anchor" href="#nfskeepaliveddrbd-搭建"></a> NFS+Keepalived+DRBD 搭建</h1>
+<p>实验环境：</p>
+<ul>
+<li>host1：NFS-Master
+<ul>
+<li>ens32：192.168.60.134</li>
+<li>ens34：192.168.70.128（Heartbeat 线网卡）</li>
+<li>ens35：192.168.80.128（DRBD 线网卡）</li>
+<li>sdb：2G（NFS 存数据）</li>
+</ul>
+</li>
+<li>host2：NFS-Backup
+<ul>
+<li>ens32：192.168.60.135</li>
+<li>ens34：192.168.70.129（Heartbeat 线网卡）</li>
+<li>ens35：192.168.80.129（DRBD 线网卡）</li>
+<li>sdb：2G（NFS 存数据）</li>
+</ul>
+</li>
+<li>host3：NFS-Slave
+<ul>
+<li>ens32：192.168.60.136</li>
+</ul>
+</li>
+</ul>
+<p>首先在 host1 和 host2 上安装 Cluster Glue，<a href="https://github.com/ClusterLabs/cluster-glue/releases">cluster-glue 下载</a></p>
+<p>解压后，进入目录，执行<code>autogen.sh</code>，生成<code>configure</code>文件</p>
+<p>安装可能需要的依赖：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y glib2-devel libxml2-devel bzip2-devel flex-devel bison-devel OpenIPMI-devel net-snmp-devel ipmitool ipmiutil ipmiutil-devel asciidoc</span><br></pre></td></tr></table></figure>
+<p>编译安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;glue \</span><br><span class="line">            LIBS&#x3D;&#39;&#x2F;lib64&#x2F;libuuid.so.1&#39;    # 一定要指定否则会报错</span><br></pre></td></tr></table></figure>
+<p>然后<code>make &amp;&amp; make install</code></p>
+<p>下载 heartbeat 源码包，<a target="_blank" rel="noopener" href="http://www.linux-ha.org/wiki/Downloads">下载地址</a>，解压进入目录执行<code>./bootstrap</code>生成<code>configure</code>文件，开始构建</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;heartbeat \</span><br><span class="line">            CFLAGS&#x3D;-l&#x2F;usr&#x2F;local&#x2F;heartbeat&#x2F;include -L&#x2F;usr&#x2F;local&#x2F;heartbeat&#x2F;lib</span><br></pre></td></tr></table></figure>
+<p>编译安装 keepalived。先检查依赖<code>libnl-devel</code>与<code>libnl3-devel</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;configure --prefix&#x3D;&#x2F;usr&#x2F;local&#x2F;keepalived \</span><br><span class="line">            --bindir&#x3D;&#x2F;usr&#x2F;bin \</span><br><span class="line">            --sbindir&#x3D;&#x2F;usr&#x2F;sbin \</span><br><span class="line">            --sysconfdir&#x3D;&#x2F;etc</span><br></pre></td></tr></table></figure>
+<p>首先配置分区一个是 400M，用于存放元数据，一个是 1.6G，用于存放业务数据。</p>
+<p>安装 DRBD，可通过 yum 安装，但要先安装 elrepo 源，<a target="_blank" rel="noopener" href="https://elrepo.org/tiki/tiki-index.php">下载地址</a>，安装完成后，查看该 repo 文件，将<code>enabled</code>设为 1。</p>
+<p>安装 DRBD，先<code>yum search</code> 查看要安装的版本，安装 9 的版本需要安装<code>drbd90-utils</code>和<code>kmod-drbd90</code>。</p>
+<p>导入 drbd 内核<code>modprobe drbd</code>，再查看<code>lsmod | grep drbd</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># lsmod | grep drbd</span><br><span class="line">drbd                  541356  0</span><br><span class="line">libcrc32c              12644  2 xfs,drbd</span><br></pre></td></tr></table></figure>
+<p>drbd 模块导入成功。</p>
+<p>编辑<code>/etc/drbd.d/nfs.res</code>配置，两台主机上要一致。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">resource data &#123;</span><br><span class="line">  protocol C;</span><br><span class="line">  on host1 &#123;</span><br><span class="line">    device    &#x2F;dev&#x2F;drbd1;</span><br><span class="line">    disk      &#x2F;dev&#x2F;sdb2;</span><br><span class="line">    address   192.168.80.128:7789;      # 心跳线</span><br><span class="line">    meta-disk &#x2F;dev&#x2F;sdb1[0];</span><br><span class="line">  &#125;</span><br><span class="line">  on host2 &#123;</span><br><span class="line">    device    &#x2F;dev&#x2F;drbd1;</span><br><span class="line">    disk      &#x2F;dev&#x2F;sdb2;</span><br><span class="line">    address   192.168.80.129:7789;</span><br><span class="line">    meta-disk &#x2F;dev&#x2F;sdb1[0];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>创建 drbd 磁盘<code>drbdadm create-md data</code>并启动<code>drbdadm up data</code>，两台都要执行。</p>
+<p>查看是否正常启动，以下为 drbd9 的显示，与 8 版本不同。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;drbd</span><br><span class="line">version: 9.0.14-1 (api:2&#x2F;proto:86-113)</span><br><span class="line">GIT-hash: 62f906cf44ef02a30ce0c148fec223b40c51c533 build by mockbuild@, 2018-05-04 03:32:42</span><br><span class="line">Transports (api:16): tcp (9.0.14-1)</span><br></pre></td></tr></table></figure>
+<p>使 host1 变为角色变为 primary。<code>drbdadm primary data --force</code></p>
+<p>在 host1 上挂载<code>mount /dev/drbd1 /var/drbd1</code>，并在其中创建文件。</p>
+<blockquote>
+<p>一定要在设置了 primary 角色后才挂载，否则挂载不上。</p>
+</blockquote>
+<p>然后 host1 卸载挂载，并角色转为 secondary</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">umount &#x2F;var&#x2F;drbd1</span><br><span class="line">drbdadm secondary data</span><br></pre></td></tr></table></figure>
+<p>在 host2 上转变角色为 primary，并挂载</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">drbdadm primary data</span><br><span class="line">mount &#x2F;dev&#x2F;drbd1 &#x2F;var&#x2F;drbd1</span><br></pre></td></tr></table></figure>
+<p>进入目录后查看，能看到在 host1 上创建的文件，同步实现。实验完后切换回来，仍然是 host1 为 primary，host2 为 secondary。</p>
+<p>安装 NFS 服务，在两台主机上<code>yum install nfs-utils rpcbind</code></p>
+<p><code>systemctl start nfs-server.service rpcbind.service</code>应该是先启动 rpcbind、再启动 nfs-server。</p>
+<p>在两台 host 上修改 nfs 配置文件<code>/etc/exports</code></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;var&#x2F;drbd1   192.168.60.*(rw,sync)</span><br></pre></td></tr></table></figure>
+<p>命令<code>exportfs -r</code>重新导入<code>/etc/exports</code>中的目录。</p>
+<p>使用<code>showmount -e 192.168.60.134</code>查看是否配置成功</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># showmount -e 192.168.60.134</span><br><span class="line">Export list for 192.168.60.134:</span><br><span class="line">&#x2F;var&#x2F;drbd1 192.168.60.*</span><br></pre></td></tr></table></figure>
+<p>开启一台同网段客户端验证。先安装<code>nfs-utils</code>和<code>rpcbind</code></p>
+<p>执行<code>mount -t nfs 192.168.60.134:/var/drbd1 /var/drbd1</code></p>
+<p>查看该目录，里面有创建的文件，NFS 获取成功。</p>
+<blockquote>
+<p>错误解决参考文章：</p>
+<p><a target="_blank" rel="noopener" href="http://doc.okbase.net/zhangjie830621/archive/79242.html">http://doc.okbase.net/zhangjie830621/archive/79242.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.linuxidc.com/Linux/2012-11/73620.htm">https://www.linuxidc.com/Linux/2012-11/73620.htm</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.bubuko.com/infodetail-1848309.html">http://www.bubuko.com/infodetail-1848309.html</a></p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="tag"><i class="fa fa-tag"></i> 高可用</a>
+              <a href="/tags/nfs/" rel="tag"><i class="fa fa-tag"></i> nfs</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/LDAP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" rel="prev" title="LDAP学习笔记">
+      <i class="fa fa-chevron-left"></i> LDAP学习笔记
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/The-Linux-HA-User-s-Guide%E7%BF%BB%E8%AF%91/" rel="next" title="The Linux-HA User's Guide翻译">
+      The Linux-HA User's Guide翻译 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#nfs-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%A6%82%E8%BF%B0"><span class="nav-text"> NFS 高可用概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#nfskeepaliveddrbd-%E6%90%AD%E5%BB%BA"><span class="nav-text"> NFS+Keepalived+DRBD 搭建</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="TianyiGu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">TianyiGu</p>
+  <div class="site-description" itemprop="description">要抓紧时间赶快生活，因为一场莫名其妙的疾病，或者一个意外的悲惨事件，都会使生命中断。</div>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/serchaofan" title="GitHub → https://github.com/serchaofan"><i class="fa fa-fw fa-github"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:624261309@qq.com" title="E-Mail → mailto:624261309@qq.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/TianyiGu1" title="Twitter → https://twitter.com/TianyiGu1" rel="noopener" target="_blank"><i class="fa fa-fw fa-twitter"></i></a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.geekchen.me/" title="https://www.geekchen.me/" rel="noopener" target="_blank">SuperChen</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://note.run-linux.com" title="https://note.run-linux.com" rel="noopener" target="_blank">Geekfan</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">TianyiGu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v5.4.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.6.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-pjax@0/pjax.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+  <script>
+var pjax = new Pjax({
+  selectors: [
+    'head title',
+    '#page-configurations',
+    '.content-wrap',
+    '.post-toc-wrap',
+    '#pjax'
+  ],
+  switches: {
+    '.post-toc-wrap': Pjax.switches.innerHTML
+  },
+  analytics: false,
+  cacheBust: false,
+  scrollTo : !CONFIG.bookmark.enable
+});
+
+window.addEventListener('pjax:success', () => {
+  document.querySelectorAll('script[pjax], script#page-configurations, #pjax script').forEach(element => {
+    var code = element.text || element.textContent || element.innerHTML || '';
+    var parent = element.parentNode;
+    parent.removeChild(element);
+    var script = document.createElement('script');
+    if (element.id) {
+      script.id = element.id;
+    }
+    if (element.className) {
+      script.className = element.className;
+    }
+    if (element.type) {
+      script.type = element.type;
+    }
+    if (element.src) {
+      script.src = element.src;
+      // Force synchronous loading of peripheral JS.
+      script.async = false;
+    }
+    if (element.getAttribute('pjax') !== null) {
+      element.setAttribute('pjax', '');
+    }
+    if (code !== '') {
+      script.appendChild(document.createTextNode(code));
+    }
+    parent.appendChild(script);
+  });
+  NexT.boot.refresh();
+  // Define Motion Sequence & Bootstrap Motion.
+  if (CONFIG.motion.enable) {
+    NexT.motion.integrator
+      .init()
+      .add(NexT.motion.middleWares.postList)
+      .bootstrap();
+  }
+  NexT.utils.updateSidebarPosition();
+});
+</script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="pjax">
+  
+
+  
+
+    </div>
+</body>
+</html>
