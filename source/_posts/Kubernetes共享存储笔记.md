@@ -7,7 +7,7 @@ date: 2020-04-05 19:06:54
 
 - [PV](#pv)
 - [PVC](#pvc)
-- [生命周期](#%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f)
+- [生命周期](#生命周期)
 - [StorageClass](#storageclass)
 
 <!--more-->

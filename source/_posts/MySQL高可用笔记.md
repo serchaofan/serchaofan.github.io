@@ -189,10 +189,10 @@ MySQL 提供了灵活的主从复制机制，可实现一主一从、一主多�
 MySQL 复制原理：MySQL 使用二进制日志（默认未启用），二进制日志会记录所有修改数据库的 SQL 语句。
 
 1. 主服务器上执行了 SQL 操作后，会记录到二进制日志 binlog
-2. 从服务器生成两个线程，一个是 I/O 线程，一个是 SQL 线程，I/O 线程请求主数据库的 binlog，将得到的 binlog 写入中继日志 relay log
+2. 从服务器生成两个线程，一个是 I/O 线程，一个是 SQL 线程，I/O 线程请求主数据库的 binlog，将得到的 binlog 写入中继日志 relay log。同时，从库的I/O线程会将主库的信息（即从库上配置的MASTER_HOST、MASTER_LOG_FILE、MASTER_LOG_POS等信息）存储在`master.info`文件，并实时更新
 3. 从数据库的 SQL 进程读取 relay log，并开启事务执行最新的一条 SQL 指令，实现主从一致
 
-{% asset_img 3.png %}
+![](../_posts/MySQL高可用笔记/3.png)
 
 # MySQL 常用调优策略
 
