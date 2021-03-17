@@ -1,78 +1,74 @@
 ---
-title: Kubernetes学习笔记
+title: Kubernetes
 date: 2018-07-13 20:33:37
 tags: [云计算, Kubernetes]
 categories: [云计算]
 ---
 
-- [Kubernetes 概述](#kubernetes-%e6%a6%82%e8%bf%b0)
-  - [k8s 结构与组件](#k8s-%e7%bb%93%e6%9e%84%e4%b8%8e%e7%bb%84%e4%bb%b6)
-  - [k8s 基础对象](#k8s-%e5%9f%ba%e7%a1%80%e5%af%b9%e8%b1%a1)
-    - [Pod](#pod)
-    - [Label](#label)
-    - [Replication Controller](#replication-controller)
-    - [Deployment](#deployment)
-    - [HPA](#hpa)
-    - [StatefulSet](#statefulset)
-    - [Service](#service)
-    - [Job](#job)
-    - [Volume](#volume)
-    - [Persistent Volume](#persistent-volume)
-    - [Namespace](#namespace)
-    - [Autonation](#autonation)
-    - [ConfigMap](#configmap)
-  - [k8s 如何进行版本升级](#k8s-%e5%a6%82%e4%bd%95%e8%bf%9b%e8%a1%8c%e7%89%88%e6%9c%ac%e5%8d%87%e7%ba%a7)
-  - [K8s 开放接口](#k8s-%e5%bc%80%e6%94%be%e6%8e%a5%e5%8f%a3)
-    - [CRI](#cri)
-    - [CNI](#cni)
-    - [CSI](#csi)
-- [Kubernetes 安装配置](#kubernetes-%e5%ae%89%e8%a3%85%e9%85%8d%e7%bd%ae)
-  - [k8s 部署要点](#k8s-%e9%83%a8%e7%bd%b2%e8%a6%81%e7%82%b9)
-  - [开始安装部署](#%e5%bc%80%e5%a7%8b%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2)
-    - [token 过期后节点再加入集群](#token-%e8%bf%87%e6%9c%9f%e5%90%8e%e8%8a%82%e7%82%b9%e5%86%8d%e5%8a%a0%e5%85%a5%e9%9b%86%e7%be%a4)
-  - [K8s 初始化过程](#k8s-%e5%88%9d%e5%a7%8b%e5%8c%96%e8%bf%87%e7%a8%8b)
-  - [Kubectl 常用操作](#kubectl-%e5%b8%b8%e7%94%a8%e6%93%8d%e4%bd%9c)
-  - [K8s 二进制安装](#k8s-%e4%ba%8c%e8%bf%9b%e5%88%b6%e5%ae%89%e8%a3%85)
-  - [K8s 集群安全](#k8s-%e9%9b%86%e7%be%a4%e5%ae%89%e5%85%a8)
-- [深入理解 Pod](#%e6%b7%b1%e5%85%a5%e7%90%86%e8%a7%a3-pod)
-  - [静态 Pod](#%e9%9d%99%e6%80%81-pod)
-  - [Pod 配置管理](#pod-%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86)
-  - [在容器内获取 Pod 信息](#%e5%9c%a8%e5%ae%b9%e5%99%a8%e5%86%85%e8%8e%b7%e5%8f%96-pod-%e4%bf%a1%e6%81%af)
-  - [Pod 生命周期与重启策略](#pod-%e7%94%9f%e5%91%bd%e5%91%a8%e6%9c%9f%e4%b8%8e%e9%87%8d%e5%90%af%e7%ad%96%e7%95%a5)
-  - [Pod 健康检查和服务可用性检查](#pod-%e5%81%a5%e5%ba%b7%e6%a3%80%e6%9f%a5%e5%92%8c%e6%9c%8d%e5%8a%a1%e5%8f%af%e7%94%a8%e6%80%a7%e6%a3%80%e6%9f%a5)
-  - [Pod 调度](#pod-%e8%b0%83%e5%ba%a6)
-    - [Deployment 与 RC](#deployment-%e4%b8%8e-rc)
-    - [NodeSelector](#nodeselector)
-    - [NodeAffinity](#nodeaffinity)
-    - [PodAffinity](#podaffinity)
-    - [Taints 与 Tolerations](#taints-%e4%b8%8e-tolerations)
-    - [Pod Priority Preemption](#pod-priority-preemption)
-    - [DaemonSet](#daemonset)
-    - [Job](#job-1)
-    - [Cronjob](#cronjob)
-  - [初始化容器 Init Container](#%e5%88%9d%e5%a7%8b%e5%8c%96%e5%ae%b9%e5%99%a8-init-container)
-  - [Pod 升级与回滚](#pod-%e5%8d%87%e7%ba%a7%e4%b8%8e%e5%9b%9e%e6%bb%9a)
-    - [Deployment 升级](#deployment-%e5%8d%87%e7%ba%a7)
-      - [更新策略](#%e6%9b%b4%e6%96%b0%e7%ad%96%e7%95%a5)
-    - [Deployment 回滚](#deployment-%e5%9b%9e%e6%bb%9a)
-      - [RC 滚动升级](#rc-%e6%bb%9a%e5%8a%a8%e5%8d%87%e7%ba%a7)
-  - [Pod 扩缩容](#pod-%e6%89%a9%e7%bc%a9%e5%ae%b9)
-    - [手动扩缩容](#%e6%89%8b%e5%8a%a8%e6%89%a9%e7%bc%a9%e5%ae%b9)
-- [深入理解 Service](#%e6%b7%b1%e5%85%a5%e7%90%86%e8%a7%a3-service)
-  - [外部服务 Service](#%e5%a4%96%e9%83%a8%e6%9c%8d%e5%8a%a1-service)
-  - [Headless Service](#headless-service)
-    - [Apache Cassandra 简介](#apache-cassandra-%e7%ae%80%e4%bb%8b)
-    - [通过 Service 动态查找 Pod](#%e9%80%9a%e8%bf%87-service-%e5%8a%a8%e6%80%81%e6%9f%a5%e6%89%be-pod)
-  - [从集群外部访问 Pod 和 Service](#%e4%bb%8e%e9%9b%86%e7%be%a4%e5%a4%96%e9%83%a8%e8%ae%bf%e9%97%ae-pod-%e5%92%8c-service)
-- [核心组件运行机制](#%e6%a0%b8%e5%bf%83%e7%bb%84%e4%bb%b6%e8%bf%90%e8%a1%8c%e6%9c%ba%e5%88%b6)
-  - [API-Server](#api-server)
-  - [Controller Manager](#controller-manager)
-    - [Replication Controller](#replication-controller-1)
-    - [Node Controller](#node-controller)
-    - [ResourceQuota Controller](#resourcequota-controller)
-    - [Namespace Controller](#namespace-controller)
-    - [Service Controller 和 Endpoints Controller](#service-controller-%e5%92%8c-endpoints-controller)
-  - [Scheduler](#scheduler)
+- [Kubernetes 概述](#Kubernetes-%E6%A6%82%E8%BF%B0)
+  - [k8s 结构与组件](#k8s-%E7%BB%93%E6%9E%84%E4%B8%8E%E7%BB%84%E4%BB%B6)
+  - [k8s 基础对象](#k8s-%E5%9F%BA%E7%A1%80%E5%AF%B9%E8%B1%A1)
+    - [Pod](#Pod)
+    - [Label](#Label)
+    - [Replication Controller](#Replication-Controller)
+    - [Deployment](#Deployment)
+    - [StatefulSet](#StatefulSet)
+    - [Service](#Service)
+    - [Job](#Job)
+    - [Volume](#Volume)
+    - [Persistent Volume](#Persistent-Volume)
+    - [Namespace](#Namespace)
+    - [Autonation](#Autonation)
+    - [ConfigMap](#ConfigMap)
+  - [k8s 如何进行版本升级](#k8s-%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E7%89%88%E6%9C%AC%E5%8D%87%E7%BA%A7)
+  - [K8s 开放接口](#K8s-%E5%BC%80%E6%94%BE%E6%8E%A5%E5%8F%A3)
+    - [CRI](#CRI)
+    - [CNI](#CNI)
+    - [CSI](#CSI)
+- [k8s 部署要点](#k8s-%E9%83%A8%E7%BD%B2%E8%A6%81%E7%82%B9)
+  - [Kubectl 常用操作](#Kubectl-%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C)
+  - [K8s 集群安全](#K8s-%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8)
+- [深入理解 Pod](#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Pod)
+  - [静态 Pod](#%E9%9D%99%E6%80%81-Pod)
+  - [Pod 配置管理](#Pod-%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86)
+  - [在容器内获取 Pod 信息](#%E5%9C%A8%E5%AE%B9%E5%99%A8%E5%86%85%E8%8E%B7%E5%8F%96-Pod-%E4%BF%A1%E6%81%AF)
+  - [Pod 生命周期与重启策略](#Pod-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8E%E9%87%8D%E5%90%AF%E7%AD%96%E7%95%A5)
+  - [Pod 健康检查和服务可用性检查](#Pod-%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%8F%AF%E7%94%A8%E6%80%A7%E6%A3%80%E6%9F%A5)
+  - [Pod 调度](#Pod-%E8%B0%83%E5%BA%A6)
+    - [Deployment 与 RC](#Deployment-%E4%B8%8E-RC)
+    - [NodeSelector](#NodeSelector)
+    - [NodeAffinity](#NodeAffinity)
+    - [PodAffinity](#PodAffinity)
+    - [Taints 与 Tolerations](#Taints-%E4%B8%8E-Tolerations)
+    - [Pod Priority Preemption](#Pod-Priority-Preemption)
+    - [DaemonSet](#DaemonSet)
+    - [Job](#Job-1)
+    - [Cronjob](#Cronjob)
+  - [初始化容器 Init Container](#%E5%88%9D%E5%A7%8B%E5%8C%96%E5%AE%B9%E5%99%A8-Init-Container)
+  - [Pod 升级与回滚](#Pod-%E5%8D%87%E7%BA%A7%E4%B8%8E%E5%9B%9E%E6%BB%9A)
+    - [Deployment 升级](#Deployment-%E5%8D%87%E7%BA%A7)
+      - [更新策略](#%E6%9B%B4%E6%96%B0%E7%AD%96%E7%95%A5)
+    - [Deployment 回滚](#Deployment-%E5%9B%9E%E6%BB%9A)
+      - [RC 滚动升级](#RC-%E6%BB%9A%E5%8A%A8%E5%8D%87%E7%BA%A7)
+  - [Pod 扩缩容](#Pod-%E6%89%A9%E7%BC%A9%E5%AE%B9)
+    - [手动扩缩容](#%E6%89%8B%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9)
+  - [K8s弹性伸缩](#K8s%E5%BC%B9%E6%80%A7%E4%BC%B8%E7%BC%A9)
+    - [HPA](#HPA)
+- [深入理解 Service](#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Service)
+  - [外部服务 Service](#%E5%A4%96%E9%83%A8%E6%9C%8D%E5%8A%A1-Service)
+  - [Headless Service](#Headless-Service)
+    - [Apache Cassandra 简介](#Apache-Cassandra-%E7%AE%80%E4%BB%8B)
+    - [通过 Service 动态查找 Pod](#%E9%80%9A%E8%BF%87-Service-%E5%8A%A8%E6%80%81%E6%9F%A5%E6%89%BE-Pod)
+  - [从集群外部访问 Pod 和 Service](#%E4%BB%8E%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E8%AE%BF%E9%97%AE-Pod-%E5%92%8C-Service)
+- [核心组件运行机制](#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6)
+  - [API-Server](#API-Server)
+  - [Controller Manager](#Controller-Manager)
+    - [Replication Controller](#Replication-Controller-1)
+    - [Node Controller](#Node-Controller)
+    - [ResourceQuota Controller](#ResourceQuota-Controller)
+    - [Namespace Controller](#Namespace-Controller)
+    - [Service Controller 和 Endpoints Controller](#Service-Controller-%E5%92%8C-Endpoints-Controller)
+  - [Scheduler](#Scheduler)
   - [kubelet](#kubelet)
   - [kubeproxy](#kubeproxy)
 
@@ -315,32 +311,7 @@ Deployment 的典型应用场景：
 - 查看 Deployment 状态，了解发布是否成功
 - 清除不再需要的旧版本 ReplicaSet
 
-### HPA
 
-Horizontal Pod Autoscaler（Pod 横向自动扩容），也是一种资源对象。通过追踪分析指定 RC 控制的所有目标 Pod 的负载情况，来确定是否需要针对性调整目标 Pod 的副本数量。
-HPA 有两种方法作为 Pod 负载的度量指标：
-
-- CPUUtilizationPercentage，是目标 Pod 所有副本自身 CPU 利用率的算数平均值（`Pod自身CPU利用率=Pod当前CPU使用量/Pod Request`）。
-  - 若某一时刻该值超过 80%，则意味着当前 Pod 副本数量不足以支撑更多请求，需要动态扩容，而当请求高峰过去，CPU 利用率又降下来，则副本数也自动减少到一个合理值。
-  - 通常是 1min 的平均值
-  - K8s 通过基础性能数据手机监控框架 Kubernetes Monitoring Architecture 支持 HPA。该框架中 K8s 定义了标准化 API 接口 Resource Metrics API，方便客户端（如 HPA）获取性能数据
-- 应用自定义的度量指标（如 TPS、QPS）
-
-```yaml
-例：
-apiVersion: autoscaling/v1
-kind: HorizontalPodAutoscaler
-metadata:
-  name: php-apache
-  namespace: default
-spec:
-  maxReplicas: 10
-  minReplicas: 1
-  scaleTargetRef:   # HPA控制一个叫php-apache的Deployment中的Pod副本
-    kind: Deployment
-    name: php-apache
-  targetCPUUtilizationPercentage: 90    # 该值超过90%则触发自动扩容
-```
 
 ### StatefulSet
 
@@ -355,7 +326,7 @@ StatefulSet 可以看作 Deployment/RC 的一个特殊变种，有以下特性�
 
 - StatefulSet 中每个 Pod 都有稳定、唯一的网络标识，可用于发现集群中其他成员
 - StatefulSet 控制的 Pod 副本的启停顺序是受控的，操作第 n 个 pod 时，前 n-1 个 Pod 已经运行且准备好
-- StatefulSet 中 pod 采用稳定的之旧话存储卷，通过 PV 或 PVC 实现，删除 Pod 默认不会删除与 StatefulSet 相关的存储卷
+- StatefulSet 中 pod 采用稳定的持久化存储卷，通过 PV 或 PVC 实现，删除 Pod 默认不会删除与 StatefulSet 相关的存储卷
 
 StatefulSet 除了与 PV 卷捆绑使用存储 pod 状态数据，还要与 Headless Service 配合使用，每个 StatefulSet 定义都要声明属于哪个 Headless Service。
 
@@ -647,9 +618,7 @@ CSI 存储关键组件：
 - CSI Controller：提供存储服务视角对存储资源和存储卷进行管理操作。k8s 推荐将其部署为单实例 Pod，可使用 StatefulSet 和 Deployment 控制器进行部署，设置副本数量为 1，保证为一种存储插件只运行一个控制器实例。
 - CSI Node：对主机 Node 上的 Volume 进行管理和操作，k8s 建议部署为 DaemonSet，在每个 Node 上都运行一个 Pod
 
-# Kubernetes 安装配置
-
-## k8s 部署要点
+# k8s 部署要点
 
 若是在**测试环境**：
 
@@ -666,108 +635,14 @@ CSI 存储关键组件：
 - node：数量越多，冗余和负载能力越强
 - 集群存储建议：Ceph、GlusterFS、iSCSI 及云存储
 
-## 开始安装部署
-
-实验环境：
-
-- 3 台虚拟机 CentOS7
-- Kubernetes 版本 1.18
-- Docker 版本 19.03
-  > 如果版本过高需要重新下载安装`yum install docker-ce-<VERSION STRING>`，如`yum install docker-ce-18.06.0.ce`
-- Node1：Master，192.168.60.3
-- Node2：Node，192.168.60.4
-- Node3：Node，192.168.60.5
-
-每个节点上配置 k8s 的 repo，最好用 aliyun 的源
-
-```
-[kubernetes]
-name=Kubernetes
-baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
-```
-
-Master 节点上不需要安装 docker，但需要安装 etcd、kubectl、kubeadm
-Node 节点上要安装 docker、kubelet、kubeadm
-
-```
-# Master
-yum install -y kubectl kubelet kubeadm etcd
-
-# Node
-yum install -y kubelet docker-ce kubeadm
-```
-
-所有节点都要关闭 selinux，确保时间都同步了，并在`/etc/hosts`中设置主机名
-
-```
-192.168.60.3  kubenode1
-192.168.60.4  kubenode2
-192.168.60.5  kubenode3
-```
-
-Master 上使用`kubeadm`安装 K8s
-
-由于`kubectl`和`kubeadm`暂时无法使用命令补全，所以需要启用自动补全。
+kubectl启用自动补全。
 
 ```
 echo "source <(kubectl completion bash)" >> ~/.bashrc
-echo "source <(kubeadm completion bash)" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-先生成默认配置文件
-
-```
-kubeadm config print init-defaults > init-default.yml
-```
-
-修改配置文件的 k8s 镜像源以及 Pod 的 IP 地址范围
-
-```yaml
-imageRepository: registry.aliyuncs.com/google_containers
-
-networking:
-dnsDomain: cluster.local
-serviceSubnet: "192.168.1.0/24"
-```
-
-可以删掉大部分内容，只保留
-
-```yaml
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: ClusterConfiguration
-imageRepository: registry.aliyuncs.com/google_containers
-kubernetesVersion: v1.17.0
-networking:
-serviceSubnet: "10.1.0.0/16"
-```
-
-之后查看所需的镜像列表
-
-```
-# kubeadm config images list --config init-default.yml
-W0222 23:58:01.371880   92156 validation.go:28] Cannot validate kube-proxy config - no validator is available
-W0222 23:58:01.371937   92156 validation.go:28] Cannot validate kubelet config - no validator is available
-registry.aliyuncs.com/google_containers/kube-apiserver:v1.18.0
-registry.aliyuncs.com/google_containers/kube-controller-manager:v1.18.0
-registry.aliyuncs.com/google_containers/kube-scheduler:v1.18.0
-registry.aliyuncs.com/google_containers/kube-proxy:v1.18.0
-registry.aliyuncs.com/google_containers/pause:3.1
-registry.aliyuncs.com/google_containers/etcd:3.4.3-0
-registry.aliyuncs.com/google_containers/coredns:1.6.5
-```
-
-拉取镜像
-
-```
-# kubeadm config images pull --config init-default.yml
-```
-
-也可使用开源脚本[xuxinkun/littleTools](https://github.com/xuxinkun/littleTools)
+若要拉取镜像，可使用开源脚本[xuxinkun/littleTools](https://github.com/xuxinkun/littleTools)
 
 ```
 git clone https://github.com/xuxinkun/littleTools
@@ -788,9 +663,6 @@ azk8spull k8s.gcr.io/pause:3.1
 azk8spull k8s.gcr.io/etcd:3.4.3-0
 azk8spull k8s.gcr.io/coredns:1.6.5
 ```
-
-开始安装 Master
-**注意：kubeadm 安装过程中不涉及网络插件（CNI）的初始化，因此 kubeadm 初步安装完成的集群是没有网络功能的，任何 Pod 包括自带的 CoreDNS 都无法正常工作**
 
 确认关闭 swap，并将`/proc/sys/net/bridge/bridge-nf-call-iptables`设为 1。在 Node 上也要这样设置
 
@@ -814,274 +686,6 @@ fs.file-max=52706963
 fs.nr_open=52706963
 net.ipv6.conf.all.disable_ipv6=1   # 不使用的 IPV6 协议栈，防止触发 docker BUG
 net.netfilter.nf_conntrack_max=2310720
-```
-
-初始化集群的控制面（Control Panel）
-
-```
-kubeadm init --config init-default.yml
-```
-
-会提示以下信息：
-
-```
-Your Kubernetes control-plane has initialized successfully!
-
-To start using your cluster, you need to run the following as a regular user:
-
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-You should now deploy a pod network to the cluster.
-Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
-  https://kubernetes.io/docs/concepts/cluster-administration/addons/
-
-Then you can join any number of worker nodes by running the following on each as root:
-
-kubeadm join 192.168.60.3:6443 --token 0rr1jc.q1vbyvjw9tbfotkx \
-    --discovery-token-ca-cert-hash sha256:ac760d87b170782743e6d858ed95a720291666c4fc51d2824867038b3ec3383f
-
-```
-
-若安装失败，可使用命令`kubeadm reset`使主机恢复原状
-
-按照提示，最好使用普通用户执行操作 k8s
-
-```
-  mkdir -p $HOME/.kube
-  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-  sudo chown $(id -u):$(id -g) $HOME/.kube/config
-```
-
-此时可查看 ConfigMap
-
-```
-# kubectl get -n kube-system configmaps
-NAME                                 DATA   AGE
-coredns                              1      59s
-extension-apiserver-authentication   6      62s
-kube-proxy                           2      59s
-kubeadm-config                       2      60s
-kubelet-config-1.18                  1      60s
-```
-
-Node 上可以直接通过 Init 信息的最后一行的命令加入集群，也可通过创建配置文件`join-config.yml`加入
-
-```yaml
-apiVersion: kubeadm.k8s.io/v1beta2
-kind: JoinConfiguration
-discovery:
-bootstrapToken:
-apiServerEndpoint: 192.168.60.3:6443 # 对应命令join后的Master地址
-token: zxzy3d.r12iq7oa9mn86tst # 对应命令的token
-unsafeSkipCAVerification: ture
-tlsBootstrapToken: zxzy3d.r12iq7oa9mn86tst # 与token一致
-```
-
-然后执行
-
-```
-kubeadm join --config join-config.yml
-```
-
-两个 Node 都加入集群后，在 master 上先查看下 node 状态
-
-```
-# kubectl get nodes
-NAME        STATUS     ROLES    AGE     VERSION
-kubenode1   NotReady   master   3m24s   v1.18.0
-kubenode2   NotReady   <none>   58s     v1.18.0
-kubenode3   NotReady   <none>   48s     v1.18.0
-```
-
-可以看出三个节点的状态都为`NotReady`，是因为没有安装 CNI 网络插件。网络插件安装一个即可。
-
-- 安装 Weave
-  可到 kubernetes.io 中找到 weave 的 addon 安装[weave 插件安装](https://www.weave.works/docs/net/latest/kubernetes/kube-addon/#install)
-
-  ```
-  kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-  ```
-
-- 安装 Flannel
-  可到 github 的 flannel 文档中找到配置，直接通过 kubectl 安装即可
-  ```
-  kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-  ```
-
-再查看节点状态，已变为 Ready
-
-```
-# kubectl get nodes
-NAME        STATUS   ROLES    AGE     VERSION
-kubenode1   Ready    master   5m46s   v1.18.0
-kubenode2   Ready    <none>   3m20s   v1.18.0
-kubenode3   Ready    <none>   3m10s   v1.18.0
-```
-
-查看所有集群相关 pod 是否正常创建并运行
-
-```
-# kubectl get pods --all-namespaces
-NAMESPACE     NAME                                READY   STATUS    RESTARTS   AGE
-kube-system   coredns-7ff77c879f-x272x            1/1     Running   0          6m14s
-kube-system   coredns-7ff77c879f-xrps7            1/1     Running   0          6m14s
-kube-system   etcd-kubenode1                      1/1     Running   0          6m20s
-kube-system   kube-apiserver-kubenode1            1/1     Running   0          6m20s
-kube-system   kube-controller-manager-kubenode1   1/1     Running   0          6m20s
-kube-system   kube-proxy-fgk5j                    1/1     Running   0          3m58s
-kube-system   kube-proxy-rbhcd                    1/1     Running   0          6m14s
-kube-system   kube-proxy-tjspj                    1/1     Running   0          3m48s
-kube-system   kube-scheduler-kubenode1            1/1     Running   0          6m20s
-kube-system   weave-net-2jxxd                     2/2     Running   0          2m
-kube-system   weave-net-4j699                     2/2     Running   0          2m
-kube-system   weave-net-jmdz9                     2/2     Running   0          2m
-```
-
-在 Master 上先开启 API Server 代理端口 8080 `kubectl proxy --port=8080 &`，并且关闭防火墙，关闭 selinux，否则可能会报错：
-
-```
-The connection to the server localhost:8080 was refused - did you specify the right host or port?
-```
-
-通过`curl localhost:8080/api`查看是否能访问
-
-```
-# curl localhost:8080/api
-I1126 00:30:27.335378   37820 log.go:172] http: Accept error: accept tcp 127.0.0.1:8080: accept4: too many open files; retrying in 5ms
-I1126 00:30:27.335676   37820 log.go:172] http: proxy error: dial tcp 127.0.0.1:8080: socket: too many open files
-```
-
-能够访问了，但可能会出现报错，`too many open files`，可以设置`ulimit -n`增大即可，然后需要重新开启 proxy。
-
-若正常情况，则是：
-
-```
-# curl localhost:8080/api
-{
-  "kind": "APIVersions",
-  "versions": [
-    "v1"
-  ],
-  "serverAddressByClientCIDRs": [
-    {
-      "clientCIDR": "0.0.0.0/0",
-      "serverAddress": "192.168.60.3:6443"
-    }
-  ]
-}
-```
-
-### token 过期后节点再加入集群
-
-kubeadm 初始化后，会生成一段供节点加入集群的 token 和 ca 证书的 hash。
-
-```
-kubeadm join 192.168.60.131:6443 --token zxzy3d.r12iq7oa9mn86tst \
-    --discovery-token-ca-cert-hash sha256:9bdc86f162f15c3eab5fc647f68b2009a3985626d8272dac6587f648767ea592
-```
-
-默认 token 的有效期为 24 小时，当过期之后，该 token 就不可用了，需要重新生成
-
-```
-kubeadm token create   # 重新生成Token
-kubeadm token list     # 查看所有Token
-
-# 根据k8s的ca证书再生成hash
-openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
-```
-
-再替换 kubeadm join 命令的 token 和 hash 即可。
-
-## K8s 初始化过程
-
-1. kubeadm 执行初始化前的检查
-
-```
-[init] using Kubernetes version: v1.12.2
-[preflight] running pre-flight checks
-[preflight/images] Pulling images required for setting up a Kubernetes cluster
-[preflight/images] This might take a minute or two, depending on the speed of your internet connection
-[preflight/images] You can also perform this action in beforehand using 'kubeadm config images pull'
-```
-
-2. 生成 token 和证书
-
-```
-[kubelet] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
-[kubelet] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
-[preflight] Activating the kubelet service
-[certificates] Generated etcd/ca certificate and key.
-[certificates] Generated etcd/server certificate and key.
-[certificates] etcd/server serving cert is signed for DNS names [kubenode1 localhost] and IPs [127.0.0.1 ::1]
-[certificates] Generated apiserver-etcd-client certificate and key.
-[certificates] Generated etcd/healthcheck-client certificate and key.
-[certificates] Generated etcd/peer certificate and key.
-[certificates] etcd/peer serving cert is signed for DNS names [kubenode1 localhost] and IPs [192.168.60.130 127.0.0.1 ::1]
-[certificates] Generated ca certificate and key.
-[certificates] Generated apiserver-kubelet-client certificate and key.
-[certificates] Generated apiserver certificate and key.
-[certificates] apiserver serving cert is signed for DNS names [kubenode1 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 192.168.60.130]
-[certificates] Generated front-proxy-ca certificate and key.
-[certificates] Generated front-proxy-client certificate and key.
-[certificates] valid certificates and keys now exist in "/etc/kubernetes/pki"
-[certificates] Generated sa key and public key.
-```
-
-3. 生成 kubeconfig 文件，kubelet 使用这个与 Master 通信
-
-```
-[kubeconfig] Wrote KubeConfig file to disk: "/etc/kubernetes/admin.conf"
-[kubeconfig] Wrote KubeConfig file to disk: "/etc/kubernetes/kubelet.conf"
-[kubeconfig] Wrote KubeConfig file to disk: "/etc/kubernetes/controller-manager.conf"
-[kubeconfig] Wrote KubeConfig file to disk: "/etc/kubernetes/scheduler.conf"
-```
-
-4. 为各组件生成静态 pod 信息
-
-```
-[controlplane] wrote Static Pod manifest for component kube-apiserver to "/etc/kubernetes/manifests/kube-apiserver.yaml"
-[controlplane] wrote Static Pod manifest for component kube-controller-manager to "/etc/kubernetes/manifests/kube-controller-manager.yaml"
-[controlplane] wrote Static Pod manifest for component kube-scheduler to "/etc/kubernetes/manifests/kube-scheduler.yaml"
-[etcd] Wrote Static Pod manifest for a local etcd instance to "/etc/kubernetes/manifests/etcd.yaml"
-```
-
-5. 启动控制面
-
-```
-[init] waiting for the kubelet to boot up the control plane as Static Pods from directory "/etc/kubernetes/manifests"
-[init] this might take a minute or longer if the control plane images have to be pulled
-[apiclient] All control plane components are healthy after 32.514538 seconds
-```
-
-6. 配置 configmap 并标记 master
-
-```
-[uploadconfig] storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
-[kubelet] Creating a ConfigMap "kubelet-config-1.12" in namespace kube-system with the configuration for the kubelets in the cluster
-[markmaster] Marking the node kubenode1 as master by adding the label "node-role.kubernetes.io/master=''"
-[markmaster] Marking the node kubenode1 as master by adding the taints [node-role.kubernetes.io/master:NoSchedule]
-[patchnode] Uploading the CRI Socket information "/var/run/dockershim.sock" to the Node API object "kubenode1" as an annotation
-```
-
-7. 认证相关设置
-
-```
-[bootstraptoken] using token: h1flky.ajnxfe5s28hnhsm9
-[bootstraptoken] configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to get long term certificate credentials
-[bootstraptoken] configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
-[bootstraptoken] configured RBAC rules to allow certificate rotation for all node client certificates in the cluster
-[bootstraptoken] creating the "cluster-info" ConfigMap in the "kube-public" namespace
-```
-
-8. 相关组件
-
-```
-[addons] Applied essential addon: CoreDNS
-[addons] Applied essential addon: kube-proxy
-
-Your Kubernetes master has initialized successfully!
 ```
 
 ## Kubectl 常用操作
@@ -1149,207 +753,6 @@ Your Kubernetes master has initialized successfully!
   ```
 - 使用命令行插件
   自定义插件，先编写一个可执行文件，文件名必须为`kubectl-<plugin name>`，复制到`$PATH`环境变量指定的目录中，就可通过`kubectl <plugin name>`执行该自定义插件了。
-
-## K8s 二进制安装
-
-到 kubernetes 的 github 上，在 release 中进入某个版本的 CHANGELOG，找到 Client Binaries 和 Server Binaries，下载相应组件的二进制版本。可以直接下 Server Binaries，即`kubernetes-server-linux-amd64.tar.tar`，包含了全部组件。
-解包以后，在`server/bin`目录中包含了所有服务程序
-
-```
-kubernetes/server/bin/
-├── apiextensions-apiserver
-├── kubeadm
-├── kube-apiserver
-├── kube-apiserver.docker_tag
-├── kube-apiserver.tar
-├── kube-controller-manager
-├── kube-controller-manager.docker_tag
-├── kube-controller-manager.tar
-├── kubectl
-├── kubelet
-├── kube-proxy
-├── kube-proxy.docker_tag
-├── kube-proxy.tar
-├── kube-scheduler
-├── kube-scheduler.docker_tag
-├── kube-scheduler.tar
-└── mounter
-```
-
-同理 etcd，解压后包含两个可执行文件`etcd`和`etcdctl`
-
-将这些文件都复制到`/usr/bin`中，然后开始设置 systemd，添加到`/usr/lib/systemd/system/`
-
-Master 端配置
-
-- etcd.service
-
-  ```
-  [Unit]
-  Description=Etcd Server
-  After=network.target
-
-  [Service]
-  Type=simple
-  WorkingDirectory=/var/lib/etcd/
-  EnvironmentFile=-/etc/etcd/etcd.conf
-  ExecStart=/usr/bin/etcd
-
-  [Install]
-  WantedBy=multi-user.target
-  ```
-
-  `/var/lib/etcd/`存放 etcd 数据，需在启动前创建。配置文件如下，也可以为空：
-
-  ```
-  ETCD_NAME=etcd0    # 节点名称
-  ETCD_DATA_DIR="/var/lib/etcd/etcd0"    # 数据存放位置
-  ETCD_LISTEN_PEER_URLS="http://0.0.0.0:2380"    # 监听其他 Etcd 实例的地址
-  ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379,http://0.0.0.0:4001"    # 监听客户端地址
-  # 通知其他 Etcd 实例地址
-  ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.1.154:2380"
-  # 初始化集群内节点地址
-  ETCD_INITIAL_CLUSTER="etcd0=http://192.168.1.154:2380,etcd1=http://192.168.1.156:2380,etcd2=http://192.168.1.249:2380"
-  # 初始化集群状态，new 表示新建
-  ETCD_INITIAL_CLUSTER_STATE="new"
-  # 初始化集群 token
-  ETCD_INITIAL_CLUSTER_TOKEN="mritd-etcd-cluster"
-  # 通知 客户端地址
-  ETCD_ADVERTISE_CLIENT_URLS="http://192.168.1.154:2379,http://192.168.1.154:4001"
-  ```
-
-  然后启动 etcd，检查是否正常
-
-  ```
-  # systemctl start etcd
-  # etcdctl endpoint health
-  127.0.0.1:2379 is healthy: successfully committed proposal: took = 2.362193ms
-  ```
-
-- kube-apiserver.service
-
-  ```
-  [Unit]
-  Description=Kube-apiserver
-  After=etcd.service
-  Wants=etcd.service
-
-  [Service]
-  Type=notify
-  EnvironmentFile=/etc/kubernetes/apiserver
-  ExecStart=/usr/bin/kube-apiserver $KUBE_API_ARGS
-  LimitNOFILE=65536
-  Restart=on-failure
-
-  [Install]
-  WantedBy=multi-user.target
-  ```
-
-  `KUBE_API_ARGS`参数为 apiserver 的启动参数，常用参数如下：
-
-  - `--etcd-servers`：指定 etcd 的 URL
-  - `--storage-backend`：指定 etcd 的版本，默认为 3
-  - `--insecure-bind-address`：apiserver 绑定主机的非安全 IP，`0.0.0.0`表示绑定所有 IP
-  - `--insecure-port`：apiserver 绑定主机的非安全端口，默认 8080
-  - `--service-cluster-ip-range`：k8s 集群中 Service 的虚拟 IP 范围，以 CIDR 表示，不能与物理机段重合
-  - `--service-node-port-range`：k8s 集群中 Service 的可用物理机端口范围，默认 30000-32767
-  - `--enable-admission-plugins`：k8s 集群的准入控制，各模块之间通过`,`分隔
-  - `--v`：日志级别
-  - `--logtostderr`：是否将日志写入 stderr，设为 false 就写入文件
-  - `--log-dir`：日志目录
-
-  配置文件中就存放参数的字符串形式
-
-- kube-controller-manager.service
-
-  ```
-  [Unit]
-  Description=Kube-controller-manager
-  After=kube-apiserver.service
-  Requires=kube-apiserver.service
-
-  [Service]
-  Type=notify
-  EnvironmentFile=/etc/kubernetes/controller-manager
-  ExecStart=/usr/bin/kube-controller-manager $KUBE_CONTROLLER_MANAGER_ARGS
-  LimitNOFILE=65536
-  Restart=on-failure
-
-  [Install]
-  WantedBy=multi-user.target
-  ```
-
-  `KUBE_CONTROLLER_MANAGER_ARGS`同理为启动参数，参数如下：
-
-  - `--kubeconfig`：与 API Server 连接的相关配置
-  - `--v`：日志级别
-  - `--logtostderr`：是否将日志写入 stderr，设为 false 就写入文件
-  - `--log-dir`：日志目录
-
-- kube-scheduler.service
-
-  ```
-  [Unit]
-  Description=Kube Scheduler
-  After=kube-apiserver.service
-  Requires=kube-apiserver.service
-
-  [Service]
-  EnvironmentFile=/etc/kubernetes/scheduler
-  ExecStart=/usr/bin/kube-scheduler $KUBE_SCHEDULER_ARGS
-  LimitNOFILE=65536
-  Restart=on-failure
-
-  [Install]
-  WantedBy=multi-user.target
-  ```
-
-  启动参数同上
-
-Node 端配置
-
-- kubelet.service
-
-  ```
-  [Unit]
-  Description=Kubelet
-  After=docker.service
-  Requires=docker.service
-
-  [Service]
-  WorkingDirectory=/var/lib/kubelet
-  EnvironmentFile=/etc/kubernetes/kubelet
-  ExecStart=/usr/bin/kubelet $KUBELET_ARGS
-  Restart=on-failure
-
-  [Install]
-  WantedBy=multi-user.target
-  ```
-
-  `/var/lib/kubelet`为 kubelet 存放数据位置，需在启动前创建
-
-  - `hostname-override`：设置本 Node 的名称
-  - 其他启动参数同上
-
-- kube-proxy.service
-
-  ```
-  [Unit]
-  Description=Kube proxy
-  After=network.target
-  Requires=network.service
-
-  [Service]
-  EnvironmentFile=/etc/kubernetes/proxy
-  ExecStart=/usr/bin/kube-proxy $KUBE_PROXY_ARGS
-  Restart=on-failure
-  LimitNOFILE=65536
-
-  [Install]
-  WantedBy=multi-user.target
-  ```
-
-  启动参数同上
 
 ## K8s 集群安全
 
@@ -2787,6 +2190,87 @@ deployment.apps/nginx-deploy scaled
 # kubectl get deployments
 NAME           READY   UP-TO-DATE   AVAILABLE   AGE
 nginx-deploy   5/5     5            5           5h43m
+```
+
+## K8s弹性伸缩
+
+三种弹性伸缩：
+- CA（Cluster Autoscaler）：Node级别自动扩缩容，通过cluster-autoscaler组件（主要是在云服务商上进行创建新节点，Cluster AutoScaler会监听Node资源使用情况。还有一种就是通过ansible等方式进行扩容）
+- HPA（Horizontal Pod Autoscaler）：Pod个数自动扩缩容
+- VPA（Vertical Pod Autoscaler）：Pod配置（如CPU、内存）自动扩缩容，通过addmin-resizer组件（主要对象是有些有状态的服务，不能横向扩容）
+
+### HPA
+
+Horizontal Pod Autoscaler（Pod 横向自动扩容），也是一种资源对象。通过追踪分析指定 RC 控制的所有目标 Pod 的负载情况，来确定是否需要针对性调整目标 Pod 的副本数量。由于需要监控Node的性能信息，所以依赖Metrics Server组件。
+HPA 有两种方法作为 Pod 负载的度量指标：
+
+- CPUUtilizationPercentage，是目标 Pod 所有副本自身 CPU 利用率的算数平均值（`Pod自身CPU利用率=Pod当前CPU使用量/Pod Request`）。
+  - 若某一时刻该值超过 80%，则意味着当前 Pod 副本数量不足以支撑更多请求，需要动态扩容，而当请求高峰过去，CPU 利用率又降下来，则副本数也自动减少到一个合理值。
+  - 通常是 1min 的平均值
+  - K8s 通过基础性能数据监控框架（Kubernetes Monitoring Architecture）支持 HPA。该框架中 K8s 定义了标准化 API 接口 Resource Metrics API，方便客户端（如 HPA）获取性能数据
+- 应用自定义的度量指标（如 TPS、QPS）
+
+```yaml
+例：
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache
+  namespace: default
+spec:
+  maxReplicas: 10
+  minReplicas: 1
+  scaleTargetRef:   # HPA控制一个叫php-apache的Deployment中的Pod副本
+    kind: Deployment
+    name: php-apache
+  targetCPUUtilizationPercentage: 90    # 该值超过90%则触发自动扩容
+```
+
+为防止副本数量因扩容大幅波动，K8s在Controller manager中设置了冷却时间，即在每次扩缩容后的冷却时间。
+- horizontal-pod-autoscaler-downscale-dalay: 缩容冷却，默认5min
+- horizontal-pod-autoscaler-upscale-dalay: 扩容冷却，默认3min
+
+目前除了`autoscaling/v1`（仅支持基于CPU使用率）外，还有`autoscaling/v2beta2`，支持了多指标以及自定义指标。
+
+从 v1.18 开始，`v2beta2` API 允许通过 HPA 的 `behavior` 字段配置扩缩行为。 在 behavior 字段中的 scaleUp 和 scaleDown 分别指定扩容和缩容行为。 可以两个方向指定一个稳定窗口，以防止扩缩目标中副本数量的波动。 类似地，指定扩缩策略可以控制扩缩时副本数的变化率。
+在 `spec` 字段的 `behavior` 部分可以指定一个或多个扩缩策略。 当指定多个策略时，默认选择允许更改最多的策略，就是说每个操作周期都会计算当前该策略能操作的pod数，然后挑能操作pod数最多的策略执行。
+```yaml
+behavior:
+  scaleDown:
+    policies:
+    - type: Pods
+      value: 4
+      periodSeconds: 60
+    - type: Percent
+      value: 10
+      periodSeconds: 60
+```
+
+当用于扩缩的指标持续抖动时，可以使用稳定窗口来限制副本数上下振动。
+```yaml
+scaleDown:
+  stabilizationWindowSeconds: 300
+```
+
+默认扩缩容行为，即未设置的默认配置
+```yaml
+behavior:
+  scaleDown:   # 缩容配置
+    stabilizationWindowSeconds: 300    # 稳定窗口为300s
+    policies:
+    - type: Percent      # 按照百分率
+      value: 100         # 可以直接降低到最小允许的副本数，即minReplicas配置。
+      periodSeconds: 15  # 每15s为一个操作周期
+  scaleUp:     # 扩容配置
+    stabilizationWindowSeconds: 0
+    policies:
+    - type: Percent
+      value: 100         # 可以直接扩容到最大允许的副本数，即maxReplicas配置。
+      periodSeconds: 15
+    - type: Pods
+      value: 4
+      periodSeconds: 15
+    selectPolicy: Max
 ```
 
 # 深入理解 Service

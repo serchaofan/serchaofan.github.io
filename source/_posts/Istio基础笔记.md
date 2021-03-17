@@ -5,7 +5,15 @@ categories: []
 date: 2020-04-05 19:09:24
 ---
 
+本文内容包括Istio的基础概念以及常见用例，大量概念摘抄自《深入浅出Istio：Service Mesh快速入门与实践》一书，仅用作学习参考。
+Istio 版本：1.9.0
+
 <!--more-->
+
+- [Service Mesh](#Service-Mesh)
+- [Istio](#Istio)
+- [Istio组件](#Istio%E7%BB%84%E4%BB%B6)
+- [Istio核心配置对象](#Istio%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE%E5%AF%B9%E8%B1%A1)
 
 # Service Mesh
 Buoyant 公司的CEO William , 曾经给出对服务网格的定义：服务网格是一个独立的基础设施层，用来处理服务之间的通信。
@@ -26,8 +34,23 @@ Istio提供了对整个服务网格的行为分析和操作控制，提供了一
 - 对集群内的所有流量(包括集群入口和出口)进行自动度量、日志采集和跟踪
 - 通过强身份验证和授权，在集群中进行安全的服务间通信
 
-![](./Istio基础笔记/1.png)
+![](1.png)
 
 # Istio组件
+istio在1.5之后回归单体应用，舍弃了mixer，将pilot、citadel、galley封装为一个istiod应用。
+Istio只包含两个组件：
+- Envoy：Envoy是使用C++开发的高性能代理，可为服务网格中的所有服务调解所有入站和出站流量。Envoy代理是与数据平面流量交互的唯一Istio组件。
+  Envoy代理被部署为服务的Sidecar，包含以下功能：
+    动态服务发现
+    负载均衡
+    TLS终止
+    HTTP/2和gRPC代理
+    断路器
+    健康检查
+    分阶段推出，并按百分比分配流量（灰度）
+    故障注入
+    丰富的指标
+- Istiod：
+
 
 # Istio核心配置对象
