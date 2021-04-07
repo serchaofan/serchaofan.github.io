@@ -1169,6 +1169,20 @@ ConfigMap 的限制条件：
 ## 在容器内获取 Pod 信息
 
 在容器中可通过 Downward API 获取所在 Pod 的信息，仍然是**通过环境变量或 Volume 挂载的方式将 Pod 信息注入容器内部**
+可以通过Downward API获取以下信息：
+- 能通过 `fieldRef` 获得：
+  - `metadata.name`
+  - `metadata.namespace`
+  - `metadata.uid`
+  - `metadata.labels['<KEY>']` - Pod 标签 `<KEY>` 的值 (例如, `metadata.labels['mylabel']`）
+  - `metadata.annotations['<KEY>']` - Pod 的注解 `<KEY>` 的值（例如, `metadata.annotations['myannotation']`）
+- 能通过 `resourceFieldRef` 获得：
+  - 容器的 CPU limit
+  - 容器的 CPU request
+  - 容器的内存 limit
+  - 容器的内存 request
+  - 容器的临时存储 limit
+  - 容器的临时存储 request
 
 - 环境变量
 
@@ -1288,8 +1302,70 @@ ConfigMap 的限制条件：
 
 - Volume 挂载
 
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: kubernetes-downwardapi-volume-example-2
+  spec:
+    containers:
+      - name: client-container
+        image: k8s.gcr.io/busybox:1.24
+        command: ["sh", "-c"]
+        args:
+        - while true; do
+            echo -en '\n';
+            if [[ -e /etc/podinfo/cpu_limit ]]; then
+              echo -en '\n'; cat /etc/podinfo/cpu_limit; fi;
+            if [[ -e /etc/podinfo/cpu_request ]]; then
+              echo -en '\n'; cat /etc/podinfo/cpu_request; fi;
+            if [[ -e /etc/podinfo/mem_limit ]]; then
+              echo -en '\n'; cat /etc/podinfo/mem_limit; fi;
+            if [[ -e /etc/podinfo/mem_request ]]; then
+              echo -en '\n'; cat /etc/podinfo/mem_request; fi;
+            sleep 5;
+          done;
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "125m"
+          limits:
+            memory: "64Mi"
+            cpu: "250m"
+        volumeMounts:
+          - name: podinfo
+            mountPath: /etc/podinfo
+    volumes:
+      - name: podinfo
+        downwardAPI:
+          items:
+            - path: "cpu_limit"
+              resourceFieldRef:
+                containerName: client-container
+                resource: limits.cpu
+                divisor: 1m
+            - path: "cpu_request"
+              resourceFieldRef:
+                containerName: client-container
+                resource: requests.cpu
+                divisor: 1m
+            - path: "mem_limit"
+              resourceFieldRef:
+                containerName: client-container
+                resource: limits.memory
+                divisor: 1Mi
+            - path: "mem_request"
+              resourceFieldRef:
+                containerName: client-container
+                resource: requests.memory
+                divisor: 1Mi
   ```
-
+  进入容器查看：
+  ```
+  / # ls /etc/podinfo/
+  cpu_limit    cpu_request  mem_limit    mem_request
+  / # cat /etc/podinfo/cpu_limit
+  250
   ```
 
 ## Pod 生命周期与重启策略
