@@ -2,6 +2,7 @@
 title: 关于
 date: 2018-04-29 09:01:40
 type: "about"
+comments: false
 ---
 
 ```json
