@@ -6,17 +6,17 @@ tags: [Tomcat, server, web, java]
 
 tomcat9.0.13，jdk1.8
 
-- [Tomcat 概述](#tomcat-%e6%a6%82%e8%bf%b0)
-  - [Tomcat 结构](#tomcat-%e7%bb%93%e6%9e%84)
-    - [Tomcat 与 HTTP 的通信方式](#tomcat-%e4%b8%8e-http-%e7%9a%84%e9%80%9a%e4%bf%a1%e6%96%b9%e5%bc%8f)
+- [Tomcat 概述](#tomcat-概述)
+  - [Tomcat 结构](#tomcat-结构)
+    - [Tomcat 与 HTTP 的通信方式](#tomcat-与-http-的通信方式)
     - [Connector](#connector)
     - [Container](#container)
-    - [Tomcat 连接器](#tomcat-%e8%bf%9e%e6%8e%a5%e5%99%a8)
-- [Tomcat 环境搭建](#tomcat-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba)
-  - [Tomcat 目录结构](#tomcat-%e7%9b%ae%e5%bd%95%e7%bb%93%e6%9e%84)
+    - [Tomcat 连接器](#tomcat-连接器)
+- [Tomcat 环境搭建](#tomcat-环境搭建)
+  - [Tomcat 目录结构](#tomcat-目录结构)
     - [server.xml](#serverxml)
-    - [webapp 结构](#webapp-%e7%bb%93%e6%9e%84)
-  - [配置 WEB 应用](#%e9%85%8d%e7%bd%ae-web-%e5%ba%94%e7%94%a8)
+    - [webapp 结构](#webapp-结构)
+  - [配置 WEB 应用](#配置-web-应用)
 
 <!--more-->
 
@@ -28,7 +28,7 @@ Tomcat 注重于 servlet 引擎，对静态页面的加载不如 apache，因此
 
 ## Tomcat 结构
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120105193.png)
 
 Server 为 Tomcat 的一个实例，一个 JVM 只能包含一个 Tomcat 实例。Server 的端口号为 8005，监听的是 shutdown 命令，若接收到 shutdown 信息，则关闭 tomcat。可在`server.xml`中看到
 
@@ -60,7 +60,7 @@ Service 包含两个部分：
 
 ### Connector
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106099.png)
 
 Connector 使用 ProtocolHandler 处理请求，不同 ProtocolHandler 代表不同连接类型
 
@@ -73,13 +73,13 @@ ProtocolHandler 包含三个部件：
 2. Processor：将 Endpoint 收到的 socket 封装成 Request，用来实现 HTTP
 3. Adapter：将 Request 交给 Container（Servlet 容器）进行具体处理
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106059.png)
 
 ### Container
 
 Container 用于封装 Servlet 以及具体处理 Request 请求
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106376.png)
 
 Container 包含四个子容器：
 
@@ -117,7 +117,7 @@ Pipeline-valve 与普通责任链不同的地方：
 - StandardContextValve
 - StandardWrapperValve
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106386.png)
 
 Connector 接收的请求会传给最上层的 EnginePipeline，依次执行最终到 StandardWrapperValve。
 此时 StandardWrapperValve 会创建 Filterchain，调用其 doFilter 方法处理请求，Filterchain 包含配置的与请求匹配的 Filter 和 Servlet，doFilter 会依次调用所有的 Filter 的 doFilter 和 Servlet 的 service 方法，请求即被处理。

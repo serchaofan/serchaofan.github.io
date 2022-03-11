@@ -5,15 +5,15 @@ categories: []
 date: 2020-04-05 19:05:37
 ---
 
-- [API Server 认证管理](#api-server-%e8%ae%a4%e8%af%81%e7%ae%a1%e7%90%86)
-- [API Server 授权管理](#api-server-%e6%8e%88%e6%9d%83%e7%ae%a1%e7%90%86)
+- [API Server 认证管理](#api-server-认证管理)
+- [API Server 授权管理](#api-server-授权管理)
   - [ABAC](#abac)
   - [Webhook](#webhook)
   - [RBAC](#rbac)
 - [Admission Control](#admission-control)
 - [Service Account](#service-account)
 - [Secret](#secret)
-- [Pod 安全策略配置](#pod-%e5%ae%89%e5%85%a8%e7%ad%96%e7%95%a5%e9%85%8d%e7%bd%ae)
+- [Pod 安全策略配置](#pod-安全策略配置)
 
 <!--more-->
 

@@ -7,14 +7,14 @@ categories: [应用运维]
 
 本篇包含以下内容
 
-- [Nagios 概述](#nagios-%e6%a6%82%e8%bf%b0)
-- [Nagios 搭建](#nagios-%e6%90%ad%e5%bb%ba)
-  - [服务器端](#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af)
-  - [客户端安装](#%e5%ae%a2%e6%88%b7%e7%ab%af%e5%ae%89%e8%a3%85)
-  - [目录与配置文件概述](#%e7%9b%ae%e5%bd%95%e4%b8%8e%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e6%a6%82%e8%bf%b0)
+- [Nagios 概述](#nagios-概述)
+- [Nagios 搭建](#nagios-搭建)
+  - [服务器端](#服务器端)
+  - [客户端安装](#客户端安装)
+  - [目录与配置文件概述](#目录与配置文件概述)
     - [templates.cfg](#templatescfg)
     - [resource.cfg](#resourcecfg)
-    - [Nagios 宏](#nagios-%e5%ae%8f)
+    - [Nagios 宏](#nagios-宏)
     - [commands.cfg](#commandscfg)
     - [hosts.cfg](#hostscfg)
     - [services.cfg](#servicescfg)
@@ -22,11 +22,11 @@ categories: [应用运维]
     - [timeperiods.cfg](#timeperiodscfg)
     - [cgi.cfg](#cgicfg)
     - [nagios.cfg](#nagioscfg)
-  - [Nagios 监控界面解析](#nagios-%e7%9b%91%e6%8e%a7%e7%95%8c%e9%9d%a2%e8%a7%a3%e6%9e%90)
-    - [常用操作](#%e5%b8%b8%e7%94%a8%e6%93%8d%e4%bd%9c)
-  - [Nagios 性能分析图表](#nagios-%e6%80%a7%e8%83%bd%e5%88%86%e6%9e%90%e5%9b%be%e8%a1%a8)
-  - [邮件告警配置](#%e9%82%ae%e4%bb%b6%e5%91%8a%e8%ad%a6%e9%85%8d%e7%bd%ae)
-- [参考资料](#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99)
+  - [Nagios 监控界面解析](#nagios-监控界面解析)
+    - [常用操作](#常用操作)
+  - [Nagios 性能分析图表](#nagios-性能分析图表)
+  - [邮件告警配置](#邮件告警配置)
+- [参考资料](#参考资料)
 
 <!-- more -->
 

@@ -2,6 +2,7 @@
 title: Varnish笔记
 date: 2018-05-31 12:00:39
 tags: [varnish, 缓存, 代理]
+comments: false
 ---
 
 - [Varnish 概述](#varnish-概述)

@@ -4,14 +4,14 @@ date: 2018-08-01 21:02:56
 tags: [OpenSSL, SSL, server, SSH]
 ---
 
-- [SSL/TLS 概念](#ssltls-%e6%a6%82%e5%bf%b5)
-  - [SSL 协议架构](#ssl-%e5%8d%8f%e8%ae%ae%e6%9e%b6%e6%9e%84)
-- [OpenSSL 概念](#openssl-%e6%a6%82%e5%bf%b5)
-- [SSH 协议](#ssh-%e5%8d%8f%e8%ae%ae)
-  - [sshd 服务](#sshd-%e6%9c%8d%e5%8a%a1)
-    - [sshd_config 配置](#sshdconfig-%e9%85%8d%e7%bd%ae)
-    - [密钥分发命令](#%e5%af%86%e9%92%a5%e5%88%86%e5%8f%91%e5%91%bd%e4%bb%a4)
-- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
+- [SSL/TLS 概念](#ssltls-概念)
+  - [SSL 协议架构](#ssl-协议架构)
+- [OpenSSL 概念](#openssl-概念)
+- [SSH 协议](#ssh-协议)
+  - [sshd 服务](#sshd-服务)
+    - [sshd_config 配置](#sshd_config-配置)
+    - [密钥分发命令](#密钥分发命令)
+- [参考文章](#参考文章)
 
 <!--more-->
 
@@ -29,7 +29,7 @@ SSL/TLS 的主要功能：
 
 SSL 基于 TCP，且分为两个子层：**握手层**和**记录层**，其中**握手层负责建立 SSL 连接，记录层负责对报文的加解密**。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120105843.png)
 
 - 握手层：
 

@@ -1,12 +1,12 @@
 ---
-title: Sed、Awk与Shell编程笔记
+title: Sed、Awk与Shell编程
 date: 2018-09-29 12:08:18
 tags: [sed, awk, Linux]
 ---
 
 - [Sed](#sed)
 - [Awk](#awk)
-- [Shell 编程](#shell-%e7%bc%96%e7%a8%8b)
+- [Shell 编程](#shell-编程)
 
 <!--more-->
 

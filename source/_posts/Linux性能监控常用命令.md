@@ -5,18 +5,18 @@ tags: [Linux, 运维, 性能]
 categories: [系统运维]
 ---
 
-- [top 与 htop](#top-%e4%b8%8e-htop)
+- [top 与 htop](#top-与-htop)
   - [top](#top)
   - [htop](#htop)
-- [uptime,free 和 vmstat](#uptimefree-%e5%92%8c-vmstat)
+- [uptime,free 和 vmstat](#uptimefree-和-vmstat)
   - [uptime](#uptime)
   - [free](#free)
   - [vmstat](#vmstat)
-- [mpstat、 iostat 与 sar](#mpstat-iostat-%e4%b8%8e-sar)
+- [mpstat、 iostat 与 sar](#mpstat-iostat-与-sar)
   - [mpstat](#mpstat)
   - [iostat](#iostat)
   - [sar](#sar)
-- [ps 和 pstree](#ps-%e5%92%8c-pstree)
+- [ps 和 pstree](#ps-和-pstree)
   - [ps](#ps)
   - [pstree](#pstree)
 

@@ -6,18 +6,18 @@ tags: [TCP/IP, 网络]
 
 本篇包含计算机网络和 TCP/IP 结构的重要知识点，以及华三设备的一些操作。
 
-- [网络概述](#%e7%bd%91%e7%bb%9c%e6%a6%82%e8%bf%b0)
-- [TCP 与 UDP 概述](#tcp-%e4%b8%8e-udp-%e6%a6%82%e8%bf%b0)
+- [网络概述](#网络概述)
+- [TCP 与 UDP 概述](#tcp-与-udp-概述)
   - [TCP](#tcp)
   - [UDP](#udp)
-- [IP 基本原理](#ip-%e5%9f%ba%e6%9c%ac%e5%8e%9f%e7%90%86)
-- [DHCP 概述](#dhcp-%e6%a6%82%e8%bf%b0)
-- [FTP 概述](#ftp-%e6%a6%82%e8%bf%b0)
-  - [TFTP 简单文件传输协议](#tftp-%e7%ae%80%e5%8d%95%e6%96%87%e4%bb%b6%e4%bc%a0%e8%be%93%e5%8d%8f%e8%ae%ae)
-- [DNS 概述](#dns-%e6%a6%82%e8%bf%b0)
-- [Telnet 概述](#telnet-%e6%a6%82%e8%bf%b0)
-  - [华三设备操作](#%e5%8d%8e%e4%b8%89%e8%ae%be%e5%a4%87%e6%93%8d%e4%bd%9c)
-- [SSH 概述](#ssh-%e6%a6%82%e8%bf%b0)
+- [IP 基本原理](#ip-基本原理)
+- [DHCP 概述](#dhcp-概述)
+- [FTP 概述](#ftp-概述)
+  - [TFTP 简单文件传输协议](#tftp-简单文件传输协议)
+- [DNS 概述](#dns-概述)
+- [Telnet 概述](#telnet-概述)
+  - [华三设备操作](#华三设备操作)
+- [SSH 概述](#ssh-概述)
 
 <!--more-->
 
