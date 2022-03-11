@@ -4,9 +4,9 @@ date: 2018-10-01 10:48:31
 tags: [Puppet, 运维, 自动化]
 ---
 
-- [Puppet 概述](#puppet-%e6%a6%82%e8%bf%b0)
-  - [Puppet 工作流程](#puppet-%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b)
-  - [Puppet 安装部署](#puppet-%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2)
+- [Puppet 概述](#puppet-概述)
+  - [Puppet 工作流程](#puppet-工作流程)
+  - [Puppet 安装部署](#puppet-安装部署)
 
 <!--more-->
 
@@ -18,7 +18,7 @@ Puppet 有自己的语言，可管理配置文件、用户、cron 任务、软�
 
 ## Puppet 工作流程
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120103550.png)
 
 1. 客户端向 Master 发送认证请求
 2. Master 通过认证返回确认信息

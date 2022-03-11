@@ -4,7 +4,6 @@ date: 2018-04-29 15:28:40
 tags: [Lang, YAML]
 ---
 
-{% asset_img yaml.gif %}
 
 **本篇介绍 YAML 的语法，包括以下部分：**
 

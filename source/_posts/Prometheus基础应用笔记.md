@@ -9,31 +9,35 @@ Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具
 
 <!--more-->
 
-- [Prometheus 基本概念](#prometheus-%e5%9f%ba%e6%9c%ac%e6%a6%82%e5%bf%b5)
-  - [特点](#%e7%89%b9%e7%82%b9)
-  - [组成](#%e7%bb%84%e6%88%90)
-  - [工作流程](#%e5%b7%a5%e4%bd%9c%e6%b5%81%e7%a8%8b)
-  - [数据模型](#%e6%95%b0%e6%8d%ae%e6%a8%a1%e5%9e%8b)
-  - [四种 Metric 类型](#%e5%9b%9b%e7%a7%8d-metric-%e7%b1%bb%e5%9e%8b)
-  - [instance 和 jobs](#instance-%e5%92%8c-jobs)
-  - [Node exporter](#node-exporter)
+- [Prometheus 基本概念](#prometheus-基本概念)
+  - [特点](#特点)
+  - [组成](#组成)
+  - [工作流程](#工作流程)
+  - [数据模型](#数据模型)
+  - [四种 Metric 类型](#四种-metric-类型)
+  - [数据采集](#数据采集)
+  - [instance 和 jobs](#instance-和-jobs)
   - [Prometheus Server](#prometheus-server)
-  - [使用 PromQL 查询监控数据](#%e4%bd%bf%e7%94%a8-promql-%e6%9f%a5%e8%af%a2%e7%9b%91%e6%8e%a7%e6%95%b0%e6%8d%ae)
-    - [常用函数](#%e5%b8%b8%e7%94%a8%e5%87%bd%e6%95%b0)
-  - [AlertManager 报警](#alertmanager-%e6%8a%a5%e8%ad%a6)
-  - [Prometheus Server 配置文件详细说明](#prometheus-server-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e8%af%a6%e7%bb%86%e8%af%b4%e6%98%8e)
-  - [HTTP API](#http-api)
-    - [表达式请求](#%e8%a1%a8%e8%be%be%e5%bc%8f%e8%af%b7%e6%b1%82)
-    - [请求元数据](#%e8%af%b7%e6%b1%82%e5%85%83%e6%95%b0%e6%8d%ae)
-    - [targets](#targets)
-    - [rules](#rules)
-    - [alerts](#alerts)
-    - [alertmanager](#alertmanager)
-    - [status](#status)
+  - [使用 PromQL 查询监控数据](#使用-promql-查询监控数据)
+  - [常用函数](#常用函数)
+- [Prometheus Server 配置文件详细说明](#prometheus-server-配置文件详细说明)
+  - [抓取配置](#抓取配置)
+  - [将 prometheus 数据自动写入 influxdb](#将-prometheus-数据自动写入-influxdb)
+- [常见exporter](#常见exporter)
+  - [Node exporter](#node-exporter)
+- [AlertManager 报警](#alertmanager-报警)
+- [HTTP API](#http-api)
+  - [表达式请求](#表达式请求)
+  - [请求元数据](#请求元数据)
+  - [targets](#targets)
+  - [rules](#rules)
+  - [alerts](#alerts)
+  - [alertmanager](#alertmanager)
+  - [status](#status)
 
-# Prometheus 基本概念
+## Prometheus 基本概念
 
-## 特点
+### 特点
 
 强大的多维度数据模型：
 
@@ -53,7 +57,7 @@ Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具
 
 > 由于数据采集可能会有丢失，所以 Prometheus 不适用对采集数据要 100% 准确的情形
 
-## 组成
+### 组成
 
 - Prometheus Server: 用于收集和存储时间序列数据。Prometheus Server 本身就是一个时序数据库，将采集到的监控数据按照时间序列的方式存储在本地磁盘当中。
 - Client Library: 客户端库，为需要监控的服务生成相应的 metrics 并暴露给 Prometheus server。当 Prometheus server 来 pull 时，直接返回实时状态的 metrics。
@@ -65,16 +69,15 @@ Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具
   AlertManager 即 Prometheus 体系中的告警处理中心。从 Prometheus server 端接收到 alerts 后，会进行去除重复数据，分组，并路由到对收的接受方式，发出报警。常见的接收方式有：电子邮件，pagerduty，OpsGenie, webhook 等。
 - Push Gateway: 主要用于短期的 jobs。由于这类 jobs 存在时间较短，可能在 Prometheus 来 pull 之前就消失了。为此，这次 jobs 可以直接向 Prometheus server 端推送它们的 metrics。这种方式主要用于服务层面的 metrics，对于机器层面的 metrices，需要使用 node exporter。
 
-![](https://www.ibm.com/developerworks/cn/cloud/library/cl-lo-prometheus-getting-started-and-practice/image001.png)
 
-## 工作流程
+### 工作流程
 
 Prometheus server 定期从配置好的 jobs 或者 exporters 中拉 metrics，或者接收来自 Pushgateway 发过来的 metrics，或者从其他的 Prometheus server 中拉 metrics。
 Prometheus server 在本地存储收集到的 metrics，并运行已定义好的 alert.rules，记录新的时间序列或者向 Alertmanager 推送报警。
 Alertmanager 根据配置文件，对接收到的报警进行处理，发出告警。
 在图形界面中，可视化采集数据。
 
-## 数据模型
+### 数据模型
 
 Prometheus 中存储的数据为时间序列，是由 metric 的名字和一系列的标签（键值对）唯一标识的，不同的标签则代表不同的时间序列。
 
@@ -83,7 +86,7 @@ Prometheus 中存储的数据为时间序列，是由 metric 的名字和一系�
 - 样本 timestamp + value：实际的时间序列，每个序列包括一个 float64 的值和一个毫秒级的时间戳。
 - 格式：`<metric name>{<label name>=<label value>, …}`，例如：`http_requests_total{method="POST",endpoint="/api/tracks"}`。
 
-## 四种 Metric 类型
+### 四种 Metric 类型
 
 Prometheus 客户端库主要提供四种主要的 metric 类型：
 
@@ -113,39 +116,30 @@ Histogram 和 Summary 主用用于统计和分析样本的分布情况。
 
 不同在于 Histogram 通过 `histogram_quantile` 函数是在服务器端计算的分位数。 而 Sumamry 的分位数则是直接在客户端计算完成。因此对于分位数的计算而言，Summary 在通过 PromQL 进行查询时有更好的性能表现，而 Histogram 则会消耗更多的资源。反之对于客户端而言 Histogram 消耗的资源更少。
 
-## instance 和 jobs
+
+### 数据采集
+Prometheus支持两种数据采集方式：Pull和Push。
+- pull：prometheus server去agent拉取数据
+- push：agent主动上报数据到prometheus server
+
+对比：
+1. Push时效性较好，可将采集数据立即上报。Pull采用周期性采集。若对实时性要求非常高，最好采用Push。
+2. Push采集后立刻上报，本地不会保存采集数据。Pull正好相反，agent本身需要有一定的数据存储能力，prometheus仅负责简单拉取。
+3. Push方式，控制方为agent，agent来决定上报周期和内容。Pull的话，prometheus来控制周期和内容。
+4. Push方式必须在agent配置prometheus的地址。pull方式prometheus可做到与agent解耦，agent不用感知prometheus的存在。
+
+Prometheus的两种配置更新方式：
+1. 调用prometheus的reload接口，即`localhost:9090/-/reload`，需要先开启`--web.enable-lifecycle`，推荐这个方式。
+2. 发送HUP信号给prometheus，即`kill -HUP <prometheus进程ID>`，需要获取进程id，并不方便。
+
+
+### instance 和 jobs
 
 - instance: 一个单独 scrape 的目标， 一般对应于一个进程。
 - jobs: 一组同种类型的 instances（主要用于保证可扩展性和可靠性）
 
-## Node exporter
 
-主要用于暴露 metrics 给 Prometheus，其中 metrics 包括：cpu 的负载，内存的使用情况，网络等。
-下载安装：https://prometheus.io/download/#node_exporter
-解压后将 node_exporter 放到`/usr/local/bin`中，然后执行。可通过浏览器访问 9100 端口`/metrics`查看
-
-可创建 systemd 服务：
-
-```
-[Unit]
-Description=node_exporter
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/node_exporter
-Restart=on-failure
-[Install]
-WantedBy=multi-user.target
-```
-
-docker 启动：
-
-```
-docker run -d -p 9100:9100 -v /proc:/host/proc -v /sys:/host/sys -v /:/rootfs prom/node-exporter
-```
-
-## Prometheus Server
+### Prometheus Server
 
 下载安装：https://prometheus.io/download/#prometheus
 解压后将目录中的命令（prometheus、promtool、tsdb）放到`/usr/local/bin` 中。
@@ -213,8 +207,6 @@ scrape_configs:
   - targets: ['localhost:9100']
 ```
 
-在 web 上选择参数 up，就能看到指定的参数的值
-{% asset_img 2.png %}
 
 常见指标：
 
@@ -229,7 +221,8 @@ scrape_configs:
 - `go*_`：node exporter 中 go 相关指标
 - `process__`：node exporter 自身进程相关运行指标
 
-## 使用 PromQL 查询监控数据
+### 使用 PromQL 查询监控数据
+
 
 PromQL 是 Prometheus 自定义的一套强大的数据查询语言，除了使用监控指标作为查询关键字以为，还内置了大量的函数，帮助用户进一步对时序数据进行处理。
 
@@ -238,8 +231,8 @@ PromQL 是 Prometheus 自定义的一套强大的数据查询语言，除了使�
 
 在 Prometheus 中，每一个暴露监控样本数据的 HTTP 服务称为一个实例。例如在当前主机上运行的 node exporter 可以被称为一个实例(Instance)。
 当前在每一个 Job 中主要使用了静态配置(static_configs)的方式定义监控目标。除了静态配置每一个 Job 的采集 Instance 地址以外，Prometheus 还支持与 DNS、Consul、E2C、Kubernetes 等进行集成实现自动发现 Instance 实例，并从这些 Instance 上获取监控数据。
-除了通过使用“up”表达式查询当前所有 Instance 的状态以外，还可以通过 Prometheus UI 中的 Targets 页面查看当前所有的监控采集任务，以及各个任务下所有实例的状态:
-{% asset_img 3.png %}
+除了通过使用“up”表达式查询当前所有 Instance 的状态以外，还可以通过 Prometheus UI 中的 Targets 页面查看当前所有的监控采集任务，以及各个任务下所有实例的状态。
+
 Prometheus 会将所有采集到的样本数据以时间序列（time-series）的方式保存在内存数据库中，并且定时保存到硬盘上。time-series 是按照时间戳和值的序列顺序存放的，我们称之为向量(vector). 每条 time-series 通过指标名称(metrics name)和一组标签集(labelset)命名。
 
 在 time-series 中的每一个点称为一个样本（sample），样本由以下三部分组成：
@@ -266,7 +259,7 @@ PromQL 还可以支持使用正则表达式作为匹配条件，多个表达式�
 - 使用`label=~regx`表示选择那些标签符合正则表达式定义的时间序列；
 - 反之使用`label!~regx`进行排除；
 
-直接查找时，返回值中只会包含该时间序列中的最新的一个样本值，这样的返回结果我们称之为瞬时向量。而相应的这样的表达式称之为瞬时向量表达式。如果我们想过去一段时间范围内的样本数据时，我们则需要使用区间向量表达式，时间范围通过时间范围选择器[]进行定义，通过区间向量表达式查询到的结果我们称为区间向量。时间选择器单位：`s - 秒`、`m - 分钟`、`h - 小时`、`d - 天`、`w - 周`、`y - 年`  
+直接查找时，返回值中只会包含该时间序列中的最新的一个样本值，这样的返回结果我们称之为瞬时向量。而相应的这样的表达式称之为瞬时向量表达式。如果我们想过去一段时间范围内的样本数据时，我们则需要使用区间向量表达式，时间范围通过时间范围选择器[]进行定义，通过区间向量表达式查询到的结果我们称为区间向量。时间选择器单位：`s - 秒`、`m - 分钟`、`h - 小时`、`d - 天`、`w - 周`、`y - 年`
 如果想查询，5 分钟前的瞬时样本数据，或昨天一天的区间内的样本数据，可以使用位移操作，位移操作的关键字为 offset。
 
 ```
@@ -483,6 +476,128 @@ quantile(0.5, http_requests_total)
 |   rate    | 计算区间向量在时间窗口内平均增长速率           |   round   | 返回向量中所有样本值的最接近的整数         |
 |   sort    | 对向量按元素的值进行升序排序                   | sort_desc | 对向量按元素的值进行降序排序               |
 
+
+## Prometheus Server 配置文件详细说明
+
+```
+global:
+  # 查询目标的频率
+  [ scrape_interval: <duration> | default = 1m ]
+
+  # 查询失败的超时时间
+  [ scrape_timeout: <duration> | default = 10s ]
+
+  # 匹配规则的频率
+  [ evaluation_interval: <duration> | default = 1m ]
+
+  # 当与外部系统（外部存储、Alertmanager）联系时，可附加到任意时间序列或告警的标签
+  external_labels:
+    [ <labelname>: <labelvalue> ... ]
+
+# 指定规则文件
+rule_files:
+  [ - <filepath_glob> ... ]
+
+# 抓取配置
+scrape_configs:
+  [ - <scrape_config> ... ]
+
+# 与alertmanager相关的告警配置
+alerting:
+  alert_relabel_configs:
+    [ - <relabel_config> ... ]
+  alertmanagers:
+    [ - <alertmanager_config> ... ]
+
+# 配置远端写入特性
+remote_write:
+  [ - <remote_write> ... ]
+
+# 配置远端读取特性
+remote_read:
+  [ - <remote_read> ... ]
+```
+
+### 抓取配置
+
+```
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  # 采集node exporter监控数据
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100', "192.168.1.13:9100"]
+```
+
+### 将 prometheus 数据自动写入 influxdb
+1. 安装influxdb，安装1.8版本，非2.0以上版本
+  ```
+  wget https://dl.influxdata.com/influxdb/releases/influxdb-1.8.10.x86_64.rpm
+  sudo yum localinstall influxdb-1.8.10.x86_64.rpm
+
+  systemctl start influxdb
+  ```
+2. 进入influxdb，创建prometheus库
+  ```
+  # influx
+  Connected to http://localhost:8086 version 1.8.10
+  InfluxDB shell version: 1.8.10
+  > create database prometheus;
+  > show databases;
+  name: databases
+  name
+  ----
+  _internal
+  prometheus
+  > exit
+  ```
+3. 配置prometheus，在`prometheus.yml`中添加
+  ```
+  remote_write:
+    - url: "http://192.168.13.41:8086/api/v1/prom/write?db=prometheus"
+
+  remote_read:
+    - url: "http://192.168.13.41:8086/api/v1/prom/read?db=prometheus"
+  ```
+
+> [prometheus如何存储influxdb官方文档](https://docs.influxdata.com/influxdb/v1.8/supported_protocols/prometheus/)
+
+
+## 常见exporter
+
+- node_expoter
+- mysqld_exporter
+- redis_exporter
+- blackbox_exporter
+- elasticsearch_exporter
+### Node exporter
+
+主要用于暴露 metrics 给 Prometheus，其中 metrics 包括：cpu 的负载，内存的使用情况，网络等。
+下载安装：https://prometheus.io/download/#node_exporter
+解压后将 node_exporter 放到`/usr/local/bin`中，然后执行。可通过浏览器访问 9100 端口`/metrics`查看
+
+可创建 systemd 服务：
+
+```
+[Unit]
+Description=node_exporter
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+Restart=on-failure
+[Install]
+WantedBy=multi-user.target
+```
+
+docker 启动：
+
+```
+docker run -d -p 9100:9100 -v /proc:/host/proc -v /sys:/host/sys -v /:/rootfs prom/node-exporter
+```
 ## AlertManager 报警
 
 Prometheus 的报警分为两个部分。 Prometheus 服务器中的报警规则将报警发送到 Alertmanager。 然后，报警管理器将重复数据删除，分组，再通过电子邮件，通话通知系统和聊天平台等方法管理这些报警，包括静默，禁止，聚合和发出通知。
@@ -538,69 +653,6 @@ ExecStart=/usr/local/bin/alertmanager --config.file=/etc/prometheus/alertmanager
 WantedBy=multi-user.target
 ```
 
-## Prometheus Server 配置文件详细说明
-
-```
-global:
-  # 查询目标的频率
-  [ scrape_interval: <duration> | default = 1m ]
-
-  # 查询失败的超时时间
-  [ scrape_timeout: <duration> | default = 10s ]
-
-  # 匹配规则的频率
-  [ evaluation_interval: <duration> | default = 1m ]
-
-  # 当与外部系统（外部存储、Alertmanager）联系时，可附加到任意时间序列或告警的标签
-  external_labels:
-    [ <labelname>: <labelvalue> ... ]
-
-# 指定规则文件
-rule_files:
-  [ - <filepath_glob> ... ]
-
-# 抓取配置
-scrape_configs:
-  [ - <scrape_config> ... ]
-
-# 与alertmanager相关的告警配置
-alerting:
-  alert_relabel_configs:
-    [ - <relabel_config> ... ]
-  alertmanagers:
-    [ - <alertmanager_config> ... ]
-
-# 配置远端写入特性
-remote_write:
-  [ - <remote_write> ... ]
-
-# 配置远端读取特性
-remote_read:
-  [ - <remote_read> ... ]
-```
-
-抓取配置
-
-```
-scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-  # 采集node exporter监控数据
-  - job_name: 'node'
-    static_configs:
-      - targets: ['localhost:9100', "192.168.1.13:9100"]
-```
-
-将 prometheus 数据自动写入 influxdb
-
-```
-remote_write:
-  - url: "http://192.168.0.16:8086/api/v1/prom/write?db=test"
-
-remote_read:
-  - url: "http://192.168.0.16:8086/api/v1/prom/read?db=test"
-```
 
 ## HTTP API
 
@@ -969,3 +1021,4 @@ curl http://localhost:9090/api/v1/status/buildinfo
   }
 }
 ```
+

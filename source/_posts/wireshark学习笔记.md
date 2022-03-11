@@ -4,15 +4,14 @@ date: 2018-05-18 21:21:35
 tags: [网络, wireshark]
 ---
 
-{% asset_img wireshark_logo.png wireshark_logo %}
 **基于 wireshark v2.4.5**
 本篇包含以下内容
 
 - [基本操作](#基本操作)
-  - [抓包过滤器](#抓包过滤器)
-- [高级功能](#高级功能)
-- [tshark 命令使用](#tshark命令使用)
+  - [捕获过滤器](#捕获过滤器)
+- [tshark 命令使用](#tshark-命令使用)
   - [常用操作](#常用操作)
+- [参考文章](#参考文章)
 
 <!--more-->
 
@@ -37,7 +36,7 @@ tags: [网络, wireshark]
 `[protocol] [direction] [host] [value] [logical operations] [other expression]`
 
 捕获-->捕获过滤器 有常用的语法案例
-{% asset_img buhuo1.PNG buhuo1 %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202250257512.PNG)
 
 常用过滤表达式举例：
 `ether`

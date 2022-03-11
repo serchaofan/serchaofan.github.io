@@ -117,7 +117,7 @@ Alias           gsv -> Get-Service
 
 提示命令帮助信息 `show-command 命令`，会弹出图形提示框，填入信息后自动生成命令。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120049483.png)
 
 # 提供程序
 

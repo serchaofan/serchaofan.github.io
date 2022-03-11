@@ -5,11 +5,11 @@ tags: [DRBD, 同步, 集群, 高可用]
 categories: [应用运维]
 ---
 
-- [DRBD 概述](#drbd-%e6%a6%82%e8%bf%b0)
-  - [DRBD 功能](#drbd-%e5%8a%9f%e8%83%bd)
-- [DRBD 基础搭建](#drbd-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
-  - [准备](#%e5%87%86%e5%a4%87)
-  - [搭建](#%e6%90%ad%e5%bb%ba)
+- [DRBD 概述](#drbd-概述)
+  - [DRBD 功能](#drbd-功能)
+- [DRBD 基础搭建](#drbd-基础搭建)
+  - [准备](#准备)
+  - [搭建](#搭建)
 
 <!--more-->
 
@@ -27,7 +27,7 @@ DRBD 镜像的特点：
 
 DRBD 的核心功能是通过 Linux 内核模块实现的。具体而言，DRBD 构成虚拟块设备的驱动程序，因此 DRBD 位于系统 I / O 堆栈的底部附近。因为 DRBD 的定义以及 Linux 内核体系结构强制要求，DRBD 不依赖于它上面的层，也就无法管理上一层（即文件系统层），例如 DRBD 无法自动检测文件系统损坏。
 
-{% asset_img 0.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042019.png)
 
 其中，**File system**为 API 向外输出的接口，**Buffer cache**用来缓存数据与元数据的，**Disk Scheduler**是用来排序内存中即将要写入磁盘的数据合并读请求。
 

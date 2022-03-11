@@ -5,7 +5,7 @@ tags: [数据库, Redis]
 ---
 
 本篇笔记主要包含以下内容
-{% asset_img redis-logo.png %}
+
 
   <!-- more -->
 
@@ -753,7 +753,7 @@ Redis 提供哨兵实现自动化的系统监控和故障恢复功能，哨兵�
 2. 主数据库出现故障时自动将从数据库转换为主数据库。
 
 在一个主从 Redis 系统中，可使用多个哨兵进行监控任务以保证系统足够稳健。哨兵不仅能监控主从数据库，还能与其他哨兵互相监控。
-{% asset_img shaobing.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048364.png)
 
 哨兵实验
 

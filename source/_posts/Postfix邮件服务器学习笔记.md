@@ -35,7 +35,7 @@ MX（Mail Exchanger）这个 DNS 设定中的标志，主要就是要给 mail se
 - Mailbox：邮件信箱，即某个用户专用的邮件存放点，Linux 默认的信箱目录为`/var/spool/mail`
 - MRA（Mail Receive Agent）：邮件接收代理。当用户端收受信件时，使用的是 MRA 的 POP3, IMAP 等通讯协定，并非 MTA 的 SMTP。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120102583.png)
 
 步骤：
 
@@ -68,7 +68,7 @@ SMTP（Send Mail Transfer Protocol）：是一种**发送邮件**的协议，使
 
 > **每个指令和应答最后必须追加换行指令 CR、LF**
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120102646.png)
 
 由于 SMTP 不具备验证发送者的功能，因此无法避免垃圾邮件，但也可通过 POP before SMTP 或 SMTP 认证对发送者认证。并且，**邮件收发双方必须同时在线，否则邮件会发送失败。**
 
@@ -126,7 +126,7 @@ hello
 
 为了解决 SMTP 的弊端，引入了 POP（Post Office Protocol）协议，这是一种用于**接收邮件**的协议，TCP 端口 110，发送端的邮件根据 SMTP 协议被转发到一直处于插电状态的 POP 服务器，客户端再根据 POP 协议从 POP 服务器接收对方发来的邮件，该过程中支持身份验证，邮件客户端会从邮件服务器上获取所有发给自己的新邮件，然后关闭连接，在关闭连接后，邮件服务器会删除所有被标记为已接收的邮件。当前 POP 的版本为 3，写作 POP3。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120102638.png)
 
 客户端的应答只有两种：正常的"+OK"，错误的"-ERR"。
 

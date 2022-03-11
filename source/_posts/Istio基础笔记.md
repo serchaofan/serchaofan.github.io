@@ -10,10 +10,10 @@ Istio 版本：1.9.0
 
 <!--more-->
 
-- [Service Mesh](#Service-Mesh)
-- [Istio](#Istio)
-- [Istio组件](#Istio%E7%BB%84%E4%BB%B6)
-- [Istio核心配置对象](#Istio%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE%E5%AF%B9%E8%B1%A1)
+- [Service Mesh](#service-mesh)
+- [Istio](#istio)
+- [Istio组件](#istio组件)
+- [Istio核心配置对象](#istio核心配置对象)
 
 # Service Mesh
 Buoyant 公司的CEO William , 曾经给出对服务网格的定义：服务网格是一个独立的基础设施层，用来处理服务之间的通信。
@@ -34,7 +34,7 @@ Istio提供了对整个服务网格的行为分析和操作控制，提供了一
 - 对集群内的所有流量(包括集群入口和出口)进行自动度量、日志采集和跟踪
 - 通过强身份验证和授权，在集群中进行安全的服务间通信
 
-![](1.png)
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120055675.png)
 
 # Istio组件
 istio在1.5之后回归单体应用，舍弃了mixer，将pilot、citadel、galley封装为一个istiod应用。

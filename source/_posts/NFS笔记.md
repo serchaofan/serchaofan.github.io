@@ -23,7 +23,7 @@ NFS 在传输数据时使用的端口会随机选择，而客户端是通过 RPC
 当 NFS 服务启动时会随即取用若干端口，并主动向 RPC 服务注册这些端口，然后 RPC 使用固定的 111 端口监听 NFS 客户端请求，并将正确的端口信息返回给客户端。
 
 **注：** 在启动 NFS 之前先要启动 RPC 服务，否则 NFS 无法向 RPC 注册，若 RPC 重启则原来注册的数据就全部丢失，NFS 也需重启以重新注册 RPC。
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120045970.png)
 
 1. 用户访问 web 页面，web 服务器上的 nfs 客户端便会向后端的 NFS 服务器通过 rpc 服务发出请求。
 2. nfs 服务器端 rpc 找到对应注册的 nfs 端口后，通知 nfs 客户端的 rpc
@@ -119,7 +119,7 @@ nfs 相关进程
 
 > 默认情况下，nfs 服务会禁止客户端的 root 用户对共享目录进行写操作，目的是为了保证当 nfs 以共享目录工作时，共享目录的数据不会被客户端随意修改，但是当 nfs 以远程存储工作时，这个功能就不合理，所以当 nfs 以远程存储来工作时，需要在服务端设置 no_root_squash 选项关闭该功能。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120045184.png)
 
 配置完后使用`exportfs -rv`命令，不需要重启 NFS。
 

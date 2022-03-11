@@ -192,7 +192,7 @@ MySQL 复制原理：MySQL 使用二进制日志（默认未启用），二进�
 2. 从服务器生成两个线程，一个是 I/O 线程，一个是 SQL 线程，I/O 线程请求主数据库的 binlog，将得到的 binlog 写入中继日志 relay log。同时，从库的I/O线程会将主库的信息（即从库上配置的MASTER_HOST、MASTER_LOG_FILE、MASTER_LOG_POS等信息）存储在`master.info`文件，并实时更新
 3. 从数据库的 SQL 进程读取 relay log，并开启事务执行最新的一条 SQL 指令，实现主从一致
 
-![](../_posts/MySQL高可用笔记/3.png)
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120033040.png)
 
 # MySQL 常用调优策略
 

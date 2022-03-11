@@ -5,12 +5,12 @@ tags: [Memcached, 缓存]
 categories: [应用运维]
 ---
 
-- [Memcached 概述](#memcached-%e6%a6%82%e8%bf%b0)
-- [Memcached 简单部署](#memcached-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2)
-  - [安装与简单操作](#%e5%ae%89%e8%a3%85%e4%b8%8e%e7%ae%80%e5%8d%95%e6%93%8d%e4%bd%9c)
-  - [部署在 LNMP 环境中](#%e9%83%a8%e7%bd%b2%e5%9c%a8-lnmp-%e7%8e%af%e5%a2%83%e4%b8%ad)
-- [Memcached 架构优化](#memcached-%e6%9e%b6%e6%9e%84%e4%bc%98%e5%8c%96)
-- [参考书目](#%e5%8f%82%e8%80%83%e4%b9%a6%e7%9b%ae)
+- [Memcached 概述](#memcached-概述)
+- [Memcached 简单部署](#memcached-简单部署)
+  - [安装与简单操作](#安装与简单操作)
+  - [部署在 LNMP 环境中](#部署在-lnmp-环境中)
+- [Memcached 架构优化](#memcached-架构优化)
+- [参考书目](#参考书目)
 
 <!--more-->
 
@@ -42,18 +42,18 @@ Memcached 通过事先规划好的系统内存空间中临时缓存数据库中�
 1. 程序更新或删除数据时，首先处理后端数据库
 2. 处理数据库的同时，会通知 Memcached，告知对应的数据失效，保证缓存数据与数据库一致。
 3. 若是在高并发读写场合，除了以上操作，还需通过相关机制，例如在数据库上部署相关程序（如数据库中设置触发器使用 UDFs），实现当数据库有更新时就把数据更新到缓存中，实现数据预热，减少第一次查询对数据库的压力。甚至可以把缓存作为数据库的从库，实现主从复制。
-   {% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120043818.png)
 
 Memcached 在企业常见架构中的位置：
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120043441.png)
 
 **Memcached 内存管理机制：**
 
 - 采用 slab 内存分配机制：
   全称 Slab Allocation。会提前将大内存分为若干 1M 的 slab，每个小对象称为 chunk，把相同尺寸的内存块分为组 chunks slab class，可重复利用。当新增数据对象时，会根据空闲 chunk 的表进行分配，避免了大量重复的初始化和清理，减轻内存管理器负担。存储在 chunk 中的数据项称为 item。
-  {% asset_img 3.png %}
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120043142.png)
   slab 分配器是基于对象（内核中的数据结构）进行管理的，每当要申请这样一个对象时，slab 分配器就从一个 slab 列表中分配一个 chunk 出去，而且是选择最适合数据大小的 slab 分配一个能存下这个数据的最小 chunk，而当要释放时，将其重新保存在该列表中，从而避免内部碎片。
-  {% asset_img 4.png %}
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120044556.png)
   slab 分配器并不丢弃已经分配的对象，而是释放并把它们保存在内存中。
   slab 分配对象时，会使用最近释放的对象的内存块，因此其驻留在 cpu 高速缓存中的概率会大大提高。
   > 早期使用的是 malloc，但会产生内存碎片，导致性能下降。

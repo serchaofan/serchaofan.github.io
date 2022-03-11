@@ -8,19 +8,19 @@ categories: [云计算]
 **主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**
 本篇主要包含以下内容
 
-- [Docker 存储介绍](#docker-%e5%ad%98%e5%82%a8%e4%bb%8b%e7%bb%8d)
+- [Docker 存储介绍](#docker-存储介绍)
 - [BindMount](#bindmount)
-  - [bind-propagation 传播挂载](#bind-propagation-%e4%bc%a0%e6%92%ad%e6%8c%82%e8%bd%bd)
-  - [Selinux 标签](#selinux-%e6%a0%87%e7%ad%be)
-- [Volume 数据卷](#volume-%e6%95%b0%e6%8d%ae%e5%8d%b7)
+  - [bind-propagation 传播挂载](#bind-propagation-传播挂载)
+  - [Selinux 标签](#selinux-标签)
+- [Volume 数据卷](#volume-数据卷)
 - [Tmpfs](#tmpfs)
-- [数据卷容器](#%e6%95%b0%e6%8d%ae%e5%8d%b7%e5%ae%b9%e5%99%a8)
-  - [数据卷备份、还原与迁移](#%e6%95%b0%e6%8d%ae%e5%8d%b7%e5%a4%87%e4%bb%bd%e8%bf%98%e5%8e%9f%e4%b8%8e%e8%bf%81%e7%a7%bb)
-    - [备份一个容器](#%e5%a4%87%e4%bb%bd%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8)
-    - [还原一个容器](#%e8%bf%98%e5%8e%9f%e4%b8%80%e4%b8%aa%e5%ae%b9%e5%99%a8)
-    - [删除一个数据卷](#%e5%88%a0%e9%99%a4%e4%b8%80%e4%b8%aa%e6%95%b0%e6%8d%ae%e5%8d%b7)
-- [存储引擎](#%e5%ad%98%e5%82%a8%e5%bc%95%e6%93%8e)
-- [参考资料](#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99)
+- [数据卷容器](#数据卷容器)
+  - [数据卷备份、还原与迁移](#数据卷备份还原与迁移)
+    - [备份一个容器](#备份一个容器)
+    - [还原一个容器](#还原一个容器)
+    - [删除一个数据卷](#删除一个数据卷)
+- [存储引擎](#存储引擎)
+- [参考资料](#参考资料)
   <!-- more -->
 
 ## Docker 存储介绍
@@ -63,7 +63,7 @@ docker 有三种存储容器数据的方式：
 - [`volumes`](#Volume数据卷)：通过创建数据卷将容器数据持久化到文件系统。
 - [`tmpfs`](#Tmpfs)：数据存放在内存中，不会写入文件系统。
 
-{% asset_img types-of-mounts.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042240.png)
 
 ## BindMount
 
@@ -203,7 +203,7 @@ etc       media     root      srv       usr       volume2
 ### 数据卷备份、还原与迁移
 
 使用数据卷能方便地进行数据备份、迁移和还原。
-{% asset_img beifen-1.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042859.jpg)
 
 #### 备份一个容器
 

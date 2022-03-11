@@ -49,7 +49,7 @@ File Transfer Protocol 文件传输协议，基于 TCP 协议，采用 C/S 模�
 
 > 注：若客户端在防火墙内部网络，主动方式会出现问题，因为客户端提供的端口是随机的，防火墙若未放行该端口，则无法建立 FTP 连接。此时需要使用**被动方式**建立连接
 
-{% asset_img post.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120037732.png)
 
 - 被动 PASV
 
@@ -58,7 +58,7 @@ File Transfer Protocol 文件传输协议，基于 TCP 协议，采用 C/S 模�
 3. 客户端用随机端口与服务器的指定临时端口 TCP 三次握手建立数据连接通道。
 4. 数据传输完毕，发送方发送 FIN 报文，关闭数据连接
 
-{% asset_img pasv.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120037599.png)
 
 **FTP 应答格式：**
 服务器端处理完命令后，会将状态信息，如命令是否执行成功、出错类型、是否就绪等，通过控制连接发送给客户端，即应答。应答的目的就是对数据传输过程进行同步，也为了让客户端了解服务器目前的状态。

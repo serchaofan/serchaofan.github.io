@@ -6,14 +6,12 @@ tags: [server, Samba]
 
 本篇笔记包含以下内容：
 
-- [Samba 原理](#samba-%e5%8e%9f%e7%90%86)
-- [Samba 基础配置](#samba-%e5%9f%ba%e7%a1%80%e9%85%8d%e7%bd%ae)
-  - [服务器端](#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af)
-  - [客户端](#%e5%ae%a2%e6%88%b7%e7%ab%af)
+- [Samba 原理](#samba-原理)
+- [Samba 基础配置](#samba-基础配置)
+  - [服务器端](#服务器端)
+  - [客户端](#客户端)
 
 <!-- more -->
-
-{% asset_img sambalogo.jpg %}
 
 # Samba 原理
 
@@ -240,8 +238,8 @@ domain=SAMBA
 在 Windows 端，可在文件资源管理器的地址栏输入`\\192.168.163.103\smbshare`登录进入 smb 服务器的该资源。
 若要挂载，在“此电脑”中右击，选择“添加一个网络位置”，按“下一步”，进入以下界面，填入要挂载的共享目录
 
-{% asset_img guazai1.PNG %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120047455.png)
 
 然后不断“下一步”，即可设置完成。在“此电脑”查看，已成功挂载。
 
-{% asset_img guazai2.PNG %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120047530.png)

@@ -5,8 +5,8 @@ tags: [nfs, 高可用]
 categories: [应用运维]
 ---
 
-- [NFS 高可用概述](#nfs-%e9%ab%98%e5%8f%af%e7%94%a8%e6%a6%82%e8%bf%b0)
-- [NFS+Keepalived+DRBD 搭建](#nfskeepaliveddrbd-%e6%90%ad%e5%bb%ba)
+- [NFS 高可用概述](#nfs-高可用概述)
+- [NFS+Keepalived+DRBD 搭建](#nfskeepaliveddrbd-搭建)
 
 <!--more-->
 
@@ -14,7 +14,7 @@ categories: [应用运维]
 
 NFS 的物理磁盘往往做 RAID10 或 RAID0，再通过 DRBD 同步 NFS，以及设置 VIP 进行主从热备。若主 NFS 宕机后，默认情况在几秒内，新的主 NFS 就可以启动同步程序自动把数据同步到所有从 NFS 中。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120102474.png)
 
 # NFS+Keepalived+DRBD 搭建
 

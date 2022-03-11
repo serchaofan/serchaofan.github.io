@@ -20,7 +20,7 @@ gitlab 组成：
 - sidekiq：Sidekiq 是 Ruby 后台作业处理器，可从 Redis 队列中提取作业并进行处理。 后台作业允许 GitLab 通过将工作移至后台来提供更快的请求/响应周期。
 - unicorn：一个用于运行核心 Rails 应用程序的 Ruby 应用程序服务器，该应用程序提供了 GitLab 中面向用户的功能
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120035370.png)
 
 gitlab 文件目录：
 
@@ -116,7 +116,7 @@ Gitlab Runner状态：
 2. Server分配Runner执行pipeline
 3. 通过公共Runner部署代码到生产服务器
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120035881.png)
 
 注册时需要为Runner指定Executor执行器，用于在不同场景下进行构建任务，不同Executor支持不同平台及执行不同方法。以下为常见Executor：
 - Shell：直接将Runner注册到Server端口，后期所有运行的job所需依赖都需要手动安装在这台注册的系统上。
@@ -131,7 +131,7 @@ Gitlab Runner状态：
 - stages：步骤，pipeline中包含多个stage，所有stage都从上到下顺序执行，若其中一个stage执行失败，则不再继续执行。只有所有stage都执行成功，pipeline状态才为成功。
 - jobs：每个stage由多个job组成，同一个stage中的job是并行执行的，任一个job失败导致stage失败导致pipeline失败。只有所有job都执行成功，stage才为成功。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120035225.png)
 
 Gitlab CI/CD流程：
 1. 校验：完成CI，包含代码扫描、性能测试、单元测试、容器扫描、依赖扫描等，stage失败就打回给开发者修复，直到分支的pipeline都构建测试正常。

@@ -8,11 +8,11 @@ tags: [OSPF, 网络]
 
 本篇包含以下内容
 
-- [OSPF 特性与基本术语](#ospf-%e7%89%b9%e6%80%a7%e4%b8%8e%e5%9f%ba%e6%9c%ac%e6%9c%af%e8%af%ad)
-- [OSPF 报文](#ospf-%e6%8a%a5%e6%96%87)
-- [OSPF 邻居建立维护与状态机](#ospf-%e9%82%bb%e5%b1%85%e5%bb%ba%e7%ab%8b%e7%bb%b4%e6%8a%a4%e4%b8%8e%e7%8a%b6%e6%80%81%e6%9c%ba)
-  - [链路状态广播 LSA](#%e9%93%be%e8%b7%af%e7%8a%b6%e6%80%81%e5%b9%bf%e6%92%ad-lsa)
-- [OSPF 特殊区域](#ospf-%e7%89%b9%e6%ae%8a%e5%8c%ba%e5%9f%9f)
+- [OSPF 特性与基本术语](#ospf-特性与基本术语)
+- [OSPF 报文](#ospf-报文)
+- [OSPF 邻居建立维护与状态机](#ospf-邻居建立维护与状态机)
+  - [链路状态广播 LSA](#链路状态广播-lsa)
+- [OSPF 特殊区域](#ospf-特殊区域)
 
   <!-- more -->
 
@@ -48,7 +48,7 @@ OSPF 选路原则：
 3. 以上都相同，形成等价路由
 
 两类外部路由：
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120049845.png)
 
 - 第一类外部路由：偏向于 AS 内部的选路，并不关心 AS 外的开销。用于控制入 AS 的路由选路。
   如图中 RTA，若选择第一类外部路由，则关心 AS 内部的开销，会选择开销较小的 RTB 路线。
@@ -81,7 +81,7 @@ OSPF 路由器类型：
 2. 区域边界路由器 Area Border：连接骨干与非骨干区域（物理上或逻辑上）
 3. 骨干路由器 Backbone：至少有一个接口属于骨干区域，即所有区域内和区域边界路由器都是骨干路由器
 4. 自治系统边界路由器 Autonomous System Border：与其他 AS 路由器交换路由信息，不一定在 AS 的边界，只要该路由器引入外部路由，就是 ASBR。
-   {% asset_img 2.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120049826.png)
 
 Router ID 用来在 AS 中唯一标识一个路由器，RouterID 的选取优先级如下：
 局部 > 全局 > 自动选举
@@ -147,7 +147,7 @@ OSPF 状态机
 - `loading`：交互路由信息
 - `full`：路由学习完毕，邻接关系建立
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120049922.png)
 
 影响 OSPF 建立邻接关系的因素：
 

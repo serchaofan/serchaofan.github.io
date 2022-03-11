@@ -5,12 +5,12 @@ tags: [LDAP, 验证]
 categories: [应用运维]
 ---
 
-- [LDAP 概述](#ldap-%e6%a6%82%e8%bf%b0)
-  - [目录服务](#%e7%9b%ae%e5%bd%95%e6%9c%8d%e5%8a%a1)
+- [LDAP 概述](#ldap-概述)
+  - [目录服务](#目录服务)
   - [X.500](#x500)
   - [LDAP](#ldap)
-    - [LDAP 的配置模式](#ldap-%e7%9a%84%e9%85%8d%e7%bd%ae%e6%a8%a1%e5%bc%8f)
-- [LDAP 简单部署](#ldap-%e7%ae%80%e5%8d%95%e9%83%a8%e7%bd%b2)
+    - [LDAP 的配置模式](#ldap-的配置模式)
+- [LDAP 简单部署](#ldap-简单部署)
 
 <!--more-->
 
@@ -75,7 +75,7 @@ LDAP 支持一主多从、多主多从以及分布式。
 
 DAP 是一个重量级的协议，在整个 OSI 协议栈上操作，需要占用大量计算资源，而 LDAP 设计在 TCP/IP 上，以小得多的资源消耗实现了大多数 DAP 功能。LDAP 服务器可当做网关访问 X.500 服务器，但基本都是在 X.500 服务器上直接实现 LDAP。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120026324.png)
 
 单独的 LDAP 守护程序 slapd，可看做是轻量级 X.500 服务器。LDAP 就是轻量级的 DAP。
 
@@ -101,7 +101,7 @@ LDAP 常用名词：
 - c：Country，国家。如 CN、US
 - o：Organization，组织。如 Inc
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120024971.png)
 
 LDAP 目录结构与信息：
 
@@ -147,15 +147,15 @@ LDIF 文件注意点：
 
 - 基本的目录查询服务：slapd 仅为本地域提供目录服务，不会以任何方式与别的目录服务器交互。
 
-  {% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120027508.png)
 
 - 目录查询代理服务：带有指针（Refferals），类似 DNS，若本地的 LDAP 无法处理，则会返回一个指针，指向更高级的服务器地址。
 
-  {% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120027137.png)
 
 - 异机复制数据，即主从同步：LDAP 的 slurpd 守护进程是用于将 slapd 上的改变传播到一个或多个从的 slapd 上。可以通过 inotify+rsync 方案实现简单的同步。
 
-  {% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120027474.png)
 
 # LDAP 简单部署
 

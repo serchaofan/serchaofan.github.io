@@ -9,45 +9,45 @@ Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节�
 
 <!-- more -->
 
-{% asset_img 0.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120059612.png)
 
-- [Ansible 结构](#ansible-%e7%bb%93%e6%9e%84)
-- [Ansible 安装](#ansible-%e5%ae%89%e8%a3%85)
+- [Ansible 结构](#ansible-结构)
+- [Ansible 安装](#ansible-安装)
 - [Inventory](#inventory)
 - [Playbook](#playbook)
-  - [命令解析](#%e5%91%bd%e4%bb%a4%e8%a7%a3%e6%9e%90)
-  - [变量引用](#%e5%8f%98%e9%87%8f%e5%bc%95%e7%94%a8)
+  - [命令解析](#命令解析)
+  - [变量引用](#变量引用)
   - [register](#register)
-  - [命令行传参](#%e5%91%bd%e4%bb%a4%e8%a1%8c%e4%bc%a0%e5%8f%82)
-  - [notify 与 handler](#notify-%e4%b8%8e-handler)
-  - [逻辑控制](#%e9%80%bb%e8%be%91%e6%8e%a7%e5%88%b6)
-    - [条件判断](#%e6%9d%a1%e4%bb%b6%e5%88%a4%e6%96%ad)
+  - [命令行传参](#命令行传参)
+  - [notify 与 handler](#notify-与-handler)
+  - [逻辑控制](#逻辑控制)
+    - [条件判断](#条件判断)
       - [when](#when)
-      - [changed_when、failed_when](#changedwhenfailedwhen)
-      - [ignore_errors](#ignoreerrors)
-    - [迭代（循环）](#%e8%bf%ad%e4%bb%a3%e5%be%aa%e7%8e%af)
-    - [Block 块](#block-%e5%9d%97)
-    - [任务间流程控制](#%e4%bb%bb%e5%8a%a1%e9%97%b4%e6%b5%81%e7%a8%8b%e6%8e%a7%e5%88%b6)
-    - [交互式提示](#%e4%ba%a4%e4%ba%92%e5%bc%8f%e6%8f%90%e7%a4%ba)
-    - [模板](#%e6%a8%a1%e6%9d%bf)
-    - [tags 标签](#tags-%e6%a0%87%e7%ad%be)
-  - [includes 和 roles](#includes-%e5%92%8c-roles)
+      - [changed_when、failed_when](#changed_whenfailed_when)
+      - [ignore_errors](#ignore_errors)
+    - [迭代（循环）](#迭代循环)
+    - [Block 块](#block-块)
+    - [任务间流程控制](#任务间流程控制)
+    - [交互式提示](#交互式提示)
+    - [模板](#模板)
+    - [tags 标签](#tags-标签)
+  - [includes 和 roles](#includes-和-roles)
     - [includes](#includes)
     - [roles](#roles)
     - [ansible-galaxy](#ansible-galaxy)
-  - [常用技巧](#%e5%b8%b8%e7%94%a8%e6%8a%80%e5%b7%a7)
-- [Ansible 插件类型](#ansible-%e6%8f%92%e4%bb%b6%e7%b1%bb%e5%9e%8b)
-- [Ansible 变量](#ansible-%e5%8f%98%e9%87%8f)
+  - [常用技巧](#常用技巧)
+- [Ansible 插件类型](#ansible-插件类型)
+- [Ansible 变量](#ansible-变量)
 - [Lookup](#lookup)
-- [Ansible 加密](#ansible-%e5%8a%a0%e5%af%86)
-- [Jinja2 过滤器](#jinja2-%e8%bf%87%e6%bb%a4%e5%99%a8)
-  - [Jinja 语法](#jinja-%e8%af%ad%e6%b3%95)
-  - [过滤器](#%e8%bf%87%e6%bb%a4%e5%99%a8)
-- [Ansible 实战](#ansible-%e5%ae%9e%e6%88%98)
-  - [为新系统添加 SSHkey](#%e4%b8%ba%e6%96%b0%e7%b3%bb%e7%bb%9f%e6%b7%bb%e5%8a%a0-sshkey)
-  - [部署 LAMP+Varnish+Memcached](#%e9%83%a8%e7%bd%b2-lampvarnishmemcached)
+- [Ansible 加密](#ansible-加密)
+- [Jinja2 过滤器](#jinja2-过滤器)
+  - [Jinja 语法](#jinja-语法)
+  - [过滤器](#过滤器)
+- [Ansible 实战](#ansible-实战)
+  - [为新系统添加 SSHkey](#为新系统添加-sshkey)
+  - [部署 LAMP+Varnish+Memcached](#部署-lampvarnishmemcached)
 - [Ansible-Tower](#ansible-tower)
-- [Ansible 常见模块](#ansible-%e5%b8%b8%e8%a7%81%e6%a8%a1%e5%9d%97)
+- [Ansible 常见模块](#ansible-常见模块)
   - [cron](#cron)
   - [user](#user)
   - [group](#group)
@@ -63,7 +63,7 @@ Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节�
   - [setup](#setup)
   - [synchronize](#synchronize)
   - [mount](#mount)
-  - [get_url](#geturl)
+  - [get_url](#get_url)
   - [lineinfile](#lineinfile)
 
 # Ansible 结构
@@ -78,7 +78,7 @@ Ansible 具有以下核心组件：
 - Connection Plugins：连接插件，用于 Ansible 和主机的通信
 - Plugins：其他各种插件，提供连接或功能接口
 
-{% asset_img jiegou.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120059083.png)
 
 Ansible 特性：
 
@@ -94,7 +94,7 @@ Ansible 特性：
 - 为架构的多个层次带来一致性，借助 Ansible 可通过编程操作计算架构中从基础设施到应用程序的每一层
 - Ansible 支持异构 IT 环境，支持 Windows 和 Linux 及多个硬件平台和云平台
 
-{% asset_img liucheng.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120059609.png)
 
 **实验系统 CentOS-7**
 **主节点服务器：192.168.163.102**
@@ -1995,7 +1995,7 @@ mysql_databases:
 
 Ansible Tower 提供了一个数据库来存储 inventory 配置信息，这个数据库可以通过 web 访问，或通过 REST 访问。Tower 与所有使用的 Ansible 动态 inventory 源保持同步，并提供了一个图形化的 inventory 编辑器。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120059235.png)
 
 在 Tower 中还能实现权限管理、Playbook 执行状态统计、REST API。[ansible-tower 下载](https://releases.ansible.com/ansible-tower/setup-bundle/)。解压后查看其中的`inventory`文件
 

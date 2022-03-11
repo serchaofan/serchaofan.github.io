@@ -7,15 +7,15 @@ categories: [系统运维]
 
 本篇包含以下内容
 
-- [LVM 逻辑卷](#lvm-%e9%80%bb%e8%be%91%e5%8d%b7)
-  - [LVM 概述](#lvm-%e6%a6%82%e8%bf%b0)
-  - [LVM 创建与调整](#lvm-%e5%88%9b%e5%bb%ba%e4%b8%8e%e8%b0%83%e6%95%b4)
-  - [LVM 快照](#lvm-%e5%bf%ab%e7%85%a7)
-- [RAID 磁盘阵列](#raid-%e7%a3%81%e7%9b%98%e9%98%b5%e5%88%97)
-  - [RAID 概述](#raid-%e6%a6%82%e8%bf%b0)
-  - [RAID 基础搭建](#raid-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
-    - [使用`RAID 5`进行备份](#%e4%bd%bf%e7%94%a8raid-5%e8%bf%9b%e8%a1%8c%e5%a4%87%e4%bb%bd)
-- [参考资料](#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99)
+- [LVM 逻辑卷](#lvm-逻辑卷)
+  - [LVM 概述](#lvm-概述)
+  - [LVM 创建与调整](#lvm-创建与调整)
+  - [LVM 快照](#lvm-快照)
+- [RAID 磁盘阵列](#raid-磁盘阵列)
+  - [RAID 概述](#raid-概述)
+  - [RAID 基础搭建](#raid-基础搭建)
+    - [使用`RAID 5`进行备份](#使用raid-5进行备份)
+- [参考资料](#参考资料)
 
 <!-- more -->
 
@@ -40,7 +40,7 @@ LVM 创建流程：
 3. 在卷组中分出逻辑卷，这些逻辑卷在外界看来就是多个独立的硬盘分区
 4. 对逻辑卷制作文件系统，并挂载
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029437.png)
 
 LVM 写入机制：
 LV 是从 VG 中划分出来的，LV 中的 PE 很可能来自于多个 PV。在向 LV 存储数据时，有多种存储机制，其中两种是：

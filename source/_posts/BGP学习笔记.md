@@ -9,12 +9,12 @@ categories: [网络]
 
 本篇包含以下内容
 
-- [BGP 特性与基本术语](#bgp-%e7%89%b9%e6%80%a7%e4%b8%8e%e5%9f%ba%e6%9c%ac%e6%9c%af%e8%af%ad)
-- [BGP 消息与状态机](#bgp-%e6%b6%88%e6%81%af%e4%b8%8e%e7%8a%b6%e6%80%81%e6%9c%ba)
-- [BGP 路由属性](#bgp-%e8%b7%af%e7%94%b1%e5%b1%9e%e6%80%a7)
-- [BGP 选路规则](#bgp-%e9%80%89%e8%b7%af%e8%a7%84%e5%88%99)
-  - [控制 BGP 路由](#%e6%8e%a7%e5%88%b6-bgp-%e8%b7%af%e7%94%b1)
-- [BGP 补充知识点](#bgp-%e8%a1%a5%e5%85%85%e7%9f%a5%e8%af%86%e7%82%b9)
+- [BGP 特性与基本术语](#bgp-特性与基本术语)
+- [BGP 消息与状态机](#bgp-消息与状态机)
+- [BGP 路由属性](#bgp-路由属性)
+- [BGP 选路规则](#bgp-选路规则)
+  - [控制 BGP 路由](#控制-bgp-路由)
+- [BGP 补充知识点](#bgp-补充知识点)
 
 <!-- more -->
 
@@ -98,7 +98,7 @@ BGP 状态机：
 5. OpenConfirm：Open 消息已确认。Keepalive 已发送，等待邻居的 Keepalive。若收到邻居的 Keepalive，则进入 Established 状态。若收到 Notification，则断开连接
 6. Established：BGP 连接建立。可发送 Update 交换路由，发送 Keepalive 维护连接，若收到 Notification 则断开连接
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120053966.png)
 
 ## BGP 路由属性
 

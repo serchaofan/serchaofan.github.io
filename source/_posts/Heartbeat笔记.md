@@ -5,19 +5,19 @@ tags: [heartbeat, server, 高可用, 集群]
 categories: [应用运维]
 ---
 
-- [Heartbeat 概念](#heartbeat-%e6%a6%82%e5%bf%b5)
-  - [脑裂](#%e8%84%91%e8%a3%82)
-  - [heartbeat 消息类型](#heartbeat-%e6%b6%88%e6%81%af%e7%b1%bb%e5%9e%8b)
-  - [heartbeat IP 地址接管及故障转移](#heartbeat-ip-%e5%9c%b0%e5%9d%80%e6%8e%a5%e7%ae%a1%e5%8f%8a%e6%95%85%e9%9a%9c%e8%bd%ac%e7%a7%bb)
-- [Heartbeat 配置](#heartbeat-%e9%85%8d%e7%bd%ae)
-  - [配置文件参数](#%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6%e5%8f%82%e6%95%b0)
+- [Heartbeat 概念](#heartbeat-概念)
+  - [脑裂](#脑裂)
+  - [heartbeat 消息类型](#heartbeat-消息类型)
+  - [heartbeat IP 地址接管及故障转移](#heartbeat-ip-地址接管及故障转移)
+- [Heartbeat 配置](#heartbeat-配置)
+  - [配置文件参数](#配置文件参数)
     - [ha.cf](#hacf)
     - [authkeys](#authkeys)
     - [haresources](#haresources)
-    - [实际配置](#%e5%ae%9e%e9%99%85%e9%85%8d%e7%bd%ae)
-    - [将 apache 交给 heartbeat 管理](#%e5%b0%86-apache-%e4%ba%a4%e7%bb%99-heartbeat-%e7%ae%a1%e7%90%86)
-    - [故障排查](#%e6%95%85%e9%9a%9c%e6%8e%92%e6%9f%a5)
-- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
+    - [实际配置](#实际配置)
+    - [将 apache 交给 heartbeat 管理](#将-apache-交给-heartbeat-管理)
+    - [故障排查](#故障排查)
+- [参考文章](#参考文章)
 
 <!--more-->
 
@@ -124,7 +124,7 @@ heartbeat 的资源目录为`/etc/ha.d/resources.d/`，可以将开发的程序�
 
   heartbeat 网卡：192.168.60.101（网卡 ens37）
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120034834.png)
 
 设置好`/etc/hosts`，使能通过主机名访问，主机名要和`uname -n`的结果一致。
 

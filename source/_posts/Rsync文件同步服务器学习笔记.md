@@ -4,16 +4,16 @@ date: 2018-08-01 20:58:22
 tags: [Rsync, server, 同步]
 ---
 
-- [Rsync 介绍与搭建](#rsync-%e4%bb%8b%e7%bb%8d%e4%b8%8e%e6%90%ad%e5%bb%ba)
-  - [quick check 算法介绍](#quick-check-%e7%ae%97%e6%b3%95%e4%bb%8b%e7%bb%8d)
-  - [rsync 的工作方式](#rsync-%e7%9a%84%e5%b7%a5%e4%bd%9c%e6%96%b9%e5%bc%8f)
-  - [rsync 命令使用](#rsync-%e5%91%bd%e4%bb%a4%e4%bd%bf%e7%94%a8)
-  - [规则解析](#%e8%a7%84%e5%88%99%e8%a7%a3%e6%9e%90)
-  - [Rsync 服务器搭建](#rsync-%e6%9c%8d%e5%8a%a1%e5%99%a8%e6%90%ad%e5%bb%ba)
-  - [Rsync 部分报错解决](#rsync-%e9%83%a8%e5%88%86%e6%8a%a5%e9%94%99%e8%a7%a3%e5%86%b3)
-- [Rsync+Inotify 文件自动同步](#rsyncinotify-%e6%96%87%e4%bb%b6%e8%87%aa%e5%8a%a8%e5%90%8c%e6%ad%a5)
-  - [Inotify 介绍](#inotify-%e4%bb%8b%e7%bb%8d)
-- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
+- [Rsync 介绍与搭建](#rsync-介绍与搭建)
+  - [quick check 算法介绍](#quick-check-算法介绍)
+  - [rsync 的工作方式](#rsync-的工作方式)
+  - [rsync 命令使用](#rsync-命令使用)
+  - [规则解析](#规则解析)
+  - [Rsync 服务器搭建](#rsync-服务器搭建)
+  - [Rsync 部分报错解决](#rsync-部分报错解决)
+- [Rsync+Inotify 文件自动同步](#rsyncinotify-文件自动同步)
+  - [Inotify 介绍](#inotify-介绍)
+- [参考文章](#参考文章)
 
 <!-- more -->
 
@@ -68,7 +68,7 @@ rsync 的增量传输体现在两个方面：**文件级别**的增量传输和*
 5. 当`Host-A`发现是匹配数据块时，将只发送这个匹配块的附加信息给`Host-B`。同时，如果两个匹配数据块之间有非匹配数据，则还会发送这些非匹配数据。
 6. 当`Host-B`陆陆续续收到这些数据后，会创建一个临时文件，并通过这些数据重组这个临时文件，使其内容和`file-A` 相同。临时文件重组完成后，修改该临时文件的属性信息(如权限、所有者、mtime 等)，然后重命名该临时文件替换掉`file-B`。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048047.png)
 
 ## rsync 的工作方式
 
@@ -414,7 +414,7 @@ mv b.html a.html
 
 要求分析：数据发布服务器既是 Rsync 服务器同时也是 Inotify 监控服务器，该服务器是用于发布数据的，将数据同步到 Web 服务器，实现 Web 服务器与此数据发布服务器的同步。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048508.png)
 
 实验环境：
 

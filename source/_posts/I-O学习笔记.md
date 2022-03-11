@@ -7,10 +7,10 @@ categories: [网络]
 
 本篇包含以下知识点：
 
-- [同、异步](#%e5%90%8c%e5%bc%82%e6%ad%a5)
-- [五种 Unix I/O 模型](#%e4%ba%94%e7%a7%8d-unix-io-%e6%a8%a1%e5%9e%8b)
-- [同步 I/O 模型](#%e5%90%8c%e6%ad%a5-io-%e6%a8%a1%e5%9e%8b)
-- [异步 I/O 模型](#%e5%bc%82%e6%ad%a5-io-%e6%a8%a1%e5%9e%8b)
+- [同、异步](#同异步)
+- [五种 Unix I/O 模型](#五种-unix-io-模型)
+- [同步 I/O 模型](#同步-io-模型)
+- [异步 I/O 模型](#异步-io-模型)
 
 <!-- more -->
 
@@ -43,21 +43,21 @@ categories: [网络]
 **I/O 模型：**
 进程是无法直接操作 I/O 设备的，其必须通过系统调用请求内核来协助完成 I/O 动作，而内核会为每个 I/O 设备维护一个 buffer。 用户进程发起请求，内核接受到请求后，从 I/O 设备中获取数据到 buffer 中，再将 buffer 中的数据 copy 到用户进程的地址空间，该用户进程获取到数据后再响应客户端。
 如下图中，真正称为 I/O 的就是**内核内存与与进程内存间的过程**<br>
-{% asset_img iomoxing.bmp iomoxing %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120036378.bmp)
 
 # 同步 I/O 模型
 
 **阻塞 I/O（Blocking I/O）：** 当用户进程进行系统调用 read()时，进程发起 recvform 系统调用，内核就开始了 I/O 的第一个阶段，准备数据到缓冲区中，当数据都准备完成后，则将数据从内核缓冲区中拷贝到用户进程的内存中，这时用户进程才解除 block 的状态重新运行。整个过程中用户进程都是阻塞的。不会消耗 CPU 时间，执行效率高。<br>
-{% asset_img zuseio.jpg zuseio %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120036123.jpg)
 
 **非阻塞 I/O（Non-Blocking I/O）：** 用户进程只有在第二个阶段被阻塞了，而第一个阶段没有阻塞。在第一个阶段中，recvform 系统调用调用之后，内核马上返回给进程，如果数据还没准备好，此时会返回一个 error，进程在返回之后，可以干点别的事情，然后再发起 recvform 系统调用，用户进程需要盲等，不停的去轮询内核，看数据是否准备好了。在拷贝数据整个过程，进程仍然是属于阻塞的状态。由于用户进程轮询内核，所以该模型是比较消耗 CPU 的，效率较低。<br>
-{% asset_img feizuseio.jpg feizuseio %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120036880.jpg)
 
 ** I/O 复用（I/O Multiplexing）：** I/O 执行的两个阶段都是用户进程都是阻塞的，但是两个阶段是独立的，在一次完整的 I/O 操作中，该用户进程是发起了两次系统调用。使用 select()、poll()或 epoll()（poll 的改进版）进行调用，可支持两路调用。相比于多进程和多线程技术，I/O 复用不需要进程线程创建和切换的开销，系统开销更小。
 
 > select 调用是内核级别的，select 轮询可以等待多个 socket，当其中任何一个 socket 的数据准备好了（通过内核监视），就能返回进行可读，然后进程再进行 recvform 系统调用。select 在此模式下最多只支持 1024 个并发。
 
-{% asset_img iofuyong.jpg iofuyong %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120037996.jpg)
 
 **I/O 复用应用场景：** <br>
 
@@ -68,7 +68,7 @@ categories: [网络]
 
 > 注：需要先开启套接字的信号驱动 I/O 功能，并使系统调用 sigaction 安装一个信号处理函数
 
-{% asset_img xinxiqudongio.jpg xinxiqudongio %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120037869.jpg)
 
 # 异步 I/O 模型
 
@@ -76,7 +76,7 @@ categories: [网络]
 
 > 异步 I/O 不需要 select 或 poll 主动询问，也没有询问描述符的数量限制。
 
-{% asset_img yibuio.jpg yibuio %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120037012.jpg)
 
 > 参考文章：
 > [简明网络 I/O 模型---同步异步阻塞非阻塞之惑](https://www.jianshu.com/p/55eb83d60ab1)

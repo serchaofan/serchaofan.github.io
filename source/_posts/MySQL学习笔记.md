@@ -61,8 +61,6 @@ categories: [应用运维]
   - [常见查看命令显示解析](#%e5%b8%b8%e8%a7%81%e6%9f%a5%e7%9c%8b%e5%91%bd%e4%bb%a4%e6%98%be%e7%a4%ba%e8%a7%a3%e6%9e%90)
     - [SHOW TABLE STATUS](#show-table-status)
 
-{% asset_img mysql.jpg %}
-
 # MySQL 体系
 
 MySQL 采用 C/S 体系，因此在使用时，是运行两个程序：

@@ -4,20 +4,20 @@ date: 2019-01-21 23:28:13
 tags:
 ---
 
-- [jenkins 介绍](#jenkins-%e4%bb%8b%e7%bb%8d)
-- [jenkins 搭建](#jenkins-%e6%90%ad%e5%bb%ba)
-  - [war 部署](#war-%e9%83%a8%e7%bd%b2)
-  - [apt 安装](#apt-%e5%ae%89%e8%a3%85)
-  - [Docker 部署](#docker-%e9%83%a8%e7%bd%b2)
-- [配置系统](#%e9%85%8d%e7%bd%ae%e7%b3%bb%e7%bb%9f)
-  - [系统设置](#%e7%b3%bb%e7%bb%9f%e8%ae%be%e7%bd%ae)
-    - [配置 JDK、Maven、Ant](#%e9%85%8d%e7%bd%ae-jdkmavenant)
-    - [配置发件人地址](#%e9%85%8d%e7%bd%ae%e5%8f%91%e4%bb%b6%e4%ba%ba%e5%9c%b0%e5%9d%80)
-    - [配置邮件通知](#%e9%85%8d%e7%bd%ae%e9%82%ae%e4%bb%b6%e9%80%9a%e7%9f%a5)
-  - [安全设置](#%e5%ae%89%e5%85%a8%e8%ae%be%e7%bd%ae)
-  - [用户设置](#%e7%94%a8%e6%88%b7%e8%ae%be%e7%bd%ae)
-  - [插件设置](#%e6%8f%92%e4%bb%b6%e8%ae%be%e7%bd%ae)
-- [项目构建设置](#%e9%a1%b9%e7%9b%ae%e6%9e%84%e5%bb%ba%e8%ae%be%e7%bd%ae)
+- [jenkins 介绍](#jenkins-介绍)
+- [jenkins 搭建](#jenkins-搭建)
+  - [war 部署](#war-部署)
+  - [apt 安装](#apt-安装)
+  - [Docker 部署](#docker-部署)
+- [配置系统](#配置系统)
+  - [系统设置](#系统设置)
+    - [配置 JDK、Maven、Ant](#配置-jdkmavenant)
+    - [配置发件人地址](#配置发件人地址)
+    - [配置邮件通知](#配置邮件通知)
+  - [安全设置](#安全设置)
+  - [用户设置](#用户设置)
+  - [插件设置](#插件设置)
+- [项目构建设置](#项目构建设置)
 - [Pipeline](#pipeline)
 
 <!-- more -->
@@ -108,7 +108,7 @@ docker run -u root -d \
 ### 配置 JDK、Maven、Ant
 
 进入全局工具配置（Global Tool Configuration），进行工具配置
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120033303.png)
 
 JDK 配置最好不要选自动配置，JAVA_HOME 要与 volume 设置的路径一致。
 
@@ -118,7 +118,7 @@ JDK 配置最好不要选自动配置，JAVA_HOME 要与 volume 设置的路径�
 
 进入配置系统（Configure System），找到 Jenkins Location 配置
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120033059.png)
 
 Jenkins URL 改为`域名/jenkins`，Email 改成 jenkins 要发送报告到的邮箱
 

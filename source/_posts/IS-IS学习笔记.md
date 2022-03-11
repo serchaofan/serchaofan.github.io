@@ -9,15 +9,15 @@ categories: [网络]
 
 本篇主要包含以下内容：
 
-- [OSI 地址](#osi-%e5%9c%b0%e5%9d%80)
-- [IS-IS 概述](#is-is-%e6%a6%82%e8%bf%b0)
-  - [IS-IS 常见术语：](#is-is-%e5%b8%b8%e8%a7%81%e6%9c%af%e8%af%ad)
-  - [IS-IS 协议报文](#is-is-%e5%8d%8f%e8%ae%ae%e6%8a%a5%e6%96%87)
-  - [IS-IS 网络类型](#is-is-%e7%bd%91%e7%bb%9c%e7%b1%bb%e5%9e%8b)
-- [IS-IS 实现](#is-is-%e5%ae%9e%e7%8e%b0)
-  - [邻接关系](#%e9%82%bb%e6%8e%a5%e5%85%b3%e7%b3%bb)
-  - [LSDB 同步](#lsdb-%e5%90%8c%e6%ad%a5)
-- [参考资料](#%e5%8f%82%e8%80%83%e8%b5%84%e6%96%99)
+- [OSI 地址](#osi-地址)
+- [IS-IS 概述](#is-is-概述)
+  - [IS-IS 常见术语：](#is-is-常见术语)
+  - [IS-IS 协议报文](#is-is-协议报文)
+  - [IS-IS 网络类型](#is-is-网络类型)
+- [IS-IS 实现](#is-is-实现)
+  - [邻接关系](#邻接关系)
+  - [LSDB 同步](#lsdb-同步)
+- [参考资料](#参考资料)
 
 <!--more-->
 
@@ -31,7 +31,7 @@ NASP 由 IDP（Initial Domian Part 初始域部分）和 DSP（Domain Specific P
 
 在 IS-IS 中，NASP 地址被分为 3 部分：可变长区域地址，System ID，NSEL。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120055808.png)
 
 System ID 用于在区域中唯一表示主机或服务器，一般会由 Router ID 转换得出。
 
@@ -146,13 +146,14 @@ IS-IS 报文直接封装在链路层数据中。报头包含通用报头 Common 
 
 **在广播网络中：**
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120055109.png)
 
 1. 所有同类路由器向 DIS 发送自己的所有 LSP
 2. DIS 周期发送 LSP 摘要信息
 3. IS 向 DIS 发送 PSNP 响应
 4. DIS 回复 LSP_K
 
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057010.png)
 ## 参考资料
 
 > [百度百科 IS-IS](https://baike.baidu.com/item/is-is/930474)

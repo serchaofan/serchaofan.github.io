@@ -63,7 +63,7 @@ docker0 的网段为 172.17.0.0/16，网关地址为 172.17.0.1，可通过`dock
 
 docker daemon 会创建一对对等接口：虚拟网桥上的 vethxxx 和容器的 eth0。veth 放置在宿主机的命名空间中，将宿主机上的所有网络为 bridge 的容器都连接到这个内部网络中，同时 daemon 会从网桥的私有地址空间中分配一个 IP 地址和子网给该容器。
 
-{% asset_img bridge.png bridge %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057950.png)
 
 ```
 # ifconfig
@@ -92,7 +92,7 @@ Docker 在 bridge 网络上不支持服务自动发现。如果需要通过容�
 
 在此模式下，容器网络与宿主机网络间的隔离将被禁止，容器共享宿主机的网络命名空间，使容器直接暴露在公共网络中。因此，需要通过端口映射（Port Mapping）进行协调。
 
-{% asset_img host.png host %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057367.png)
 
 ```
 # docker run -it --network=host alpine
@@ -119,7 +119,7 @@ ens33     Link encap:Ethernet  HWaddr 00:0C:29:58:0C:12
 
 在该模式，新创建的容器和已经存在的一个容器共享一个网络命名空间。两个容器除了网络的命名空间，其他的如文件系统、进程列表等仍然是隔离的。两个容器可以通过环回口进行设备通信。该模式也是 Kubernetes 使用的网络模式。
 
-{% asset_img container.jpg container %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057940.jpg)
 
 该模式通过`--network=container:另一个已存在的容器`实现。
 
@@ -231,7 +231,7 @@ eth1      Link encap:Ethernet  HWaddr 02:42:0A:01:01:03
 
 原理如图（图为 docker 文档的，ip 地址有偏差），docker 会在本容器上创建一个新的网卡，由指定的网络分配 IP 地址，实现与指定的网桥中容器的连接（如上面 ifconfig 中 eth1）。
 
-{% asset_img bridge3.png bridge3 %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058452.png)
 
 **DNS：** 使用对方容器的容器名、服务名、网络别名来找到对方，无论容器是否重启、更换 IP，内置的 DNS 都能正确指定到对方的位置。
 
@@ -246,7 +246,7 @@ eth1      Link encap:Ethernet  HWaddr 02:42:0A:01:01:03
 外网通过端口映射访问容器，每个映射的端口，宿主机都会启动一个 docker-proxy 进程处理访问容器的流量，可在宿主机通过`ps -ef | grep docker-proxy`查看端口映射情况
 下图为内外网的完整访问流程图
 
-{% asset_img wwfwrq.png wwfwrq %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058221.png)
 
 # 跨主机网络
 

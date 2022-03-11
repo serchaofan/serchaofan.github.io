@@ -55,7 +55,7 @@ etcd 的特点
 
 # etcd 架构
 
-{% asset_img etcd1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038841.png)
 
 - HTTP Server：用于处理用户发送的 API 请求以及其它 etcd 节点的同步与心跳信息请求。
 - Store：用于处理 etcd 支持的各类功能的事务，包括数据索引、节点状态变更、监控与反馈、事件处理与执行等等，是 etcd 对用户提供的大多数 API 功能的具体实现。
@@ -77,9 +77,9 @@ etcd 的特点
 常见服务发现形式：
 
 - 前后端业务注册发现：中间件和后端服务在 etcd 中注册后，前端和中间件可以从 etcd 中找到相应服务器并根据调用关系进行绑定
-  {% asset_img etcd2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038532.png)
 - 多组后端服务器注册发现：后端多个状态相同 APP 可同时注册到 etcd 中，前端可通过 HAProxy 从 etcd 获取到后端 IP 和端口然后请求转发，能够通过动态的配置域名解析实现实例故障重启透明化
-  {% asset_img etcd3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038285.png)
 
 ## 消息发布与订阅
 

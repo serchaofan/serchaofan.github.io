@@ -4,13 +4,12 @@ date: 2018-05-31 12:00:39
 tags: [varnish, 缓存, 代理]
 ---
 
-- [Varnish 概述](#varnish-%e6%a6%82%e8%bf%b0)
-  - [Squid 与 Varnish 对比](#squid-%e4%b8%8e-varnish-%e5%af%b9%e6%af%94)
-- [Varnish 基本配置](#varnish-%e5%9f%ba%e6%9c%ac%e9%85%8d%e7%bd%ae)
+- [Varnish 概述](#varnish-概述)
+  - [Squid 与 Varnish 对比](#squid-与-varnish-对比)
+- [Varnish 基本配置](#varnish-基本配置)
 
 <!--more-->
 
-{% asset_img varnish-bunny.png %}
 
 # Varnish 概述
 
@@ -106,7 +105,7 @@ root      62571  62560  0 02:23 ?        00:00:00 sbin/varnishd -f /usr/local/va
 
 通过浏览器访问 Varnish 服务器，使用开发者工具可看到响应头中的消息显示是 Varnish 返回的。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202250255383.png)
 
 可以通过`backend`块定义多个后端服务器。
 

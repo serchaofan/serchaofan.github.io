@@ -10,9 +10,9 @@ tags: [Vultr, Shadowsocks]
 
 <!--more-->
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120031109.png)
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120031379.png)
 
 在服务器页面会有提示密码，先用`ssh-copy-id`拷贝一下密钥，方便以后登录。
 
@@ -74,7 +74,7 @@ cipher = aes-256-cfb
 
 最后开始安装，安装完成后就会提示ss的信息
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120031950.png)
 
 至此，服务器端配置完成。
 
@@ -115,11 +115,11 @@ INFO: loading config from /etc/shadowsocks/config.json
 
 在浏览器上设置代理，选自动检测代理设置。
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120031732.png)
 
 然后安装插件switchyomega进行配置
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120031697.png)
 
 代理协议一定要是sock5，因为ss只支持sock5，不支持HTTP。
 

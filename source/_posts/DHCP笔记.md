@@ -7,11 +7,11 @@ categories: [应用运维]
 
 本篇包含以下内容
 
-- [DHCP 原理](#dhcp-%e5%8e%9f%e7%90%86)
-- [DHCP 服务器配置](#dhcp-%e6%9c%8d%e5%8a%a1%e5%99%a8%e9%85%8d%e7%bd%ae)
-  - [服务器端](#%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%ab%af)
-  - [客户端](#%e5%ae%a2%e6%88%b7%e7%ab%af)
-- [DHCP 中继](#dhcp-%e4%b8%ad%e7%bb%a7)
+- [DHCP 原理](#dhcp-原理)
+- [DHCP 服务器配置](#dhcp-服务器配置)
+  - [服务器端](#服务器端)
+  - [客户端](#客户端)
+- [DHCP 中继](#dhcp-中继)
 
 <!-- more -->
 
@@ -32,7 +32,8 @@ DHCP 的基本原则：尽可能为客户端分配**原来使用**的地址。
 DHCP 的分配顺序：1.静态分配的 2.客户端曾经会用过的 3.最先找到的可用 IP。
 
 **DHCP 报文与请求过程**
-{% asset_img dhcp-qingqiu.png %}
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058220.png)
 
 DHCP 工作过程
 

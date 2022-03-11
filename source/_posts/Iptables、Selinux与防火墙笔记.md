@@ -8,12 +8,12 @@ categories: [系统运维]
 本片包含以下内容：
 
 - [Iptables](#iptables)
-  - [Netfilter/Iptables 框架](#netfilteriptables-%e6%a1%86%e6%9e%b6)
-  - [iptables 规则](#iptables-%e8%a7%84%e5%88%99)
-  - [iptables 应用](#iptables-%e5%ba%94%e7%94%a8)
+  - [Netfilter/Iptables 框架](#netfilteriptables-框架)
+  - [iptables 规则](#iptables-规则)
+  - [iptables 应用](#iptables-应用)
 - [Selinux](#selinux)
 - [firewalld](#firewalld)
-    - [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
+    - [参考文章](#参考文章)
 
 <!--more-->
 
@@ -91,7 +91,7 @@ iptables 分为三部分：
    - 若是要**转发**：进入**mangle 表 forward 链**，然后进入**filter 表的 forward 链过滤**，进入**mangle 表的 postrouting 链**，进入**nat 表的 postrouting 链**，做**SNAT，但不过滤**，然后数据包离开本机。
    - 若是**发给本地**的：进入**mangle 表的 input 链**，进入**filter 表的 input 链**，对数据**包过滤**，然后交给本地程序，处理完后**先判断路由**，进入**raw 表的 output 链**，**连接跟踪**对包的处理，进入**mangle 表的 output 链**，可**修改数据包但不过滤**，进入**nat 表的 output 链，做 NAT**，然后路由，进入**filter 表的 output 链**，可**过滤包**，进入**mangle 表的 postrouiting 链**，进入**nat 表的 postrouting 链**，做**SNAT 但不过滤**，包离开本机。
 
-{% asset_img 0.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042587.png)
 
 ## iptables 应用
 
