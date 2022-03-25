@@ -71,7 +71,12 @@ date: 2020-04-05 19:05:37
 
 认证步骤的输入是整个HTTP请求，但通常情况组件只检查头部和客户端证书。
 
-认证模块包含：客户端证书、密码（HTTP Base）、普通令牌（HTTP Token）、引导令牌和JWT令牌。
+认证模块包含：
+1. 客户端证书（HTTPS）
+2. 密码（HTTP Base），`"用户名:密码"`进行 BASE64 编码后的字符串放在 Header 的 Authorization 中
+3. 普通令牌（HTTP Token），Token 放在 Header 里
+4. 引导令牌
+5. JWT令牌
 
 如果请求认证不通过，服务器将以HTTP状态码`401`拒绝该请求。反之，该用户被认证为特定的`username`，并且该用户名可用于后续步骤。
 
@@ -80,7 +85,26 @@ date: 2020-04-05 19:05:37
 
 请求必须包含**请求者的用户名、请求的行为以及受该操作影响的对象**。如果现有策略声明用户有权完成请求的操作，那么该请求被鉴权通过。
 
-Kubernetes 支持多种鉴权模块，例如**ABAC模式**、**RBAC 模式**和 **Webhook 模式**等。 管理员创建集群时会配置应在 API Server中使用的鉴权模块。 如果配置了多个鉴权模块，则 Kubernetes 会检查每个模块，任意一个模块鉴权该请求，请求即可继续，如果所有模块拒绝了该请求，请求将会被拒绝，返回HTTP状态码403。
+Kubernetes 支持多种鉴权模块，例如**ABAC模式**、**RBAC 模式**和 **Webhook 模式**等。 管理员创建集群时会配置应在 API Server中使用的鉴权模块。 如果配置了多个鉴权模块，则 Kubernetes 会检查每个模块，**任意一个鉴权模块允许该请求，请求即可继续**，如果所有模块拒绝了该请求，请求将会被拒绝，返回HTTP状态码403。
+
+鉴权模块:
+- Node：节点鉴权是一种特殊用途的鉴权模式，**专门对 kubelet 发出的 API 请求进行鉴权**。
+- ABAC：**基于属性的访问控制**，通过使用将属性组合在一起的策略，将访问权限授予用户。策略可以使用任何类型的属性（用户属性、资源属性、 对象，环境属性等）
+- RBAC：**基于角色的访问控制**，权限是单个用户执行特定任务的能力，例如查看、创建或修改文件。
+- Webhook：是一个 HTTP 回调：发生某些事情时调用的 HTTP POST，从而通过 HTTP POST 进行简单的事件通知
+- AlwaysDeny：阻止所有请求。仅用于测试。
+- AlwaysAllow：允许所有请求。仅在不需要 API 请求的鉴权时才使用。
+
+在API server启动参数中添加一条`--authorization-mode=`指定鉴权模块，这条也必须配置至少一种，若配置多种则以`,`分隔，例如`--authorization-mode=Node,RBAC`，模块按顺序检查，较靠前的模块具有更高的优先级来允许或拒绝请求。
+
+可使用`kubectl auth can-i <verb> <resource>` 了解当前用户是否有权限做指定操作，可以则为`yes`，反之为`no`。
+
+```
+# kubectl auth can-i create deployment -n dev
+yes
+# kubectl auth can-i delete deployment -n kube-system
+yes
+```
 
 ### 准入控制
 准入控制模块是可以修改或拒绝请求的软件模块。除鉴权模块可用的属性外，准入控制模块还可以访问正在创建或修改的对象的内容。
@@ -90,29 +114,44 @@ Kubernetes 支持多种鉴权模块，例如**ABAC模式**、**RBAC 模式**和 
 **与身份认证和鉴权模块不同，如果任何准入控制器模块拒绝某请求，则该请求将立即被拒绝。**
 
 ## 鉴权概述
+Kubernetes 仅审查以下 API 请求属性：
+1. 用户：身份验证期间提供的`user`。
+2. 组：经过身份验证的用户所属的组名列表。
+3. 额外信息：由身份验证层提供的任意字符串键到字符串值的映射。
+4. API：指示请求是否针对 API 资源。
+5. 请求路径：各种非资源端点的路径，如 `/api` 或 `/healthz`。
+6. API 请求动词：API 动词 `get`、`list`、`create`、`update`、`patch`、`watch`、`proxy`、`redirect`、`delete` 和 `deletecollection` 用于资源请求。
+7. HTTP 请求动词：HTTP 动词 `get`、`post`、`put` 和 `delete` 用于非资源请求。
+8. Resource：正在访问的资源的 ID 或名称（仅限资源请求），对于使用 `get`、`update`、`patch` 和 `delete` 动词的资源请求必须提供资源名称。
+9. 子资源：正在访问的子资源（仅限资源请求）。
+10. 名字空间：正在访问的对象的名称空间（仅适用于名字空间资源请求）。
+11. API组：正在访问的API组 （仅限资源请求）。空字符串表示核心API组（apiVersion: v1）。
+
+### 请求动词
+#### 非资源请求
+除`/api/v1/...`或`/apis/<group>/<version>/...`之外的请求被视为非资源请求（Non-Resource Requests），并使用该HTTP请求的小写形式作为其请求动词（如`get`）
+
+#### 资源请求
+| HTTP动词 | 请求动词 |
+|-|-|
+|POST|create|
+|GET, HEAD|get （针对单个资源）、list（针对集合）|
+|PUT|update|
+|PATCH | patch|
+|DELETE|	delete（针对单个资源）、deletecollection（针对集合）|
+
+有时使用专门的动词以对额外的权限进行鉴权。例如：
+- PodSecurityPolicy：`policy` API 组中 `podsecuritypolicies` 资源使用 `use` 动词
+- RBAC：对 `rbac.authorization.k8s.io` API 组中 `roles` 和 `clusterroles` 资源的 `bind` 和 `escalate` 动词
+- 身份认证：对核心 API 组中 `users`、`groups` 和 `serviceaccounts` 以及 `authentication.k8s.io` API 组中的 `userextras` 所使用的 `impersonate` 动词。
 
 
-## API Server 认证管理
-
-由于都是通过 API server 的 REST API 对资源访问的，所以集群安全关键在于如何识别认证客户端身份和权限的授权。
-
-K8s 提供三种级别的客户端身份认证方式：
-
-- HTTPS：双向数字证书认证
-- HTTP Token：Token 放在 Header 里
-- HTTP Base：`"用户名:密码"`进行 BASE64 编码后的字符串放在 Header 的 Authorization 中
 
 ## API Server 授权管理
 
 客户端发起 API server 调用时，API server 要先内部进行用户认证，然后执行用户授权，通过授权策略决定一个 API 调用是否合法。
 API server 支持的几种授权策略：
 
-- AlwaysDeny：拒绝所有请求
-- AlwaysAllow：允许所有请求
-- ABAC：基于属性的访问控制，通过用户配置进行匹配控制
-- Webhook：通过调用外部 REST 对用户进行授权
-- RBAC：基于角色的访问控制
-- Node：对 kubelet 发出的请求进行访问控制
 
 API server 收到请求后，会读取请求中的数据，生成一个访问策略对象，然后将这个对象与策略文件中所有访问策略对象逐条匹配，只要至少一个策略通过，则请求被鉴权通过。
 
