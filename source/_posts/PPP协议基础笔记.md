@@ -6,23 +6,23 @@ tags: [PPP, 网络, 华三]
 
 PPP 协议基础，根据华三网络整理
 
-- [PPP 协议概述](#ppp-%e5%8d%8f%e8%ae%ae%e6%a6%82%e8%bf%b0)
+- [PPP 协议概述](#ppp-协议概述)
   - [PPP MP](#ppp-mp)
   - [PPPOE](#pppoe)
-- [华三 PPP 环境搭建](#%e5%8d%8e%e4%b8%89-ppp-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba)
-  - [PAP 单向验证配置](#pap-%e5%8d%95%e5%90%91%e9%aa%8c%e8%af%81%e9%85%8d%e7%bd%ae)
-  - [PAP 双向验证配置](#pap-%e5%8f%8c%e5%90%91%e9%aa%8c%e8%af%81%e9%85%8d%e7%bd%ae)
-  - [CHAP 验证配置](#chap-%e9%aa%8c%e8%af%81%e9%85%8d%e7%bd%ae)
-  - [IP 地址协商](#ip-%e5%9c%b0%e5%9d%80%e5%8d%8f%e5%95%86)
-    - [直接指定对端 IP 地址](#%e7%9b%b4%e6%8e%a5%e6%8c%87%e5%ae%9a%e5%af%b9%e7%ab%af-ip-%e5%9c%b0%e5%9d%80)
-    - [配置地址池供对端选择](#%e9%85%8d%e7%bd%ae%e5%9c%b0%e5%9d%80%e6%b1%a0%e4%be%9b%e5%af%b9%e7%ab%af%e9%80%89%e6%8b%a9)
-    - [ISP 域关联 IP 地址池](#isp-%e5%9f%9f%e5%85%b3%e8%81%94-ip-%e5%9c%b0%e5%9d%80%e6%b1%a0)
-    - [PPP 常见配置项](#ppp-%e5%b8%b8%e8%a7%81%e9%85%8d%e7%bd%ae%e9%a1%b9)
-  - [MP 配置](#mp-%e9%85%8d%e7%bd%ae)
-    - [虚拟模板接口配置 MP](#%e8%99%9a%e6%8b%9f%e6%a8%a1%e6%9d%bf%e6%8e%a5%e5%8f%a3%e9%85%8d%e7%bd%ae-mp)
-      - [将链路直接绑定到 VT 上](#%e5%b0%86%e9%93%be%e8%b7%af%e7%9b%b4%e6%8e%a5%e7%bb%91%e5%ae%9a%e5%88%b0-vt-%e4%b8%8a)
-      - [按用户名查找 VT](#%e6%8c%89%e7%94%a8%e6%88%b7%e5%90%8d%e6%9f%a5%e6%89%be-vt)
-    - [MP-group 接口配置 MP](#mp-group-%e6%8e%a5%e5%8f%a3%e9%85%8d%e7%bd%ae-mp)
+- [华三 PPP 环境搭建](#华三-ppp-环境搭建)
+  - [PAP 单向验证配置](#pap-单向验证配置)
+  - [PAP 双向验证配置](#pap-双向验证配置)
+  - [CHAP 验证配置](#chap-验证配置)
+  - [IP 地址协商](#ip-地址协商)
+    - [直接指定对端 IP 地址](#直接指定对端-ip-地址)
+    - [配置地址池供对端选择](#配置地址池供对端选择)
+    - [ISP 域关联 IP 地址池](#isp-域关联-ip-地址池)
+    - [PPP 常见配置项](#ppp-常见配置项)
+  - [MP 配置](#mp-配置)
+    - [虚拟模板接口配置 MP](#虚拟模板接口配置-mp)
+      - [将链路直接绑定到 VT 上](#将链路直接绑定到-vt-上)
+      - [按用户名查找 VT](#按用户名查找-vt)
+    - [MP-group 接口配置 MP](#mp-group-接口配置-mp)
 
 <!--more-->
 
@@ -50,7 +50,7 @@ PPP 会话过程：PPP 的初始状态为不活动（dead）状态
 3. 网络层协商阶段（若配置了网络层协议）：PPP 双方发送 NCP 报文协商网络层协议（如 IPCP）及地址，NCP 状态从 Initial 变为 Request。协商成功后 NCP 状态变为 Opened，链路建立成功。
 4. 此后，PPP 链路将一直保持通信，直至有明确的 LCP 或 NCP 消息关闭这条链路，或发生了某些外部事件（例如用户的干预）。
 
-{% asset_img 1.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251136229.jpg)
 
 两种验证：
 
@@ -64,7 +64,7 @@ PPP 会话过程：PPP 的初始状态为不活动（dead）状态
 
 PPP 帧格式：
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251136794.png)
 
 ## PPP MP
 
@@ -356,7 +356,7 @@ MP 的配置主要有两种方式，一种是通过虚拟模板（Virtual Templa
 
 实验环境：两台路由器，连着两根串口线
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251137201.png)
 
 #### 将链路直接绑定到 VT 上
 

@@ -5,8 +5,8 @@ categories: []
 date: 2020-02-13 19:19:50
 ---
 
-- [Serverless 简介](#serverless-%e7%ae%80%e4%bb%8b)
-- [Serverless 技术特点](#serverless-%e6%8a%80%e6%9c%af%e7%89%b9%e7%82%b9)
+- [Serverless 简介](#serverless-简介)
+- [Serverless 技术特点](#serverless-技术特点)
 
 <!--more-->
 
@@ -14,7 +14,7 @@ date: 2020-02-13 19:19:50
 
 Serverless（无服务器架构）指的是服务端逻辑由开发者实现，运行在无状态的计算容器中，由事件触发，完全被第三方管理，而业务层面的状态则记录在数据库或存储资源中。用户无需管理服务器等基础设施，只需编写代码和选择触发器（trigger)，比如 RPC 请求、定时器等并上传，其余的工作（如实例选择、扩缩容、部署、容灾、监控、日志、安全补丁等）全部由 serverless 系统托管。用户只需要为代码实际运行消耗的资源付费——代码未运行则不产生费用（Pay as you go）。
 
-{% asset_img 0.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251134740.png)
 
 Serverless 相比 Serverful，有以下 3 个改变：
 
@@ -22,18 +22,18 @@ Serverless 相比 Serverful，有以下 3 个改变：
 - **代码的执行不再需要手动分配资源**。不需要为服务的运行指定需要的资源（比如使用几台机器、多大的带宽、多大的磁盘等），只需要提供一份代码，剩下的交由 serverless 平台去处理就行了。当前阶段的实现平台分配资源时还需要用户方提供一些策略，例如单个实例的规格和最大并发数，单实例的最大 CPU 使用率。理想的情况是通过某些学习算法来进行完全自动的自适应分配。
 - **按使用量计费**。Serverless 按照服务的使用量（调用次数、时长等）计费，而不是像传统的 serverful 服务那样，按照使用的资源（ECS 实例、VM 的规格等）计费。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251134453.png)
 
 Serverless 两个重要的产品：
 
 - FaaS（Function as a Service， 函数即服务，也称为云函数）：FaaS 提供了一个计算平台，在这个平台上，应用以一个或多个函数的形式开发、运行和管理。FaaS 平台提供了函数式应用的运行环境，一般支持多种主流的编程语言，如 Java、PHP 及 Python 等。FaaS 可以根据实际的访问量进行应用的自动化动态加载和资源的自动化动态分配。大多数 FaaS 平台基于事件驱动（Event Driven）的思想，可以根据预定义的事件触发指定的函数应用逻辑。
 - BaaS（Backend as a Service，后端即服务）：通过 BaaS 平台将应用所依赖的第三方服务，如数据库、消息队列及存储等服务化并发布出来，用户通过向 BaaS 平台申请所需要的服务进行消费，而不需要关心这些服务的具体运维。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251135144.png)
 
 FaaS 与 PaaS 的比较：大部分 PaaS 应用无法针对每个请求启动和停止整个应用程序，而 FaaS 平台生来就是为了实现这样的目的。FaaS 和 PaaS 在运维方面最大的差异在于缩放能力。对于大部分 PaaS 平台，用户依然需要考虑缩放。但是对于 FaaS 应用，这种问题完全是透明的。就算将 PaaS 应用设置为自动缩放，依然无法在具体请求的层面上进行缩放，而 FaaS 应用在成本方面效益就高多了。
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251135535.png)
 
 **Serverless 架构的优点**
 

@@ -1,30 +1,16 @@
 ---
-title: Supervisor学习笔记
+title: Supervisor使用
 tags: [Supervisor]
 categories: []
 date: 2019-12-15 14:34:32
+comments: false
 ---
 
 Supervisor 是一个 python 编写的 C/S 系统，允许其用户监视和控制 UNIX/Linux 上的多个进程。它不会作为“进程 ID 1”替代 init 运行，相反，它旨在用于控制与某个项目或客户相关的进程，并且在启动时像任何其他程序一样启动。
 
 <!--more-->
 
-- [特点](#特点)
-- [组成](#组成)
-- [安装使用](#安装使用)
-  - [添加程序](#添加程序)
-  - [web 管理](#web-管理)
-  - [supervisorctl 动作](#supervisorctl-动作)
-  - [配置文件详解](#配置文件详解)
-    - [[unix_http_server]](#unix_http_server)
-    - [[inet_http_server]](#inet_http_server)
-    - [[supervisord]](#supervisord)
-    - [[supervisorctl]](#supervisorctl)
-    - [[program:x]](#programx)
-    - [[include]](#include)
-    - [[group:x]](#groupx)
-
-# 特点
+## 特点
 
 - `rc.d`脚本是进程初始化、自动启动、管理的一个很好的形式，但是编写和维护很麻烦。 此外，`rc.d`脚本无法自动重启崩溃的进程，许多程序在崩溃时无法正确地自行重启。`Supervisord` 将进程作为其子进程启动，并且可以配置为在崩溃时自动重启，也可以将其自动配置为自行调用启动进程。
 - 在 UNIX 上，通常很难获得准确的启动和关闭状态信息。 Pidfile 经常出错。 Supervisord 将流程作为子流程启动，因此它始终知道其子级的真实的启动和关闭状态，并且可以方便地查询该数据。
@@ -35,14 +21,14 @@ Supervisor 是一个 python 编写的 C/S 系统，允许其用户监视和控�
 - Supervisor 能启动、停止和监视进程，可以单独控制，也可以分组控制。可以配置 Supervisor 来提供本地或远程命令行和 web 接口。
 - Supervisor 具有一个简单的事件通知协议，该协议可以使用任何语言编写的程序对其进行监视，并且具有用于控制的 XML-RPC 接口。它还使用扩展点构建，Python 开发人员可以利用这些扩展点。
 
-# 组成
+## 组成
 
 - supervisord：负责自行调用启动子程序，响应来自客户端的命令，重新启动崩溃或退出的子进程，记录其子进程 stdout 和 stderr 输出以及生成和处理与子进程生命周期中的点相对应的“事件”。配置文件`/etc/supervisord.conf`，是“ Windows-INI”样式的配置文件。因为可能包含未加密的用户名和密码，最好通过适当的文件系统权限来确保此文件的安全
 - supervisorctl：提供了类似 shell 的界面，与 supervisord 结合使用。 通过超级用户，用户可以连接到不同的超级用户进程（一次一个），获取由超级用户控制的子进程的状态，停止和启动该超级用户的子进程，以及获取超级用户正在运行的进程的列表。命令行客户端通过 UNIX 域套接字或 Internet（TCP）套接字与服务器交互。 服务器可以声明客户端用户应在允许客户端执行命令之前出示身份验证凭据。客户端进程通常使用与服务器相同的配置文件，但是其中需包含`[supervisorctl]`
-- 激活配置文件的`[inet_http_server]`部分后，可访问浏览器的 localhost:9001，通过 web 界面查看操作
+- 激活配置文件的`[inet_http_server]`部分后，可访问浏览器的 `localhost:9001`，通过 web 界面查看操作
 - 开启 web ui 后，还会自动提供 XML-RPC 接口，该接口可用于询问和控制管理程序及其运行的程序。
 
-# 安装使用
+## 安装使用
 
 `pip install supervisor`，之后运行命令`echo_supervisord_conf`，该命令会打印出 supervisor 的配置案例。
 
@@ -74,7 +60,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-## 添加程序
+### 添加程序
 
 在配置文件中添加
 
@@ -97,7 +83,7 @@ command=/bin/cat
 foo                              RUNNING   pid 27977, uptime 0:00:44
 ```
 
-## web 管理
+### web 管理
 
 需要在配置中将`[inet_http_server]`的注释去除
 
@@ -113,7 +99,7 @@ password=test
 重新启动 supervisord，查看 9001 端口是否开启
 然后通过浏览器访问 9001 端口。
 
-## supervisorctl 动作
+### supervisorctl 动作
 
 - `help`：获取动作的列表
   `help <action>`能获取指定 action 的帮助
@@ -278,4 +264,81 @@ prompt = mysupervisor
 [group:foo]
 programs=bar,baz
 priority=999
+```
+
+## 常见服务配置示例
+### kafka和zookeeper
+```ini
+[program:kafka]
+command=/data/kafka/bin/kafka-server-start.sh  /data/kafka/config/server.properties
+directory=/data/kafka
+user=root
+autostart=true
+autorestart=true
+startsecs=10
+stdout_logfile=/data/logs/kafka.log
+redirect_stderr=true
+environment=JAVA_HOME=/usr/local/jdk1.8.0_261
+
+[program:zookeeper]
+command=/data/zookeeper/bin/zkServer.sh start-foreground
+directory=/data/zookeeper
+user=root
+autostart=true
+autorestart=true
+startsecs=10
+stdout_logfile=/data/logs/zookeeper.log
+redirect_stderr=true
+environment=JAVA_HOME=/usr/local/jdk1.8.0_261
+
+```
+
+### prometheus
+```ini
+[program:prometheus]
+command=/data/prometheus/prometheus --web.enable-lifecycle --storage.tsdb.path=/data/prometheus/data  --config.file="/data/prometheus/prometheus.yml"  --storage.tsdb.retention.time=30d
+redirect_stderr=true
+stdout_logfile=/data/logs/prometheus.log
+autostart=true
+autorestart=true
+startsecs=10
+
+[program:node_exporter]
+command=/data/node_exporter/node_exporter --web.listen-address=":9100"
+directory=/data/node_exporter
+redirect_stderr=true
+stdout_logfile=/data/logs/node_export.log
+autostart=true
+autorestart=true
+startsecs=10
+
+```
+
+### rocketmq
+```
+[program:mqnamesrv]
+command=/usr/local/rocketmq/bin/mqnamesrv
+process_name=mqnamesrv
+numprocs=1
+autostart=true
+autorestart=true
+startsecs=10
+startretries=3
+stopasgroup=true
+killasgroup=true
+stopsignal=TERM
+stopwaitsecs=5
+
+[program:broker]
+command=/usr/local/rocketmq/bin/mqbroker -n xxx:9876;xxx:9876;xxx:9876 -c /usr/local/rocketmq/conf/2m-2s-async/broker-a.properties
+numprocs=1
+autostart=true
+autorestart=true
+startsecs=10
+startretries=3
+stopasgroup=true
+stopsignal=TERM
+stopwaitsecs=5
+killasgroup=true
+
 ```

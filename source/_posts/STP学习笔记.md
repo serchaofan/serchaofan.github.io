@@ -49,7 +49,7 @@ STP 消除环路的思想：
 根路径开销：网桥到根桥的最短的路径开销
 
 **配置 BPDU：**
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251130257.png)
 
 - 网桥通过交换配置 BPDU 来获取 STP 计算所需的参数
 - 配置 BPDU 基于二层组播方式发送，目的地址`01-80-C2-00-00-00`
@@ -93,11 +93,11 @@ STP 消除环路的思想：
 
 端口被选为指定端口或根端口后，需要从 Blocking 经过 Listening 和 Learning 才能到达 Forwarding。期间有两次 Forward Delay，每次为 15 秒。设置 Forward Delay 的作用为：使 BPDU 消息有一个充分时间再网络中传播。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251131138.png)
 
 **拓扑改变后处理：**
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251131550.png)
 
 如图：SWD 的 0/1 端口故障导致 hostA 中断，经过 MaxAge，SWE 的 0/1 口配置 BPDU 老化，变为 Listening，经过两个 ForwardDelay，0/1 口变为 Forwarding 状态。
 
@@ -143,7 +143,7 @@ RSTP 端口角色变化：将 STP 的 Alternate 分为 Alternate 和 Backup
 - 当阻塞端口收到更优的配置 BPDU 来自其他网桥时，该端口为 Alternate
 - 当阻塞端口收到更优的配置 BPDU 来自本网桥时，该端口为 Backup
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251131774.png)
 
 RSTP 使用 RST BPDU。与 BPDU 的区别：
 
@@ -164,7 +164,7 @@ RSTP 快速收敛机制：
   - 握手请求报文：Proposal
   - 握手回应报文：Agreement
   - 条件：必须在点对点链路
-    {% asset_img 5.png %}
+    ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251132094.png)
 
 拓扑改变触发条件：只有非边缘端口转变为 Forwarding，产生拓扑改变
 
