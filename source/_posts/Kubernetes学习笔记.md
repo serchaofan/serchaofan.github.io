@@ -5,73 +5,6 @@ tags: [云计算, Kubernetes]
 categories: [云计算]
 ---
 
-- [Kubernetes 概述](#Kubernetes-%E6%A6%82%E8%BF%B0)
-  - [k8s 结构与组件](#k8s-%E7%BB%93%E6%9E%84%E4%B8%8E%E7%BB%84%E4%BB%B6)
-  - [k8s 基础对象](#k8s-%E5%9F%BA%E7%A1%80%E5%AF%B9%E8%B1%A1)
-    - [Pod](#Pod)
-    - [Label](#Label)
-    - [Replication Controller](#Replication-Controller)
-    - [Deployment](#Deployment)
-    - [StatefulSet](#StatefulSet)
-    - [Service](#Service)
-    - [Job](#Job)
-    - [Volume](#Volume)
-    - [Persistent Volume](#Persistent-Volume)
-    - [Namespace](#Namespace)
-    - [Autonation](#Autonation)
-    - [ConfigMap](#ConfigMap)
-  - [k8s 如何进行版本升级](#k8s-%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E7%89%88%E6%9C%AC%E5%8D%87%E7%BA%A7)
-  - [K8s 开放接口](#K8s-%E5%BC%80%E6%94%BE%E6%8E%A5%E5%8F%A3)
-    - [CRI](#CRI)
-    - [CNI](#CNI)
-    - [CSI](#CSI)
-- [k8s 部署要点](#k8s-%E9%83%A8%E7%BD%B2%E8%A6%81%E7%82%B9)
-  - [Kubectl 常用操作](#Kubectl-%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C)
-  - [K8s 集群安全](#K8s-%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8)
-- [深入理解 Pod](#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Pod)
-  - [静态 Pod](#%E9%9D%99%E6%80%81-Pod)
-  - [Pod 配置管理](#Pod-%E9%85%8D%E7%BD%AE%E7%AE%A1%E7%90%86)
-  - [在容器内获取 Pod 信息](#%E5%9C%A8%E5%AE%B9%E5%99%A8%E5%86%85%E8%8E%B7%E5%8F%96-Pod-%E4%BF%A1%E6%81%AF)
-  - [Pod 生命周期与重启策略](#Pod-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8E%E9%87%8D%E5%90%AF%E7%AD%96%E7%95%A5)
-  - [Pod 健康检查和服务可用性检查](#Pod-%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5%E5%92%8C%E6%9C%8D%E5%8A%A1%E5%8F%AF%E7%94%A8%E6%80%A7%E6%A3%80%E6%9F%A5)
-  - [Pod 调度](#Pod-%E8%B0%83%E5%BA%A6)
-    - [Deployment 与 RC](#Deployment-%E4%B8%8E-RC)
-    - [NodeSelector](#NodeSelector)
-    - [NodeAffinity](#NodeAffinity)
-    - [PodAffinity](#PodAffinity)
-    - [Taints 与 Tolerations](#Taints-%E4%B8%8E-Tolerations)
-    - [Pod Priority Preemption](#Pod-Priority-Preemption)
-    - [DaemonSet](#DaemonSet)
-    - [Job](#Job-1)
-    - [Cronjob](#Cronjob)
-  - [初始化容器 Init Container](#%E5%88%9D%E5%A7%8B%E5%8C%96%E5%AE%B9%E5%99%A8-Init-Container)
-  - [Pod 升级与回滚](#Pod-%E5%8D%87%E7%BA%A7%E4%B8%8E%E5%9B%9E%E6%BB%9A)
-    - [Deployment 升级](#Deployment-%E5%8D%87%E7%BA%A7)
-      - [更新策略](#%E6%9B%B4%E6%96%B0%E7%AD%96%E7%95%A5)
-    - [Deployment 回滚](#Deployment-%E5%9B%9E%E6%BB%9A)
-      - [RC 滚动升级](#RC-%E6%BB%9A%E5%8A%A8%E5%8D%87%E7%BA%A7)
-  - [Pod 扩缩容](#Pod-%E6%89%A9%E7%BC%A9%E5%AE%B9)
-    - [手动扩缩容](#%E6%89%8B%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9)
-  - [K8s弹性伸缩](#K8s%E5%BC%B9%E6%80%A7%E4%BC%B8%E7%BC%A9)
-    - [HPA](#HPA)
-- [深入理解 Service](#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Service)
-  - [外部服务 Service](#%E5%A4%96%E9%83%A8%E6%9C%8D%E5%8A%A1-Service)
-  - [Headless Service](#Headless-Service)
-    - [Apache Cassandra 简介](#Apache-Cassandra-%E7%AE%80%E4%BB%8B)
-    - [通过 Service 动态查找 Pod](#%E9%80%9A%E8%BF%87-Service-%E5%8A%A8%E6%80%81%E6%9F%A5%E6%89%BE-Pod)
-  - [从集群外部访问 Pod 和 Service](#%E4%BB%8E%E9%9B%86%E7%BE%A4%E5%A4%96%E9%83%A8%E8%AE%BF%E9%97%AE-Pod-%E5%92%8C-Service)
-- [核心组件运行机制](#%E6%A0%B8%E5%BF%83%E7%BB%84%E4%BB%B6%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6)
-  - [API-Server](#API-Server)
-  - [Controller Manager](#Controller-Manager)
-    - [Replication Controller](#Replication-Controller-1)
-    - [Node Controller](#Node-Controller)
-    - [ResourceQuota Controller](#ResourceQuota-Controller)
-    - [Namespace Controller](#Namespace-Controller)
-    - [Service Controller 和 Endpoints Controller](#Service-Controller-%E5%92%8C-Endpoints-Controller)
-  - [Scheduler](#Scheduler)
-  - [kubelet](#kubelet)
-  - [kubeproxy](#kubeproxy)
-
 <!--more-->
 
 # Kubernetes 概述
@@ -135,7 +68,7 @@ Node 流程概述：kubelet 监听 apiserver 的资源变动，在符合的 node
 
 - **etcd**：分布式键值存储系统，用于保持集群状态，如 pod、service 对象信息。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071602665.png)
 
 - **cloud-controller-manager**：K8s 与云厂商提供的服务能力对接的关键组件，也称 k8s cloudprovider。
 
@@ -170,7 +103,7 @@ k8s 提供如 Pod、Service、Namespace、Volume 的基础对象
 - 引入与业务无关且不宜死亡的 Pause 容器作为 pod 的根容器，以它的状态代表整个容器组的状态。
 - pod 的多个业务容器共享 Pause 容器的 IP，共享 Pause 容器挂接的 Volume，既简化了密切关联的业务容器之间的通信问题，也解决了它们之间的文件共享问题。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071602081.png)
 
 k8s 为每个 pod 分配一个 **pod IP**，pod 的**容器组共享 pod IP**，k8s 要求底层网络支持集群内任意两个 pod 之间的 TCP/IP 直接通信，通常通过虚拟二层网络实现（如 Flannel、Open vSwitch）。**在 k8s 中，一个 pod 里的容器能直接与另一主机上的 pod 的容器通信。**
 
@@ -342,7 +275,7 @@ $(podname).$(Headless Service name)
 
 每个 Service 就算是一个微服务。Service 定义一个服务的访问入口，前端的应用 pod 通过该入口地址访问其背后的一组 pod 副本组成的集群，而 Service 通过 Label Selector 与后端 pod 对接。最终系统由多个提供不同业务能力又相互独立的微服务单元组成，服务间通过 TCP/IP 网络通信，形成强大的弹性网络。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/3.png)
 
 **客户端如何访问由多个 Pod 副本组成的集群？**通过 node 上的 **kube-proxy** 进程，kube-proxy 是一个智能的负载均衡器，负责把对 Service 的请求转发到后端的某个 Pod 实例上，并在内部实现服务的负载均衡和会话保持，且 Service 没有共用一个负载均衡器的 IP，**每个 Service 都被分配一个全局唯一虚拟 IP，称为 Cluster IP，导致每个服务变成具备唯一 IP 地址的节点，服务调用变成了 TCP 网络通信**。
 Service 一旦创建，k8s 就自动为它分配一个可用 Cluster IP，且**在 Service 的整个生命周期中，Cluster IP 不会发生改变。所以服务发现只要用 Service 的 Name 和 Cluster IP 做 DNS 映射即可。**
@@ -558,7 +491,7 @@ CRI 中定义了**容器和镜像的服务**的接口，因为容器运行时与
 无论 docker 还是 rkt 都用到了 kubelet 内部接口，导致定制开发难度增加，因此 CRI 接口规范用定义清晰的抽象层清除这一壁垒，当开发者能专注于容器运行时本身。
 
 kubelet 使用 gRPC 框架通过 unix socket 与 CRI 代理（shim）进行通信，这个过程中 kubelet 是客户端，shim 是服务端。
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071603640.png)
 
 Protocol Buffers 包含两个 gRPC 服务：ImageService、RuntimeService
 
@@ -2077,7 +2010,7 @@ deployment "nginx-deploy" successfully rolled out
 再次查看 Pod 列表，能看到 pod 名称都已经更新了，可通过`describe`查看具体 Pod 情况，能看到 Pod 镜像已经更新。
 
 滚动升级的流程
-{% asset_img 8.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071604530.png)
 
 ```
 Events:
@@ -2482,7 +2415,7 @@ Cassandra 结合 Headless Service 可实现 Cassandra 节点之间互相查找�
 由于 pod 的创建和销毁都会实时更新 Service 的 Endpoint 数据，所以可动态对 Service 的后端 Pod 进行查询，因此一个 Cassandra 节点只需要查询到其他节点就能自动组成一个集群。
 
 Cassandra 节点加入集群的过程
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071603288.png)
 
 1. 新节点出现会更新 Service 的 Endpoint
 2. Master 获取 Service 的后端 Endpoint，将新 Pod 加入集群
@@ -2596,7 +2529,7 @@ API Server 架构：
 - 注册表层：K8s 将所有资源对象都保存在注册表（Registry）中，包含了资源对象类型、如何创建资源对象、如何转换资源版本、如何将资源编码和解码为 Json 或 ProtoBuf 格式
 - etcd 数据库
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071604800.png)
 
 完整 Pod 的调度机制 List-Watch
 
@@ -2604,7 +2537,7 @@ API Server 架构：
 2. API Server 通过自身的 Watch 接口获取它们感兴趣的任务资源对象的相关事件。
 3. K8s List-Watch 实现数据同步，客户端先调用 API server 的 List 接口获取相关资源对象的全量数据并缓存到内存中，然后启动对应资源对象的 Watch 协程，接收到 Watch 事件后根据事件类型对内存的全量资源对象列表同步修改，能达到近乎实时的数据同步
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071604806.png)
 
 所有 K8s 内建的资源对象实现都包含以下功能：
 
