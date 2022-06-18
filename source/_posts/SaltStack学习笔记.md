@@ -4,20 +4,18 @@ date: 2018-11-16 16:09:09
 tags: [SaltStack, 运维, 自动化]
 ---
 
-{% asset_img logo.svg %}
-
 <!--more-->
 
-- [Salt 概述](#salt-%e6%a6%82%e8%bf%b0)
-  - [SaltStack 架构](#saltstack-%e6%9e%b6%e6%9e%84)
-- [SaltStack 安装部署](#saltstack-%e5%ae%89%e8%a3%85%e9%83%a8%e7%bd%b2)
-  - [Master 迁移](#master-%e8%bf%81%e7%a7%bb)
+- [Salt 概述](#salt-概述)
+  - [SaltStack 架构](#saltstack-架构)
+- [SaltStack 安装部署](#saltstack-安装部署)
+  - [Master 迁移](#master-迁移)
   - [returner](#returner)
     - [syslog](#syslog)
     - [mysql](#mysql)
   - [event](#event)
-  - [分组](#%e5%88%86%e7%bb%84)
-  - [常用模块](#%e5%b8%b8%e7%94%a8%e6%a8%a1%e5%9d%97)
+  - [分组](#分组)
+  - [常用模块](#常用模块)
     - [archive](#archive)
     - [cmd](#cmd)
     - [cp](#cp)
@@ -37,8 +35,8 @@ tags: [SaltStack, 运维, 自动化]
     - [pillar](#pillar)
     - [nginx](#nginx)
     - [test](#test)
-- [配置管理](#%e9%85%8d%e7%bd%ae%e7%ae%a1%e7%90%86)
-  - [使用模板](#%e4%bd%bf%e7%94%a8%e6%a8%a1%e6%9d%bf)
+- [配置管理](#配置管理)
+  - [使用模板](#使用模板)
   - [grains](#grains)
   - [pillar](#pillar-1)
   - [syndic](#syndic)
@@ -706,7 +704,7 @@ s3:
 
 syndic 是一个允许建立 salt 命令拓扑结构的工具，当两台 master 上都运行了 syndic，则高一级的 master 可以管理到另一台下的所有 minion，Master 的 Master 也称为**Master of Master**，syndic 常用于代理 proxy。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206081022751.png)
 
 加入一台新的 salt 主机，IP 地址为`172.16.246.134`，安装`salt-syndic`，然后在现 master（`172.16.246.158`）的 master 配置文件中找到`syndic_master`参数并修改。
 

@@ -5,24 +5,24 @@ categories: []
 date: 2020-04-05 19:06:01
 ---
 
-- [Node 管理](#node-%e7%ae%a1%e7%90%86)
-  - [Node 隔离与恢复](#node-%e9%9a%94%e7%a6%bb%e4%b8%8e%e6%81%a2%e5%a4%8d)
-  - [Node 扩容](#node-%e6%89%a9%e5%ae%b9)
-- [更新 Label](#%e6%9b%b4%e6%96%b0-label)
+- [Node 管理](#node-管理)
+  - [Node 隔离与恢复](#node-隔离与恢复)
+  - [Node 扩容](#node-扩容)
+- [更新 Label](#更新-label)
 - [Namespace](#namespace)
-- [资源管理](#%e8%b5%84%e6%ba%90%e7%ae%a1%e7%90%86)
-- [Pod 驱逐机制](#pod-%e9%a9%b1%e9%80%90%e6%9c%ba%e5%88%b6)
+- [资源管理](#资源管理)
+- [Pod 驱逐机制](#pod-驱逐机制)
 - [Pod Disruption Budget](#pod-disruption-budget)
-- [集群高可用](#%e9%9b%86%e7%be%a4%e9%ab%98%e5%8f%af%e7%94%a8)
-- [集群监控](#%e9%9b%86%e7%be%a4%e7%9b%91%e6%8e%a7)
-- [集群日志管理](#%e9%9b%86%e7%be%a4%e6%97%a5%e5%bf%97%e7%ae%a1%e7%90%86)
-- [审计机制](#%e5%ae%a1%e8%ae%a1%e6%9c%ba%e5%88%b6)
+- [集群高可用](#集群高可用)
+- [集群监控](#集群监控)
+- [集群日志管理](#集群日志管理)
+- [审计机制](#审计机制)
 - [Dashboard](#dashboard)
 - [Helm](#helm)
-- [查看系统 Event](#%e6%9f%a5%e7%9c%8b%e7%b3%bb%e7%bb%9f-event)
-- [查看容器日志](#%e6%9f%a5%e7%9c%8b%e5%ae%b9%e5%99%a8%e6%97%a5%e5%bf%97)
-- [查看服务日志](#%e6%9f%a5%e7%9c%8b%e6%9c%8d%e5%8a%a1%e6%97%a5%e5%bf%97)
-- [常见问题](#%e5%b8%b8%e8%a7%81%e9%97%ae%e9%a2%98)
+- [查看系统 Event](#查看系统-event)
+- [查看容器日志](#查看容器日志)
+- [查看服务日志](#查看服务日志)
+- [常见问题](#常见问题)
 
 <!--more-->
 
