@@ -7,13 +7,6 @@ date: 2018-12-30 14:42:04
 
 学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》
 
-- [简介](#简介)
-- [UTS](#uts)
-- [IPC](#ipc)
-- [PID](#pid)
-- [Mount](#mount)
-- [Network](#network)
-- [User](#user)
 
 <!--more-->
 

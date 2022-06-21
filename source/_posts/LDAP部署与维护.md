@@ -1,23 +1,12 @@
 ---
-title: LDAP学习笔记
+title: LDAP部署与维护
 date: 2018-11-24 09:22:47
 tags: [LDAP, 验证]
 categories: [应用运维]
+comments: false
 ---
 
-- [LDAP 概述](#ldap-概述)
-  - [目录服务](#目录服务)
-  - [X.500](#x500)
-  - [LDAP](#ldap)
-    - [LDAP 的配置模式](#ldap-的配置模式)
-- [LDAP 简单部署](#ldap-简单部署)
-
-<!--more-->
-
-# LDAP 概述
-
-## 目录服务
-
+# 目录服务
 **目录**是一类为了浏览和搜索数据而设计的特殊数据库，按照**树状**形式存储信息，目的包含基于属性的描述性信息，支持高级过滤功能。
 
 目录不支持大多数事务型数据库支持的高吞吐量和复杂更新操作。**目录服务适合的业务应用于大量查询与搜索操作，而不是大量写入操作。目录服务器还能提供主从服务器同步目录数据功能。**
@@ -32,7 +21,6 @@ categories: [应用运维]
 - 将目录划分为多个数据源（存储区），以存储大量对象
 
 ## X.500
-
 X.500 是构成全球分布式的名录服务系统的协议，描述了用户信息的存储和访问方式，X.500 不是一个协议，而是一个协议族，包括从 X.501 到 X.525 等一系列完整的目录服务协议。X.500 采用层次结构（类似 DNS）。
 
 X.500 相关协议或机制：
@@ -66,7 +54,6 @@ X.500 特征：
 - 基于 OSI 协议，需要在会话层和表示层进行许多连接的建立和包处理
 
 ## LDAP
-
 LDAP 就是活动目录在 Linux 上的一个实现。
 
 LDAP（Lightweight Directory Access Protocol）轻量目录访问协议，基于 X.500 标准，支持 TCP/IP。
@@ -144,7 +131,6 @@ LDIF 文件注意点：
 - 每条记录必须有至少一个 objectClass 属性
 
 ### LDAP 的配置模式
-
 - 基本的目录查询服务：slapd 仅为本地域提供目录服务，不会以任何方式与别的目录服务器交互。
 
 ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120027508.png)
@@ -157,65 +143,127 @@ LDIF 文件注意点：
 
 ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120027474.png)
 
-# LDAP 简单部署
+# LDAP Docker部署
+使用的镜像为：`osixia/openldap`
+> 官方Github仓库：https://github.com/osixia/docker-openldap
 
-实验环境：
-
-- Master：192.168.60.134
-- Slave：192.168.60.135
-
-要安装的软件：安装的 ldap 版本 2.4
-
-- `openldap`：ldap 库
-- `openldap-servers`：ldap 服务器
-- `openldap-clients`：ldap 客户端
-- `openldap-devel`：ldap 开发库与头文件
-- `nss`：网络安全服务，类似 Openssl，是底层密码库
-
-OpenLDAP 的配置目录：`/etc/openldap/`
-
+启动命令：
 ```
-/etc/openldap/
-├── certs
-├── check_password.conf
-├── ldap.conf       # ldap默认的全局配置
-├── schema          # 存放LDAP的schema
-└── slapd.d         # 存放ldap的配置文件
-老版本还有slapd.conf，作为主配置文件，记录根域信息、管理员信息等。2.3以后已不再使用，但目前仍然支持。
+docker run -d --name ldap-service \
+              --hostname ldap-service \
+              -p 389:389 -p 689:689 \
+              -v /data/openldap/database:/var/lib/ldap \
+              -v /data/openldap/config:/etc/ldap/slapd.d \
+              --env LDAP_ORGANISATION="公司名" \
+              --env LDAP_DOMAIN="公司域名" \
+              --env LDAP_ADMIN_PASSWORD="admin账号的密码" \
+              --env LDAP_TLS=false \
+              --detach osixia/openldap:stable
 ```
+> 注：
+> 启动前需要先建目录/data/openldap，这个是ldap数据目录，需要定期备份。
+> LDAP_ORGANISATION 指定的是公司名，若不填就是默认值Example Inc.
+> LDAP_DOMAIN 指定的是公司域名，若不填则是默认值example.org。该值会转化为namingContexts的值`dc=xxx,dc=xxx`，例如example.org会转为`dc=example,dc=org`，也就是DN中的后缀。
 
-OpenLDAP 2.3 及更高版本已转换为使用动态运行时配置引擎 slapd-config
-
-- 完全启用 LDAP
-- 使用标准 LDAP 操作进行管理
-- 将其配置数据存储在 LDIF 数据库中，通常位于`/etc/openldap/slapd.d`目录中。
-- 允许所有 slapd 的配置选项在运行中进行更改，通常无需重新启动服务器即可使更改生效。
-
-OpenLDAP 监听的端口：
-
+该容器启动后开放了389和689两个端口，即OpenLDAP监听的端口：
 - 389：默认监听端口，是传输明文数据的
 - 636：加密监听端口，默认启动时不开启，是传输密文数据的
 
-OpenLDAP 的配置文件目录结构：`/etc/openldap/slapd.d`
+常用的ldap管理界面，是由php编写的，同样可通过容器启动。
+> 官方Github仓库：https://github.com/osixia/docker-phpLDAPadmin
 
 ```
-slapd.d/
-└── cn=config
-    └── cn=schema
+docker run --name phpldapadmin-service \
+            -p 6443:443 -p 6680:80 \
+            --hostname phpldapadmin-service \
+            --link ldap-service \
+            --env PHPLDAPADMIN_LDAP_HOSTS=ldap-service \
+            --env PHPLDAPADMIN_HTTPS=false \
+            --detach osixia/phpldapadmin:stable
 ```
+> 注：
+> --link 指定的是上面启动的ldap的容器名，将两个容器连接
+> PHPLDAPADMIN_LDAP_HOSTS环境指定的也是ldap的容器名，这个环境变量指定的就是LDAP服务器的域名或IP，docker容器间网络便能使用容器名访问。
 
-slapd-config 配置树具有非常特定的结构。 树的根名为`cn = config`并包含全局配置设置。`cn = config`中包含的指令通常适用于整个服务器。 其中大多数是面向系统或连接，而不是数据库相关。 此条目必须具有`olcGlobal`的 objectClass。
+启动完成后就能通过6680端口访问，admin用户登录名就是`cn=admin,dc=xxx,dc=xxx`
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211655037.png)
 
-> 参考资料
->
-> Linux 服务器架设指南
->
-> Linux 就该这么学
->
-> Linux 企业应用案例精解
->
-> Linux 系统管理大全
->
-> 百度百科——X.500
->
-> 百度百科——LDAP
+一般的目录层级为：
+```
+ou=group
+|- ou=某某大部门
+    |- ou=某某子部门
+ou=people
+|- cn=用户
+```
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211657950.png)
+
+或者只留一个`ou=people`下面直接建用户就行，连`group`都不用。
+
+配套的还有个小工具，自助密码修改服务，也是用Docker部署。
+> 官方Github仓库：https://github.com/ltb-project/self-service-password
+
+启动前创建/data/self-service-password目录，并需要在该目录中创建一个php文件，填写ldap服务的连接配置。
+```
+docker run -p 6681:80 \
+            -v /data/self-service-password/config.inc.local.php:/var/www/conf/config.inc.local.php \
+            -itd ltbproject/self-service-password:latest
+```
+以下为
+```php
+<?php
+$ldap_url = "ldap://LDAP服务器地址";
+$ldap_starttls = false;
+$ldap_binddn = "cn=admin,dc=xxx,dc=xxx";
+$ldap_bindpw = 'admin密码';
+$ldap_base = "dc=xxx,dc=xxx";
+$ldap_login_attribute = "cn";
+$ldap_fullname_attribute = "cn";
+$keyphrase = "xxxxx";
+$use_tokens = false;
+?>
+```
+> keyphrase可以是随机字符串，用于加密，不过不要随意变动
+
+# LDAP 对接其他系统
+## Gitlab
+公司的gitlab版本为14.9，支持以下写法
+```
+gitlab_rails['ldap_enabled'] = true
+gitlab_rails['prevent_ldap_sign_in'] = false
+
+###! **remember to close this block with 'EOS' below**
+gitlab_rails['ldap_servers'] = YAML.load <<-'EOS'
+  main: # 'main' is the GitLab 'provider ID' of this LDAP server
+    label: 'LDAP'
+    host: '填写LDAP服务器IP'
+    port: 389
+    uid: 'uid'
+    bind_dn: 'cn=admin,dc=xxx,dc=xxx'
+    password: '填写admin密码'
+    encryption: 'plain' # "start_tls" or "simple_tls" or "plain"
+    verify_certificates: true
+#     smartcard_auth: false
+    active_directory: false
+    allow_username_or_email_login: false
+#     lowercase_usernames: false
+#     block_auto_created_users: false
+    base: 'dc=xxx,dc=xxx'
+    attributes:
+      username: ['uid', 'mail']
+      email:    ['mail']
+EOS
+```
+gitlab重启后再访问就多了LDAP登录的方式
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211720987.png)
+
+## Jenkins
+需要先确保LDAP插件安装完成
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211728646.png)
+在全局安全配置中的安全域指定LDAP，并填入LDAP连接信息
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211726837.png)
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211727679.png)
+
+## Yearning
+Yearning SQL审计平台也支持LDAP登录，在设置页面，填入LDAP信息，并重启yearning服务（一定要重启，不然不生效）
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206211732851.png)

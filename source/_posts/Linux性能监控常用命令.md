@@ -5,27 +5,11 @@ tags: [Linux, 运维, 性能]
 categories: [系统运维]
 ---
 
-- [top 与 htop](#top-与-htop)
-  - [top](#top)
-  - [htop](#htop)
-- [uptime,free 和 vmstat](#uptimefree-和-vmstat)
-  - [uptime](#uptime)
-  - [free](#free)
-  - [vmstat](#vmstat)
-- [mpstat、 iostat 与 sar](#mpstat-iostat-与-sar)
-  - [mpstat](#mpstat)
-  - [iostat](#iostat)
-  - [sar](#sar)
-- [ps 和 pstree](#ps-和-pstree)
-  - [ps](#ps)
-  - [pstree](#pstree)
-
 <!-- more -->
 
 **所有工具进行系统性能分析的思路都是相同的。**
 
 # top 与 htop
-
 ## top
 
 查看动态进程状态，默认每 5 秒刷新一次。

@@ -5,9 +5,7 @@ tags: [server, LVS, keepalived, 负载均衡]
 categories: [应用运维]
 comment: false
 ---
-
 <!-- more -->
-
 # LVS 原理
 
 LVS（Linux Virtual Server）Linux 虚拟服务器是由章文嵩于 1998 年开发的负载均衡软件，提供**传输层**和**应用层**的负载均衡，传输层的负载均衡工具为 IPVS，应用层的负载均衡工具为 KTCPVS。

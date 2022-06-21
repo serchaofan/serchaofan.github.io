@@ -1,35 +1,13 @@
 ---
 title: Kubernetes集群管理与排错笔记
-tags: []
+tags: [kubernetes]
 categories: []
 date: 2020-04-05 19:06:01
+comments: false
 ---
-
-- [Node 管理](#node-管理)
-  - [Node 隔离与恢复](#node-隔离与恢复)
-  - [Node 扩容](#node-扩容)
-- [更新 Label](#更新-label)
-- [Namespace](#namespace)
-- [资源管理](#资源管理)
-- [Pod 驱逐机制](#pod-驱逐机制)
-- [Pod Disruption Budget](#pod-disruption-budget)
-- [集群高可用](#集群高可用)
-- [集群监控](#集群监控)
-- [集群日志管理](#集群日志管理)
-- [审计机制](#审计机制)
-- [Dashboard](#dashboard)
-- [Helm](#helm)
-- [查看系统 Event](#查看系统-event)
-- [查看容器日志](#查看容器日志)
-- [查看服务日志](#查看服务日志)
-- [常见问题](#常见问题)
-
 <!--more-->
-
 # Node 管理
-
 ## Node 隔离与恢复
-
 将 Node 纳入或脱离调度范围
 
 创建 node 类型的 yaml，并设置`unschedulable: true`
@@ -200,16 +178,95 @@ spec:
         limits:
           memory: "128Mi"
           cpu: "500m"
-
-spec:
-  containers:
-    - image: <Image>
-      name: my-name
-      resources:
         requests:
           cpu: "20m"
           memory: "55M"
 ```
+
+## Pod的QoS服务质量
+根据指定资源requests与limits的不同，创建的Pod会有三个不同的QoS（服务质量）属性。K8S提供三种QoS类，并使用QoS类决定Pod的调度与驱逐策略。
+- Guaranteed 有保证
+- Burstable 不稳定
+- BestEffort 尽最大努力
+
+
+对于 QoS 类为 Guaranteed 的 Pod：
+**Pod 中的每个容器都必须指定CPU与内存的`limits`和`requests`，且`limits=requests`。**
+```yaml
+spec:
+  containers:
+    - name: myapp
+      image: <Image>
+      resources:
+        limits:
+          cpu: "1"
+          memory: "1Gi"
+        requests:
+          cpu: "1"
+          memory: "1Gi"
+```
+查看pod的status
+```
+#kubectl get po -oyaml xxxx
+......
+status:
+  qosClass: Guaranteed
+```
+
+对于 QoS 类为 Burstable 的 Pod：
+**Pod 不符合Guaranteed标准，且Pod 中至少一个容器具有内存或CPU的请求或限制。**
+```yaml
+spec:
+  containers:
+    - name: myapp
+      image: <Image>
+      resources:
+        limits:
+          cpu: "2"
+          memory: "2Gi"
+        requests:
+          cpu: "1"
+          memory: "1Gi"
+或
+      resources:
+        limits:
+          memory: "2Gi"
+        requests:
+          memory: "1Gi"
+```
+查看pod的status
+```
+#kubectl get po -oyaml xxxx
+......
+status:
+  qosClass: Burstable
+```
+
+对于 QoS 类为 BestEffort 的 Pod：
+**Pod 中的容器必须没有设置内存和 CPU 限制或请求。**
+```yaml
+spec:
+  containers:
+    - name: myapp
+      image: <Image>
+```
+查看pod的status
+```
+#kubectl get po -oyaml xxxx
+......
+status:
+  qosClass: BestEffort
+```
+
+K8S根据QoS进行的回收策略：
+- 当Pod出现资源不足情况时，先会杀死优先级低的pod，而优先级是通过OOM分数值来实现，范围为0-1000。OOM分数值根据`OOM_ADJ`参数计算得出。
+- Guaranteed的Pod，`OOM_ADJ`值为`-998`
+- BestEffort的pod，`OOM_ADJ`值为`1000`
+- Burstable的pod，`OOM_ADJ`值范围为`2~999`
+- `OOM_ADJ`值越大，Pod优先级越低，出现资源不足时会被优先kill掉。
+- 对于docker、kubelet等k8s的保留资源，`OOM_ADJ`值设置成了`-999`，即不会被OOM kill干掉。
+- 也就是说，当资源不足时，最先被kill掉的是BestEffort的pod，最晚被安排Kill掉的是Guaranteed的pod
+- 若资源充足，且想要提高资源利用率，资源限制按照Guaranteed配置。
 
 # Pod 驱逐机制
 
@@ -237,7 +294,3 @@ spec:
 
 > 参考文档
 > Kubernetes 权威指南
-
-```
-
-```
