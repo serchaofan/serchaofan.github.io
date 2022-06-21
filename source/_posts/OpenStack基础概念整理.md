@@ -25,7 +25,7 @@ OpenStack 是有多个服务组件组成的一种技术集合，包含以下主�
 - **Ceilometer**：为 OpenStack 云的计费、基准、扩展性以及统计等目的提供**监测和计量**。（可选组件）
 - **Heat**：提供**部署编排云应用**，Orchestration 服务支持多样化的综合的云应用，通过调用 OpenStack-native REST API 和 CloudFormation-compatible Query API，支持 Heat Orchestration Template (HOT)格式模板或者 AWS CloudFormation 格式模板。（可选组件）
 
-{% asset_img 0.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212344479.png)
 
 > 参考文档
 >

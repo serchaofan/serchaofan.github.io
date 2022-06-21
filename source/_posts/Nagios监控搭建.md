@@ -39,8 +39,7 @@ Nagios 是一款用于监控系统和网络的开源应用软件，能有效的�
 **Nagios 结构**
 分为 Nagios Core 核心主程序和 Nagios Plugins 插件。核心只提供很少的监控功能，用户需要给 Nagios 安装相应插件以搭建完善的监控系统。
 
-{% asset_img jiegou.png %}
-
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220057263.png)
 **Nagios 如何工作**
 
 - 监控：监控关键 IT 基础架构组件，包括系统指标，网络协议，应用程序，服务，服务器和网络基础架构。
@@ -90,7 +89,7 @@ NRPE 的检测类型分为两种:
 - 间接检测：当运行 Nagios 的监控主机无法访问到某台被监控主机，但是运行 NRPE 的机器可以访问得到的时候，运行 NRPE 的主机就充当一个中间代理，将监控请求发送到被监控对象上
 
 就如下图中`check_disk`和`check_load`是直接检测，`check_http`和`check_ftp`是间接检测。
-{% asset_img nrpe-jiegou.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220057178.png)
 
 ## Nagios 搭建
 
@@ -805,16 +804,16 @@ define command {
 
 重启 nagios 和 httpd
 进入 web 端，点击左侧菜单`services`。进入如下页面
-{% asset_img services.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220058932.png)
 
 点击红框框出的图标，即可进入 pnp 测试界面
-{% asset_img pnp-success.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220058132.png)
 
 若全部通过，便会提示删除或重命名`/usr/local/nagios/share/pnp/install.php`。于是将该 php 文件删除。`rm -f /usr/local/nagios/share/pnp/install.php`
 
 如果在点击 pnp 图标时，出现以下报错：
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220058844.png)
 
 则需要检查`nagios.cfg`和`commands.cfg`配置文件，查看`commands.cfg`配置可知`command_name`为`process-host-perfdata`的默认存放路径`bulk`为`/usr/local/pnp4nagios/var/host-perfdata`，同理，`process-service-perfdata`的存放路径为`/usr/local/pnp4nagios/var/service-perfdata`。
 
@@ -881,7 +880,7 @@ define contact {
 ```
 
 - 当服务出现重启或故障时，系统会自动发送邮件。
-  {% asset_img youjian.png %}
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220058443.png)
 
 ## 参考资料
 

@@ -24,8 +24,6 @@ categories: [应用运维]
 
 <!--more-->
 
-{% asset_img 0.png %}
-
 # 分布式文件系统
 
 Distributed File System（DFS）分布式文件系统是开放软件基金会（OSF）的分布式计算环境（DCE）中的文件系统部分，指文件系统管理的物理存储资源不一定直接连接在本地节点上，具有以下特性：
@@ -76,7 +74,7 @@ MFS 组成：
 3. 客户端向已知的 chunk server 发送请求
 4. chunk server 向客户端发送数据。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220100155.png)
 
 数据传输并不经过元数据服务器，减轻了元数据服务器的压力，也增大了整个系统的吞吐能力。
 
@@ -102,7 +100,7 @@ MFS 组成：
 
 8. 客户端告知元数据服务器写入成功
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220100108.png)
 
 # MFS 简单部署
 
@@ -120,7 +118,7 @@ MFS 组成：
 
 - Client：192.168.60.131
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220100965.png)
 
 先要配置官方源，[官网配置](https://moosefs.com/download/#current)，版本 3.0
 
@@ -262,7 +260,7 @@ CSSERV_LISTEN_PORT = 9422    # 监听客户端的端口
 
 但通过 web 查看状态，发现已经使用了 260M 左右。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206220100531.png)
 
 因为 master 向 data 服务器申请空间是按最少 256M 申请的，低于 256M 则不会再申请空间，因此用于 MFS 的磁盘空间一定要大于 256M，并且空闲的空间一定要大于 1G 才能参与分配，即用于 MFS 磁盘的空间大小至少大于 1G，应该从几个 G 开始。
 

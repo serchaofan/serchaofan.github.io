@@ -97,7 +97,7 @@ touch templates/search/indexes/blog/article_text.txt
 # txt文件的格式必须是：  要检索的模型类的小写_text.txt
 ```
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212345229.png)
 
 在该 txt 文件中列出所有要检索的字段，是该模型类中定义的字段，**一定要加上 object**
 
@@ -159,7 +159,7 @@ def ChineseAnalyzer():
 
 将该目录中的`whoosh_backend.py`复制后改名为`whoosh_cn_backend.py`
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212345027.png)
 
 并添加和修改以下内容
 
@@ -210,15 +210,15 @@ def mysearch(request):
 
 运行项目，添加几篇文章，进行测试。通过`/mysearch`访问表单页面
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212345891.png)
 
 先进行英文单词的检索
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212345913.png)
 
 检索成功，跳转到结果页面。再进行中文单词检索
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212345562.png)
 
 # 改进 1
 
@@ -249,7 +249,7 @@ def mysearch(request):
 </div>
 ```
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212346787.png)
 
 **注：在简单实现中，搜索出的结果是无法进行超链接的。需要进行小的修改**
 
@@ -279,7 +279,7 @@ def mysearch(request):
 {% endblock content %}
 ```
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212346954.png)
 
 > 参考文章：
 >
