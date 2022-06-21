@@ -1,48 +1,15 @@
 ---
-title: ELK与EFK详细笔记
+title: ELK日志架构笔记
 date: 2018-09-24 16:28:34
-tags:
-  [Elasticsearch, ELK, EFK, Kibana, Logstash, 监控, 运维, 搜索, 日志, Fluentd]
-categories: [大数据]
+tags: [Elasticsearch, ELK, Kafka, Kibana, Logstash, 运维, 日志, Filebeat]
+categories: [大数据, 日志, 架构]
 ---
 
-本篇包含以下内容：
-
-- [Elasticsearch](#elasticsearch)
-  - [Elasticsearch 安装](#elasticsearch-%e5%ae%89%e8%a3%85)
-  - [Elasticsearch 配置文件](#elasticsearch-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
-  - [Elasticsearch 概念](#elasticsearch-%e6%a6%82%e5%bf%b5)
-    - [REST](#rest)
-    - [集群原理](#%e9%9b%86%e7%be%a4%e5%8e%9f%e7%90%86)
-    - [集群健康](#%e9%9b%86%e7%be%a4%e5%81%a5%e5%ba%b7)
-    - [水平扩容](#%e6%b0%b4%e5%b9%b3%e6%89%a9%e5%ae%b9)
-    - [添加索引](#%e6%b7%bb%e5%8a%a0%e7%b4%a2%e5%bc%95)
-    - [简单搜索](#%e7%ae%80%e5%8d%95%e6%90%9c%e7%b4%a2)
-    - [查询表达式搜索](#%e6%9f%a5%e8%af%a2%e8%a1%a8%e8%be%be%e5%bc%8f%e6%90%9c%e7%b4%a2)
-    - [高亮搜索](#%e9%ab%98%e4%ba%ae%e6%90%9c%e7%b4%a2)
-    - [聚合](#%e8%81%9a%e5%90%88)
-- [Logstash](#logstash)
-  - [Logstash 安装](#logstash-%e5%ae%89%e8%a3%85)
-  - [Logstash 如何工作](#logstash-%e5%a6%82%e4%bd%95%e5%b7%a5%e4%bd%9c)
-    - [关闭 Logstash](#%e5%85%b3%e9%97%ad-logstash)
-  - [Logstash 配置文件](#logstash-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
-    - [logstash.yml](#logstashyml)
-    - [自定义 Logstash 配置文件](#%e8%87%aa%e5%ae%9a%e4%b9%89-logstash-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
-  - [Logstash 日志](#logstash-%e6%97%a5%e5%bf%97)
-  - [Logstash 常用插件](#logstash-%e5%b8%b8%e7%94%a8%e6%8f%92%e4%bb%b6)
-- [Kibana](#kibana)
-  - [Kibana 安装](#kibana-%e5%ae%89%e8%a3%85)
-  - [Kibana 配置](#kibana-%e9%85%8d%e7%bd%ae)
-  - [Kibana 基本功能](#kibana-%e5%9f%ba%e6%9c%ac%e5%8a%9f%e8%83%bd)
-    - [添加 index 的管理](#%e6%b7%bb%e5%8a%a0-index-%e7%9a%84%e7%ae%a1%e7%90%86)
-    - [使用 kibana 提供的数据进行分析](#%e4%bd%bf%e7%94%a8-kibana-%e6%8f%90%e4%be%9b%e7%9a%84%e6%95%b0%e6%8d%ae%e8%bf%9b%e8%a1%8c%e5%88%86%e6%9e%90)
-- [ELK 架构](#elk-%e6%9e%b6%e6%9e%84)
+本篇文章将完整描述基于ELK的日志系统的设计与部署，以及所有涉及的知识点。
 
 <!--more-->
 
-# Elasticsearch
-
-{% asset_img 0.png %}
+## Elasticsearch
 
 Elasticsearch 是基于 Lucene 的搜索框架，使用 Java 编写，它提供了一个分布式多用户能力的全文搜索引擎，基于 RESTful web 接口，上手容易，拓展节点方便，可用于存储和检索海量数据，接近实时搜索，海量数据量增加，搜索响应性能几乎不受影响。
 
@@ -62,16 +29,17 @@ Elasticsearch 主要特点：
 
 使用场景：日志搜索，数据聚合，数据监控，报表统计分析
 
-使用 Elasticsearch 的大企业：维基百科、卫报、StackOverflow、Github、ebay
+> 使用 Elasticsearch 的大企业：维基百科、卫报、StackOverflow、Github、ebay
 
-## Elasticsearch 安装
+### Elasticsearch 安装
 
 1. 因为 Lucene 和 Elasticsearch 都是 Java 写的，所以首先搭建 JDK 环境，下载 JDK1.8，设置环境变量，并`source /etc/profile`应用
 
    ```
-   echo "export JAVA_HOME=/usr/local/jdk1.8">>/etc/profile
-   echo "export CLASSPATH=$JAVA_HOME/lib">>/etc/profile
-   echo "export PATH=$JAVA_HOME/bin:$PATH">>/etc/profile
+   echo "export JAVA_HOME=/usr/local/jdk1.8" >> /etc/profile
+   echo "export CLASSPATH=\$JAVA_HOME/lib" >> /etc/profile
+   echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/profile
+   source /etc/profile
    ```
 
 2. 下载 Elasticsearch，目前版本为 6.4.1，解压到`/usr/local/elasticsearch-6.4`
@@ -438,7 +406,7 @@ curl_lo_g ${LO_ES}/_all/employee/_search -d '
 
 聚合 aggregations 用于生成基于数据的精细分析结果，类似 SQL 的`group by`。
 
-# Logstash
+## Logstash
 
 Logstash 是一个开源的服务器端数据处理管道（Pipeline），它可以同时从多个源中提取数据，对其进行转换，然后将其发送到数据存储（如 Elasticsearch）。支持丰富的 Input 和 Output 类型，能够处理各种应用的日志。
 
@@ -833,7 +801,7 @@ output {
 - `Grok`：是 Logstash 过滤器的基础，用于从非结构化数据中获取结构，具有丰富的集成模式，能快速处理 Web，系统，网络和其他类型的事件格式。
 - `Codecs`：通常用于简化对 JSON 和多行事件等常见事件结构的处理。
 
-# Kibana
+## Kibana
 
 Kibana 是一个开源分析和可视化平台，旨在与 Elasticsearch 协同工作。可使用 Kibana 搜索，查看以及与存储在 Elasticsearch 索引中的数据进行交互，可以轻松地执行高级数据分析，并在各种图表（charts），表格（tables）和地图（maps）中可视化数据。
 
@@ -939,7 +907,7 @@ curl -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/bank/account
 
 {% asset_img 14.png %}
 
-# ELK 架构
+## ELK 架构
 
 若环境的内存少，就在 es 配置文件添加以下配置
 
