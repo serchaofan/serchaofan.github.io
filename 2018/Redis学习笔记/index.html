@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Redis基础学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="数据库,Redis">
+  
+
+  
+    <meta name="description" content="本篇笔记主要包含以下内容">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Redis基础学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年5月17日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>本篇笔记主要包含以下内容</p>
+  <span id="more"></span>
+
+<ul>
+<li><a href="#redis-%E4%BB%8B%E7%BB%8D">Redis 介绍</a></li>
+<li><a href="#redis-%E5%AE%89%E8%A3%85">Redis 安装</a></li>
+<li><a href="#redis-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B">Redis 数据类型</a></li>
+<li><a href="#%E6%8E%92%E5%BA%8F">排序</a></li>
+<li><a href="#%E5%8F%91%E5%B8%83%E4%B8%8E%E8%AE%A2%E9%98%85">发布与订阅</a></li>
+<li><a href="#%E4%BA%8B%E5%8A%A1">事务</a></li>
+<li><a href="#%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4">过期时间</a></li>
+<li><a href="#%E6%8C%81%E4%B9%85%E5%8C%96">持久化</a></li>
+<li><a href="#redis-%E4%BC%98%E5%8C%96%E6%8A%80%E6%9C%AF">Redis 优化技术</a><ul>
+<li><a href="#%E7%AE%A1%E9%81%93">管道</a></li>
+<li><a href="#%E5%86%85%E9%83%A8%E7%BC%96%E7%A0%81%E4%BC%98%E5%8C%96">内部编码优化</a></li>
+</ul>
+</li>
+<li><a href="#%E9%9B%86%E7%BE%A4">集群</a><ul>
+<li><a href="#%E5%A4%8D%E5%88%B6%E4%B8%BB%E4%BB%8E">复制（主从）</a></li>
+<li><a href="#%E6%97%A0%E7%A1%AC%E7%9B%98%E5%A4%8D%E5%88%B6">无硬盘复制</a></li>
+<li><a href="#%E5%A2%9E%E9%87%8F%E5%A4%8D%E5%88%B6">增量复制</a></li>
+<li><a href="#%E5%93%A8%E5%85%B5">哨兵</a></li>
+<li><a href="#%E9%9B%86%E7%BE%A4-1">集群</a></li>
+</ul>
+</li>
+<li><a href="#%E7%AE%A1%E7%90%86">管理</a><ul>
+<li><a href="#%E5%AE%89%E5%85%A8">安全</a></li>
+<li><a href="#%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE">通信协议</a></li>
+<li><a href="#%E4%B8%80%E4%BA%9B%E7%AE%A1%E7%90%86%E5%91%BD%E4%BB%A4">一些管理命令</a></li>
+</ul>
+</li>
+<li><a href="#redis-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0">Redis 配置文件常用参数</a><ul>
+<li><a href="#%E5%9C%A8-docker-%E4%B8%8A%E6%90%AD%E5%BB%BA-redis">在 Docker 上搭建 Redis</a></li>
+</ul>
+</li>
+<li><a href="#faq">FAQ</a><ul>
+<li><a href="#redis-%E6%8A%A5%E9%94%99%E9%97%AE%E9%A2%98">Redis 报错问题</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li>
+</ul>
+<h1 id="Redis-介绍"><a href="#Redis-介绍" class="headerlink" title="Redis 介绍"></a>Redis 介绍</h1><p>Redis（Remote Dictionary Server）是由 C 语言写成的高性能 key-value 非关系型数据库。<br>为了保证效率，Redis 的数据都缓存在内存中，并周期性地将更新的数据写入磁盘，或将修改写入记录文件，在此基础上实现了主从同步。</p>
+<h1 id="Redis-安装"><a href="#Redis-安装" class="headerlink" title="Redis 安装"></a>Redis 安装</h1><ul>
+<li>因为 Redis 是由 C 语言写的，所以要装 gcc。<br><code>yum install gcc</code></li>
+<li>安装 jemalloc，用于动态内存分配，是 malloc 的一个优化版本<br><code>yum install jemalloc</code></li>
+<li>安装工具命令语言 TCL<br><code>yum install tcl</code></li>
+<li>解压 redis 包到<code>/usr/local</code>，进入后<code>make &amp;&amp; make install</code>即可编译安装，可先<code>make test</code>检查是否出错</li>
+<li>建立软连接，redis 的命令都存放在<code>/usr/local/redis/src/</code>目录下</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ln -s /usr/local/redis/src/redis-server /bin/redis-server</span><br><span class="line">ln -s /usr/local/redis/src/redis-cli /bin/redis-cli</span><br><span class="line">ln -s /usr/local/redis/src/redis-benchmark /bin/redis-benchmark</span><br><span class="line">ln -s /usr/local/redis/redis.conf /etc/redis.conf</span><br></pre></td></tr></table></figure>
+
+<p>如果可用内存十分小，最好要设置内核参数<code>vm.overcommit_memory</code>为 1。</p>
+<p><code>overcommit_memory</code>指定了内核针对内存分配的策略：</p>
+<ul>
+<li><code>0</code>：内核将检查是否有足够可用内存供应用进程使用。若不足，会报错</li>
+<li><code>1</code>：内核允许分配所有物理内存，不管当前内存状态。</li>
+<li><code>2</code>：内核允许分配<strong>超过</strong>所有物理内存和 swap 之和的内存大小。</li>
+</ul>
+<p><code>echo &quot;vm.overcommit_memory=1&quot; &gt;&gt; /etc/sysctl.conf</code>并且<code>sysctl -p</code></p>
+<p><strong>redis 命令</strong></p>
+<ul>
+<li><code>redis-server</code>用于开启 redis 服务器端</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[redis.conf文件路径] 设置配置文件路径，即可按照指定配置启动redis-server</span><br><span class="line">--[配置参数]  设置指定参数</span><br><span class="line">例：--port=6378</span><br><span class="line">-v 查看redis版本</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>redis-cli</code>开启客户端命令行</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-h [hostname]  指定要连接的redis服务器主机名，默认127.0.0.1</span><br><span class="line">-p [port] 指定服务器端口，默认6379</span><br><span class="line">-s [socket] 指定服务器socket，会覆盖主机名和端口</span><br><span class="line">-a [password] 设置连接redis服务器时要用的密码</span><br><span class="line">-u [uri] 设置服务器的URI</span><br><span class="line">shutdown 关闭redis</span><br></pre></td></tr></table></figure>
+
+<p><strong>注：</strong> 若要让 redis 默认在后台启动，可修改配置文件中<code>daemonize 参数</code>，若为 no，则是前台启动，若为 yes，则是后台启动</p>
+<ul>
+<li><code>redis-check-aof</code>与<code>redis-check-rdb</code>：用于检测持久化状态或进行修复</li>
+</ul>
+<p><strong>redis-cli 基本操作</strong><br><code>exists [key]</code> 查看键是否存在，存在返回 1，否则返回 0<br><code>del [key]</code> 删除键<br><code>type [key]</code> 返回键的数据类型<br><code>keys [pattern]</code> 返回符合指定匹配规则的键，支持 glob 风格通配符格式。<br><code>rename [old-key] [new-key]</code> 重命名键<br><code>dbsize</code> 返回当前数据库的键数量<br><code>expire [key] [time]</code> 指定键的生存时间（单位秒），返回 1 说明设置成功。未设置默认键的生存时间是无穷，会一直占用空间。<br><code>ttl [key]</code> 返回键的剩余生存时间，-1 表示永久，-2 表示不存在（已删除）<br><code>select [db-num]</code> 选择数据库编号</p>
+<blockquote>
+<p>0 为默认，从 1 开始会在端口后显示，最大为 15，即最多有 16 个数据库。若超出范围，虽会显示该编号，但是仅会对 15 号数据库操作。</p>
+</blockquote>
+<p><code>move [key] [db-num]</code> 将指定键移动到指定数据库（不是复制）<br><code>flushdb</code> 删除当前数据库中所有键<br><code>flushall</code> 删除所有数据库的所有键</p>
+<p><strong>glob 风格通配符</strong></p>
+<table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>?</td>
+<td>匹配一个字符</td>
+</tr>
+<tr>
+<td>*</td>
+<td>匹配任意个字符</td>
+</tr>
+<tr>
+<td>[]</td>
+<td>匹配括号建的任一字符</td>
+</tr>
+</tbody></table>
+<h1 id="Redis-数据类型"><a href="#Redis-数据类型" class="headerlink" title="Redis 数据类型"></a>Redis 数据类型</h1><ul>
+<li><p><strong>字符串 String</strong>：可包含任意数据，包括图片和序列化对象，单个值上限 512MB</p>
+</li>
+<li><p><strong>列表 List</strong>：<strong>双向链表</strong>，通过 push 和 pop 从链表头部或尾部添加删除元素，因此即可用作栈也可用作队列，且都是双向的</p>
+</li>
+<li><p><strong>哈希 Hash</strong>：也称散列，字符串类型的键值对的映射表，<strong>适合存储对象</strong>，每个 Hash 可存储 2^32-1 个键值对。</p>
+<p>新建的 hash 对象以 zipmap 来存储，zipmap 本身不是 hash table，但相比正常的 hash，可以节省 hash 自身需要的元数据存储开销。</p>
+<p>zipmap 的增删改的复杂度都是 O(n)，但是一般对象的 field 都不多，所以速度也较快。若 field 或 value 的大小超出一定限制，则 redis 会自动将 zipmap 替换为正常的 hash 实现。</p>
+<p>可通过配置文件的<code>hash-max-ziplist-entries</code>和<code>hash-max-ziplist-value</code>设置限制大小，单位字节。默认 entries 设为 512，value 设为 64</p>
+</li>
+<li><p><strong>集合 Set</strong>：字符串类型的无序集合，通过 Hash 表实现，所有操作的复杂度都为 O(1)，最多可包含 2^32-1 个键值对</p>
+</li>
+<li><p><strong>有序集合 Sorted Set</strong>：也称 ZSet，每个元素都会关联一个 double 类型的分数，称为权。redis 正是通过权来为集合中的成员进行从小到大的排序。有序集合的成员是唯一的,但权却可以重复。</p>
+</li>
+</ul>
+<p><strong>redis-cli 操作</strong></p>
+<ul>
+<li><p><strong>字符串</strong><br><code>set [key] [value]</code> 设置键值</p>
+<p><code>setnx [key] [value]</code>：设置键值，若 key 已存在，则不会修改该值，并返回 0</p>
+<p><code>setex [key] [expire time][value]</code>：设置键值以及有效时间</p>
+<p><code>mset [key1] [value1] [key2] [value2] ...</code> 同时设置多个键值</p>
+<p><code>msetnx</code>：设置多个键值，但若 key 存在，则不会修改值</p>
+<p><code>get [key]</code> 获取键值<br><code>mget [key1] [key2] ...</code>同时获取多个键的值<br><code>getrange [key] [start] [end]</code> 返回键中字符串值的子字符串<br><code>setrange [key] [start] [end]</code> 设置字符串值的子串值<br><code>getset [key] [value]</code> 设置键的值并返回旧值<br><code>strlen [key]</code> 返回该键的字符串值的长度<br><code>incr [key]</code> 设置键值自增，返回新值<br><code>decr [key]</code> 设置键值自减，返回新值<br><code>incrby [key] [value]</code> 设置键值自增指定 value，返回新值<br><code>descby [key] [value]</code> 设置键值自减指定 value，返回新值<br><code>append [key] [value]</code> 指定键追加值 value，返回新值长度<br><code>substr [key] [start] [end]</code> 取字符串（字符编号从 0 开始）</p>
+</li>
+<li><p><strong>列表</strong><br><code>lpush [list] [member1] [member2]...</code> 在 list 头部添加元素<br><code>rpush [list] [member1] [member2]...</code> 在 list 尾部添加元素<br><code>lpop [list]</code> 在 list 头部删除元素，返回删除元素<br><code>rpop [list]</code> 在 list 尾部删除元素，返回删除元素</p>
+<p><code>linsert [list] before|after [指定值][value]</code>：在指定 list 的特定位置前或后添加字符串 value</p>
+<p><code>lset [list][index][value]</code>：设置指定下标的值</p>
+<p><code>lrem [list][num][value]</code>：删除 list 中 num 个和 value 值一致的值。若 num&gt;0，则从头开始删，若 num&lt;0，则从尾开始删，若 num 为 0，删除全部</p>
+<p><code>llen [list]</code> 返回 list 的长度<br><code>lindex [list] [index]</code> 获取列表中对应索引的元素<br><code>lrange [list] [start] [end]</code> 返回 list 指定区间的元素（编号从 0 开始）<br><code>ltrim [list] [start] [end]</code> 截取 list，只保留截取区间的元素</p>
+</li>
+<li><p><strong>集合</strong><br><code>sadd [set] [member1] [member2]...</code> 添加集合元素<br><code>srem [set] [member1] [member2]...</code> 删除集合元素</p>
+<p><code>spop [set] [value]</code>：删除指定 value</p>
+<p><code>scard [set]</code> 返回集合元素个数<br><code>smove [set1] [set2] [value]</code> 将指定元素从 set1 移到 set2<br><code>sismember [set] [value]</code> 判断该元素是否属于指定集合<br><code>smembers [set]</code> 返回集合中所有元素</p>
+<p><code>srandmember [set]</code>：随机返回 set 中的一个值</p>
+<p><code>sinter [set1] [set2]</code> 返回集合的交集<br><code>sinterstore [set3] [set1] [set2]</code> 将集合的交集存储到 set3 集合中<br><code>sunion [set1] [set2]</code> 返回集合的并集<br><code>sunionstore [set3] [set1] [set2]</code> 将集合的并集存储到 key3 集合中<br><code>sdiff [set1] [set2]</code> 返回集合的差集<br><code>sdiffstore [key3] [key1] [key2]</code> 将集合的差集存储到 key3 集合中</p>
+</li>
+<li><p><strong>有序集合</strong><br><code>zadd [key] [score1] [member1]...</code> 向有序集合添加成员并设置权值<br><code>zrem [key] [member]</code> 删除集合元素<br><code>zincrby [key] [incr] [member]</code> 设置元素的增加值<br><code>zrank [key] [member]</code> 返回指定元素的下标（从小到大）<br><code>zrevrank [key] [member]</code> 返回指定元素的下标（从大到小）<br><code>zrange [key] [start] [end]</code> 返回集合的指定区间元素<br><code>zrevrange [key] [start] [end]</code> 返回集合的指定区间元素（逆序）</p>
+<p><code>zrangebyscore [key][start][end]</code>：返回 score 在指定范围间的元素。可在最后添加参数<code>withscores</code>返回该元素的 score</p>
+<p><code>zcount [key][start][end]</code>：返回 score 在指定范围内的元素个数</p>
+<p><code>zcard [key]</code> 返回集合元素个数<br><code>zscore [key] [member]</code> 返回元素的权值<br><code>zremrangebyrank [key] [start] [end]</code> 删除集合中给定排名区间的元素</p>
+<p><code>zremrangebyscore [key][start][end]</code>：删除集合中 score 在指定范围内的元素</p>
+</li>
+<li><p><strong>哈希</strong><br><code>hset [table] [column] [value]</code> 设置字段 column 的值</p>
+<p><code>hsetnx [table][column][value]</code>：设置字段值，若字段存在则不会修改值，并返回 0</p>
+<p><code>hget [table] [column]</code> 获取字段的值<br><code>hmset [table] [column1] [value1]...</code> 设置多个字段的值<br><code>hmget [table] [column1] [column2]...</code> 获取多个字段的值<br><code>hincrby [table] [column] [incr]</code> 字段增加指定值<br><code>hexists [table] [column]</code> 字段是否存在</p>
+<p><code>hlen [table]</code>：返回指定 hash 的字段数</p>
+<p><code>hdel [table] [column]...</code> 删除表中字段<br><code>hdel [table]</code> 删除表<br><code>hkeys [table]</code> 返回表的所有字段<br><code>hvals [table]</code> 返回表的所有值<br><code>hgetall [table]</code> 返回表的所有字段与值</p>
+</li>
+</ul>
+<h1 id="排序"><a href="#排序" class="headerlink" title="排序"></a>排序</h1><p>Redis 支持对 list、set、sorted set 的排序。<br><code>sort [key] [BY partten][LIMIT offset count][GET pattern][ASC|DESC][ALPHA][STORE dstkey]</code></p>
+<ul>
+<li>sort 默认排序为从小到大，若要按照字母顺序排可选择<code>ALPHA</code>选项，<code>ALPHA</code>可以和<code>ASC</code> <code>DESC</code>一起用。<br>在对有序集合类型排序时会忽略元素的分数，只针对元素自身的值进行排序。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; lpush list1 1 2 3 4</span><br><span class="line">&gt; sort list1</span><br><span class="line">1) &quot;1&quot;</span><br><span class="line">2) &quot;2&quot;</span><br><span class="line">3) &quot;3&quot;</span><br><span class="line">4) &quot;4&quot;</span><br><span class="line"></span><br><span class="line">&gt; lpush list2 a b c A B C</span><br><span class="line">&gt; sort list2 alpha</span><br><span class="line">1) &quot;a&quot;</span><br><span class="line">2) &quot;A&quot;</span><br><span class="line">3) &quot;b&quot;</span><br><span class="line">4) &quot;B&quot;</span><br><span class="line">5) &quot;c&quot;</span><br><span class="line">6) &quot;C&quot;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>BY partten</code> 设置条件进行排序</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; sort list1 by a*</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>LIMIT offset count</code> 表示跳过前 offset 个元素，并获取之后的 countge 元素</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; sort list2 alpha limit 2 3</span><br><span class="line">1) &quot;b&quot;</span><br><span class="line">2) &quot;B&quot;</span><br><span class="line">3) &quot;c&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>GET pattern</code></li>
+</ul>
+<h1 id="发布与订阅"><a href="#发布与订阅" class="headerlink" title="发布与订阅"></a>发布与订阅</h1><p>发布/订阅是一种消息通信模式，主要目的是解除消息发布者与消息订阅者的耦合。</p>
+<p>订阅者可以通过<code>subscribe</code>和<code>psubscribe</code>命令向 redis server 订阅自己感兴趣的消息类型，redis 将消息类型称为频道(channel)。<br>当发布者通过<code>publish</code>命令向 redis server 发送特定类型的消息时，该频道的全部订阅者都会收到此消息。这里消息的传递是多对多的。一个订阅者可以订阅多个频道,也可以向多个频道发送消息。<br><code>publish [channel] [message]</code>向指定频道发布信息<br><code>subscribe [channel]</code> 订阅频道<br>实验：开启两个终端</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 终端2</span><br><span class="line">&gt; SUBSCRIBE chan1</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) &quot;subscribe&quot;</span><br><span class="line">2) &quot;chan1&quot;</span><br><span class="line">3) (integer) 1</span><br></pre></td></tr></table></figure>
+
+<p>此时该终端处于订阅状态，该状态下客户端不可使用除<code>subscribe</code>、<code>unsubscribe</code>、<code>psubscribe</code>、<code>punsubscribe</code>以外的命令。<br>在订阅频道后客户端会收到三种类型的回复，每种回复都包含三个值。<br>第一个值为消息类型。有以下三种消息类型</p>
+<ul>
+<li><strong>subscribe</strong>：表示订阅成功的反馈信息。此时第二个值为订阅的频道名，第三个值为当前客户端订阅的频道数</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 终端2</span><br><span class="line">1) &quot;subscribe&quot;</span><br><span class="line">2) &quot;chan1&quot;</span><br><span class="line">3) (integer) 1</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>message</strong>：表示接收到的消息。此时第二个值为产生消息的频道，第三个值为消息的内容<br>另一个终端在该频道发布消息</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 终端1</span><br><span class="line">&gt; PUBLISH chan1 hello</span><br><span class="line"># 终端2</span><br><span class="line">1) &quot;message&quot;</span><br><span class="line">2) &quot;chan1&quot;</span><br><span class="line">3) &quot;hello&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>unsubscribe</strong>：表示成功取消订阅某个频道。此时第二个值为对应频道名，第三个值为当前频道数量。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 频道2</span><br><span class="line">&gt; UNSUBSCRIBE chan1</span><br><span class="line">1) &quot;unsubscribe&quot;</span><br><span class="line">2) &quot;chan1&quot;</span><br><span class="line">3) (integer) 0</span><br></pre></td></tr></table></figure>
+
+<p><code>unsubscribe</code>命令可退订频道，若不指定频道则退订所有频道</p>
+<p><strong>按照规则订阅</strong><br>使用<code>psubscribe</code>订阅符合指定规则的频道。规则支持 glob 风格的通配符。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 频道2</span><br><span class="line">&gt; PSUBSCRIBE chan*</span><br><span class="line">Reading messages... (press Ctrl-C to quit)</span><br><span class="line">1) &quot;psubscribe&quot;</span><br><span class="line">2) &quot;chan*&quot;</span><br><span class="line">3) (integer) 1</span><br><span class="line"># 频道1</span><br><span class="line">&gt; PUBLISH chan2 hello</span><br><span class="line">&gt; PUBLISH chan100 hello</span><br><span class="line"># 频道2</span><br><span class="line">1) &quot;pmessage&quot;</span><br><span class="line">2) &quot;chan*&quot;</span><br><span class="line">3) &quot;chan2&quot;</span><br><span class="line">4) &quot;hello&quot;</span><br><span class="line">1) &quot;pmessage&quot;</span><br><span class="line">2) &quot;chan*&quot;</span><br><span class="line">3) &quot;chan100&quot;</span><br><span class="line">4) &quot;hello&quot;</span><br></pre></td></tr></table></figure>
+
+<p>频道 2 收到了任意以<code>chan</code>开头的频道的信息<br>第一个值：表示该信息的通过<code>psubscribe</code>命令订阅得到的<br>第二个值：订阅使用的通配符<br>第三个值：收到消息的具体频道名<br>第四个值：收到的消息内容</p>
+<p><code>punsubscribe</code>命令可退订规则，若不指定频道则退订所有规则，且只会退订由规则加入的频道，并不会退订<code>subscribe</code>加入的频道。退订的规则必须严格匹配，与订阅时的一致。</p>
+<p>发布订阅存在的问题：</p>
+<ul>
+<li>如果订阅者读取消息的速度很慢，会使得消息不断积压在发布者的输出缓存区中，造成内存占用过多；</li>
+<li>如果订阅者在执行订阅的过程中网络出现问题，那么就会丢失断线期间发送的所有消息。</li>
+</ul>
+<h1 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h1><p>事务的原理是先将属于一个事务的命令发送给 Redis，使 Redis 依次执行这些命令。</p>
+<p>使用<code>multi</code>开启事务，之后的所有操作都属于该事务，直到提交<code>exec</code>，在事务中若有失误，可通过<code>discard</code>回滚，取消事务中所有操作。使用事务可保证一个事务内不会有其他的客户端的命令的插入。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; set num1 11</span><br><span class="line">OK</span><br><span class="line">&gt; set num2 abc</span><br><span class="line">OK</span><br><span class="line">&gt; set num3 111</span><br><span class="line">OK</span><br><span class="line">&gt; MULTI</span><br><span class="line">OK</span><br><span class="line">&gt; incr num1</span><br><span class="line">QUEUED</span><br><span class="line">&gt; incr num2</span><br><span class="line">QUEUED</span><br><span class="line">&gt; incr num3</span><br><span class="line">QUEUED</span><br><span class="line">&gt; exec</span><br><span class="line">1) (integer) 12</span><br><span class="line">2) (error) ERR value is not an integer or out of range</span><br><span class="line">3) (integer) 112</span><br></pre></td></tr></table></figure>
+
+<p>可见，事务中若有错误命令，仅会影响该命令，不会影响接下来的命令的执行。</p>
+<p>事务的所有操作都是在事务提交时操作并一起返回值的，而有时需要先获得一条命令的返回值，再根据这个值执行下一条命令，即前一条命令的返回值需要作为后一条命令的参数。于是需要另一条命令<code>watch</code>，用于监视一个或多个键，一旦其中一个键被修改了，之后的事务都不会执行，监控一直持续到事务提交</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; set key 1</span><br><span class="line">OK</span><br><span class="line">&gt; watch key</span><br><span class="line">OK</span><br><span class="line">&gt; set key 2     # 由于这里key被修改，于是之后的事务不会执行</span><br><span class="line">OK</span><br><span class="line">&gt; multi</span><br><span class="line">OK</span><br><span class="line">&gt; incr key</span><br><span class="line">QUEUED</span><br><span class="line">&gt; exec</span><br><span class="line">(nil)</span><br><span class="line">&gt; get key</span><br><span class="line">&quot;2&quot;</span><br><span class="line"></span><br><span class="line"># 若在开启监视后，事务开启前，该键未被修改，则事务中对该键的操作仍有效</span><br><span class="line">&gt; set key 1</span><br><span class="line">OK</span><br><span class="line">&gt; watch key</span><br><span class="line">OK</span><br><span class="line">&gt; multi</span><br><span class="line">OK</span><br><span class="line">&gt; incr key</span><br><span class="line">QUEUED</span><br><span class="line">&gt; exec</span><br><span class="line">1) (integer) 2</span><br></pre></td></tr></table></figure>
+
+<p>在执行<code>exec</code>后会取消对所有键的监视，若不想在执行事务中的命令也可使用<code>unwatch</code>命令取消监控。</p>
+<h1 id="过期时间"><a href="#过期时间" class="headerlink" title="过期时间"></a>过期时间</h1><p>在实际开发中会遇到有时效的数据，过了一定时间就应该清除，在 Redis 中可使用<code>expire</code>设置一个键的过期时间，到达该时间后 Redis 会自动删除该键。<br><code>expire &lt;key&gt; &lt;time&gt; （时间单位：秒，且必须是整数）</code><br>返回值为 1 表示设置成功，0 表示未成功或键不存在。</p>
+<p>若要设置更加精确的时间，可用命令<code>pexpire</code>，单位：毫秒。<br>可使用<code>ttl</code>命令查看指定键的剩余时间。若该键被删除了，则返回值为-2，若未设置该键的过期时间，，则返回-1。<br>可使用<code>persist &lt;key&gt;</code>命令取消设置指定键的过期时间，成功则返回 1，否则（键不存在，或键原来就没有过期时间设置）返回 0。</p>
+<p><strong>注：</strong><code>set</code>或<code>getset</code>命令对键重新赋值也会清除过期时间。</p>
+<p>若<code>watch</code>监视一个没有过期时间的键，该键到期自动删除后并不会被<code>watch</code>认为该键被修改。</p>
+<p>命令<code>expireat &lt;key&gt; &lt;time&gt;</code> 用 Unix 时间作为过期时间（1970 年 1 月 1 日到现在的秒数）<br>命令<code>pexpireat &lt;key&gt; &lt;time&gt;</code>同上，但单位为毫秒</p>
+<p>当 Redis 用作缓存系统时，可以限制 Redis 能够使用的最大内存，并让 Redis 按照一定规则淘汰不需要的缓存键。<br>修改配置文件<code>maxmemory</code>参数，限制最大可用内存大小（单位：字节）。当超出限制后，Redis 会根据<code>maxmemory-policy</code>参数指定的策略删除键直到 Redis 占用的内存小于指定内存。</p>
+<p>以下为 Redis 提供的策略规则：</p>
+<table>
+<thead>
+<tr>
+<th>规则名</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>volatile-lru</td>
+<td>使用 LRU 算法删除一个键（只对设置了过期时间的键起作用）</td>
+</tr>
+<tr>
+<td>allkeys-lru</td>
+<td>使用 LRU 算法删除一个键（会不断删除）</td>
+</tr>
+<tr>
+<td>volatile-random</td>
+<td>随机删除一个键（只对设置了过期时间的键起作用）</td>
+</tr>
+<tr>
+<td>allkeys-random</td>
+<td>随机删除一个键</td>
+</tr>
+<tr>
+<td>volatile-ttl</td>
+<td>删除过期时间最近的一个键</td>
+</tr>
+<tr>
+<td>noeviction</td>
+<td>不开启策略</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>LRU 算法：Least Recently Used 最近最少使用。该算法认为最近最少使用的键在未来一段时间内也不会被用到，即当需要空间时这些键是可以被删除的。</p>
+</blockquote>
+<p><strong>注：</strong>实际上，Redis 不会准确将整个数据库中最久未使用的键删除，而是每次从数据库中随机取 5 个键（可修改）并删除其中最久未被使用的键。随机取的键个数可通过配置文件的<code>maxmemory-samples</code>参数设置。默认为 5 个能产生最优的结果。10 个最接近 LRU 算法的要求，但会消耗更多的 CPU 资源。3 个会更快，但并不准确。</p>
+<h1 id="持久化"><a href="#持久化" class="headerlink" title="持久化"></a>持久化</h1><p>redis 为了内部数据安全考虑，会把数据以文件形式保存一份在硬盘中，服务器重启后会自动将数据还原到内存中，将数据保存到硬盘称为持久化。<br>持久化分为以下两种：</p>
+<ul>
+<li>快照持久化（snap shotting），也称 RDB</li>
+<li>AOF 持久化（append only file）</li>
+</ul>
+<p><strong>RDB</strong><br>默认开启，一次性将所有数据保存在硬盘中，整个数据库只保存为一个文件，便于数据迁移，也便于数据库毁坏后的恢复。<br>在开始初始化时，唯一要做到的只是 fork 出子进程，再由子进程完成持久化工作，极大避免了服务进程执行 IO 操作，而父进程仍然处理客户端的请求，实现性能最大化。相较于 AOF，若数据集很大，RDB 的启动效率会很高。</p>
+<p><strong>若要保证数据的高可用性，最大限度避免数据丢失，则不宜选择 RDB。因为依靠子进程完成持久化，所以当数据集较大时，可能会导致整个服务器延时增大。</strong></p>
+<p>写时复制策略保证了在 fork 的时刻虽然生成了两份内存副本，但内存的占用量并不会增加一倍，因此需要确保 linux 系统允许应用申请超过可用内存的空间。可通过<code>/etc/sysctl.conf</code>中修改<code>vm.overcommit_memory</code>参数为 1。</p>
+<p>当快照时，若写入操作交到，造成 fork 前后差异较大，是会使内存使用量显著超过实际数据大小的，因为内存不仅保存了当前数据库数据，还保存了快照时的内存数据。</p>
+<p><strong>快照方式</strong></p>
+<ul>
+<li><strong>根据配置规则自动进行快照</strong><br>redis 目录中的 dump.rdb 就是快照持久化的数据备份文件。<br>配置文件<code>/etc/redis.conf</code>的 RDB 参数</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 设置备份频率</span><br><span class="line">save 900 1     # 900秒中有一个键发生变化就触发RDB备份</span><br><span class="line">save 300 10    # 300秒中有10个键发生变化就触发RDB备份</span><br><span class="line">save 60 10000  # 60秒中有10000个键发生变化就触发RDB备份</span><br><span class="line"></span><br><span class="line">dbfilename dump.rdb  # 备份数据库文件名</span><br><span class="line">dir ./               # 备份数据库文件存放位置</span><br></pre></td></tr></table></figure>
+
+<p>在 RDB 中可实现精细持续化，将每个修改的键保存，频率可达到秒级。</p>
+<p>只有当快照结束时，新的 rdb 文件才会覆盖旧的文件，而在备份过程中，redis 是不会修改原 rdb 文件的，即任何时刻 rdb 文件都是完整的。于是可通过定时备份 rdb 文件实现 redis 数据库备份。<br>rdb 文件是经过压缩的二进制格式，<br>可通过配置文件的<code>rdbcompression yes</code>参数禁用来压缩节省 CPU 占用。</p>
+<p>Redis 启动后会读取 RDB 文件，将数据从硬盘载入内存。通常一个记录 1000 万个字符串类型键、大小为 1GB 的快照文件载入到内存中需要花费 20-30 秒。</p>
+<ul>
+<li><p><strong>使用<code>save</code>或<code>bgsave</code>命令快照</strong><br><code>save</code>命令：Redis 会同步进行快照，快照时会自动阻塞所有来自客户端的请求。若数据量大会导致 Redis 长时间无法访问，在生产环境中尽量不要用。<br><code>bgsave</code>命令：推荐使用，可在后台异步快照，快照时 Redis 仍能响应客户端请求。可通过<code>lastsave</code>命令查看快照是否完成，返回 unix 时间戳。</p>
+</li>
+<li><p><strong>执行<code>flushall</code>命令</strong><br>Redis 会清空数据库中所有数据。无论清空数据库过程中是否触发了自动快照条件，只要自动快照条件不为空，redis 就会执行一次快照。若未指定自动快照条件，则<code>flushall</code>并不会执行快照。</p>
+</li>
+<li><p><strong>执行复制（replication）时</strong><br>当设置了主从模式时，Redis 会在复制初始化时自动执行快照，并生成 RDB 文件，并不需要定义快照条件或手动执行。</p>
+</li>
+</ul>
+<p><strong>AOF</strong><br>将用户执行的写指令都备份到日志文件中，还原数据就是执行写指令。AOF 可带来更高的数据安全性，即持久性。<br><strong>注：开启 AOF 持久化会清空 redis 数据库所有数据，所以若要选择 AOF 持久化，应该在安装完 redis 服务器后就要立刻开启。</strong></p>
+<p>Redis 有三种同步策略：每秒同步，每修改同步，不同步。</p>
+<ul>
+<li>每秒同步为异步持久化，效率高。若服务器突然宕机，则在这一秒中的数据会丢失。</li>
+<li>每修改同步为同步持久化，每次数据发生变化就会立刻记录到磁盘中，效率低。</li>
+</ul>
+<p>该机制对日志文件的写入操作采用 append 模式，即使在写入过程中出现宕机，也不会破坏日志中已写入的数据，在 Redis 重启后可通过命令<code>redis-check-aof</code>解决数据一致性问题。<br>当日志过大时，Redis 会自动启用重写 rewrite 机制，以 append 模式不断将修改数据写入老磁盘文件，并会创建一个新文件用于记录期间哪些修改命令被执行，保证了数据持久性。</p>
+<p>对于相同数量的数据集，AOF 文件通常比 RDB 文件大。AOF 的运行效率通常慢于 RDB，但其中每秒同步的效率较高。</p>
+<p>配置文件<code>/etc/redis.conf</code>的 AOF 参数</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 若要开启AOF，将此项改为yes</span><br><span class="line">appendonly no</span><br><span class="line"></span><br><span class="line"># 还可设置AOF的备份文件位置</span><br><span class="line">appendfilename appendonly.aof</span><br><span class="line"></span><br><span class="line"># 设置同步机制，三种机制always，everysec，no。</span><br><span class="line"># always：每修改同步</span><br><span class="line"># everysec：每秒同步，默认</span><br><span class="line"># no：同步禁用</span><br><span class="line">appendfsync everysec</span><br></pre></td></tr></table></figure>
+
+<p>AOF 是将 Redis 客户端向 Redis 发送的所有命令全部记录下来，这就造成了有很多冗余无用的命令，如<code>SELECT</code>等也会记录，随着执行命令的增多，AOF 文件的大小也会逐渐增大。<br>因此，Redis 提供了优化策略，可在配置文件中修改以下两个参数：<br><code>auto-aof-rewrite-percentage 100</code>：设置当目前 AOF 文件的大小超过上一次 AOF 文件大小的指定百分比时就会再次进行重写，若之前未重写过，则会根据启动时的 AOF 文件大小作依据。<br><code>auto-aof-rewrite-min-size 64mb</code>：限制允许重写的最小 AOF 文件大小。</p>
+<p>若不满足重写条件，可通过命令<code>bgrewriteaof</code>手动重写。</p>
+<h1 id="Redis-优化技术"><a href="#Redis-优化技术" class="headerlink" title="Redis 优化技术"></a>Redis 优化技术</h1><h2 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h2><p>客户端使用 TCP 与服务器建立连接，若执行较多的命令，每个命令的往返时延累加起来对性能有一定的影响。在执行多个命令时每条命令都需要等待上一条命令执行完（即收到 Redis 的返回结果）才能执行。<br>Redis 支持管道（pipelining），可一次性发送多条命令并在执行后一次性返回结果。通过减少客户端与服务器的通信次数来实现降低往返时累计值。<br><strong>注：</strong>每一组中的命令都不能依赖之前命令的执行结果。</p>
+<h2 id="内部编码优化"><a href="#内部编码优化" class="headerlink" title="内部编码优化"></a>内部编码优化</h2><p>Redis 为每种数据类型都提供了两种内部编码的方式，并且会自动根据实际情况进行编码的转变，对于开发者而言是透明的。其中一种为复杂度是 O(1)的编码，而当键的元素个数大时，变会采用复杂度为 O(n)的编码。<br>可通过<code>object encoding &lt;key&gt;</code>查看指定键的编码方式。</p>
+<p>Redis 的每个键值都是使用一个 redisObject 的结构体保存的。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">redisObject</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> type:<span class="number">4</span>;</span><br><span class="line">    <span class="type">unsigned</span> notused:<span class="number">2</span>;  <span class="meta"># not used</span></span><br><span class="line">    <span class="type">unsigned</span> encoding:<span class="number">4</span>;</span><br><span class="line">    <span class="type">unsigned</span> lru:<span class="number">22</span>;     <span class="meta"># lru时间</span></span><br><span class="line">    <span class="type">int</span> refcount;        # 存储某个键值被引用的数量</span><br><span class="line">    <span class="type">void</span> *ptr;</span><br><span class="line">&#125;robj;</span><br></pre></td></tr></table></figure>
+
+<p>每个数据类型的编码</p>
+<table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>内部编码方式</th>
+<th>object encoding 命令结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>字符串</td>
+<td>REDIS_ENCODING_RAW</td>
+<td>“raw”</td>
+</tr>
+<tr>
+<td></td>
+<td>REDIS_ENCODING_INT</td>
+<td>“int”</td>
+</tr>
+<tr>
+<td></td>
+<td>REDIS_ENCODING_EMBSTR</td>
+<td>“embstr”</td>
+</tr>
+<tr>
+<td>散列</td>
+<td>REDIS_ENCODING_HT</td>
+<td>“hashtable”</td>
+</tr>
+<tr>
+<td></td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>“ziplist”</td>
+</tr>
+<tr>
+<td>列表</td>
+<td>REDIS_ENCODING_LINKEDLIST</td>
+<td>“linkedlist”</td>
+</tr>
+<tr>
+<td></td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>“ziplist”</td>
+</tr>
+<tr>
+<td>集合</td>
+<td>REDIS_ENCODING_HT</td>
+<td>“hashtable”</td>
+</tr>
+<tr>
+<td></td>
+<td>REDIS_ENCODING_INTSET</td>
+<td>“intset”</td>
+</tr>
+<tr>
+<td>有序集合</td>
+<td>REDIS_ENCODING_SKIPLIST</td>
+<td>“skiplist”</td>
+</tr>
+<tr>
+<td></td>
+<td>REDIS_ENCODING_ZIPLIST</td>
+<td>“ziplist”</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>EMBSTR 字符串编码方式与 RAW 类似，都是基于 sdshdr 实现。</p>
+</blockquote>
+<ul>
+<li>字符串类型<br>Redis 使用<code>sdshdr</code>类型变量存储<br>一个键值能被多个键引用，Redis 会预先建立 10000 个分别存储从 0 到 9999 的 redisObject 型的变量对象，若设置的键值在 10000 以内，则该键就会直接引用这个共享对象，并不会再建立一个 redisObject 对象了。</li>
+</ul>
+<blockquote>
+<p>当配置文件设定了<code>macmemory</code>Redis 可用最大空间后，就不会使用共享对象，因为对于每个键值都需要使用一个 redisObject 记录 LRU 信息</p>
+</blockquote>
+<h1 id="集群"><a href="#集群" class="headerlink" title="集群"></a>集群</h1><p>Redis 集群主要用于防止单点故障，以及解决存储、性能瓶颈问题。</p>
+<h2 id="复制（主从）"><a href="#复制（主从）" class="headerlink" title="复制（主从）"></a>复制（主从）</h2><p>Redis 提供的复制功能，可实现当一台数据库中的数据更新后，自动将更新的数据同步到其他数据库上。因此，将数据库分为主数据库（master）与从数据库（slave）。<br>主数据库可进行读写操作，当数据更新时将更新的数据同步到从数据库。而从数据库一般为只读操作，接收主数据库的同步数据。一个从数据库只能有一个主数据库。从数据库默认只读，若创建键会报错。</p>
+<p>在一台主机上模拟主从数据库<br>首先启动主数据库<code>redis-server /etc/redis.conf</code><br>然后可直接通过命令<code>redis-server --port 6666 --slaveof 127.0.0.1 6379</code>再打开一个数据库，并作为从数据库<br>连接到从数据库<code>redis-cli -p 6666</code>并执行<code>INFO replication</code>，查看从数据库的信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; INFO replication</span><br><span class="line"># Replication</span><br><span class="line">role:slave</span><br><span class="line">master_host:127.0.0.1</span><br><span class="line">master_port:6379</span><br><span class="line">master_link_status:up</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>在主数据库上创建键，在从数据库上就能得到该键了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6379&gt; set key1 123</span><br><span class="line">127.0.0.1:6666&gt; get key1</span><br><span class="line">&quot;123&quot;</span><br></pre></td></tr></table></figure>
+
+<p>也可通过修改数据库的配置文件将该数据库设为从数据库<br>在 redis<strong>从服务器</strong>上修改配置文件参数<br><code>bind &lt;主服务器IP&gt;</code><br><code>slaveof &lt;主服务器IP&gt; &lt;主服务器端口&gt;</code><br>主数据库上不需要任何配置。</p>
+<p>还可在一个已开启的数据库中输入命令<code>slaveof &lt;ip-addr&gt; &lt;port&gt;</code>将本数据库设为指定主数据库的从数据库。若该数据库已是其他数据库的从数据库了，则这条命令会取消与原主数据库的同步，而与新指定的主数据库同步。还可通过命令<code>slaveof no one</code>使当前数据库停止接收主数据库同步，并转变为主数据库。</p>
+<p>主从同步流程：</p>
+<ol>
+<li>当一个从数据库启动后，会向主数据库发送 SYNC 命令。</li>
+<li>主数据库收到 SYNC 后，会在后台保存 RDB 快照，并将快照与缓存的命令都发送给从数据库。</li>
+<li>从数据库收到后载入快照，并将执行缓存命令。<br><strong>1 到 3 步称为复制初始化</strong></li>
+<li>复制初始化完成后，主数据库每当收到写命令后就会将命令同步到从数据库。</li>
+</ol>
+<p>当主从数据库断开连接并重连后，Redis 提供有条件的增量数据传输，主数据库只需将断线期间执行的命令传送给从数据库即可。</p>
+<p>试验同步：<br>先使用 telnet 伪装成一个从数据库与主数据库通信</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># telnet 127.0.0.1 6379</span><br><span class="line">Trying 127.0.0.1...</span><br><span class="line">Connected to 127.0.0.1.</span><br></pre></td></tr></table></figure>
+
+<p>然后在从数据库中使用<code>ping</code>确认与主数据库的连接，若正常则主数据库会返回<code>PONG</code>。<br>再输入<code>REPLCONF listening-port 6666</code>说明自己端口号。<br>开始同步<code>SYNC</code>，此时 telnet 的界面会出现以下信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">* Slave 127.0.0.1:6666 asks for synchronization</span><br><span class="line">* Starting BGSAVE for SYNC with target: disk</span><br><span class="line">* Background saving started by pid 4079</span><br><span class="line">* DB saved on disk</span><br><span class="line">* RDB: 6 MB of memory used by copy-on-write</span><br><span class="line">* Background saving terminated with success</span><br><span class="line">* Synchronization with slave 127.0.0.1:6666 succeeded</span><br></pre></td></tr></table></figure>
+
+<p>默认从数据库会使用同步前的数据响应客户端请求，可以在从数据库上修改配置文件参数<code>slave-serve-stale-data</code>为 no，使从数据库再同步完成前对所有命令都返回错误（除<code>INFO</code>和<code>SLAVEOF</code>）。<br>复制同步阶段会贯穿整个主从同步始终，直到主从关系终止。</p>
+<p><strong>乐观复制：</strong>允许一定时间内主从数据库的内容不一致，但最终是会同步的。主从数据库的数据同步是异步的，会产生主从数据库数据不一致的时间窗口（即网络传输的时间加上命令执行的时间），因此，主数据库是不知道命令最终同步给多少个数据库的。Redis 提供配置文件参数限制至少同步给的从数据库的数量时，主数据库才是可写的。<br><code>min-slaves-to-write 3</code> 表示有 3 个以上的从数据库连接到主数据库时，主数据库才是可写的。<br><code>min-slaves-max-lag 10</code> 表示允许从数据库失去与主数据库连接的最长时间。若从数据库最后一次与主数据库的联系（即发送<code>replconf ack</code>命令）的时间小于该值，则认为从数据库仍与主数据库连接，否则就断开主从连接。这一特性默认关闭。</p>
+<p><strong>图结构：从数据库不仅能从主数据库接收同步数据，还能再以自身作为主数据库，将数据再同步给下属的从数据库。</strong></p>
+<p>通过复制可实现读写分离，提高负载能力。往往读的频率大于写的频率，当单机的 Redis 无法应对大量读请求时，可通过复制建立多个从数据库节点，主数据库只进行写操作，从数据库负责读操作。</p>
+<p><strong>从数据库的持久化</strong><br>可通过复制建立一个或多个从数据库，并在从数据库启动持久化，在主数据库禁用持久化。<br>当<strong>从数据库</strong>崩溃重启后主数据库会自动同步数据。<br>当<strong>主数据库</strong>崩溃后则需要按照以下步骤进行恢复。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. 在从数据库中使用命令slaveof no one将从数据库提升为主数据库继续对外提供服务</span><br><span class="line">2. 启动崩溃的主数据库，再使用slaveof将其设置为新的主数据库的从数据库，再将数据进行同步。</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>当开启复制且主数据库关闭持久化功能时，不要使用 supervisor 等进程管理工具使主数据库崩溃后自动重启。同样当主数据库所在服务器因故关闭时，也要避免直接重启。<br>因为主数据库重启后没有开启持久化功能，所以主数据库中所有数据都会被清空，而从数据库又会与从主数据库中同步数据，导致从数据库所有数据也被清空。</p>
+</blockquote>
+<h2 id="无硬盘复制"><a href="#无硬盘复制" class="headerlink" title="无硬盘复制"></a>无硬盘复制</h2><p>Redis 的复制是基于 RDB 方式持久化实现的，即主数据库端在后台保存 RDB 快照，从数据库接收并载入快照文件。<br>缺点：</p>
+<ol>
+<li>当主数据库禁用 RDB 快照后，如果执行复制初始化，Redis 依然会生成 RDB 快照，所以下次启动后主数据库会以该快照恢复数据。<strong>因为复制发生的时间不能确定，这使得恢复的数据可能是任何时间点的。</strong></li>
+<li>因为复制初始化时需要在硬盘中创建 RDB 快照文件，所以如果硬盘性能很慢（如网络硬盘）时这一过程会对性能产生影响。<br>举例来说，当使用 Redis 做缓存系统时，因为不需要持久化，所以服务器的硬盘读写速度可能较差。但是当该缓存系统使用一主多从的集群架构时，每次和从数据库同步，Redis 都会执行一次快照，同时对硬盘进行读写，导致性能降低。</li>
+</ol>
+<p>因此 Redis 引入了无硬盘复制选项，开启该选项时，Redis 在<strong>与从数据库进行复制初始化时将不会将快照内容存储到硬盘上，而是直接通过网络发送给从数据库</strong>，避免了硬盘的性能瓶颈。</p>
+<p>可修改配置文件中<code>repl-diskless-sync</code>参数为 yes 开启。</p>
+<h2 id="增量复制"><a href="#增量复制" class="headerlink" title="增量复制"></a>增量复制</h2><p>场景：当主从数据库连接断开后，从数据库会发送 SYNC 命令来重新进行一次完整复制操作。虽然断开期间数据库的变化很小，但也需要将数据库中的所有数据重新快照并传送一次。因此 Redis 实现了主从断线重连的情况下的增量复制。</p>
+<p>增量复制是基于如下 3 点实现的。</p>
+<ol>
+<li>从数据库会存储<strong>主数据库的运行 ID（run id）</strong>。每个 Redis 运行实例均会拥有一个唯一的运行 ID，每当实例重启后，就会自动生成一个新的运行 ID。</li>
+<li>在复制同步阶段，<strong>主数据库每将一个命令传送给从数据库时，都会同时把该命令存放到一个积压队列（backlog）中</strong>，并记录下当前积压队列中存放的命令的偏移量范围。</li>
+<li>同时，从数据库接收到主数据库传来的命令时，会记录下该命令的偏移量。</li>
+</ol>
+<p>当主从连接准备就绪后，从数据库会发送一条 PSYNC 命令来告诉主数据库可以开始把所有数据同步过夹了，格式为<code>PSYNC 主数据库的运行ID断开前最新的命令偏移量</code>。主数据库收到 PSYNC 命令后，会执行以下判断来决定此次重连是否可以执行增量复制。</p>
+<ol>
+<li>首先主数据库会判断从数据库传送来的运行 ID 是否和自己的运行 ID 相同，确保从数据库之前确实是和自己同步的。</li>
+<li>然后判断从数据库最后同步成功的备今信移景是否在积压队列中，如果在则可以执行增量复制，并将积压队列中相应的命令发送给从数据库。<br>如果此次重连不满足增量复制的条件，主数据库会进行一次全部同步。</li>
+</ol>
+<p>增量复制的过程对开发者来说是完全透明的，唯一需要开发者设置的就是积压队列的大小了。主数据库可以正常地和旧版本的从数据库同步（通过接收 SYNC 命令），从数据库也可以与旧版本的主数据库同步（通过发送 SYNC 命令）。<br>积压队列在本质上是一个固定长度的循环队列，默认情况下积压队列的大小为 1MB，可以通过配置文件的<code>rep1-backlog-size</code>选项来调整。积压队列越大，其允许的主从数据库断线的时间就越长。<br>根据主从数据库之间的网络状态，设置一个合理的积压队列很重要。因为积压队列存储的内容是命令本身，所以估算积压队列的大小只需估计主数据库可能执行的命令的大小即可。另一个配置参数是<code>rep1-backlog-ttl</code>，当所有从数据库与主数据库断开连接后，经过多久时间可以释放积压队列的内存空间，默认为 1 小时。</p>
+<h2 id="哨兵"><a href="#哨兵" class="headerlink" title="哨兵"></a>哨兵</h2><p>Redis 提供哨兵实现自动化的系统监控和故障恢复功能，哨兵是一个独立的进程。<br>哨兵有以下功能：</p>
+<ol>
+<li>监控主数据库和从数据库是否正常运行。</li>
+<li>主数据库出现故障时自动将从数据库转换为主数据库。</li>
+</ol>
+<p>在一个主从 Redis 系统中，可使用多个哨兵进行监控任务以保证系统足够稳健。哨兵不仅能监控主从数据库，还能与其他哨兵互相监控。<br><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048364.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048364.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>哨兵实验</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">实验环境：system2 192.168.163.102</span><br><span class="line">主服务器：127.0.0.1 6379</span><br><span class="line">redis-server /etc/redis.conf</span><br><span class="line"></span><br><span class="line">从服务器：127.0.0.1 6380 6381</span><br><span class="line">redis-server --port 6380 --slaveof 127.0.0.1 6379</span><br><span class="line">redis-server --port 6381 --slaveof 127.0.0.1 6379</span><br><span class="line"></span><br><span class="line">127.0.0.1:6379&gt; info replication</span><br><span class="line"># Replication</span><br><span class="line">role:master</span><br><span class="line">connected_slaves:2</span><br><span class="line">slave0:ip=127.0.0.1,port=6380,state=online,offset=266,lag=0</span><br><span class="line">slave1:ip=127.0.0.1,port=6381,state=online,offset=266,lag=0</span><br><span class="line"></span><br><span class="line">设置哨兵</span><br><span class="line">创建配置文件/etc/sentinel.conf，并添加以下内容：</span><br><span class="line">sentinel monitor MyMaster_1 127.0.0.1 6379 1</span><br><span class="line">sentinel monitor master-name ip port quoram</span><br><span class="line"># MyMaster_1为要监视的主数据库的名字，可自定义</span><br><span class="line"># 后面跟上主数据库的IP地址和端口号</span><br><span class="line"># 最后一个数字quoram表示最低通过票数</span><br><span class="line"></span><br><span class="line"># 配置哨兵时，只需要配置监视的主数据库即可，哨兵会自动发现主数据库下的所有从数据库。</span><br><span class="line"></span><br><span class="line">然后启动Sentinel进程</span><br><span class="line">redis-sentinel /etc/sentinel.conf</span><br><span class="line">启动哨兵后会报如下信息</span><br><span class="line">Sentinel ID is 33766bbd6ec93b3574240b6a4ac5c8ea498207d4</span><br><span class="line">+monitor master MyMaster_1 127.0.0.1 6379 quorum 1</span><br><span class="line">* +slave slave 127.0.0.1:6380 127.0.0.1 6380 @ MyMaster_1 127.0.0.1 6379</span><br><span class="line">* +slave slave 127.0.0.1:6381 127.0.0.1 6381 @ MyMaster_1 127.0.0.1 6379</span><br><span class="line"></span><br><span class="line"># +slave表示发现了从数据库</span><br><span class="line">然后在另一个终端中关闭主数据库</span><br><span class="line">在原终端中会出现一连串的以下信息</span><br><span class="line">* Connecting to MASTER 127.0.0.1:6379</span><br><span class="line">* MASTER &lt;-&gt; SLAVE sync started</span><br><span class="line">Error condition on socket for SYNC: Connection refused</span><br><span class="line"></span><br><span class="line">在过了一段时间（默认30s，可配置修改）后，会出现以下信息</span><br><span class="line">+sdown master MyMaster_1 127.0.0.1 6379</span><br><span class="line">+odown master MyMaster_1 127.0.0.1 6379 #quorum 1/1</span><br><span class="line"></span><br><span class="line"># +sdown 表示哨兵主观认为主数据库停止服务了</span><br><span class="line"># +odown 表示哨兵客观认为主数据库停止服务了</span><br><span class="line"># 此时哨兵执行故障恢复，挑选一个从数据库提升为主数据库</span><br><span class="line">然后会报出许多信息，下面列举出几条重要的信息</span><br><span class="line">+try-failover master MyMaster_1 127.0.0.1 6379</span><br><span class="line">+vote-for-leader 33766bbd6ec93b3574240b6a4ac5c8ea498207d4 1</span><br><span class="line">......</span><br><span class="line">+failover-end master MyMaster_1 127.0.0.1 6379</span><br><span class="line">+switch-master MyMaster_1 127.0.0.1 6379 127.0.0.1 6380</span><br><span class="line">+slave slave 127.0.0.1:6381 127.0.0.1 6381 @ MyMaster_1 127.0.0.1 6380</span><br><span class="line">+slave slave 127.0.0.1:6379 127.0.0.1 6379 @ MyMaster_1 127.0.0.1 6380</span><br><span class="line"></span><br><span class="line"># +try-failover 表示哨兵开始故障恢复</span><br><span class="line"># +failover-end 表示哨兵完成故障恢复，故障恢复步骤包括领头哨兵选举、备份从数据库的选择等</span><br><span class="line"># +switch-master 表示主数据库从6379端口迁移到6380，即6380端口的从数据库提升为主数据库</span><br><span class="line"># 两个+slave，原主数据库变为了现主数据库的从数据库，但此时6379的数据库并未启动，说明哨兵并不会清除已停止服务的实例的信息</span><br><span class="line"></span><br><span class="line">再次登录上127.0.0.1:6380</span><br><span class="line">127.0.0.1:6380&gt; info replication</span><br><span class="line"># Replication</span><br><span class="line">role:master</span><br><span class="line">connected_slaves:1</span><br><span class="line">slave0:ip=127.0.0.1,port=6381,state=online,offset=99027,lag=1</span><br><span class="line"># 因为6379端口数据库未启动，所以此时只有一个从数据库</span><br><span class="line">然后重启6379端口数据库</span><br><span class="line">-sdown slave 127.0.0.1:6379 127.0.0.1 6379 @ MyMaster_1 127.0.0.1 6380</span><br><span class="line">+convert-to-slave slave 127.0.0.1:6379 127.0.0.1 6379 @ MyMaster_1 127.0.0.1 6380</span><br><span class="line"></span><br><span class="line"># -sdown 表示实例6379已恢复服务（与+sdown相反）</span><br><span class="line"># +convert-to-slave 表示将6379端口实例设置为6380端口实例的从数据库。</span><br><span class="line">在6379端会报以下信息：</span><br><span class="line">SLAVE OF 127.0.0.1:6380 enabled</span><br><span class="line">再在6380端查看</span><br><span class="line">127.0.0.1:6380&gt; info replication</span><br><span class="line"># Replication</span><br><span class="line">role:master</span><br><span class="line">connected_slaves:2</span><br><span class="line">slave0:ip=127.0.0.1,port=6381,state=online,offset=541686,lag=0</span><br><span class="line">slave1:ip=127.0.0.1,port=6379,state=online,offset=541686,lag=0</span><br></pre></td></tr></table></figure>
+
+<p>一个哨兵节点可同时监控多个 Redis 主从系统，只要提供多个 sentinel monitor 配置即可。多个哨兵节点也可监控一个主从系统。</p>
+<p>sentinel.conf 配置文件的其他配置</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># sentinel down-after-milliseconds 主数据库名 值</span><br><span class="line"># 这条参数用于设置哨兵发送ping命令检测数据库节点状态的周期时间，单位为毫秒</span><br></pre></td></tr></table></figure>
+
+<p>当超过该参数时间而未收到回复后，则哨兵认为该节点主观下线。若该节点为主数据库，则哨兵会进一步判断是否需要故障恢复。哨兵会向其他节点发送<code>sentinel is-master-down-by-addr</code>命令询问其他节点是否他们也认为主数据库主观下线，当赞同的节点达到指定数目后，哨兵会认为主数据库客观下线，并进行故障恢复。这个指定数目就是<code>sentinel.conf</code>中<code>sentinel monitor</code>最后一项数值 quoram。</p>
+<p>哨兵启动后，会与要监控的主数据库建立两条连接。一条连接用来订阅该主数据的<code>_sentinel_:he11o</code>频道以获取其他同样监控该数据库的哨兵节点的信息，另外哨兵也需要定期向主数据库发送 INFO 等命令来获取主数据库本身的信息。</p>
+<p>哨兵创建后与立刻做的事情：<br>发送 INFO 命令获得<strong>当前数据库</strong>的相关信息（包括运行 ID、复制信息等）从而实现新节点的自动发现。哨兵向主数据库发送 INFO 命令，通过解析返回结果来得知从数据库列表，而后对每个从数据库同样建立两个连接。至此，与主数据库的连接建立成功。</p>
+<p>和主数据库的连接建立完成后，哨兵会定时执行下面 3 个操作。</p>
+<ol>
+<li>每 10 秒哨兵会向主数据库和从数据库发送 INFO 命令。</li>
+<li>每 2 秒哨兵会向主数据库和从数据库的<code>_sentinel_:hel1o</code>频道发送自己的信息。<br>发送的消息内容为：<code>&lt;哨兵IP&gt;，&lt;哨兵port&gt;，&lt;哨兵运行ID&gt;，&lt;哨兵配置版本&gt;，&lt;主数据库名&gt;，&lt;主数据库IP&gt;，&lt;主数据库port&gt;，&lt;主数据库配置版本&gt;</code></li>
+<li>每 1 秒哨兵会向主数据库、从数据库和其他哨兵节点发送 PING 命令。</li>
+</ol>
+<p>选举领头哨兵的过程使用了 Raft 算法，过程如下：</p>
+<ol>
+<li>发现主数据库客观下线的哨兵节点向每个哨兵节点发送命令，要求对方选自己为领头哨兵。</li>
+<li>如果目标哨兵节点没有选过其他人，则会同意将该节点设为领头哨兵。</li>
+<li>如果该节点发现有超过半数且超过该数值的哨兵节点同意选自己为领头哨兵，则此节点会成功成为领头哨兵。</li>
+<li>当有多个哨兵节点同时参选领头哨兵，会出现没有一个节点当选的情况。此时参选节点会等待一个随机时间重新发起参选请求，进行下一轮直到选举成功。</li>
+</ol>
+<p>故障恢复过程：</p>
+<ol>
+<li>领头哨兵会从从数据库中挑选一个作为新的主数据库。<br>挑选的依据分为三点：<ul>
+<li>所有在线的从数据库中选择优先级最高的，优先级可通过配置文件<code>slave-priority</code>参数设置</li>
+<li>若有多个最高优先级的从数据库，则复制的命令偏移量大的优先</li>
+<li>若上述都相同，则运行 ID 小的优先</li>
+</ul>
+</li>
+<li>选出符合的从数据库后，会向该数据库发送<code>slaveof no one</code>使其提升为主数据库，然后再向其他数据库发送<code>slaveof</code>使其成为新的主数据库的从数据库。最后再更新数据记录，原的主数据库变为从数据库。</li>
+</ol>
+<p>哨兵的部署方案：</p>
+<ul>
+<li>每个节点部署一个哨兵</li>
+<li>每个哨兵与其对应节点网络环境相同或相近</li>
+</ul>
+<p>这样可以保证哨兵的视角具有代表性和可靠性。最好将 quoram 的值设为 N/2+1（N 为哨兵节点个数）。若每个节点都部署一个哨兵的话，可能会因为 Redis 不支持连接复用而造成产生大量冗余连接。</p>
+<h2 id="集群-1"><a href="#集群-1" class="headerlink" title="集群"></a>集群</h2><p>集群往往用于水平扩容。<br>若要开启集群，只要将配置文件的<code>cluster-enabled</code>参数设为 yes 即可，默认开启。每个集群至少需要三个主数据库。</p>
+<p>集群实验</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">实验环境</span><br><span class="line">6个数据库，3个主数据库，3个从数据库</span><br><span class="line">三个主数据库端口分别为6000，6001，6002</span><br><span class="line">三个从数据库端口分别为6003，6004，6005</span><br></pre></td></tr></table></figure>
+
+<p>集群会将当前节点记录的集群状态持久化到指定文件，默认为当前目录下的<code>nodes.conf</code>，这里还是存放在/etc/nodes.conf，每个节点对应的文件必须不同，否则会启动失败，因此启动节点时要注意最后为每个节点使用不同的工作目录，或通过配置文件<code>cluster-config-file 节点文件路径</code>修改。<br>最好给每个节点都创建一个目录，然后每个节点都复制一份配置文件，并修改<code>port</code>参数，<code>cluster-config-file</code>参数。然后通过<code>redis-server 配置文件</code>启动。使用<code>ps</code>查看，每个节点都是显示类似<code>redis-server *:6000 [cluster]</code>。<br>然后进入节点</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6000&gt; info cluster</span><br><span class="line"># Cluster</span><br><span class="line">cluster_enabled:1    # 1说明集群启动正常</span><br></pre></td></tr></table></figure>
+
+<p>目前仅仅节点运行正常，但并未加入集群。需要使用 redis 的 ruby 插件。<br>首先需要安装 ruby，最好不要 yum 安装，应该下最新版本的源码包编译安装。安装完后可以在<code>/usr/local/redis/src/</code>目录下找到<code>redis-trib.rb</code>命令，创软链接。<br>然后使用该命令初始化集群</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">redis-trib.rb create --replicas 1 \</span><br><span class="line">    127.0.0.1:6000 \</span><br><span class="line">    127.0.0.1:6001 \</span><br><span class="line">    127.0.0.1:6002 \</span><br><span class="line">    127.0.0.1:6003 \</span><br><span class="line">    127.0.0.1:6004 \</span><br><span class="line">    127.0.0.1:6005</span><br><span class="line"># --replicas 1 表示每个主数据库拥有的从数据库个数为1</span><br><span class="line"></span><br><span class="line">会出现以下信息：</span><br><span class="line">&gt;&gt;&gt; Creating cluster</span><br><span class="line">&gt;&gt;&gt; Performing hash slots allocation on 6 nodes...</span><br><span class="line">Using 3 masters:</span><br><span class="line">127.0.0.1:6000</span><br><span class="line">127.0.0.1:6001</span><br><span class="line">127.0.0.1:6002</span><br><span class="line">Adding replica 127.0.0.1:6004 to 127.0.0.1:6000</span><br><span class="line">Adding replica 127.0.0.1:6005 to 127.0.0.1:6001</span><br><span class="line">Adding replica 127.0.0.1:6003 to 127.0.0.1:6002</span><br><span class="line">......</span><br><span class="line">Can I set the above configuration? (type &#x27;yes&#x27; to accept):</span><br><span class="line">确认输入yes创建集群</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>redis-trib.rb</code>创建集群的过程：</p>
+<ol>
+<li>首先该命令会以客户端形式尝试连接所有节点，并发送 ping 确定节点正常，同时发送<code>info</code>获取节点运行 ID、验证是否开启了集群</li>
+<li>集群会向每个节点发送<code>cluster meet IP地址 端口</code>告诉当前节点指定的节点也是集群成员。</li>
+<li><code>redis-trib.rb</code>会分配主从数据库节点，分配原则为尽量保证每个主数据库运行在不同 IP 地址上，同时每个从数据库和主数据库都不运行在同一 IP 地址。</li>
+<li>分配完成后，会为主数据库分配插槽，即分配哪些键归哪些节点复制。对每个要成为子数据库的节点发送<code>cluster replicate 主数据库运行ID</code>将当前节点转换为从数据库并复制指定主数据库。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">127.0.0.1:6000&gt; CLUSTER nodes</span><br><span class="line">5c15caa067f96e557d73704e961ee08504fe3ac1 127.0.0.1:6004@16004 slave b098c2ddc169cc6e5411e8c42fb5afa96fa91764 0 1531150828178 5 connected</span><br><span class="line">6808731e0d12e8ec740509ef060c81306d5cd9bd 127.0.0.1:6000@16000 myself,master - 0 1531150825000 1 connected 0-5460</span><br><span class="line">8e885e28b530491468b76bb8084cf7c22a8166f4 127.0.0.1:6005@16005 slave 9de0340daaf29f81b32c96d8010e9e443d66be0b 0 1531150827000 6 connected</span><br><span class="line">b098c2ddc169cc6e5411e8c42fb5afa96fa91764 127.0.0.1:6001@16001 master - 0 1531150825153 2 connected 5461-10922</span><br><span class="line">e219bc21f1ab59f4cf00ca1b35da84e955424556 127.0.0.1:6003@16003 slave 6808731e0d12e8ec740509ef060c81306d5cd9bd 0 1531150827000 4 connected</span><br><span class="line">9de0340daaf29f81b32c96d8010e9e443d66be0b 127.0.0.1:6002@16002 master - 0 1531150827169 3 connected 10923-16383</span><br></pre></td></tr></table></figure>
+
+<p>可通过<code>cluster meet IP地址 端口</code>向新节点发送使新节点加入集群<br>当新节点收到该命令后，会根据命令中的 IP 地址和端口与目标建立握手连接，然后目标会认为此节点为集群中的一员，并使用 Gossip 协议（一种分布式系统通信协议）向集群中所有节点发送此节点的信息。</p>
+<p>新节点加入集群后可进行以下操作：</p>
+<ul>
+<li>使用<code>cluster replicate</code>复制每个主数据库，以从数据库运行</li>
+<li>向集群申请分配插槽（slot）以主数据库运行</li>
+</ul>
+<p>在一个集群中，所有键会被分配给 16384 个插槽，每个主数据库会负责处理其中一部分插槽。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">确认创建集群后的报出的信息</span><br><span class="line">&gt;&gt;&gt; Performing Cluster Check (using node 127.0.0.1:6000)</span><br><span class="line">M: 6808731e...... 127.0.0.1:6000</span><br><span class="line">   slots:0-5460 (5461 slots) master</span><br><span class="line">   1 additional replica(s)</span><br><span class="line">S: 5c15caa0...... 127.0.0.1:6004</span><br><span class="line">   slots: (0 slots) slave</span><br><span class="line">   replicates b098c2d......</span><br><span class="line">S: 8e885e28...... 127.0.0.1:6005</span><br><span class="line">   slots: (0 slots) slave</span><br><span class="line">   replicates 9de0340......</span><br><span class="line">M: b098c2dd...... 127.0.0.1:6001</span><br><span class="line">   slots:5461-10922 (5462 slots) master</span><br><span class="line">   1 additional replica(s)</span><br><span class="line">......</span><br><span class="line">由此也可看出，只有主数据库才会分配插槽，从数据库无插槽。</span><br></pre></td></tr></table></figure>
+
+<p>初始化集群时分配给每个节点的插槽是连续的，但实际上 Redis 没有限制，可将任意几个插槽分配给任意节点。</p>
+<p>键与插槽的关系<br>键名的有效部分通过算法计算出散列值并取 16384 的余数。使得每个键都可以分配到 16384 个插槽中，进而分配的指定的一个节点中处理。</p>
+<blockquote>
+<p>有效部分：若键名包含大括号，则有效部分为大括号内的内容，若不包含大括号，则整个键名都是有效部分</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">可使用命令cluster slots查看插槽分配情况</span><br><span class="line">127.0.0.1:6000&gt; CLUSTER SLOTS</span><br><span class="line">1) 1) (integer) 0</span><br><span class="line">   2) (integer) 5460</span><br><span class="line">   3) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6000</span><br><span class="line">      3) &quot;6808731e0d12e8ec740509ef060c81306d5cd9bd&quot;</span><br><span class="line">   4) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6003</span><br><span class="line">      3) &quot;e219bc21f1ab59f4cf00ca1b35da84e955424556&quot;</span><br><span class="line">2) 1) (integer) 5461</span><br><span class="line">   2) (integer) 10922</span><br><span class="line">   3) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6001</span><br><span class="line">      3) &quot;b098c2ddc169cc6e5411e8c42fb5afa96fa91764&quot;</span><br><span class="line">   4) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6004</span><br><span class="line">      3) &quot;5c15caa067f96e557d73704e961ee08504fe3ac1&quot;</span><br><span class="line">3) 1) (integer) 10923</span><br><span class="line">   2) (integer) 16383</span><br><span class="line">   3) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6002</span><br><span class="line">      3) &quot;9de0340daaf29f81b32c96d8010e9e443d66be0b&quot;</span><br><span class="line">   4) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6005</span><br><span class="line">      3) &quot;8e885e28b530491468b76bb8084cf7c22a8166f4&quot;</span><br><span class="line"></span><br><span class="line">因为有3个master，所以有三条记录，每条记录中包含四个值：</span><br><span class="line">1) 插槽的开始号</span><br><span class="line">2) 插槽的结束号</span><br><span class="line">3) 所有负责该插槽的节点（第一个是主数据库，后面都是从数据库）。包含以下内容：</span><br><span class="line">   1) 节点的IP地址</span><br><span class="line">   2) 节点端口号</span><br><span class="line">   3) 节点运行ID</span><br></pre></td></tr></table></figure>
+
+<p>插槽的分配的情况</p>
+<ol>
+<li>插槽之前没被分配过，现在想分配给指定节点</li>
+<li>插槽之前被分配过，现在想移动到指定节点</li>
+</ol>
+<p>将插槽分配给节点的过程</p>
+<ol>
+<li>若是上述的第一种情况，即插槽未被分配过。使用<code>cluster addslots [插槽号]....</code>可分配多个插槽。<br>若被分配过则会报错<code>(error) ERR Slot 100 is already busy</code></li>
+<li>若是第二种情况，即插槽被分配过。redis-trib.rb 提供简便迁移方法<br><code>redis-trib.rb reshard 目标IP地址:端口</code><br>其中<code>reshard</code>表示需要重新分片。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">目标：将6000端口的插槽分1000个到6001端口</span><br><span class="line">redis-trib.rb reshard 127.0.0.1:6000</span><br><span class="line"></span><br><span class="line"># 然后会询问要迁移的插槽个数</span><br><span class="line">How many slots do you want to move (from 1 to 16384)? 1000</span><br><span class="line"></span><br><span class="line"># 询问要迁移到的节点ID（redis-trib.rb会给出，也可以进入数据库cluster nodes查看）</span><br><span class="line">What is the receiving node ID? b098c2ddc169cc6e5411e8c42fb5afa96fa91764</span><br><span class="line"></span><br><span class="line"># 询问从哪个节点开始移出插槽，输入6000端口节点的ID</span><br><span class="line"># 在结束输入后回车，并输入done</span><br><span class="line">Please enter all the source node IDs.</span><br><span class="line">  Type &#x27;all&#x27; to use all the nodes as source nodes for the hash slots.</span><br><span class="line">  Type &#x27;done&#x27; once you entered all the source nodes IDs.</span><br><span class="line">Source node #1:6808731e0d12e8ec740509ef060c81306d5cd9bd</span><br><span class="line">Source node #2:done</span><br><span class="line"># 然后会要求再次确认，输入yes</span><br><span class="line">Do you want to proceed with the proposed reshard plan (yes/no)? yes</span><br><span class="line"># 再进redis查看cluster slots</span><br><span class="line">127.0.0.1:6000&gt; CLUSTER SLOTS</span><br><span class="line">1) 1) (integer) 1000</span><br><span class="line">   2) (integer) 5460</span><br><span class="line">   3) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6000</span><br><span class="line">      3) &quot;6808731e0d12e8ec740509ef060c81306d5cd9bd&quot;</span><br><span class="line">   4) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6003</span><br><span class="line">      3) &quot;e219bc21f1ab59f4cf00ca1b35da84e955424556&quot;</span><br><span class="line">2) 1) (integer) 0</span><br><span class="line">   2) (integer) 999</span><br><span class="line">   3) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6001</span><br><span class="line">      3) &quot;b098c2ddc169cc6e5411e8c42fb5afa96fa91764&quot;</span><br><span class="line">   4) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6004</span><br><span class="line">      3) &quot;5c15caa067f96e557d73704e961ee08504fe3ac1&quot;</span><br><span class="line">3) 1) (integer) 5461</span><br><span class="line">   2) (integer) 10922</span><br><span class="line">   3) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6001</span><br><span class="line">      3) &quot;b098c2ddc169cc6e5411e8c42fb5afa96fa91764&quot;</span><br><span class="line">   4) 1) &quot;127.0.0.1&quot;</span><br><span class="line">      2) (integer) 6004</span><br><span class="line">      3) &quot;5c15caa067f96e557d73704e961ee08504fe3ac1&quot;</span><br></pre></td></tr></table></figure>
+
+<p>若不使用<code>redis-trib.rb</code>命令。也可通过<code>cluster setslot</code>命令分片。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cluster setslot 插槽号 node 新节点运行ID</span><br><span class="line">例：若要将上面分好的1000个插槽迁移回到6000管理</span><br><span class="line"></span><br><span class="line">前提：插槽中没有任何键。因为这样迁移时并不会连同相应键一起迁移，会造成键的丢失。</span><br></pre></td></tr></table></figure>
+
+<p>可通过<code>cluster getkeysinslot 插槽号 要返回的键的数量</code>获取指定插槽中的键，以查看要迁移的插槽中是否存在键。<br>然后把每个键迁移迁移到目标节点：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">migrate 目标节点地址 目标节点端口 键名 数据库号 超时时间 [copy] [replace]`</span><br><span class="line">其中copy和replace可选，copy表示不会将键从当前数据库删除，只是复制。replace表示目标节点若存在同名键则覆盖。</span><br><span class="line">因为集群模式数据库只能使用0号数据库，所以数据库号始终是0</span><br></pre></td></tr></table></figure>
+
+<p>Redis 还提供以下命令实现集群不下线的数据迁移：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">clsuter setslot 插槽号 migrating 新节点运行ID</span><br><span class="line">cluster setslot 插槽号 importing 原节点运行ID</span><br><span class="line"></span><br><span class="line">迁移时若要把N号插槽从A迁移到B，需要如下操作</span><br><span class="line">在B执行cluster setslot N importing A</span><br><span class="line">在A执行clsuter setslot N migrating B</span><br><span class="line">在A执行cluster getkeysinslot N 获取N号插槽的键列表</span><br><span class="line">对列表的每个键都执行migrate命令</span><br><span class="line">执行cluster setslot 0 B 完成迁移</span><br></pre></td></tr></table></figure>
+
+<p>当客户端向集群中任一节点发送命令后，该节点都会判断相应键是否在当前节点，若在则立刻处理，若不在则返回一个 MOVE 重定向请求，告诉客户端目前负责该键的节点。返回的错误信息格式为：<br><code>(error) MOVED 键所在的插槽号 IP地址:端口</code><br><code>redis-cli</code>也提供集群模式支持自动重定向，通过<code>-c</code>参数启动客户端。</p>
+<p>集群中每个节点都会每隔 1 秒随机选 5 个节点，并选择其中最久无响应的节点发送一个 ping，若超时无回复，则变为主观下线，进行判断，与哨兵类似。选择主数据库的过程也与哨兵一致，都使用 Raft 算法。<br>若一个至少负责一个插槽的主数据库下线且无相应从数据库可进行故障恢复，则<strong>整个集群</strong>默认会进入下线状态无法工作。也可修改配置文件的<code>cluster-require-full-coverage</code>设为 no，使集群在这种情况下继续工作。</p>
+<h1 id="管理"><a href="#管理" class="headerlink" title="管理"></a>管理</h1><h2 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h2><p>可通过配置文件的<code>requirepass</code>参数设置密码，于是客户端每次连接数据库时必须发送密码验证，否则 Redis 会拒绝执行客户端发来的命令，会报错：<code>(error)NOAUTH Authentication required</code>。<br>使用<code>auth 密码</code>验证。<br>也可在 redis 中通过命令<code>config set requirepass 密码</code>设置密码。<br>也可通过命令<code>config get requirepass</code>获取密码（已验证后才能看）</p>
+<p>攻击者会通过穷举法破解 Redis 密码（1 秒内可尝试十几万个密码）。</p>
+<blockquote>
+<p>配置 Redis 复制时，若主数据库设置了密码，需要在从数据库的配置文件中通过<code>masterauth</code>参数设置验证密码，在从数据库连接主数据库时会自动<code>auth</code>验证。</p>
+</blockquote>
+<p>Redis 支持对命令的重命名，可在配置文件中的<code>rename-command</code>进行设置。格式为<code>rename-command 命令 重命名后的命令</code>。<br>若要禁用某命令可直接将该命令重命名为空字符串即可。</p>
+<h2 id="通信协议"><a href="#通信协议" class="headerlink" title="通信协议"></a>通信协议</h2><p>Redis 支持两种通信协议：</p>
+<ul>
+<li>统一请求协议：二进制安全</li>
+<li>简单协议：便于在 telnet 中输入（已废弃）</li>
+</ul>
+<p>简单协议中提供五种 telnet 返回值表示形式已被封装到 redis-cli 中，而就成为了 redis 的返回形式。</p>
+<ul>
+<li>错误回复 error reply<br>以<code>-</code>开头，并跟上错误信息，以<code>\r\n</code>结尾</li>
+<li>状态回复 status reply<br>以<code>+</code>开头，跟上状态信息，以<code>\r\n</code>结尾</li>
+<li>整数回复 integer reply<br>以<code>:</code>开头，跟上数值，以<code>\r\n</code>结尾</li>
+<li>字符串回复 bulk reply<br>以<code>$</code>开头，跟上字符串长度，<code>\r\n</code>分隔，再跟上字符串内容，再以<code>\r\n</code>结尾。若返回值为空，会返回<code>$-1</code></li>
+<li>多行字符串回复 multi-bulk reply<br>以<code>*</code>开头，跟上字符串个数，<code>\r\n</code>分隔，再跟上字符串内容，再以<code>\r\n</code>结尾。</li>
+</ul>
+<p><strong>统一请求协议</strong><br>命令格式类似于多行字符串回复的格式，每个命令都可以包含二进制字符。<br>Redis 的 AOF 文件和主从复制时发送的内容都使用了统一请求协议。<br>若发送命令<code>set foo bar</code>，则在传输中的写法为<code>*3\r\n$3\r\nSET\r\n*3\r\n$3\r\nFOO\r\n*3\r\n$3\r\nBAR\r\n</code>。</p>
+<h2 id="一些管理命令"><a href="#一些管理命令" class="headerlink" title="一些管理命令"></a>一些管理命令</h2><ul>
+<li>耗时命令日志<br>当一条命令执行时间超时后，Redis 会将该命令的执行时间等信息加入耗时命令日志（slow log）。可通过配置文件的<code>slowlog-log-slower-than</code>参数设置该限制时间，单位为微秒（1s=10^6μs），默认为 10000μs。耗时命令日志会存储在内存中，也可通过配置文件<code>slowlog-max-len</code>设置记录的最多条数，默认 128。</li>
+</ul>
+<p>可在 rediscli 中使用<code>slowlog get</code>获取当前耗时命令日志。<br>每条日志由四个部分组成：</p>
+<ol>
+<li>该日志的唯一 ID</li>
+<li>该命令执行的 Unix 时间</li>
+<li>该命令的耗时时间，单位微秒</li>
+<li>命令和参数</li>
+</ol>
+<ul>
+<li>命令监控<br>Redis 提供<code>monitor</code>命令监控 Redis 执行的所有命令。<br>在一个终端中输入<code>monitor</code>，便开始监视任何执行操作（该终端被挂起，不能执行命令）。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">在第一个终端中输入</span><br><span class="line">127.0.0.1:6379&gt; MONITOR</span><br><span class="line">OK</span><br><span class="line">在另一个终端中执行一条命令</span><br><span class="line">set foo bar</span><br><span class="line"></span><br><span class="line">于是在第一个终端中就会打印出以下内容</span><br><span class="line">1531104811.876088 [0 127.0.0.1:41664] &quot;COMMAND&quot;</span><br><span class="line">1531104820.923283 [0 127.0.0.1:41664] &quot;set&quot; &quot;foo&quot; &quot;bar&quot;</span><br></pre></td></tr></table></figure>
+
+<p><code>monitor</code>命令十分影响 redis 的性能，会降低近一半的负载能力，因此只适合进行排错和调试。</p>
+<ul>
+<li><code>config get &lt;指定配置&gt;</code>：获取服务器配置信息（就是配置文件中的参数）。</li>
+</ul>
+<h1 id="Redis-配置文件常用参数"><a href="#Redis-配置文件常用参数" class="headerlink" title="Redis 配置文件常用参数"></a>Redis 配置文件常用参数</h1><p>按照配置文件中的出现顺序</p>
+<ul>
+<li><p><code>bind &lt;IPaddr&gt;</code>： 指定 Redis 只接收该地址的请求。默认接收所有 IP 地址的请求，这样会造成安全隐患，最好填写需要调用 redis 的服务器的 IP 地址，或者直接写<code>127.0.0.1</code>仅允许本地用户调用。</p>
+</li>
+<li><p><code>daemonize yes|no</code>：是否在后台运行。默认在前台运行</p>
+</li>
+<li><p><code>pidfile</code>：PID 文件路径。若运行多个 Redis，则需要在各自的配置文件中指定不同的 PID 文件路径和端口</p>
+</li>
+<li><p><code>port</code>：Redis 监听的端口，默认为 6379</p>
+</li>
+<li><p><code>timeout</code>：客户端连接超时时间，单位秒。若客户端在超时前没发出任何指令，则会关闭连接。</p>
+</li>
+<li><p><code>logfile</code>：日志文件路径</p>
+</li>
+<li><p><code>loglevel</code>：日志等级，分为四个：debug、verbose、notice、warning，默认为 notice</p>
+</li>
+<li><p><code>databases</code>：数据库个数，默认设为 16 个</p>
+</li>
+<li><p><code>save &lt;seconds&gt; &lt;changes&gt;</code>：redis 进行备份的频率。在多少秒内进行几次更新操作，就会触发备份，将数据同步到 RDB 文件。详见持久化</p>
+</li>
+<li><p><code>rdbcompression yes|no</code>：是否开启 rdb 备份时压缩，默认开启</p>
+</li>
+<li><p><code>dbfilename</code>：rdb 备份的文件名，默认为<code>dump.rdb</code></p>
+</li>
+<li><p><code>dir</code>：rdb 备份文件存放路径。路径和文件名要分开配置，因为 Redis 备份时会先将当前数据库的状态写入一个临时文件，等备份完成后再把该文件替换为指定文件。</p>
+</li>
+<li><p><code>slaveof &lt;masterip&gt; &lt;masteport&gt;</code>：在从数据库上设置，指定主数据库</p>
+</li>
+<li><p><code>masterauth &lt;master-password&gt;</code> ：当主数据库连接需要密码验证时，在此指定密码</p>
+</li>
+<li><p><code>requirepass</code>：设置客户端连接后进行任何其他操作前需要的密码。</p>
+<blockquote>
+<p>因为 Redis 速度快，所以外部用户可以每秒进行 150000 次密码尝试，若密码简单，很容易被破解。</p>
+</blockquote>
+</li>
+<li><p><code>maxmemory &lt;bytes&gt;</code>：设置 Redis 最大能使用的内存，单位字节。当分配的内存完全被占用后，若再接收到 set 命令，则 Redis 会先删除设置了 expire 的键，无论是否到期。若所有 expire 的键都被删除了，则 redis 不再进行 set 操作，只允许 get 操作。此参数适合把 redis 当做类似 Memcached 缓存来使用</p>
+</li>
+<li><p><code>maxclients</code>：限制同时连接的客户数。当连接数超过该值，则不再接收，并返回 error。</p>
+</li>
+<li><p><code>appendonly yes|no</code> ：默认情况下，redis 会在后台异步把数据库镜像备份到此磁盘，但这样备份非常耗时，且不能很频繁，若断电会造成大量数据丢失。若开启 appendonly，则 redis 会将接收到的每一次写操作追加到<code>appendonly.aof</code>中，当 redis 重启时，会从该文件恢复到之前的状态。但这样容易造成该文件过大。可通过指令<code>BGREWRITEAOF</code>对该文件整理。</p>
+</li>
+<li><p><code>appendfsync always|everysec|no</code>：详见持久化</p>
+</li>
+<li><p><code>vm-enabled</code>：是否开启虚拟内存支持。当内存不够时，会把 value 存放到交换区（swap）中。性能基本不受影响。同时要将<code>vm-max-memory</code>设置足够大以存放所有 key</p>
+</li>
+<li><p><code>vm-max-memory</code>：开启虚拟内存后 redis 可用的最大内存大小，默认为 0。在生产环境中，最好不要设为 0，根据实际情况调整。</p>
+</li>
+</ul>
+<h2 id="在-Docker-上搭建-Redis"><a href="#在-Docker-上搭建-Redis" class="headerlink" title="在 Docker 上搭建 Redis"></a>在 Docker 上搭建 Redis</h2><h1 id="FAQ"><a href="#FAQ" class="headerlink" title="FAQ"></a>FAQ</h1><ol>
+<li><p><strong>Redis 内存用完怎么办？</strong></p>
+<p>redis 的性能会下降，并可能出错。可通过 info 查看 redis 内存使用情况，并写脚本进行监控。可通过配置文件<code>maxmemory</code>调整 redis 可用内存大小。若 redis 的内存使用达到上限，即给出错误写入的命令，仅能接受只读命令。</p>
+</li>
+<li><p><strong>使 redis 内存使用率降低的方法？</strong></p>
+<p>最好使用 redis 的哈希、列表、排序集、整数集</p>
+</li>
+<li><p><strong>如果没有数据集较大的内存，怎么进行高层次的操作？</strong></p>
+<p>使用客户端哈希，并部署 redis 集群，自动分发，以及 redis 子集的热备</p>
+</li>
+<li><p><strong>单线程 Redis 如何利用多个 CPU？</strong></p>
+<p>只需在同一台机器上启动多个 redis 实例，当做不同服务器即可。</p>
+</li>
+</ol>
+<h2 id="Redis-报错问题"><a href="#Redis-报错问题" class="headerlink" title="Redis 报错问题"></a>Redis 报错问题</h2><ul>
+<li>Redis 被配置为保存数据库快照，但它目前不能持久化到硬盘。用来修改集合数据的命令不能用</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">报错：(error) MISCONF Redis is configured to save RDB snapshots, but it is currently not able to persist on disk. Commands that may modify the data set are disabled, because this instance is configured to report errors during writes if RDB snapshotting fails (stop-writes-on-bgsave-error option). Please check the Redis logs for details about the RDB error.</span><br></pre></td></tr></table></figure>
+
+<p>原因：强制关闭 Redis 快照导致不能持久化<br>解决：将配置文件<code>stop-writes-on-bgsave-error</code>设置为 no</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><blockquote>
+<p>Redis 入门指南（第二版）<br><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000010131816">Linux_基于 Docker 搭建 Redis 集群</a> &gt; <a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000014618411">Docker Redis 的官方镜像简单使用</a> &gt; <a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000009857207">【Redis】基于 Redis3.2.4 集群搭建说明</a></p>
+<p>高性能网站构建实战</p>
+</blockquote>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>数据库</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Redis/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Redis</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/wireshark%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Wireshark学习笔记</p>
+          <p class='content'>基于 wireshark v2.4.5本篇包含以下内容
+
+基本操作
+捕获过滤器
+
+
+tshark 命令使用
+常用操作
+
+
+参考文章
+
+
+
+基本操作两种过滤器：
+
+捕获过滤器 Capture Fi...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/%E8%BF%90%E7%BB%B4%E5%B0%8F%E6%8A%80%E5%B7%A7%E6%95%B4%E7%90%86/'>
+          <p class='title'>运维小技巧整理<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>网上、书上的运维技巧整理
+
+
+删除脚本-1为防止rm -rf失误造成破坏，可将删除写成一个脚本remove.sh
+
+首先在指定目录创建.trash目录，作为回收站
+创建脚本，放在一个固定位置/r...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-%E4%BB%8B%E7%BB%8D"><span class="toc-text">Redis 介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-%E5%AE%89%E8%A3%85"><span class="toc-text">Redis 安装</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B"><span class="toc-text">Redis 数据类型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E5%BA%8F"><span class="toc-text">排序</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%91%E5%B8%83%E4%B8%8E%E8%AE%A2%E9%98%85"><span class="toc-text">发布与订阅</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1"><span class="toc-text">事务</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4"><span class="toc-text">过期时间</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8C%81%E4%B9%85%E5%8C%96"><span class="toc-text">持久化</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-%E4%BC%98%E5%8C%96%E6%8A%80%E6%9C%AF"><span class="toc-text">Redis 优化技术</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%A1%E9%81%93"><span class="toc-text">管道</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E9%83%A8%E7%BC%96%E7%A0%81%E4%BC%98%E5%8C%96"><span class="toc-text">内部编码优化</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4"><span class="toc-text">集群</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E5%88%B6%EF%BC%88%E4%B8%BB%E4%BB%8E%EF%BC%89"><span class="toc-text">复制（主从）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E7%A1%AC%E7%9B%98%E5%A4%8D%E5%88%B6"><span class="toc-text">无硬盘复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A2%9E%E9%87%8F%E5%A4%8D%E5%88%B6"><span class="toc-text">增量复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%93%A8%E5%85%B5"><span class="toc-text">哨兵</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4-1"><span class="toc-text">集群</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AE%A1%E7%90%86"><span class="toc-text">管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E5%85%A8"><span class="toc-text">安全</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E4%BF%A1%E5%8D%8F%E8%AE%AE"><span class="toc-text">通信协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E7%AE%A1%E7%90%86%E5%91%BD%E4%BB%A4"><span class="toc-text">一些管理命令</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Redis-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0"><span class="toc-text">Redis 配置文件常用参数</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8-Docker-%E4%B8%8A%E6%90%AD%E5%BB%BA-Redis"><span class="toc-text">在 Docker 上搭建 Redis</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#FAQ"><span class="toc-text">FAQ</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Redis-%E6%8A%A5%E9%94%99%E9%97%AE%E9%A2%98"><span class="toc-text">Redis 报错问题</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Redis基础学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

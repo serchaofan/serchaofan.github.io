@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Linux-Namespace学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="namespace">
+  
+
+  
+    <meta name="description" content="学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Linux-Namespace学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/Linux%E5%8E%9F%E7%90%86/">Linux原理</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年12月30日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》</p>
+<span id="more"></span>
+
+<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Linux 提供了 6 种 Namespace 隔离。</p>
+<table>
+<thead>
+<tr>
+<th align="center">namespace</th>
+<th align="center">系统调用参数</th>
+<th align="center">隔离内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">UTS</td>
+<td align="center">CLONE_NEWUTS</td>
+<td align="center">主机名与域名</td>
+</tr>
+<tr>
+<td align="center">IPC</td>
+<td align="center">CLONE_NEWIPC</td>
+<td align="center">信号量、消息队列、共享内存</td>
+</tr>
+<tr>
+<td align="center">PID</td>
+<td align="center">CLONE_NEWPID</td>
+<td align="center">进程编号</td>
+</tr>
+<tr>
+<td align="center">Network</td>
+<td align="center">CLONE_NEWNET</td>
+<td align="center">网络设备、网络栈、端口等</td>
+</tr>
+<tr>
+<td align="center">Mount</td>
+<td align="center">CLONE_NEWNS</td>
+<td align="center">挂载点</td>
+</tr>
+<tr>
+<td align="center">User</td>
+<td align="center">CLONE_NEWUSER</td>
+<td align="center">用户与用户组</td>
+</tr>
+</tbody></table>
+<p>namespace 有以下 API：<code>clone()</code>、<code>setns()</code>、<code>unshare()</code></p>
+<p><code>clone()</code>是 Linux 系统调用 <code>fork()</code>的一种更通用的方式</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">int clone(int (_child_func)(void _), void *child_stack, int flags, void *arg);</span><br><span class="line"></span><br><span class="line">child*func 传入子进程运行的程序主函数</span><br><span class="line">child_stack 传入子程序使用的栈空间</span><br><span class="line">flags 表示使用哪些 CLONE*\*标志位</span><br><span class="line">args 传入用户参数</span><br></pre></td></tr></table></figure>
+
+<p>从 3.8 版本开始，可通过<code>/proc/[pid]/ns</code> 目录查看指向不同 namespace 号的文件，<code>[]</code>中的就是 namespace 号。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ll /proc/\$\$/ns</span><br><span class="line"></span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 ipc -&gt; ipc:[4026531839]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 mnt -&gt; mnt:[4026531840]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 net -&gt; net:[4026531956]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 pid -&gt; pid:[4026531836]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 user -&gt; user:[4026531837]</span><br><span class="line">lrwxrwxrwx. 1 root root 0 1 月 9 05:31 uts -&gt; uts:[4026531838]</span><br></pre></td></tr></table></figure>
+
+<p>设置链接的作用：一旦 link 文件被打开，只要打开的文件描述符存在，则即使该 namespace 下的所有进程都结束，这个 namespace 仍会继续存在，后续的进程仍能加入进来。</p>
+<p>通过 <code>setns()</code>加入一个已存在的 namespace</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">setns</span><span class="params">(<span class="type">int</span> fd, <span class="type">int</span> nstype)</span>;</span><br><span class="line"></span><br><span class="line">fd 为要加入 namespace 的文件描述符</span><br><span class="line">nstype 让调用者检查 fd 指向的 namespace 类型是否符合实际要求。若为 <span class="number">0</span> 表示不检查</span><br></pre></td></tr></table></figure>
+
+<p>通过 <code>unshare()</code>在原先进程上进行 namespace 隔离，而不用启动新的进程。Docker 暂时还没有使用此调用。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">unshare</span><span class="params">(<span class="type">int</span> flags)</span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>fork()</code>系统调用，fork 函数不属于 namespace 的 API，属于 Linux 系统自带的调用。能创建新的进程，并分配资源。<code>fork()</code>调用一次却能返回两次，父进程和子进程各返回一次。可能有三种返回值：</p>
+<ul>
+<li>在父进程中，返回新创建的子进程的进程 ID</li>
+<li>在子进程中，返回 0</li>
+<li>若出现错误，返回一个负值</li>
+</ul>
+<p>一个实例代码：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="type">pid_t</span> fpid;</span><br><span class="line">    <span class="type">int</span> count = <span class="number">0</span>;</span><br><span class="line">    fpid = fork();</span><br><span class="line">    <span class="keyword">if</span>(fpid &lt; <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;error&quot;</span>);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(fpid == <span class="number">0</span>)</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;child process id: %d\n&quot;</span>, getpid());</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;parent process id: %d\n&quot;</span>, getpid());</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译后输出：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">parent process id: 33008</span><br><span class="line">child process id: 33009</span><br></pre></td></tr></table></figure>
+
+<p>在使用 <code>fork()</code>函数后，父进程有义务监视子进程的运行状态，并在子进程退出后自己才能正常退出，否则子进程就会孤儿进程。对于孤儿进程，会直接由上级的父进程接管。</p>
+<p>以下是 6 种隔离的具体实现，以下为学习顺序</p>
+<ul>
+<li><a href="#%E7%AE%80%E4%BB%8B">简介</a></li>
+<li><a href="#uts">UTS</a></li>
+<li><a href="#ipc">IPC</a></li>
+<li><a href="#pid">PID</a></li>
+<li><a href="#mount">Mount</a></li>
+<li><a href="#network">Network</a></li>
+<li><a href="#user">User</a></li>
+</ul>
+<h2 id="UTS"><a href="#UTS" class="headerlink" title="UTS"></a>UTS</h2><p>简单实现 UTS 隔离，实现代码<code>uts.c</code></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> STACK_SIZE (1024*1024)</span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">char</span> child_stack[STACK_SIZE];</span><br><span class="line"><span class="type">char</span>* <span class="type">const</span> child_args[] = &#123;<span class="string">&quot;/bin/bash&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">child_main</span><span class="params">(<span class="type">void</span>* args)</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    sethostname(<span class="string">&quot;newnamespace&quot;</span>, <span class="number">12</span>);</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">sethostname函数来自unistd.h库，用于设置主机名</span></span><br><span class="line"><span class="comment">int sethostname(const char *name, size_t len);</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">execv函数来自unistd.h库，用于运行其他程序</span></span><br><span class="line"><span class="comment">int execv(const char *pathname, char * const argv[]);</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;程序开始\n&quot;</span>);</span><br><span class="line">    <span class="type">int</span> child_pid = clone(child_main, child_stack + STACK_SIZE, CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br><span class="line">    waitpid(child_pid, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;已退出\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">waitpid来自sys/wait.h头文件，暂停执行调用进程，直到pid参数指定的子进程发生更改状态。 默认情况下，waitpid()仅等待已终止的子项。</span></span><br><span class="line"><span class="comment">pid_t waitpid(pid_t pid, int *status, int options);</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<p>编译运行，实现了域名隔离</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@s1 uts]# gcc -Wall uts.c -o uts</span><br><span class="line">[root@s1 uts]# ./uts</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace uts]# exit</span><br><span class="line">exit</span><br><span class="line">已退出</span><br><span class="line">[root@s1 uts]#</span><br></pre></td></tr></table></figure>
+
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>简单实现 IPC 隔离，代码与 uts.c 基本一致，只需要添加一个标识位<code>CLONE_NEWIPC</code></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> child_pid = clone(child_main, child_stack + STACK_SIZE,</span><br><span class="line">        CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+
+<p>先创建一个消息队列</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@s1 ipc]# ipcmk -Q</span><br><span class="line">Message queue id: 0</span><br><span class="line">[root@s1 ipc]# ipcs -q</span><br><span class="line"></span><br><span class="line">------ Message Queues --------</span><br><span class="line">key        msqid      owner      perms  used-bytes   messages</span><br><span class="line">0xf1646a41 0          root       644  0            0</span><br></pre></td></tr></table></figure>
+
+<p>编译后运行 ipc</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@s1 ipc]# gcc -Wall ipc.c -o ipc</span><br><span class="line">[root@s1 ipc]# ./ipc</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace ipc]# ipcs -q</span><br><span class="line"></span><br><span class="line">------ Message Queues --------</span><br><span class="line">key        msqid      owner      perms  used-bytes   messages</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>已实现了 IPC 隔离，在子进程中查看不到原先创建的消息队列</p>
+<h2 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h2><p>每个 PID namespace 都有自己的计数器，内核为所有 PID namespace 维护一个树状结构，最顶层是系统初始化时创建的，称为 root namespace，新的 Namespace 称为 child namespace。<br>所属父进程能看到子节点的进程，并可通过信号等方式对子节点的进程产生影响。而子节点不能看到父进程 PID namespace 中的内容。</p>
+<p>同样代码仍然使用<code>ipc.c</code> 的，只要添加一个标志位<code>CLONE_NEWPID</code>，保存为<code>pid.c</code></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> child_pid = clone(child_main, child_stack + STACK_SIZE,</span><br><span class="line">        CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+
+<p>首先查看当前的 shell 的 PID，再运行 pid，查看 shell 的 PID</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@s1 pid]# echo $$</span><br><span class="line">35580</span><br><span class="line">[root@s1 pid]# ./pid</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace pid]# echo $$</span><br><span class="line">1</span><br></pre></td></tr></table></figure>
+
+<p>init 进程的 PID 为 1，作为所有进程的父进程，维护一张进程表，检查进程状态，一旦有子进程因父进程的错误变为孤儿进程，init 会收养该子进程，并回收资源，结束进程。</p>
+<p>内核为 PID namespace 中的 init 进程赋予了<strong>信号屏蔽</strong>的特权，若 init 中没有编写处理某个信号的代码，则与 init 同一个 PID namespace 的进程发送给 init 的该信号就会被屏蔽。主要用于防止 init 进程被误杀。</p>
+<p>父节点向子节点发送的除<code>SIGKILL</code>或<code>SIGSTOP</code>信号外的其他信号也会被子节点屏蔽。而对于<code>SIGKILL</code>和<code>SIGSTOP</code>信号，子节点会强制执行，因此，父节点有权终止子节点的进程。</p>
+<p>当子节点的 init 进程被销毁，即使<code>/proc/[pid]/ns/pid</code>处于挂载或打开状态，导致 namespace 保存下来，但该 namespace 也无法通过<code>setns()</code>或<code>fork()</code>创建进程。</p>
+<p>当一个容器中存在多个进程时，容器内的 init 进程可对信号捕获，对子进程做信息保存、资源回收等处理。</p>
+<p>在新的 PID namespace 中用<code>ps</code>查看，仍然会看到所有进程。因为与 PID 相关的<code>/proc</code>文件系统<code>profs</code>没有挂载到一个与原<code>/proc</code>不同的位置</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@newnamespace pid]# ps -a</span><br><span class="line">   PID TTY          TIME CMD</span><br><span class="line"> 36025 pts/1    00:00:00 pid</span><br><span class="line"> 36026 pts/1    00:00:00 bash</span><br><span class="line"> 36060 pts/1    00:00:00 ps</span><br></pre></td></tr></table></figure>
+
+<p>挂载文件系统 proc 到/proc</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@newnamespace pid]# mount -t proc proc /proc</span><br><span class="line">[root@newnamespace pid]# ps a</span><br><span class="line">   PID TTY      STAT   TIME COMMAND</span><br><span class="line">     1 pts/1    S      0:00 /bin/bash</span><br><span class="line">    38 pts/1    R+     0:00 ps a</span><br></pre></td></tr></table></figure>
+
+<p>但此时并没有进行 mount namespace 的隔离，所以该操作实际上影响了 root namespace 的文件系统。因此退出后，仍要重新挂载 proc：<code>mount -t proc proc /proc</code></p>
+<p>调用<code>unshare()</code>和<code>setns()</code>创建新的 PID namespace 时，该调用程序并不进入，而是之后创建的子进程才会进入 namespace，成为 init。因为调用<code>getpid()</code>函数得到的 PID 是根据调用者所在的 PID namespace 决定返回哪个 PID，进入新的 PID namespace 会导致 PID 变动，造成进程错误。</p>
+<h2 id="Mount"><a href="#Mount" class="headerlink" title="Mount"></a>Mount</h2><p>通过隔离文件系统挂载点对隔离文件系统提供支持，是第一个支持的 Linux namespace。</p>
+<p>进程创建 mount namespace 时，会把当前的文件结构复制给新的 namespace，并且子节点中的挂载只影响自身，不影响外部。但也会有例外，因此，2006 年引入的<strong>挂载传播</strong>解决了该问题，定义了挂载对象（mount object）间的关系：</p>
+<ul>
+<li>共享挂载（share relationship）：若两个挂载对象具有共享关系，则一个挂载对象中的挂载事件会传播到另一个挂载对象，反之亦然。</li>
+<li>从属关系（slave relationship）：若两个挂载对象形成从属关系，则一个挂载对象中的挂载事件会传播到另一个挂载对象，反之不行。从属对象是事件的接受者。</li>
+</ul>
+<p>有可能出现的挂载状态：</p>
+<ul>
+<li>共享挂载（share）：传播事件的挂载对象</li>
+<li>从属挂载（slave）：接收传播事件的挂载对象</li>
+<li>共享/从属挂载（shared and slave）：既传播又接收事件的挂载对象</li>
+<li>私有挂载（private）：既不传播也不接收事件的挂载对象</li>
+<li>不可绑定挂载（unbindable）：类似私有挂载，但不允许执行绑定挂载，即这块文件对象不可被复制</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029202.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029202.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p><code>mount</code>提供以上的各种挂载方式：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--make-shared           mark a subtree as shared</span><br><span class="line">--make-slave            mark a subtree as slave</span><br><span class="line">--make-private          mark a subtree as private</span><br><span class="line">--make-unbindable       mark a subtree as unbindable</span><br><span class="line">--make-rshared          recursively marka whole subtree as shared</span><br><span class="line">--make-rslave           recursively marka whole subtree as slave</span><br><span class="line">--make-rprivate         recursively marka whole subtree as private</span><br><span class="line">--make-runbindable      recursively marka whole subtree as unbindable</span><br></pre></td></tr></table></figure>
+
+<p>代码仍然只需要添加标志位<code>CLONE_NEWNS</code></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> STACK_SIZE (1024*1024)</span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">char</span> child_stack[STACK_SIZE];</span><br><span class="line"><span class="type">char</span>* <span class="type">const</span> child_args[] = &#123;<span class="string">&quot;/bin/bash&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">child_main</span><span class="params">(<span class="type">void</span>* args)</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    sethostname(<span class="string">&quot;newnamespace&quot;</span>, <span class="number">12</span>);</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;程序开始\n&quot;</span>);</span><br><span class="line">    <span class="type">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br><span class="line">    waitpid(child_pid, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;已退出\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译后运行，挂载 CDROM</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@newnamespace mount]# mount /dev/cdrom /mnt</span><br><span class="line">mount: /dev/sr0 is write-protected, mounting read-only</span><br><span class="line">[root@newnamespace mount]# df</span><br><span class="line">Filesystem              1K-blocks    Used Available Use% Mounted on</span><br><span class="line">/dev/mapper/centos-root  17811456 1836940  15974516  11% /</span><br><span class="line">......</span><br><span class="line">/dev/sda1                 1038336  129608    908728  13% /boot</span><br><span class="line">/dev/sr0                  4414592 4414592         0 100% /mnt</span><br></pre></td></tr></table></figure>
+
+<h2 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h2><p>网络隔离包括：网络设备、IPv4 和 IPv6 协议栈、IP 路由表、防火墙、<code>/proc/net</code>、<code>/sys/class/net</code>、套接字等。</p>
+<p>通过创建 veth pair（虚拟网络设备对）实现容器内外的通信。当创建的 network namespace 被释放时，这个 namespace 中的物理网卡会返回到 root namespace，而不是创建 namespace 的父进程。</p>
+<p>在建立好 veth pair 前，新旧 namespace 间通过管道（pipe）通信。以 docker 为例，docker daemon 在宿主进程上创建 veth pair，把一端绑定在 docker0 网桥上，另一端接入新建的 network namespace，在 veth pair 建立完成前，docker daemon 和 init 通过管道通信，直到 init 接收到 docker daemon 发送的 veth 设备信息，然后关闭管道，并启动 eth0。</p>
+<p>代码仅需要在 mount.c 上添加标志位<code>CLONE_NEWNET</code>，保存为<code>network.c</code></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWNET | CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWIPC | CLONE_NEWUTS | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+
+<p>编译运行后，查看网络设备，只有一个环回口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[root@s1 network]# ./network</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">[root@newnamespace network]# ifconfig</span><br><span class="line">[root@newnamespace network]# ip addr</span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop state DOWN qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br></pre></td></tr></table></figure>
+
+<h2 id="User"><a href="#User" class="headerlink" title="User"></a>User</h2><p>user namespace 主要隔离安全相关的标识符和属性，包括用户（组）ID、root 目录、密钥和特殊权限。user namespace 也类似 PID namespace，是树状结构。</p>
+<p>为了能查看用户权限，需要在代码中添加内容。需要导入<code>sys/capability.h</code>，该包需要安装<code>libcap-dev</code>（debian）或<code>libcap-devel</code>（redhat）。</p>
+<p>在<code>child_main</code>函数中添加</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">child_main</span><span class="params">(<span class="type">void</span>* args)</span>&#123;</span><br><span class="line">    <span class="type">cap_t</span> caps;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    sethostname(<span class="string">&quot;newnamespace&quot;</span>, <span class="number">12</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;eUID=%ld, eGID=%ld\n&quot;</span>, (<span class="type">long</span>)geteuid(), (<span class="type">long</span>)getegid());</span><br><span class="line">    caps = cap_get_proc();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;capabilities: %s\n&quot;</span>, cap_to_text(caps, <span class="literal">NULL</span>));</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>并在 main 函数添加标志位<code>CLONE_NEWUSER</code>，并且需要删除以前的<code>CLONE</code>标识符，否则可能无法正常显示。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWUSER | SIGCHLD, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+
+<p>因为添加了 capability 头文件，在编译时需要添加选项<code>-lcap</code>。<code>gcc -Wall -lcap userns.c -o userns</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">root:user &gt; ./userns</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">eUID=65534, eGID=65534</span><br><span class="line">capabilities: = cap_chown,cap_dac_override,......</span><br><span class="line">nobody:user &gt;</span><br></pre></td></tr></table></figure>
+
+<p>子节点的 UID 和 GID 都变为了 65534（默认的），并且用户名变为 nobody。capabilities 为子节点中该用户的权限，已经有所有权限了。65534 表示尚未与外部的 namespace 的用户（组）映射。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029746.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029746.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>进行用户绑定，通过在<code>/proc/[pid]/uid_map</code>和<code>/proc/[pid]/gid_map</code>写入对应绑定信息即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ID-inside-ns   ID-outside-ns   length</span><br></pre></td></tr></table></figure>
+
+<p>注：</p>
+<ul>
+<li><strong>这两个文件仅允许拥有该 user namespace 中 CAP_SETUID 的进程写入一次，不允许修改</strong></li>
+<li><strong>写入的进程必须是 user namespace 的父 namespace 或子 namespace</strong></li>
+<li>第一个字段<code>ID-inside-ns</code>表示新建的 user namespace 中对应的 UID/GID，第二个字段<code>ID-outside-ns</code>表示外部映射的 UID/GID，<code>length</code>表示映射范围，通常就填 1，表示只映射一个。</li>
+</ul>
+<p>创建函数设置 UID 和 GID</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">set_uid_map</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> inside_id, <span class="type">int</span> outside_id, <span class="type">int</span> length)</span>&#123;</span><br><span class="line">    <span class="type">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/uid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* uid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(uid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(uid_map);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_gid_map</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> inside_id, <span class="type">int</span> outside_id, <span class="type">int</span> length)</span>&#123;</span><br><span class="line">    <span class="type">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/gid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* gid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(gid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(gid_map);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后在 child_main 函数中添加对这两个函数的调用</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">child_main</span><span class="params">(<span class="type">void</span>* args)</span>&#123;</span><br><span class="line">    <span class="type">cap_t</span> caps;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    set_uid_map(getpid(), <span class="number">0</span>, <span class="number">1000</span>, <span class="number">1</span>);</span><br><span class="line">    set_gid_map(getpid(), <span class="number">0</span>, <span class="number">1000</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;eUID=%ld, eGID=%ld\n&quot;</span>, (<span class="type">long</span>)geteuid(), (<span class="type">long</span>)getegid());</span><br><span class="line">    caps = cap_get_proc();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;capabilities: %s\n&quot;</span>, cap_to_text(caps, <span class="literal">NULL</span>));</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>userns.c</code>完整文件：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sched.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;sys/capability.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> STACK_SIZE (1024*1024)</span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">char</span> child_stack[STACK_SIZE];</span><br><span class="line"><span class="type">char</span>* <span class="type">const</span> child_args[] = &#123;<span class="string">&quot;/bin/bash&quot;</span>, <span class="literal">NULL</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_uid_map</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> inside_id, <span class="type">int</span> outside_id, <span class="type">int</span> length)</span>&#123;</span><br><span class="line">    <span class="type">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/uid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* uid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(uid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(uid_map);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_gid_map</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> inside_id, <span class="type">int</span> outside_id, <span class="type">int</span> length)</span>&#123;</span><br><span class="line">    <span class="type">char</span> path[<span class="number">256</span>];</span><br><span class="line">    <span class="built_in">sprintf</span>(path, <span class="string">&quot;/proc/%d/gid_map&quot;</span>, getpid());</span><br><span class="line">    FILE* gid_map = fopen(path, <span class="string">&quot;w&quot;</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(gid_map, <span class="string">&quot;%d %d %d&quot;</span>, inside_id, outside_id, length);</span><br><span class="line">    fclose(gid_map);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">child_main</span><span class="params">(<span class="type">void</span>* args)</span>&#123;</span><br><span class="line">    <span class="type">cap_t</span> caps;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;在子进程中！\n&quot;</span>);</span><br><span class="line">    <span class="comment">// sethostname(&quot;newnamespace&quot;, 12);</span></span><br><span class="line">    <span class="comment">// printf(&quot;------------&quot;);</span></span><br><span class="line">    set_uid_map(getpid(), <span class="number">0</span>, <span class="number">1000</span>, <span class="number">1</span>);</span><br><span class="line">    set_gid_map(getpid(), <span class="number">0</span>, <span class="number">995</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;eUID=%ld, eGID=%ld\n&quot;</span>, (<span class="type">long</span>)geteuid(), (<span class="type">long</span>)getegid());</span><br><span class="line">    caps = cap_get_proc();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;capabilities: %s\n&quot;</span>, cap_to_text(caps, <span class="literal">NULL</span>));</span><br><span class="line">    execv(child_args[<span class="number">0</span>], child_args);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;程序开始\n&quot;</span>);</span><br><span class="line">    <span class="type">int</span> child_pid = clone(child_main,</span><br><span class="line">            child_stack + STACK_SIZE,</span><br><span class="line">            CLONE_NEWUSER | SIGCHLD, <span class="literal">NULL</span>);</span><br><span class="line">    waitpid(child_pid, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;已退出\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>重新编译执行，结果如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gutianyi:user &gt; ./userns</span><br><span class="line">程序开始</span><br><span class="line">在子进程中！</span><br><span class="line">eUID=0, eGID=0</span><br><span class="line">capabilities: = cap_chown......</span><br><span class="line">root:user &gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注：执行的用户必须是<code>set_uid_map</code>和<code>set_gid_map</code>中 outside_id 对应的用户。</p>
+</blockquote>
+<p>Linux 内核将原来与超级用户相关的高级权限划分为不同的单元，称为 Capability。管理员可独立对特定的 Capability 进行使用或禁用。在 Docker 中同时使用了 user namespace 和 Capability，加强了容器安全性。</p>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/namespace/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>namespace</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2019/Jenkins%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Jenkins学习笔记</p>
+          <p class='content'>
+jenkins 介绍
+jenkins 搭建
+war 部署
+apt 安装
+Docker 部署
+
+
+配置系统
+系统设置
+配置 JDK、Maven、Ant
+配置发件人地址
+配置邮件通知
+
+
+安全设置...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/%E5%9C%A8Vultr%E4%B8%8A%E6%90%AD%E5%BB%BAShadowsock%E8%AE%B0%E5%BD%95/'>
+          <p class='title'>在Vultr上搭建Shadowsocks记录<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>使用的是Vultr的云服务器，选择的节点在日本，服务器是最便宜的3.5$每月的。
+
+
+
+
+在服务器页面会有提示密码，先用ssh-copy-id拷贝一下密钥，方便以后登录。
+登录服务器后，下载sh...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTS"><span class="toc-text">UTS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IPC"><span class="toc-text">IPC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PID"><span class="toc-text">PID</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mount"><span class="toc-text">Mount</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Network"><span class="toc-text">Network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#User"><span class="toc-text">User</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Linux-Namespace学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

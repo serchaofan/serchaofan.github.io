@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Rsync文件同步服务器学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="server,Rsync,同步">
+  
+
+  
+    <meta name="description" content="
+Rsync 介绍与搭建
+quick check 算法介绍
+rsync 的工作方式
+rsync 命令使用
+规则解析
+Rsync 服务器搭建
+Rsync 部分报错解决
+
+
+Rsync+Inotify 文件自动同步
+Inotify 介绍
+
+
+参考文章
+">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Rsync文件同步服务器学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年8月1日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <ul>
+<li><a href="#rsync-%E4%BB%8B%E7%BB%8D%E4%B8%8E%E6%90%AD%E5%BB%BA">Rsync 介绍与搭建</a><ul>
+<li><a href="#quick-check-%E7%AE%97%E6%B3%95%E4%BB%8B%E7%BB%8D">quick check 算法介绍</a></li>
+<li><a href="#rsync-%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F">rsync 的工作方式</a></li>
+<li><a href="#rsync-%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8">rsync 命令使用</a></li>
+<li><a href="#%E8%A7%84%E5%88%99%E8%A7%A3%E6%9E%90">规则解析</a></li>
+<li><a href="#rsync-%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%90%AD%E5%BB%BA">Rsync 服务器搭建</a></li>
+<li><a href="#rsync-%E9%83%A8%E5%88%86%E6%8A%A5%E9%94%99%E8%A7%A3%E5%86%B3">Rsync 部分报错解决</a></li>
+</ul>
+</li>
+<li><a href="#rsyncinotify-%E6%96%87%E4%BB%B6%E8%87%AA%E5%8A%A8%E5%90%8C%E6%AD%A5">Rsync+Inotify 文件自动同步</a><ul>
+<li><a href="#inotify-%E4%BB%8B%E7%BB%8D">Inotify 介绍</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+
+<h1 id="Rsync-介绍与搭建"><a href="#Rsync-介绍与搭建" class="headerlink" title="Rsync 介绍与搭建"></a>Rsync 介绍与搭建</h1><p>Rsync（Remote Synchronize）是一个远程数据同步工具，可使本地主机不同分区或目录之间及本地和远程两台主机之间的数据快速同步镜像，远程备份等功能。</p>
+<p>Rsync 特点：</p>
+<ul>
+<li>使用 TCP 873 端口</li>
+<li>可根据数据变化进行差异备份或增量备份，减少数据流量</li>
+<li>传输可以通过 ssh 协议加密数据</li>
+<li>支持拷贝特殊文件如链接，设备等</li>
+<li>可以镜像保存整个目录树和文件系统</li>
+<li>可以保持原来文件或目录的所有属性均不改变</li>
+<li>可使用 rsh、ssh，或直接通过 socket 连接</li>
+<li>支持匿名的或认证的进程模式传输</li>
+<li>使用 Rsync 自己的 <strong><code>quick check</code></strong> 算法</li>
+<li>rsync 传输大文件时速度大概是 scp 的 20 倍以上</li>
+</ul>
+<p>rsync 同步过程由两部分模式组成：<strong>决定哪些文件需要同步的检查模式</strong>，<strong>文件同步时的同步模式。</strong></p>
+<ul>
+<li><p>检查模式是指按照指定规则来检查哪些文件需要被同步。</p>
+<blockquote>
+<p>默认情况下，rsync 使用<code>quick check</code>算法。可以通过<code>rsync</code>命令选项设置指定的检查模式。</p>
+</blockquote>
+</li>
+<li><p>同步模式是指在文件确定要被同步后，在同步过程发生之前要做哪些额外工作。</p>
+</li>
+</ul>
+<h2 id="quick-check-算法介绍"><a href="#quick-check-算法介绍" class="headerlink" title="quick check 算法介绍"></a>quick check 算法介绍</h2><p>比较源文件和目标文件的文件大小和修改时间 mtime（修改时间），只要存在不同，就发送端会传输该文件，如果目标路径下没有文件，则 rsync 会直接传输文件。若存在差异，并不会传送整个文件，而是只传源文件和目标文件所不同的部分，实现真正的增量同步。</p>
+<p>rsync 的增量传输体现在两个方面：<strong>文件级别</strong>的增量传输和<strong>数据块级别</strong>的增量传输。</p>
+<ul>
+<li><strong>文件级别</strong>的增量传输是指源主机上有，但目标主机上没有将直接传输该文件</li>
+<li><strong>数据块级别</strong>的增量传输是指只传输两文件所不同的那一部分数据。</li>
+</ul>
+<p>两台计算机<code>Host-A</code>与<code>Host-B</code>，其中<code>Host-A</code>是源主机，即数据的发送端<code>Sender</code>，<code>Host-B</code>是目标主机，即数据的接收端<code>Receiver</code>。<code>Host-A</code>上存在文件<code>file-A</code>，<code>Host-B</code>上存在<code>file-B</code>。注：**<code>file-A</code>与<code>file-B</code>是同名文件。** rsync 的实现有以下过程：</p>
+<ol>
+<li><p><code>Host-A</code>告诉<code>Host-B</code>有文件<code>file-A</code>要传输。</p>
+</li>
+<li><p><code>Host-B</code>收到信息后，将文件<code>file-B</code>划分为一系列大小固定的数据块(大小在 500-1000 字节之间)，并以 chunk 号码对数据块进行编号，同时还会记录数据块的起始偏移地址以及数据块长度。</p>
+</li>
+<li><p><code>Host-B</code>对每一个分割好的数据块执行两种校验：一种是 32 位的滚动弱校验（rolling checksum），另一种是 128 位的 MD5 强校验。将<code>file-B</code>计算出的所有滚动弱校验和强校验码跟随在对应数据块<code>chunk[N]</code>后形成校验码集合，然后发送给主机<code>Host-A</code></p>
+<blockquote>
+<p>不同数据块的滚动弱校验值有可能相同，但几率非常小。</p>
+</blockquote>
+</li>
+<li><p><code>Host-A</code>通过搜索<code>file-A</code> 的所有该固定大小的数据块（偏移量可以任选），并计算它的校验码和校验码集合中的校验码进行匹配。</p>
+<ul>
+<li>如果能匹配上校验码集合中的某个数据块条目，则表示该数据块和<code>file-B</code>中数据块相同，不需要传输。</li>
+<li>如果不能匹配校验码集合中的数据块条目，则表示该数据块是<strong>非匹配数据块</strong>，它需要传输给<code>Host-B</code>，于是<code>Host-A</code>将跳转到<strong>下一个字节</strong>，从此字节处继续取数据块进行匹配。<blockquote>
+<p>数据匹配过程有三个层次：首先比较 hash 值，然后比较弱滚动校验，最后比较强校验。</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li><p>当<code>Host-A</code>发现是匹配数据块时，将只发送这个匹配块的附加信息给<code>Host-B</code>。同时，如果两个匹配数据块之间有非匹配数据，则还会发送这些非匹配数据。</p>
+</li>
+<li><p>当<code>Host-B</code>陆陆续续收到这些数据后，会创建一个临时文件，并通过这些数据重组这个临时文件，使其内容和<code>file-A</code> 相同。临时文件重组完成后，修改该临时文件的属性信息(如权限、所有者、mtime 等)，然后重命名该临时文件替换掉<code>file-B</code>。</p>
+</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048047.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048047.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<h2 id="rsync-的工作方式"><a href="#rsync-的工作方式" class="headerlink" title="rsync 的工作方式"></a>rsync 的工作方式</h2><ul>
+<li>本地传输方式：首先 rsync 命令执行时，会有一个 rsync 进程，然后根据此进程 fork 另一个 rsync 进程作为连接的对端，连接建立之后，后续所有的通信将采用管道的方式。</li>
+<li>远程 shell 连接方式：本地敲下 rsync 命令后，将请求和远程主机建立远程 shell 连接（如 ssh 连接），连接建立成功后，在远程主机上将 fork 远程 shell 进程调用远程 rsync 程序，并将 rsync 所需的选项通过远程 shell 命令（如 ssh）传递给远程 rsync。这样两端就都启动了 rsync，之后它们将通过管道的方式进行通信。</li>
+<li>网络套接字连接远程主机上的 rsync daemon：当通过网络套接字和远程已运行好的 rsync 建立连接时，rsync daemon 进程会创建一个子进程来响应该连接并负责后续该连接的所有通信。这样两端也都启动了连接所需的 rsync，此后通信方式是通过网络套接字来完成的。</li>
+<li>远程 shell 临时启动一个 rsync daemon：不要求远程主机上事先启动 rsync 服务，而是临时派生出 rsync daemon，它是单用途的一次性 daemon，仅用于临时读取 daemon 的配置文件，当此次 rsync 同步完成，远程 shell 启动的 rsync daemon 进程也会自动停止。</li>
+</ul>
+<p>发起连接的一端称为 Client 端，就是执行 rsync 命令的一端，连接的另一端称为 Server 端。</p>
+<blockquote>
+<p>注：当 Client 端和 Server 端都启动好 rsync 进程并建立好了 rsync 连接(管道、网络套接字)后，将使用 Sender 端和 Receiver 端来代替 Client 端和 Server 端的概念。</p>
+</blockquote>
+<p>当两端的 rsync 连接建立后，Sender 端的 rsync 进程称为<code>Sender</code>进程，该进程负责 Sender 端所有的工作。Receiver 端的 rsync 进程称为<code>Receiver</code>进程，负责接收 sender 端发送的数据，以及完成文件重组的工作。Receiver 端还有一个核心进程 <strong><code>Generator</code></strong> 进程，该进程负责在 Receiver 端执行<code>--delete</code>动作、比较文件大小和 mtime 以决定文件是否跳过、对每个文件划分数据块、计算校验码以及生成校验码集合，然后将校验码集合发送给 Sender 端。</p>
+<p>三个进程的作业流程：<code>Generator</code>进程的输出结果作为<code>Sender</code>端的输入，<code>Sender</code>端的输出结果作为<code>Recevier</code>端的输入。并且，<strong>这三个进程是完全独立、并行工作的。</strong></p>
+<p><strong>数据同步方式</strong></p>
+<ul>
+<li><strong>推 push</strong>：一台主机负责把数据传送给其他主机，服务器开销很大，比较适合后端服务器少的情况</li>
+<li><strong>拉 pull</strong>：所有主机定时去找一主机拉数据，可能就会导致数据缓慢</li>
+</ul>
+<h2 id="rsync-命令使用"><a href="#rsync-命令使用" class="headerlink" title="rsync 命令使用"></a>rsync 命令使用</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">本地传输方式:  rsync [OPTION...] SRC... [DEST]</span><br><span class="line"></span><br><span class="line">远程shell连接方式:</span><br><span class="line">    Pull: rsync [OPTION...] [USER@]HOST:SRC... [DEST]</span><br><span class="line">    Push: rsync [OPTION...] SRC... [USER@]HOST:DEST</span><br><span class="line"></span><br><span class="line">连接远程主机上的rsync daemon:</span><br><span class="line">    Pull: rsync [OPTION...] [USER@]HOST::SRC... [DEST]</span><br><span class="line">          rsync [OPTION...] rsync://[USER@]HOST[:PORT]/SRC... [DEST]</span><br><span class="line">    Push: rsync [OPTION...] SRC... [USER@]HOST::DEST</span><br><span class="line">          rsync [OPTION...] SRC... rsync://[USER@]HOST[:PORT]/DEST</span><br></pre></td></tr></table></figure>
+
+<p>若主机与路径用<code>:</code>分隔，则为 shell 连接，若为<code>::</code>，则为 daemon 连接。</p>
+<p><strong>注：</strong>源路径如果是一个目录的话，带上尾随斜线和不带尾随斜线是不一样的，<strong>不带尾随斜线表示的是整个目录包括目录本身</strong>，<strong>带上尾随斜线表示的是目录中的文件，不包括目录本身。</strong></p>
+<p>若只有源路径或只有目的路径，则相当于<code>ls -l</code>查看指定文件或目录属性。</p>
+<p><strong>常用选项：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-a        归档模式，表示递归传输并保持文件属性。等同于&quot;-rtopgDl&quot;。</span><br><span class="line">-P        显示文件传输的进度信息</span><br><span class="line">-v        显示rsync过程中详细信息(最多支持-vvvv)</span><br><span class="line">-r        递归</span><br><span class="line">-t        保持mtime属性(最好加上，否则时间会设置为当前系统时间，在增量备份时会因为时间出错)</span><br><span class="line">-o 　　　　保持owner属性</span><br><span class="line">-g 　　　　保持group属性(属组)。</span><br><span class="line">-p 　　　　保持perms属性(权限，不包括特殊权限)。</span><br><span class="line">-D　　　　 拷贝设备文件和特殊文件。</span><br><span class="line">-l　　　　 如果文件是软链接文件，则拷贝软链接本身而非软链接所指向的对象。</span><br><span class="line">-z 　　　　传输时进行压缩提高效率。</span><br><span class="line">-R        使用相对路径。意味着将命令行中指定的全路径而非路径最尾部的文件名发送给服务端，包括它们的属性</span><br><span class="line">-u      　仅在源mtime比目标已存在文件的mtime新时才拷贝。接收端判断，不会影响删除行为。</span><br><span class="line">--size-only　　只检查文件大小（默认算法是检查文件大小和mtime不同的文件）</span><br><span class="line">--max-size　　 限制rsync传输的最大文件大小。可以使用单位后缀，还可以是一个小数值(例如：&quot;--max-size=1.5m&quot;)</span><br><span class="line">--min-size 　　限制rsync传输的最小文件大小。这可以用于禁止传输小文件或那些垃圾文件。</span><br><span class="line">--exclude   　指定排除规则来排除不需要传输的文件。一个exclude只能指定一条规则，若有多条规则，就要写多个exclude</span><br><span class="line">--exclude-from  若规则有多条，可以写在文件中，并使用此选项加载规则文件</span><br><span class="line">--include     指定传输规则，只传输符合该规则的文件，与exclude相反</span><br><span class="line">--delete    　接收端的rsync会先删除目标目录下已经存在，但发送端目录不存在的文件，以SRC为主，对DEST进行同步。多则删之，少则补之。注意&quot;--delete&quot;是在接收端执行的，所以它是在exclude/include规则生效之后才执行的。</span><br><span class="line">-b --backup   对目标上已存在的文件做一个备份，备份的文件名后默认使用&quot;~&quot;做后缀。</span><br><span class="line">--backup-dir  指定备份文件的保存路径，若指定，保存路径必须存在。</span><br><span class="line">              不指定时默认和待备份文件保存在同一目录下。</span><br><span class="line">              默认没有后缀，可通过&quot;--suffix=&quot;指定</span><br><span class="line">-e          　指定所要使用的远程shell程序，默认为ssh。</span><br><span class="line">--port      　连接daemon时使用的端口号，默认为873端口。</span><br><span class="line">--password-file　　daemon模式时的密码文件，是rsync模块认证的密码。</span><br><span class="line">-W --whole-file　　rsync将不再使用增量传输，而是全量传输。在网络带宽高于磁盘带宽时，该选项比增量传输更高效。</span><br><span class="line">--existing  　　        要求只更新目标端已存在的文件，目标端还不存在的文件不传输。注意，使用相对路径时如果上层目录不存在也不会传输。</span><br><span class="line">--ignore-existing      要求只更新目标端不存在的文件。和&quot;--existing&quot;结合使用有特殊功能。</span><br><span class="line">--remove-source-files  要求删除源端已经成功传输的文件。</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>最常用组合<code>-avz</code>。</strong></p>
+</blockquote>
+<p><strong>命令示例：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rsync -r -R  /etc/dir-1  /tmp         将/etc/dir-1目录复制到/tmp目录下，tmp目录下将会有etc/dir-1子目录</span><br><span class="line">rsync -r -R  /etc/./dir-1  /tmp 将/etc/dir-1目录复制到/tmp目录下，但在/etc/和dir-1目录间加上了“.”</span><br><span class="line">                                       因此仅仅将dir-1目录复制过去作为子目录，tmp目录下将有dir-1子目录</span><br><span class="line">rsync -r -b --backup-dir --suffix=&#x27;.bak&#x27; /etc/dir-1 /tmp   备份文件，若不存在就直接复制，若已存在就添加后缀以区分</span><br><span class="line"></span><br><span class="line">rsync -r --exclude=&quot;*.txt&quot; /etc/dir-1 /tmp   将/etc/dir-1目录下的以&quot;.txt&quot;结尾的文件排除</span><br><span class="line">rsync -r -v --delete --exclude=&quot;*.txt&quot; /etc/dir-1 /tmp   将/tmp/dir-1中存在而/etc/dir-1不存在的文件删除，并且不删除&quot;.txt&quot;结尾的文件（即使源中不存在）</span><br><span class="line">sending incremental file list</span><br><span class="line">deleting dir-1/a3.log</span><br><span class="line">deleting dir-1/a2.log</span><br><span class="line">deleting dir-1/a1.log</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="规则解析"><a href="#规则解析" class="headerlink" title="规则解析"></a>规则解析</h2><p><strong>规则作用时间：</strong>当发送端敲出 rsync 命令后，rsync 将立即<strong>扫描命令行中给定的文件和目录</strong>(扫描过程中还会按照目录进行排序，将同一个目录的文件放在相邻的位置)，这称为<strong>拷贝树</strong>(copy tree)，扫描完成后将待传输的文件或目录<strong>记录到文件列表中</strong>，然后将文件列表传输给接收端。<strong>筛选规则的作用时刻是在扫描拷贝树时，所以会根据规则来匹配并决定文件是否记录到文件列表中</strong>(严格地说是会记录到文件列表中的，只不过<strong>排除的文件会被标记为 hide 隐藏起来</strong>)，只有记录到了文件列表中的文件或目录才是真正需要传输的内容。**筛选规则的生效时间在 rsync 整个同步过程中是非常靠前的，它会影响很多选项的操作对象，最典型的如<code>--delete</code>**，<code>--delete</code>是在 generator 进程处理每个文件列表时、生成校验码之前进行的，这样就无需为多余的文件生成校验码。</p>
+<p><strong>rsync 规则</strong>：通过选项<code>--filter</code>指定规则</p>
+<ul>
+<li><code>exclude</code>规则：即排除规则，只作用于发送端，被排除的文件不会进入文件列表(实际上是加上隐藏规则进行隐藏)。</li>
+<li><code>include</code>规则：即包含规则，也称为传输规则，只作用于发送端，被包含的文件将明确记录到文件列表中。</li>
+<li><code>hide</code>规则：即隐藏规则，只作用于发送端，隐藏后的文件对于接收端来说是看不见的，也就是说接收端会认为它不存在于源端。</li>
+<li><code>show</code>规则：即显示规则，只作用于发送端，是隐藏规则的反向规则。</li>
+<li><code>protect</code>规则：即保护规则，该规则只作用于接收端，被保护的文件不会被删除掉。</li>
+<li><code>risk</code>规则：即取消保护规则。是<code>protect</code>的反向规则。</li>
+<li><code>clear</code>规则：删除<code>include</code>/<code>exclude</code>规则列表。</li>
+</ul>
+<blockquote>
+<p>上述内容都引用自<a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7220009.html">骏马金龙－rsync 介绍与用法</a></p>
+</blockquote>
+<h2 id="Rsync-服务器搭建"><a href="#Rsync-服务器搭建" class="headerlink" title="Rsync 服务器搭建"></a>Rsync 服务器搭建</h2><p>实验环境：</p>
+<ul>
+<li>Rsync 服务器：192.168.205.135</li>
+<li>Rsync 客户端：192.168.205.134</li>
+</ul>
+<p>首先，两台主机都需要安装 rsync，<code>yum/dnf install rsync</code>，fedora 已默认安装。</p>
+<p>由于 rsync 的配置文件默认不存在，所以需要手动创建。Rsync 有三个配置文件：</p>
+<ul>
+<li>rsyncd.conf：主配置文件</li>
+<li>rsyncd.secrets：密码文件</li>
+<li>rsyncd.motd：服务器信息文件</li>
+</ul>
+<p>创建<code>/etc/rsyncd.conf</code>文件，具体参数可通过<code>man rsyncd.conf</code>查看</p>
+<p>配置文件分为两部分：全局参数，模块参数<br>全局参数：对 rsync 服务器生效，如果模块参数和全局参数冲突，冲突的地方模块参数生效<br>模块参数：定义需要通过 rsync 输出的目录定义的参数</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 常见全局参数：</span><br><span class="line">port = 873                     监听端口</span><br><span class="line">address = 192.168.205.135      监听服务器地址</span><br><span class="line">uid = nobody                   数据传输时使用的用户ID，默认nobody</span><br><span class="line">gid = nobody                   数据传输时使用的组ID，默认nobody</span><br><span class="line">read only = yes                是否只读</span><br><span class="line">max connections = 10           并发连接数，0表示无限制。超出并发连接数时若再访问，会收到稍后重试的消息</span><br><span class="line">use chroot = no                是否开启chroot，若设为yes，rsync会首先进行chroot设置，将根映射到模块中path指定目录</span><br><span class="line">                               需要root权限，在同步符号连接资料时仅同步文件名，不同步文件内容</span><br><span class="line">transfer logging = yes           开启Rsync数据传输日志功能</span><br><span class="line">#log format =                    设置日志格式，默认log格式为：&quot;%o %h [%a] %m (%u) %f %l&quot;</span><br><span class="line"># 默认log格式表达的是：&quot;操作类型 远程主机名[远程IP地址] 模块名 (认证的用户名) 文件名 文件长度字符数&quot;</span><br><span class="line">#syslog facility =               指定rsync发送日志消息给syslog时的消息级别，默认值是daemon</span><br><span class="line">lock file = /var/run/rsync.lock  设置锁文件</span><br><span class="line">log file = /var/log/rsyncd.log   设置日志文件</span><br><span class="line">pid file = /var/run/rsyncd.pid   设置进程号文件</span><br><span class="line">motd file = /etc/rsyncd.motd     设置服务器信息提示文件</span><br><span class="line">hosts allow = 192.168.205.134    设置允许访问服务器的主机</span><br><span class="line"></span><br><span class="line"># 模块配置</span><br><span class="line">[rsync_test]</span><br><span class="line">comment = rsync test   添加注释</span><br><span class="line">path = /root/rsync_test     同步文件或目录路径</span><br><span class="line">ignore errors                忽略一些IO错误</span><br><span class="line"># exclude =                    可以指定不同步的目录或文件，使用相对路径</span><br><span class="line">auth users = tom,jack        允许连接的用户，可以是系统中不存在的</span><br><span class="line">secrets file = /etc/rsyncd.secrets   设置密码验证文件，该文件的权限要求为只读（600），该文件仅在设置了auth users才有效</span><br><span class="line">list = false      是否允许查看模块信息</span><br><span class="line">timeout = 600     可以覆盖客户指定的 IP 超时时间。确保rsync服务器不会永远等待一个崩溃的客户端。</span><br><span class="line">                  超时单位为秒钟，0表示没有超时定义，这也是默认值。</span><br><span class="line">                  对于匿名rsync服务器来说，一个理想的数字是600</span><br></pre></td></tr></table></figure>
+
+<p>相关系统操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">useradd tom &amp;&amp; echo &quot;redhat&quot; | passwd tom --stdin</span><br><span class="line">echo &quot;tom:redhat&quot; &gt;&gt; /etc/rsyncd.secrets</span><br><span class="line">echo &quot;jack:redhat&quot; &gt;&gt; /etc/rsyncd.secrets      添加用户到密码文件</span><br><span class="line">chmod 600 /etc/rsyncd.secrets                  修改密码文件权限</span><br><span class="line">echo &quot;Welcome to Rsync&quot; &gt;&gt; /etc/rsyncd.motd</span><br><span class="line"># firewall-cmd --permanent --add-port=873/tcp  若开启了防火墙，就放行端口</span><br><span class="line">rsync --daemon --config=/etc/rsyncd.conf         启动rsyncd服务</span><br></pre></td></tr></table></figure>
+
+<p>客户端同步文件：<code>rsync -r tom@192.168.205.135::rsync_test /root/rsync_test</code></p>
+<p>自动备份脚本，可配合 crond 使用</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"># 本脚本是将服务器端的文件定期同步到本端</span><br><span class="line"># 设置服务器端模块和本端目录</span><br><span class="line">SRC=rsync_test</span><br><span class="line">DEST=/root/rsync_test</span><br><span class="line">Server=192.168.205.135</span><br><span class="line"># 设置验证用户名和密码</span><br><span class="line">User=tom</span><br><span class="line">Password=redhat</span><br><span class="line"># 若本地同步目录不存在，就创建目录。同步时会删除目录中本端存在，但服务器端不存在的文件</span><br><span class="line">[ ! -d $DEST ] &amp;&amp; mkdir $DEST</span><br><span class="line">rsync -az --delete $&#123;User&#125;@$&#123;Server&#125;::$SRC $DEST/$(date +%Y%m%d)</span><br></pre></td></tr></table></figure>
+
+<p>若使用 Xinetd 服务管理 Rsync，需要先安装 xinetd。创建文件<code>/etc/xinetd.d/rsync</code>，添加以下内容。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service rsync &#123;</span><br><span class="line">    disable = no</span><br><span class="line">    socket_type = stream</span><br><span class="line">    wait = no</span><br><span class="line">    user = root</span><br><span class="line">    server = /usr/bin/rsync</span><br><span class="line">    server_args = --daemon --config=/etc/rsyncd.conf</span><br><span class="line">    log_on_failure += USERID</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后重启 xinetd 服务即可。</p>
+<h2 id="Rsync-部分报错解决"><a href="#Rsync-部分报错解决" class="headerlink" title="Rsync 部分报错解决"></a>Rsync 部分报错解决</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rsync: failed to connect to 192.168.205.135 (192.168.205.135): No route to host (113)</span><br><span class="line">rsync error: error in socket IO (code 10) at clientserver.c(125) [Receiver=3.1.2]</span><br></pre></td></tr></table></figure>
+
+<p>解决：防火墙问题，放行端口或直接关闭</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@ERROR: auth failed on module rsync_test</span><br><span class="line">rsync error: error starting client-server protocol (code 5) at main.c(1648) [Receiver=3.1.2]</span><br></pre></td></tr></table></figure>
+
+<p>解决：用户名与密码问题或模块问题，检查用户名与密码是否匹配，服务器端模块是否存在</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rsync: read error: Connection reset by peer (104)</span><br><span class="line">rsync error: error in rsync protocol data stream (code 12) at io.c(759) [Receiver=3.1.2]</span><br></pre></td></tr></table></figure>
+
+<p>解决：服务器端配置文件/etc/rsyncd.conf 问题，检查配置文件参数是否出错</p>
+<h1 id="Rsync-Inotify-文件自动同步"><a href="#Rsync-Inotify-文件自动同步" class="headerlink" title="Rsync+Inotify 文件自动同步"></a>Rsync+Inotify 文件自动同步</h1><h2 id="Inotify-介绍"><a href="#Inotify-介绍" class="headerlink" title="Inotify 介绍"></a>Inotify 介绍</h2><p><strong>Inotify</strong>是一个 Linux 特性，是<code>inode notify</code>的简写，能监控文件系统操作，反应灵敏，异步传输信息，比 cron 高效，通过 Inotify 能试试了解文件系统发生的所有变化。</p>
+<p>注：Linux 内核需要大于 2.6 才集成了 Inotify，先要通过 uname -r 查看内核版本</p>
+<p>Inotify 一些特点：</p>
+<ul>
+<li>允许程序员使用标准 <code>select</code> 或者 <code>poll</code> 函数来监视事件</li>
+<li>使用一个独立的文件描述符，可以通过系统调用获得</li>
+</ul>
+<p>使用 rsync 工具与 inotify 机制相结合，可以实现触发式备份（实时同步）。</p>
+<p>在系统<code>/proc/sys/fs/inotify/</code>目录中有三个文件：</p>
+<ul>
+<li><code>max_queued_events</code>：inotify 实例事件队列可容纳的事件个数，默认 16384</li>
+<li><code>max_user_instances</code>：每个用户可以运行的 inotifywait 或 inotifywatch 命令的进程数，默认 128</li>
+<li><code>max_user_watches</code>：每个进程最多监控文件数，默认 8192</li>
+</ul>
+<blockquote>
+<p>若要监控的文件量较大时，需要适当增大这三个值</p>
+</blockquote>
+<p>可以在<code>/etc/sysctl.conf</code>中添加以下内容修改这三个值，或通过<code>sysctl -w</code>直接设置。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">fs.inotify.max_queued_events =</span><br><span class="line">fs.inotify.max_user_instances =</span><br><span class="line">fs.inotify.max_user_watches =</span><br></pre></td></tr></table></figure>
+
+<p>Inotify 常用的文件系统事件：</p>
+<table>
+<thead>
+<tr>
+<th>事件名</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IN_ACCESS</td>
+<td>文件访问事件</td>
+</tr>
+<tr>
+<td>IN_MODIFY</td>
+<td>文件修改事件</td>
+</tr>
+<tr>
+<td>IN_ATTRIB</td>
+<td>文件属性修改事件</td>
+</tr>
+<tr>
+<td>IN_OPEN</td>
+<td>文件打开事件</td>
+</tr>
+<tr>
+<td>IN_CLOSE_WRITE</td>
+<td>可写文件被关闭事件</td>
+</tr>
+<tr>
+<td>IN_CLOSE_NOWRITE</td>
+<td>不可写文件被关闭事件</td>
+</tr>
+<tr>
+<td>IN_MOVED_FROM IN_MOVED_TO</td>
+<td>文件移动或重命名事件</td>
+</tr>
+<tr>
+<td>IN_DELETE</td>
+<td>文件或目录删除事件</td>
+</tr>
+<tr>
+<td>IN_CREATE</td>
+<td>文件或目录创建事件</td>
+</tr>
+<tr>
+<td>IN_DELETE_SELF</td>
+<td>自删除事件</td>
+</tr>
+</tbody></table>
+<p>若系统为 fedora，可直接安装<code>dnf install inotify-tools</code>，若系统为 CentOS，则需要先安装<code>epel-release</code>再安装<code>yum install inotify-tools</code></p>
+<p>inotify-tools 提供两个应用程序：<code>inotifywait</code>和<code>inotifywatch</code></p>
+<p><code>inotifywait</code>命令用法：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">inotifywait [options] file...</span><br><span class="line">    @&lt;file&gt;        排除监控指定文件</span><br><span class="line">    --exclude &lt;pattern&gt;    使用正则表达式匹配例外文件，区分大小写</span><br><span class="line">    --excludei &lt;pattern&gt;   使用正则表达式匹配例外文件，不区分大小写</span><br><span class="line">	-m|--monitor  	一直监听，不退出。若不加此项，监听到一个事件后就退出</span><br><span class="line">	-d|--daemon   	相当于-m，但是是在后台运行，需要-o或--outfile指定输出文件，或者通过再指定--syslog将错误信息输出至syslog系统日志</span><br><span class="line">	-r|--recursive	递归监控目录</span><br><span class="line">	--fromfile &lt;file&gt;   从文件中读取需要监控与例外的文件名，每行一个文件，若文件名以@开头，表示例外文件</span><br><span class="line">	-o|--outfile &lt;file&gt; 将事件信息输出到文件，默认输出到标准输出</span><br><span class="line">	-s|--syslog   	将错误事件日志发送到syslog，而不是stderr</span><br><span class="line">	-q|--quiet    	静默模式，只输出事件</span><br><span class="line">	-qq           	静默模式，什么都不输出（包括事件）</span><br><span class="line">	--format &lt;fmt&gt;	指定输出信息格式</span><br><span class="line">	--timefmt &lt;fmt&gt;	设置时间格式</span><br><span class="line">	-c|--csv      	使用CSV格式输出</span><br><span class="line">	-t|--timeout &lt;seconds&gt; 在指定时间内若监听到事件，就退出</span><br><span class="line">	-e|--event &lt;event1&gt; [ -e|--event &lt;event2&gt; ... ] 只监控指定事件</span><br></pre></td></tr></table></figure>
+
+<p>实例：<code>inotifywait -m -d -r -o /var/log/html_monitor /var/www/html</code></p>
+<p>然后进入<code>/var/www/html</code>进行以下操作</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">touch a.html</span><br><span class="line">vim a.html</span><br><span class="line">cp a.html b.html</span><br><span class="line">rm a.html</span><br><span class="line">chmod -r b.html</span><br><span class="line">mv b.html a.html</span><br></pre></td></tr></table></figure>
+
+<p>在<code>/var/log/html_monitor</code>中就有以下信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/var/www/html/ CREATE a.html</span><br><span class="line">/var/www/html/ OPEN a.html</span><br><span class="line">/var/www/html/ ATTRIB a.html</span><br><span class="line">/var/www/html/ CLOSE_WRITE,CLOSE a.html</span><br><span class="line">/var/www/html/ OPEN,ISDIR</span><br><span class="line">/var/www/html/ ACCESS,ISDIR</span><br><span class="line">.....</span><br><span class="line">/var/www/html/ MOVED_FROM b.html</span><br><span class="line">/var/www/html/ MOVED_TO a.html</span><br></pre></td></tr></table></figure>
+
+<p>仅仅几步操作，就生成了 170 多行事件信息。</p>
+<h2 id="Inotify-与-Rsync-实时同步数据"><a href="#Inotify-与-Rsync-实时同步数据" class="headerlink" title="Inotify 与 Rsync 实时同步数据"></a>Inotify 与 Rsync 实时同步数据</h2><p>要求分析：数据发布服务器既是 Rsync 服务器同时也是 Inotify 监控服务器，该服务器是用于发布数据的，将数据同步到 Web 服务器，实现 Web 服务器与此数据发布服务器的同步。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048508.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120048508.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>实验环境：</p>
+<ul>
+<li>数据发布服务器：192.168.205.135</li>
+<li>Web 服务器：192.168.205.134</li>
+</ul>
+<p>首先需要在 Web 服务器上编写<code>rsyncd.conf</code>，添加模块</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[www]</span><br><span class="line">comment = web file dictionary</span><br><span class="line">path = /var/www/html</span><br><span class="line">auth users = www</span><br><span class="line">secrets file = /etc/rsyncd.secrets</span><br><span class="line">hosts allow = 192.168.205.135</span><br></pre></td></tr></table></figure>
+
+<p>进行系统准备：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 在Web服务器上创建用户www</span><br><span class="line">useradd www &amp;&amp; echo &quot;redhat&quot; | passwd www --stdin</span><br><span class="line">echo &quot;www:redhat&quot; &gt;&gt; /etc/rsyncd.secrets</span><br><span class="line">chmod 600 /etc/rsyncd.secrets</span><br><span class="line">查看/var/www是否所属于www，若不是就chown -R www:www /var/www</span><br><span class="line"></span><br><span class="line"># 在数据发布服务器上</span><br><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id -i ~/.ssh/id_rsa.pub www@192.168.205.134</span><br><span class="line"># 在Web服务器上，同理，双向交换ssh公钥</span><br><span class="line">ssh-copy-id -i ~/.ssh/id_rsa.pub root@192.168.205.135</span><br></pre></td></tr></table></figure>
+
+<p>数据发布服务器上触发同步脚本示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line">SRC=/var/www/web_html/</span><br><span class="line">DST=www@192.168.205.134::www</span><br><span class="line">/usr/bin/inotifywait -d -r -o var/log/inotify_web -e modify,delete,create,attrib $&#123;SRC&#125; | while read line</span><br><span class="line">do</span><br><span class="line">    /usr/bin/rsync -az --delete $&#123;SRC&#125; $&#123;DST&#125; 2&gt;&amp;1</span><br><span class="line">done &amp;</span><br></pre></td></tr></table></figure>
+
+<p>加上执行权限<code>chmod a+x</code>并写入<code>/etc/rc.local</code>，<code>echo &quot;脚本名&quot; &gt;&gt; /etc/rc.local</code></p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/george-guo/p/7718515.html">rsync</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/atong/1344829">Rsync 原理详解及部署</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7220009.html">Rsync 完全手册</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/chenhao6/1298375">inotify+rsync+mutt+msmtp 实现 linux 文件或者目录自动更新并且实现发邮件给管理员</a></li>
+<li>Linux 运维之道（第二版）</li>
+<li><a target="_blank" rel="noopener" href="http://www.ttlsa.com/web/let-infotify-rsync-fast/">真正的 inotify+rsync 实时同步 彻底告别同步慢</a></li>
+</ul>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/server/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>server</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Rsync/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Rsync</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%90%8C%E6%AD%A5/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>同步</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>无人值守学习笔记</p>
+          <p class='content'>本篇主要包含以下内容：
+
+PXE 概述
+Kickstart
+Kickstart 概述
+Kickstart 准备
+DHCP 配置
+TFTP 配置
+使用 VSFTP 搭建镜像源
+使用 HTTP 搭建...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/'>
+          <p class='title'>Linux性能监控与优化<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+
+所有工具进行系统性能分析的思路都是相同的。
+top 与 htoptop查看动态进程状态，默认每 5 秒刷新一次。
+top  -d：指定top刷新的时间间隔，默认是5 秒  -b：批处理模式，...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Rsync-%E4%BB%8B%E7%BB%8D%E4%B8%8E%E6%90%AD%E5%BB%BA"><span class="toc-text">Rsync 介绍与搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#quick-check-%E7%AE%97%E6%B3%95%E4%BB%8B%E7%BB%8D"><span class="toc-text">quick check 算法介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsync-%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F"><span class="toc-text">rsync 的工作方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rsync-%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8"><span class="toc-text">rsync 命令使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%84%E5%88%99%E8%A7%A3%E6%9E%90"><span class="toc-text">规则解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rsync-%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%90%AD%E5%BB%BA"><span class="toc-text">Rsync 服务器搭建</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rsync-%E9%83%A8%E5%88%86%E6%8A%A5%E9%94%99%E8%A7%A3%E5%86%B3"><span class="toc-text">Rsync 部分报错解决</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Rsync-Inotify-%E6%96%87%E4%BB%B6%E8%87%AA%E5%8A%A8%E5%90%8C%E6%AD%A5"><span class="toc-text">Rsync+Inotify 文件自动同步</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Inotify-%E4%BB%8B%E7%BB%8D"><span class="toc-text">Inotify 介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Inotify-%E4%B8%8E-Rsync-%E5%AE%9E%E6%97%B6%E5%90%8C%E6%AD%A5%E6%95%B0%E6%8D%AE"><span class="toc-text">Inotify 与 Rsync 实时同步数据</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Rsync文件同步服务器学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

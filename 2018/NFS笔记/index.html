@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>NFS基础笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="server,nfs">
+  
+
+  
+    <meta name="description" content="
+NFS 原理
+NFS 基础配置
+服务器端
+NFS 客户端
+nfs 挂载优化
+系统安全相关
+挂载性能相关">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        NFS基础笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E5%BA%94%E7%94%A8%E8%BF%90%E7%BB%B4/">应用运维</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年5月2日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <ul>
+<li><a href="#nfs-%E5%8E%9F%E7%90%86">NFS 原理</a></li>
+<li><a href="#nfs-%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE">NFS 基础配置</a><ul>
+<li><a href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF">服务器端</a></li>
+<li><a href="#nfs-%E5%AE%A2%E6%88%B7%E7%AB%AF">NFS 客户端</a></li>
+<li><a href="#nfs-%E6%8C%82%E8%BD%BD%E4%BC%98%E5%8C%96">nfs 挂载优化</a><ul>
+<li><a href="#%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8%E7%9B%B8%E5%85%B3">系统安全相关</a></li>
+<li><a href="#%E6%8C%82%E8%BD%BD%E6%80%A7%E8%83%BD%E7%9B%B8%E5%85%B3">挂载性能相关</a><span id="more"></span></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="NFS-原理"><a href="#NFS-原理" class="headerlink" title="NFS 原理"></a>NFS 原理</h1><p>NFS（Network Files Network）网络文件系统，允许网络中主机通过通过 TCP/IP 进行资源共享。采用 C/S 工作模式，NFS 服务器相当于文件服务器，将某个目录设置为输出目录，客户端可将服务器端的输出目录挂载在本地进行访问。NFSv4 基于 TCP，端口号 2049。<br>RPC（Remote Procedure Call）远程过程调用，是一种通过网络从远程计算机程序上请求服务，跨越了传输层和应用层的协议。<br>NFS 在传输数据时使用的端口会随机选择，而客户端是通过 RPC 知道服务器端使用的哪个端口传输数据。NFS 的 RPC 主要功能是记录每个 NFS 功能对应的端口号，并在 NFS 客户端请求时将该端口和功能信息传给该客户端，确保客户端连到正确的端口。<br>当 NFS 服务启动时会随即取用若干端口，并主动向 RPC 服务注册这些端口，然后 RPC 使用固定的 111 端口监听 NFS 客户端请求，并将正确的端口信息返回给客户端。</p>
+<p><strong>注：</strong> 在启动 NFS 之前先要启动 RPC 服务，否则 NFS 无法向 RPC 注册，若 RPC 重启则原来注册的数据就全部丢失，NFS 也需重启以重新注册 RPC。<br><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120045970.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120045970.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<ol>
+<li>用户访问 web 页面，web 服务器上的 nfs 客户端便会向后端的 NFS 服务器通过 rpc 服务发出请求。</li>
+<li>nfs 服务器端 rpc 找到对应注册的 nfs 端口后，通知 nfs 客户端的 rpc</li>
+<li>nfs 客户端得到了服务器端的取数据的端口，与 nfs daemon 连接存取数据</li>
+<li>nfs 客户端在将得到的文件传给前端</li>
+</ol>
+<p><strong>NFS 局限：</strong></p>
+<ul>
+<li>存在单点故障，可通过高可用集群解决</li>
+<li>高并发场景，NFS 性能有限</li>
+<li>客户端认证基于 IP 和主机名，安全性一般</li>
+<li>NFS 传输明文，不对数据完整性验证</li>
+<li>多台客户端挂载一个 NFS 时，耦合度高，管理维护麻烦</li>
+</ul>
+<h1 id="NFS-基础配置"><a href="#NFS-基础配置" class="headerlink" title="NFS 基础配置"></a>NFS 基础配置</h1><p>环境：</p>
+<ul>
+<li>两台虚拟机<br>192.168.163.103/24<br>192.168.163.104/24</li>
+<li>系统：CentOS7</li>
+<li>Selinux：关闭</li>
+<li>防火墙：关闭</li>
+</ul>
+<h2 id="服务器端"><a href="#服务器端" class="headerlink" title="服务器端"></a>服务器端</h2><p>NFS 服务依赖于 RPC 服务与外界通信，所以需要安装 rpcbind 程序<br>而 NFS</p>
+<ol>
+<li>安装 NFS 主程序和 RPC 程序<br><code>yum install nfs-utils rpcbind</code><br><code>systemctl enable nfs-server</code><br><code>systemctl start nfs-server rpcbind.service</code></li>
+<li>配置文件<code>/etc/exports</code></li>
+</ol>
+<p>可通过<code>rpcinfo -p localhost</code>查看已注册的端口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># rpcinfo -p localhost</span><br><span class="line">   program vers proto   port  service</span><br><span class="line">    100000    4   tcp    111  portmapper</span><br><span class="line">    100000    3   tcp    111  portmapper</span><br><span class="line">    100000    2   tcp    111  portmapper</span><br><span class="line">    100000    4   udp    111  portmapper</span><br><span class="line">    100000    3   udp    111  portmapper</span><br><span class="line">    100000    2   udp    111  portmapper</span><br><span class="line">    100024    1   udp  49302  status</span><br><span class="line">    100024    1   tcp  49199  status</span><br><span class="line">    100005    1   udp  20048  mountd</span><br><span class="line">    100005    1   tcp  20048  mountd</span><br><span class="line">    100005    2   udp  20048  mountd</span><br><span class="line">    100005    2   tcp  20048  mountd</span><br><span class="line">    100005    3   udp  20048  mountd</span><br><span class="line">    100005    3   tcp  20048  mountd</span><br><span class="line">    100003    3   tcp   2049  nfs</span><br><span class="line">    100003    4   tcp   2049  nfs</span><br></pre></td></tr></table></figure>
+
+<p>nfs 相关进程</p>
+<ul>
+<li>rpc.statd：检查文件一致性</li>
+<li>rpc.idmapd：名字映射</li>
+<li>rpc.mountd：权限管理验证（nfs mount daemon）</li>
+<li>nfsd：NFS 主进程，管理登入，ID 身份判明等</li>
+</ul>
+<p><strong><code>/etc/exports</code>文件配置</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 格式为：共享目录  分享给的主机1(参数)  主机2(参数) ...</span><br><span class="line">/var/nfsshare  192.168.163.*(rw,sync)  *.example.com(rw)</span><br><span class="line"># 客户端地址可以是 IP、主机名、域名、网段</span><br></pre></td></tr></table></figure>
+
+<p><strong>参数列表</strong></p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ro</td>
+<td>客户端只读</td>
+</tr>
+<tr>
+<td>rw</td>
+<td>客户端可读写</td>
+</tr>
+<tr>
+<td>sync</td>
+<td>数据同步写入内存与磁盘，保证数据一致性，效率低</td>
+</tr>
+<tr>
+<td>async</td>
+<td>异步 IO，数据先暂时存与内存，待需要时写入硬盘，效率高，但数据丢失风险高</td>
+</tr>
+<tr>
+<td>noaccess</td>
+<td>阻止访问该目录及其子目录</td>
+</tr>
+<tr>
+<td>all_squash</td>
+<td>无论 NFS 客户端使用什么用户访问，都映射为 NFS 服务器端的匿名用户，即 nfsnobody</td>
+</tr>
+<tr>
+<td>root_squash</td>
+<td>当 NFS 客户端使用 root 访问时，映射为 NFS 服务器端的匿名用户，即 nfsnobody</td>
+</tr>
+<tr>
+<td>no_root_squash</td>
+<td>当 NFS 客户端使用 root 访问时，仍映射为 NFS 服务器端的 root，并不安全</td>
+</tr>
+<tr>
+<td>wdelay</td>
+<td>为合并多次更新而延迟写入磁盘</td>
+</tr>
+<tr>
+<td>no_wdelay</td>
+<td>尽可能快地写入磁盘</td>
+</tr>
+<tr>
+<td>secure</td>
+<td>限制 nfs 服务只能使用小于 1024 的 TCP/IP 端口传输数据</td>
+</tr>
+<tr>
+<td>insecure</td>
+<td>可使用大于 1024 的端口</td>
+</tr>
+<tr>
+<td>anounuid</td>
+<td>指定 NFS 服务器中的用户为匿名用户</td>
+</tr>
+<tr>
+<td>anoungid</td>
+<td>指定 NFS 服务器中的用户组为匿名用户组</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>默认情况下，nfs 服务会禁止客户端的 root 用户对共享目录进行写操作，目的是为了保证当 nfs 以共享目录工作时，共享目录的数据不会被客户端随意修改，但是当 nfs 以远程存储工作时，这个功能就不合理，所以当 nfs 以远程存储来工作时，需要在服务端设置 no_root_squash 选项关闭该功能。</p>
+</blockquote>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120045184.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120045184.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>配置完后使用<code>exportfs -rv</code>命令，不需要重启 NFS。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">exportfs</span><br><span class="line">	-a  导出所有列在/etc/exports的目录</span><br><span class="line">	-v  显示所有被导出或取消导出的目录</span><br><span class="line">	-r  重新导出所有列在/etc/exports的目录</span><br><span class="line">	-u [目录] 取消指定目录的导出，与-a同时用时，会取消配置文件中所有目录的导出</span><br></pre></td></tr></table></figure>
+
+<p><code>nfsstat</code>命令可查看当前 NFS 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nfsstat</span><br><span class="line">	-s 显示NFS服务器信息</span><br><span class="line">	-c 显示NFS客户端信息</span><br><span class="line">	-m 显示每个NFS文件系统的统计信息（在客户端上查看）</span><br><span class="line">	-r 显示RPC信息</span><br></pre></td></tr></table></figure>
+
+<p>若开启了 firewalld，则需要放行 nfs 和 rpcbind 还有 mountd 服务，放行端口 2049</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --add-service=nfs</span><br><span class="line">firewall-cmd --permanent --add-service=rpc-bind</span><br><span class="line">firewall-cmd --permanent --add-service=mountd</span><br><span class="line">firewall-cmd --permanent --add-port=2049/tcp 文件</span><br><span class="line">chcon -R -t public_content_t /var/nfsshare</span><br><span class="line">setsebool -P nfs_export_all_rw on</span><br><span class="line">setsebool -P nfs_export_all_ro on</span><br></pre></td></tr></table></figure>
+
+<h2 id="NFS-客户端"><a href="#NFS-客户端" class="headerlink" title="NFS 客户端"></a>NFS 客户端</h2><ol>
+<li>需要安装<code>nfs-utils rpcbind</code><br><code>yum install nfs-utils rpcbind</code></li>
+<li>通过<code>showmount</code>查看 NFS 服务器的共享信息</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">showmount [options] [NFS服务器]</span><br><span class="line">	-e 显示NFS服务器的共享列表</span><br><span class="line">	-a 显示本机挂载NFS资源情况</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># showmount -e 192.168.163.102</span><br><span class="line">Export list for 192.168.163.102:</span><br><span class="line">/var/nfsshare 192.168.163.*</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>挂载到本机</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># mkdir /nfsshare  #创建挂载目录</span><br><span class="line"># mount -t nfs 192.168.163.102:/var/nfsshare /nfsshare</span><br><span class="line"># df -h</span><br><span class="line">Filesystem                     Size  Used Avail Use% Mounted on</span><br><span class="line">......</span><br><span class="line">192.168.163.102:/var/nfsshare   17G  8.1G  9.0G  48% /nfsshare</span><br></pre></td></tr></table></figure>
+
+<p>在 mount 时也可使用<code>-o</code>指定文件系统的选项</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rsize=   从NFS服务器读文件时每次使用的字节数，默认1024字节</span><br><span class="line">wsize=   向NFS服务器写文件时每次使用的字节数，默认1024字节</span><br><span class="line">timeo=   RPC调用超时后，确定重试算法的参数</span><br><span class="line">soft   软挂载方式，当客户端请求得不到回应时，提示IO错误并退出</span><br><span class="line">hard   硬挂载方式，当客户端请求得不到回应时，提示服务器无响应，但继续请求。默认硬挂载</span><br><span class="line">intr   NFS文件操作超时并时硬挂载时，允许中断文件操作并向调用它的程序返回EINTR</span><br><span class="line">ro   只读方式挂载NFS文件系统</span><br><span class="line">rw   读写方式挂载NFS文件系统</span><br><span class="line">fg   在前台重试挂载</span><br><span class="line">bg   在后台重试挂载</span><br></pre></td></tr></table></figure>
+
+<p>也可通过配置文件<code>/etc/fstab</code>开机自动挂载</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># vim /etc/fstab</span><br><span class="line">......</span><br><span class="line">192.168.163.102:/var/nfsshare  /nfsshare  nfs  defaults 0 0</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 mount 或配置文件/etc/fstab 挂载的不足：</strong>NFS 服务器与客户端的连接不是永久的，任何一方的掉线都会导致另一方等待超时。并且即使很多用户都挂载了共享目录，也会有大部分的用户在大部分时间是不会使用的，这样造成了 NFS 服务器资源的大量消耗。可通过 autofs 服务按需动态挂载解决该问题。</p>
+<ol start="4">
+<li>使用 autofs 自动挂载<br>autofs 是一个提供按需挂载的服务，只有在用户访问该挂载点时才会动态挂载该共享目录。<br>安装 autofs 程序，并开机自启<br><code>yum install autofs</code><br><code>systemctl enable autofs.service</code><br><code>systemctl start autofs.service</code><br>创建 autofs 关于 nfs 主配置文件，也可以直接在 autofs 的主配置文件<code>/etc/auto.master</code>中添加内容。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># vim /etc/auto.master.d/nfs.autofs</span><br><span class="line">主配置文件的配置格式：</span><br><span class="line">挂载点顶层目录      映射文件</span><br><span class="line">/nfs                  /etc/nfs.misc</span><br><span class="line">由于挂载点为/nfs/share，所以顶层目录为/nfs</span><br></pre></td></tr></table></figure>
+
+<p>创建 nfs 配置的映射文件<code>/etc/nfs.misc</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># vim /etc/nfs.misc</span><br><span class="line">映射文件格式：</span><br><span class="line">挂载点     [-挂载选项]       NFS服务器名或IP:共享目录</span><br><span class="line">挂载点是对于挂载点顶层目录的相对路径</span><br><span class="line">share   -fstype=nfs,rw   192.168.163.102:/var/nfsshare</span><br></pre></td></tr></table></figure>
+
+<p>配置完成后重启 autofs 服务即可。<br>进入<code>/nfs</code>目录中，查看并无内容。然后进入<code>share</code>便可查看到挂载目录的内容。再通过<code>df</code>查看，已成功挂载。</p>
+<p><strong>注：</strong>由于在客户端挂载时也会指定选项，若与服务器端选项不同，在执行操作时可能会报错，即：选项以服务器端配置为准。</p>
+<h2 id="nfs-挂载优化"><a href="#nfs-挂载优化" class="headerlink" title="nfs 挂载优化"></a>nfs 挂载优化</h2><h3 id="系统安全相关"><a href="#系统安全相关" class="headerlink" title="系统安全相关"></a>系统安全相关</h3><p>对企业一般来说，NFS 只共享静态数据，不需要 suid、exec 权限，不应允许执行命令。所以在挂载时应该指定以下参数</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mount -t nfs -o nosuid,noexec,nodev,rw 10.0.0.1:/data /mnt</span><br></pre></td></tr></table></figure>
+
+<h3 id="挂载性能相关"><a href="#挂载性能相关" class="headerlink" title="挂载性能相关"></a>挂载性能相关</h3><ul>
+<li>禁止更新目录及文件时间戳挂载<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mount -t nfs -o noatime,nodiratime 10.0.0.1:/data</span><br></pre></td></tr></table></figure></li>
+<li>安全加优化<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mount -t nfs -o nosuid,noexec,nodev,noatime,nodiratime,intr,rsize=131072,wsize=131072 10.0.0.1:/data /mnt</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>rsize 为 nfs 客户端读 server 的数据块大小，wsize 为 nfs 客户端写 server 的数据块大小，最好设为 1024 的倍数<br>配置这两个参数可以让一次读写更多数据包，提高访问性能</p>
+</blockquote>
+</li>
+<li>内核层面优化<ul>
+<li><code>net.core.wmem_default</code>：接受套接字缓冲区大小的默认值，默认为 124928</li>
+<li><code>net.core.rmem_default</code>：发送套接字缓冲区大小的默认值，默认为 124928</li>
+<li><code>net.core.rmem_max</code>：接受套接字缓冲区大小的最大值，默认同上</li>
+<li><code>net.core.wmem_max</code>：发送套接字缓冲区大小的最大值，默认同上<br><strong>可以将这些参数调大</strong></li>
+</ul>
+</li>
+</ul>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/server/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>server</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/nfs/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>nfs</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/Apache-Server%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Apache-Server笔记</p>
+          <p class='content'>
+
+Apache-httpd 服务器介绍Apache 服务器全称 Apache-HTTP-Server，而 httpd 就是 Apache 服务器端运行的软件，提供 WWW 服务器平台。
+Apa...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/samba%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>Samba基础学习笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>本篇笔记包含以下内容：
+
+Samba 原理
+Samba 基础配置
+服务器端
+客户端
+
+
+
+
+
+Samba 原理Samba 最初的目的是为了 Windows 和 Linux 之间的沟通，实现不同操...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#NFS-%E5%8E%9F%E7%90%86"><span class="toc-text">NFS 原理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NFS-%E5%9F%BA%E7%A1%80%E9%85%8D%E7%BD%AE"><span class="toc-text">NFS 基础配置</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%AB%AF"><span class="toc-text">服务器端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NFS-%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-text">NFS 客户端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#nfs-%E6%8C%82%E8%BD%BD%E4%BC%98%E5%8C%96"><span class="toc-text">nfs 挂载优化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E5%AE%89%E5%85%A8%E7%9B%B8%E5%85%B3"><span class="toc-text">系统安全相关</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%82%E8%BD%BD%E6%80%A7%E8%83%BD%E7%9B%B8%E5%85%B3"><span class="toc-text">挂载性能相关</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="NFS基础笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

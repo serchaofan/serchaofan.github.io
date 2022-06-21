@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>HAProxy笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="server,HAproxy,代理,负载均衡">
+  
+
+  
+    <meta name="description" content="本篇包含以下内容：
+
+HAProxy 介绍
+HAProxy 配置文件
+源码包安装
+HAProxy 操作
+HAproxy 配置文件
+web 查看状态
+ACL 配置
+
+
+
+
+HAProxy+Keepalived 搭建
+参考文章
+">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        HAProxy笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E5%BA%94%E7%94%A8%E8%BF%90%E7%BB%B4/">应用运维</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年5月31日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>本篇包含以下内容：</p>
+<ul>
+<li><a href="#haproxy-%E4%BB%8B%E7%BB%8D">HAProxy 介绍</a></li>
+<li><a href="#haproxy-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6">HAProxy 配置文件</a><ul>
+<li><a href="#%E6%BA%90%E7%A0%81%E5%8C%85%E5%AE%89%E8%A3%85">源码包安装</a></li>
+<li><a href="#haproxy-%E6%93%8D%E4%BD%9C">HAProxy 操作</a><ul>
+<li><a href="#haproxy-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6-1">HAproxy 配置文件</a></li>
+<li><a href="#web-%E6%9F%A5%E7%9C%8B%E7%8A%B6%E6%80%81">web 查看状态</a></li>
+<li><a href="#acl-%E9%85%8D%E7%BD%AE">ACL 配置</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#haproxykeepalived-%E6%90%AD%E5%BB%BA">HAProxy+Keepalived 搭建</a></li>
+<li><a href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+
+<h1 id="HAProxy-介绍"><a href="#HAProxy-介绍" class="headerlink" title="HAProxy 介绍"></a>HAProxy 介绍</h1><p>HAProxy 是一个提供高可用性、负载均衡，以及可基于 TCP（第四层）和 HTTP（第七层）的应用代理软件。</p>
+<p>HAProxy 适合处理高负载 Web 站点的 HTTP 请求，这些站点通常需要<strong>会话保持或七层处理</strong>，HAProxy 完全支持数以万计的并发连接，并且能使后端的 Web 服务器不会暴露。HAProxy 还支持<strong>服务器健康检查</strong>，当后端服务器出现故障后，HAProxy 会自动移除该服务器，在故障排除后自动将该服务器加入。</p>
+<p>HAProxy 特点：</p>
+<ul>
+<li>支持连接拒绝：通过限制连接防御攻击蠕虫，降低被 DDOS 攻陷的可能</li>
+<li>支持全透明代理</li>
+<li>支持健康检查</li>
+<li>实现会话保持</li>
+<li>实现 HTTP 重写与重定向</li>
+<li>自带服务器状态监控页面，实现监控统计</li>
+<li>原生配置了 SSL 证书</li>
+<li>支持虚拟主机</li>
+<li>支持双机热备</li>
+<li>支持服务器健康检查</li>
+<li>单进程</li>
+<li>支持 RDP 协议（远程桌面协议）</li>
+</ul>
+<p>HAProxy 支持的代理模式：</p>
+<ul>
+<li><p>基于四层的 TCP 代理：仅在客户端和服务器间进行流量转发。可用于邮件服务（SMTP、POP3 等）、内部协议通信服务器、MySQL、https 等</p>
+<p><strong>四层根据负载均衡算法直接修改报文的目的 IP 地址，然后发送给后端，相当于一个转发的功能。</strong></p>
+</li>
+<li><p>基于七层的 HTTP 代理：能分析应用层协议，且能根据协议信息灵活控制访问。</p>
+<p><strong>七层是查看请求报文内容，根据内容选择后端服务器。不仅可以根据 IP 和端口进行负载分流，还能根据 URL、域名、浏览器、语言等报文参数决定负载均衡策略。</strong></p>
+<p>在七层模式下，负载均衡器与客户端还有后端服务器会分别建立一次 TCP 连接，因此七层负载对设备的要求更高，而处理能力也不如四层负载。</p>
+</li>
+</ul>
+<p><strong>HAProxy 的 frontend 和 backend 功能：</strong></p>
+<ul>
+<li><strong>frontend</strong>：ACL 规则匹配，根据任意 HTTP 请求头内容做规则匹配，然后将请求重定向到指定的 backend</li>
+<li><strong>backend</strong>：事先定义的 server pool，等待前端将请求转到的服务器组</li>
+</ul>
+<p>HAproxy 实现性能最大化的做法：</p>
+<ul>
+<li><strong>单进程、事件驱动模型</strong>降低了<strong>上下文切换的开销和内存占用</strong></li>
+<li>O(1)事件检查器允许其在高并发连接中对任何连接的任何事件实现即时探测</li>
+<li>在任何可用情况下，<strong>单缓冲（Single Buffering）机制</strong>能以<strong>不复制任何数据的方式完成读写操作</strong>，能够节约大量 CPU 时钟周期（CPU 主频的倒数。周期小说明执行速度变快）及内存带宽。</li>
+<li>MRU 内存分配器在固定大小的内存池中可实现即时内存分配，能显著减少创建一个会话的时长。</li>
+<li>借助内核的<code>splice()</code>系统调用，可实现<strong>零复制转发（Zero-copy forwarding）</strong>，还可实现零复制启动（Zero-Starting）。</li>
+<li>树型存储：实现了<code>O(logN)</code>的低开销保持计时器命令、保持运行队列命令、管理轮询和最少连接队列。</li>
+<li>优化了 HTTP 首部分析，避免在分析过程中重读任何内存区域</li>
+<li>降低了系统调用，大部分工作在用户空间中完成，如时间读取、缓冲聚合、问价描述符的启用和禁用等。</li>
+</ul>
+<p>HAproxy 进程消耗比系统空间消耗低 20 倍以上，在某些系统上，HAproxy 的七层性能可能超过硬件负载均衡设备。</p>
+<p><strong>负载均衡器的性能评估要素</strong></p>
+<ul>
+<li><p><strong>会话率</strong>：单位时间内的处理请求数。该指标决定了一个负载均衡器是否能将所有请求分发出去，依赖于 CPU 性能。</p>
+<p>当关闭了 keep-alive 连接保持功能，session/s（每秒会话数）和 requests/s（每秒请求数）或者 hits/s（每秒命中数）是一样的。</p>
+<p>当开启了 keep-alive 连接保持功能，requests/s 或者 hits/s 要高很多</p>
+</li>
+<li><p><strong>会话并发能力</strong>：并发处理能力。当并发会话数上升时，session/s 会下降。该指标被系统允许的最大文件描述符数量以及内存大小限制。</p>
+</li>
+<li><p><strong>数据率</strong>：处理数据能力。当传输大的对象时，会增加并发会话数，可获得更高的数据率，这时 session 的创建与销毁是最少的。使用 MB/s 或 GB/s 为单位</p>
+</li>
+</ul>
+<p><strong>HAProxy 与 LVS 的异同</strong></p>
+<ul>
+<li>LVS 是基于<strong>Linux 内核</strong>实现的一种负载，HAProxy 是基于<strong>第三方应用</strong>实现的负载</li>
+<li>LVS 仅是四层 IP 负载均衡，HAProxy 提供四层与七层负载，提供 TCP 和 HTTP 应用的负载</li>
+<li>LVS 的状态检测功能单一，HAProxy 因为能在四层和七层负载，可支持端口、URL、脚本等多种状态检测方式</li>
+<li>HAProxy 的整体性能低于 LVS，LVS 拥有接近硬件设备的网络吞吐和连接负载能力</li>
+</ul>
+<p><strong>HAProxy 负载均衡算法：</strong></p>
+<ul>
+<li>roundrobin：与 LVS 的轮询一致。</li>
+<li>static-rr：与 LVS 的 wrr 一致。</li>
+<li>leastconn：与 LVS 的 Least conn 一致。</li>
+<li>source：类似 LVS 的源地址散列 source hashing。对源 IP 进行哈希。同一客户端 IP 访问同一台服务器</li>
+<li>uri：类似 LVS 的目的地址散列 destination hashing。对目的地址进行哈希，同一请求的 URI 总是访问同一个服务器</li>
+<li>url_param：根据 URL 参数调度。将同一个用户信息都发往同一个后端服务器。</li>
+<li>hdr(name)：根据 HTTP 请求头锁定每一次 HTTP 请求。若缺少头，则用 rr 代替</li>
+<li>rdp-cookie(name)：查询每个 TCP 请求，并哈希 RDP cookie，用于退化的持久模式，使同一个用户或会话 ID 总是发送到同一台服务器。若没有 cookie，则使用 rr 代替。</li>
+</ul>
+<h1 id="HAProxy-配置文件"><a href="#HAProxy-配置文件" class="headerlink" title="HAProxy 配置文件"></a>HAProxy 配置文件</h1><p>直接通过<code>yum install haproxy</code>安装（版本可能很老），版本为 1.6。或者在<a target="_blank" rel="noopener" href="https://www.haproxy.org/download/">haproxy 下载</a>源码包，版本会更加新。安装后会自动创建用户 haproxy。可以通过<code>systemctl</code>管理。</p>
+<h2 id="源码包安装"><a href="#源码包安装" class="headerlink" title="源码包安装"></a>源码包安装</h2><p>下载的是 1.8.14 版本的源码包。进入解压目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">make PREFIX=/usr/local/haproxy1.8 TARGET=linux2628</span><br><span class="line"># 其中TARGET是指定Linux内核版本，一定要写，Linux2.6以及3.X都是写linux2628</span><br><span class="line">make install PREFIX=/usr/local/haproxy1.8</span><br></pre></td></tr></table></figure>
+
+<p>若使用源码安装，则不会自动创建 haproxy 用户及用户组，需要手动创建。并且没有任何配置文件，都要手动创建。有模板文件，在解压目录的<code>example/</code>目录中，叫<code>option-http_proxy.cfg</code>，在安装目录中创建一个<code>conf</code>目录，再将该配置文件复制过去。</p>
+<h2 id="HAProxy-操作"><a href="#HAProxy-操作" class="headerlink" title="HAProxy 操作"></a>HAProxy 操作</h2><p>HAProxy 命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">haproxy</span><br><span class="line">        -v 显示版本</span><br><span class="line">        -vv 显示详细的构建选项信息</span><br><span class="line">        -d 进入debug模式</span><br><span class="line">        -f 指定配置文件</span><br><span class="line">        -dM[&lt;byte&gt;] poisons memory with &lt;byte&gt; (defaults to 0x50)</span><br><span class="line">        -D 后台运行; -C changes to &lt;dir&gt; before loading files.</span><br><span class="line">        -q 静默模式</span><br><span class="line">        -c 检查配置文件语法</span><br><span class="line">        -n 设置最大连接数，默认2000</span><br><span class="line">        -m 限制可用的内存量，单位MB</span><br><span class="line">        -N sets the default, per-proxy maximum # of connections (2000)</span><br><span class="line">        -L 设置本地peer name，默认为主机名</span><br><span class="line">        -p writes pids of all children to this file</span><br><span class="line">        -de 禁止使用epoll()函数</span><br><span class="line">        -dp 禁止使用poll()函数</span><br><span class="line">        -dS disables splice usage (broken on old kernels)</span><br><span class="line">        -dR disables SO_REUSEPORT usage</span><br><span class="line">        -dV 禁止服务器端的SSL</span><br><span class="line">        -sf/-st [pid ]* finishes/terminates old pids.</span><br><span class="line">常用操作：选项不可连起来，只能分开</span><br><span class="line">haproxy -c -f /etc/haproxy/haproxy.cfg  检查配置文件，一定要-c -f都指定</span><br><span class="line">haproxy -D -f /etc/haproxy/haproxy.cfg  以daemon模式启动</span><br><span class="line">haproxy -vv       显示编译与启动信息</span><br><span class="line">killall haproxy   关闭HAProxy</span><br></pre></td></tr></table></figure>
+
+<h3 id="HAproxy-配置文件"><a href="#HAproxy-配置文件" class="headerlink" title="HAproxy 配置文件"></a>HAproxy 配置文件</h3><p>HAProxy 主配置文件<code>/etc/haproxy/haproxy.cfg</code></p>
+<p>HAProxy 的配置有五个部分：<code>global</code>，<code>defaults</code>，<code>frontend</code>，<code>backend</code>，<code>listen</code></p>
+<ul>
+<li>global：设置全局配置参数，属于进程级的配置，和操作系统配置有关</li>
+<li>defaults：默认参数的配置。默认会自动被引用到下面的 frontend、backend 和 listen 部分中。如果在 frontend、backend 和 listen 部分中也配置了与 defaults 部分一样的参数，那么 <strong>defaults 部分参数对应的值自动被覆盖。</strong></li>
+<li>frontend：设置接收用户请求的<strong>前端虚拟节点</strong></li>
+<li>backend：设置后端服务器集群的配置</li>
+<li>listen：是 frontend 部分和 backend 部分的结合体。是为了兼容 1.3 版本以前的配置而保留下来的。可以不用。</li>
+</ul>
+<p>全局 global 配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">global</span><br><span class="line">进程管理与安全性参数</span><br><span class="line">  log     127.0.0.1 local2 [level]           #日志使用local2输出到本地，后面还可以添加日志等级</span><br><span class="line">  chroot      /var/lib/haproxy        #改变haproxy的工作目录</span><br><span class="line">  pidfile     /var/run/haproxy.pid    #指定PID文件路径</span><br><span class="line">  user        haproxy       #执行HAProxy进程的用户</span><br><span class="line">  group       haproxy       #执行HAProxy进程的用户组</span><br><span class="line">  daemon                    #后台执行</span><br><span class="line">  stats socket /var/lib/haproxy/stats #用户访问统计数据的接口</span><br><span class="line">  stats maxconn 10          #默认stats socket仅限10个并发连接</span><br><span class="line">  nbproc      1             #启动的haproxy进程的个数，只能用于守护进程模式</span><br><span class="line">性能调整参数</span><br><span class="line">  maxconn     4000          #最大连接数</span><br><span class="line">  spread-checks             #设置HealthCheck时间间隔</span><br><span class="line">  noepoll                   #禁用使用epoll事件轮询系统</span><br><span class="line">  nopoll                    #禁用poll事件轮询系统</span><br><span class="line">  nosplice                  #禁用套接字之间使用内核tcp拼接</span><br></pre></td></tr></table></figure>
+
+<p>为了配置文件中的日志参数，创建独立的日志文件，需要修改<code>/etc/rsyslog.conf</code>，添加以下参数，然后重启<code>rsyslog</code>服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">local2.*                       /var/log/haproxy.log</span><br></pre></td></tr></table></figure>
+
+<p><strong>注：HAProxy 要求<code>ulimit -n</code>的值（即最大打开文件数）要大于<code>maxconn * 2 + 18</code>。</strong></p>
+<p>默认 defaults 配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">defaults</span><br><span class="line">  mode http                 # 默认模式，tcp为4层，http为7层，health只返回ok</span><br><span class="line">  option httplog            # 采用http日志格式</span><br><span class="line">  option httpclose          # 防止多余的cookie信息影响到客户端请求的处理结果</span><br><span class="line">  retries  3               # 尝试连接的次数，若连接失败则认为服务器不可用</span><br><span class="line">  option http_proxy        # 开启代理（仅是基本的代理功能）</span><br><span class="line">  option dontlognull       # 不记录空连接</span><br><span class="line">  option http-server-close # 开启connection closing</span><br><span class="line">  option forwardfor except 127.0.0.0/8     # 服务器能获取客户端的真实IP地址</span><br><span class="line">  option redispatch        # 当客户端将请求发往了故障的服务器，则会自动将请求发往其他正常的机器</span><br><span class="line">  # option abortonclose    # 当服务器负载很高的时候，自动结束掉当前队列处理比较久的链接</span><br><span class="line">  # 时间单位可以是us（微秒）|ms（毫秒）|s（秒）|m（分）|h（时）|d（天）</span><br><span class="line">  timeout http-request 10s   # http请求超时时间</span><br><span class="line">  timeout queue        1m    # 队列超时时间</span><br><span class="line">  timeout connect      10s   # 连接超时时间</span><br><span class="line">  timeout client       1m    # 客户端响应超时时间</span><br><span class="line">  timeout server       1m    # 服务器端响应超时时间</span><br><span class="line">  timeout http-keep-alive 10s # keepalive持久连接超时时间</span><br><span class="line">  timeout check        10s    # 检查时间间隔</span><br></pre></td></tr></table></figure>
+
+<p>前端服务 frontend 配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">frontend  main *:5000        # 在1.8版本中不能这么写，而是用bind</span><br><span class="line">    # 设置acl规则</span><br><span class="line">    acl url_static       path_beg       -i /static /images /javascript /stylesheets</span><br><span class="line">    acl url_static       path_end       -i .jpg .gif .png .css .js</span><br><span class="line"></span><br><span class="line">    use_backend static          if url_static # 调用后端服务器并检查是否匹配acl规则</span><br><span class="line">    default_backend             app  # 客户端访问时默认调用后端服务器地址池，与backend关联</span><br><span class="line">    stats  uri  /stats    # 开启HAProxy的状态查看网页，通过/stats查看</span><br></pre></td></tr></table></figure>
+
+<p>后端服务 backend 配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">backend static       # 定义后端服务器，static是配置存放静态资源的后端服务器</span><br><span class="line">    balance     roundrobin   # 算法</span><br><span class="line">    server      static 127.0.0.1:4331 check     # 对后端进行健康检查</span><br><span class="line"></span><br><span class="line">backend app          # 运行应用的动态服务器</span><br><span class="line">    balance     roundrobin</span><br><span class="line">    server  app1 127.0.0.1:5001 check</span><br><span class="line">    server  app2 127.0.0.1:5002 check</span><br></pre></td></tr></table></figure>
+
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">backend static</span><br><span class="line">    balance     roundrobin</span><br><span class="line">    server      static 172.16.246.135:80 check</span><br><span class="line">    server      static 172.16.246.136:80 check</span><br><span class="line"></span><br><span class="line">backend app</span><br><span class="line">    balance     roundrobin</span><br><span class="line">    server  tomcat1  172.16.246.151:8080 check</span><br><span class="line">    server  tomcat2  172.16.246.136:8080 check</span><br></pre></td></tr></table></figure>
+
+<p>访问 HAproxy 服务器的 5000 端口，就能访问后端服务器</p>
+<h3 id="web-查看状态"><a href="#web-查看状态" class="headerlink" title="web 查看状态"></a>web 查看状态</h3><p>可以配置专门的 frontend 设置 haproxy 自带的 stats，监控 haproxy 状态。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">frontend   stats</span><br><span class="line">    bind *:8080</span><br><span class="line">    stats enable           # 开启stats</span><br><span class="line">    stats refresh 3s       # 刷新间隔</span><br><span class="line">    stats uri /stats       # 访问uri</span><br><span class="line">    stats auth admin:redhat   # 认证用户密码</span><br><span class="line">    stats admin if TRUE       # 开启认证</span><br></pre></td></tr></table></figure>
+
+<h3 id="ACL-配置"><a href="#ACL-配置" class="headerlink" title="ACL 配置"></a>ACL 配置</h3><p>ACL 操作通常包括阻止请求，选择后端或添加报文头。</p>
+<ul>
+<li>从数据流，表或环境中提取数据样本</li>
+<li>可选地对提取的样本进行一些格式转换</li>
+<li>在此样本上应用一个或多个模式匹配方法</li>
+<li>仅在模式与样本匹配时执行操作</li>
+</ul>
+<p>ACL 的数量没有强制限制。 未使用的不会影响性能，只消耗少量内存。</p>
+<p>acl 格式：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">acl   acl名   acl方法（也称测试标准）   [flags]  匹配路径或文件</span><br></pre></td></tr></table></figure>
+
+<p>常用 acl 方法：</p>
+<ul>
+<li><p>hdr_reg(host)：正则匹配</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 匹配URL是www.exam.com和www1.exam.com的请求</span><br><span class="line">acl  www hdr_reg(host)  -i  ^(www.exam.com|www1.exam.com)</span><br></pre></td></tr></table></figure></li>
+<li><p>hdr_dom(host)：</p>
+</li>
+<li><p>hdr_beg(host)：测试请求报文的指定首部的开头部分是否符合指定的模式</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 匹配提供静态请求的主机img\video\ftp</span><br><span class="line">acl  host_static  hdr_beg(host)  -i  img. video. ftp.</span><br></pre></td></tr></table></figure></li>
+<li><p>url_sub：</p>
+</li>
+<li><p>url_dir：</p>
+</li>
+<li><p>path_beg：测试请求的 URL 是否以后面指定的模式开头</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">acl url_static  path_beg  -i  /static  #匹配url以/static开头</span><br></pre></td></tr></table></figure></li>
+<li><p>path_end：测试请求的 URL 是否以后面指定的模式结尾</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">acl url_static  path_end  -i  .jpg .js #匹配url以.jpg或.js结尾</span><br></pre></td></tr></table></figure></li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">frontend  main</span><br><span class="line">    bind          *:5000</span><br><span class="line">    acl host_1           hdr_dom(name) -i host1.example.com</span><br><span class="line">    acl host_2           hdr_dom(name) -i host2.example.com</span><br><span class="line">    use_backend host1   if host_1</span><br><span class="line">    use_backend host2   if host_2</span><br><span class="line"></span><br><span class="line">backend host1</span><br><span class="line">    balance     roundrobin</span><br><span class="line">    server host1 192.168.60.130:80 check</span><br><span class="line"></span><br><span class="line">backend host2</span><br><span class="line">    balance     roundrobin</span><br><span class="line">    server host2 192.168.60.131:80 check</span><br></pre></td></tr></table></figure>
+
+<p>然后通过<code>host1.example.com</code>可访问 host1 的后端主机池，<code>host2.example.com</code>访问 host2 的后端主机池。</p>
+<h1 id="HAProxy-Keepalived-搭建"><a href="#HAProxy-Keepalived-搭建" class="headerlink" title="HAProxy+Keepalived 搭建"></a>HAProxy+Keepalived 搭建</h1><p>安装 keepalived，可以直接 yum 安装，也可以源码安装。源码安装版本 2.0.10。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./configure --prefix=/usr/local/keepalived \</span><br><span class="line">            --bindir=/usr/bin \</span><br><span class="line">            --sbindir=/usr/sbin \</span><br><span class="line">            --sysconfdir=/etc</span><br></pre></td></tr></table></figure>
+
+<p>然后直接<code>make &amp;&amp; make install</code>即可。</p>
+<p>修改配置<code>/etc/keepalived/keepalived.conf</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># Master配置</span><br><span class="line">global_defs &#123;      # 可以不用改</span><br><span class="line">   notification_email &#123;</span><br><span class="line">     acassen@firewall.loc</span><br><span class="line">     failover@firewall.loc</span><br><span class="line">     sysadmin@firewall.loc</span><br><span class="line">   &#125;</span><br><span class="line">   notification_email_from Alexandre.Cassen@firewall.loc</span><br><span class="line">   smtp_server 192.168.60.1</span><br><span class="line">   smtp_connect_timeout 30</span><br><span class="line">   router_id LVS_DEVEL</span><br><span class="line">   vrrp_skip_check_adv_addr</span><br><span class="line">   vrrp_strict</span><br><span class="line">   vrrp_garp_interval 0</span><br><span class="line">   vrrp_gna_interval 0</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">vrrp_instance VI_1 &#123;</span><br><span class="line">    state MASTER        # master这边要改</span><br><span class="line">    interface ens32     # 改为面向集群的网卡（内网网卡）</span><br><span class="line">    virtual_router_id 51</span><br><span class="line">    priority 120        # master的优先级一定要比backup高</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        192.168.60.200    # VIP</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># backup配置</span><br><span class="line">vrrp_instance VI_1 &#123;</span><br><span class="line">    state BACKUP           #backup这里要改</span><br><span class="line">    interface ens32</span><br><span class="line">    virtual_router_id 51</span><br><span class="line">    priority 100</span><br><span class="line">    advert_int 1</span><br><span class="line">    authentication &#123;</span><br><span class="line">        auth_type PASS</span><br><span class="line">        auth_pass 1111</span><br><span class="line">    &#125;</span><br><span class="line">    virtual_ipaddress &#123;</span><br><span class="line">        192.168.60.200</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>修改完后直接<code>systemctl restart keepalived</code>，查看 Master 的网卡</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">2: ens32: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span><br><span class="line">    link/ether 00:0c:29:38:e9:f3 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 192.168.60.134/24 brd 192.168.60.255 scope global noprefixroute ens32</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">    inet 192.168.60.200/32 scope global ens32    #VIP在Master这，Backup上是没有该VIP的</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">....</span><br></pre></td></tr></table></figure>
+
+<p>关闭 Master，再查看 Backup，发现 VIP 已转移到此主机上，且已变为 Master。</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.ttlsa.com/linux/haproxy-study-tutorial/">HAProxy 用法详解 全网最详细中文文档</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/yijiu/1428649">HAproxy 负载均衡-特性篇</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/9290f1ccbc62">转 笔记 1. HAProxy 介绍</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/freeloda/1294094">http 反向代理之 haproxy 详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/dengaosky/2050231?utm_source=oschina-app">Haproxy 的负载均衡、动静分离、状态监控、近期网络架构</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/sj349781478/article/details/78862315">CentOS7 haproxy+keepalived 实现高可用集群搭建</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/skyflask/p/6970151.html">Haproxy 原理(1)</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/c9f6d55288c0">HAProxy 从零开始到掌握</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/f-ck-need-u/p/7576137.html">HAProxy 骏马金龙</a></li>
+<li>Linux 集群与自动化运维</li>
+</ul>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/server/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>server</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/HAproxy/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>HAproxy</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E4%BB%A3%E7%90%86/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>代理</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>负载均衡</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/HTTP%E5%8D%8F%E8%AE%AE%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>HTTP协议基础笔记</p>
+          <p class='content'>
+Web 概述
+HTTP 概述
+HTTP 报文
+HTTP 请求方式
+HTTP 首部
+HTTP 请求报文（Request）
+HTTP 响应报文（Response）
+
+
+状态码
+
+
+HTTP Coo...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/Varnish%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>Varnish笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+Varnish 概述
+Squid 与 Varnish 对比
+
+
+Varnish 基本配置
+
+
+
+
+Varnish 概述Varnish 是一款高性能、开源的反向代理服务器和缓存服务器。并且，Va...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#HAProxy-%E4%BB%8B%E7%BB%8D"><span class="toc-text">HAProxy 介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#HAProxy-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">HAProxy 配置文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BA%90%E7%A0%81%E5%8C%85%E5%AE%89%E8%A3%85"><span class="toc-text">源码包安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HAProxy-%E6%93%8D%E4%BD%9C"><span class="toc-text">HAProxy 操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HAproxy-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">HAproxy 配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#web-%E6%9F%A5%E7%9C%8B%E7%8A%B6%E6%80%81"><span class="toc-text">web 查看状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ACL-%E9%85%8D%E7%BD%AE"><span class="toc-text">ACL 配置</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#HAProxy-Keepalived-%E6%90%AD%E5%BB%BA"><span class="toc-text">HAProxy+Keepalived 搭建</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="HAProxy笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

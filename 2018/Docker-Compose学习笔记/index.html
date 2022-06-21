@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Docker Compose学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="docker,docker-compose,云计算,容器编排">
+  
+
+  
+    <meta name="description" content="环境：docker：18.06.1，docker-compose：1.22.0
+docker18.06 对应的 Compose 文件格式版本为 3.7
+本篇包含以下内容：
+
+docker-compose 介绍
+Compose 文件格式
+docker-compose 示例
+官方 wordpress 案例
+官方 Dj...">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Docker Compose学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E4%BA%91%E8%AE%A1%E7%AE%97/">云计算</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年7月30日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>环境：docker：18.06.1，docker-compose：1.22.0</p>
+<p>docker18.06 对应的 Compose 文件格式版本为 3.7</p>
+<p>本篇包含以下内容：</p>
+<ul>
+<li><a href="#docker-compose-%E4%BB%8B%E7%BB%8D">docker-compose 介绍</a></li>
+<li><a href="#compose-%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F">Compose 文件格式</a></li>
+<li><a href="#docker-compose-%E7%A4%BA%E4%BE%8B">docker-compose 示例</a><ul>
+<li><a href="#%E5%AE%98%E6%96%B9-wordpress-%E6%A1%88%E4%BE%8B">官方 wordpress 案例</a></li>
+<li><a href="#%E5%AE%98%E6%96%B9-django-%E6%A1%88%E4%BE%8B">官方 Django 案例</a></li>
+<li><a href="#%E5%AE%98%E6%96%B9-flask-%E6%A1%88%E4%BE%8B">官方 Flask 案例</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+
+<h1 id="docker-compose-介绍"><a href="#docker-compose-介绍" class="headerlink" title="docker-compose 介绍"></a>docker-compose 介绍</h1><p><code>Docker Compose</code>是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。在配置文件中，所有的容器通过 services 来定义，然后使用 docker-compose 脚本来启动，停止和重启应用，和应用中的服务以及所有依赖服务的容器。</p>
+<p><strong>Compose 的特性</strong></p>
+<ul>
+<li>通过项目名称将单个主机隔离成多个环境，能将应用环境复制多份，还能防止使用相同名称的服务的应用间的干扰</li>
+<li>能够保护卷中的数据，如果 Compose 发现存在之前运行过的容器，它会把旧容器中的数据卷拷贝到新的容器中</li>
+<li>只会重新创建改变过的容器，Compose 会缓存用于创建容器的配置信息，当你重启服务时，如果服务没有被更改，Compose 就会重用已经存在的容器，加快了修改应用的速度</li>
+</ul>
+<p><strong>编排：</strong>Orchestration，根据被部署的对象间的耦合关系以及被部署对象对环境的依赖，制定部署流程中各个动作的执行顺序，部署过程中所需要的依赖文件和被部署文件的存储位置和获取方式，以及如何验证部署成功。这些信息都会在编排工具中以制定格式定义并保存。</p>
+<p><strong>部署：</strong>Deployment，按照编排所指定的内容和流程，在目标机器上执行编排指定环境初始化，存放指定的依赖和文件，运行指定的部署动作，按照编排中规则确认是否部署成功。</p>
+<blockquote>
+<p>以上编排和部署定义摘选自《docker 容器与容器云》</p>
+</blockquote>
+<p><strong>docker-compose 安装</strong></p>
+<p>使用 pip 快速安装<code>pip install docker-compose</code><br>或通过 compose 的 github 库按提示安装<a target="_blank" rel="noopener" href="https://github.com/docker/compose/releases">docker-compose 的 github</a></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -L https://github.com/docker/compose/releases/download/1.22.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose</span><br><span class="line">chmod +x /usr/local/bin/docker-compose</span><br></pre></td></tr></table></figure>
+
+<p>docker-compose 参数选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose [-f &lt;arg&gt;...] [options] [COMMAND] [ARGS...]</span><br><span class="line">  -f, --file FILE             指定compose文件，默认为docker-compose.yml</span><br><span class="line">  -p, --project-name NAME     指定项目名，默认为所在目录名</span><br><span class="line">  --verbose                   显示详细过程信息</span><br><span class="line">  --log-level LEVEL           设置日志级别(DEBUG, INFO, WARNING, ERROR, CRITICAL)</span><br><span class="line">  --no-ansi                   不打印ANSI控制字符</span><br><span class="line">  -H, --host HOST             指定要连接的主机</span><br><span class="line"></span><br><span class="line">  --tls                       使用tls，就是指--tlsverify</span><br><span class="line">  --tlscacert CA_PATH         指定只承认该CA颁发的证书</span><br><span class="line">  --tlscert CLIENT_CERT_PATH  TLS证书路径</span><br><span class="line">  --tlskey TLS_KEY_PATH       TLS密钥路径</span><br><span class="line">  --tlsverify                 使用TLS</span><br><span class="line">  --skip-hostname-check       不根据客户端证书中指定的名称检查守护程序的主机名</span><br><span class="line">  --project-directory PATH    指定工作目录，默认为compose文件所在目录</span><br><span class="line">  --compatibility             Compose将尝试将v3文件中的部署密钥转换为其非Swarm等效项</span><br></pre></td></tr></table></figure>
+
+<p><strong>docker-compose 命令：</strong></p>
+<ul>
+<li><p>**<code>build</code>**：构建或重构服务（services）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">build [options] [--build-arg key=val...] [SERVICE...]</span><br><span class="line">    --compress              使用gzip压缩构建上下文</span><br><span class="line">    --force-rm              始终移除中间容器</span><br><span class="line">    --no-cache              构建镜像时不使用缓存</span><br><span class="line">    --pull                  总是尝试拉取最新镜像</span><br><span class="line">    -m, --memory MEM        设置构建镜像的内存上限</span><br><span class="line">    --build-arg key=val     设置服务的构建时变量</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>bundle</code>**：从 Compose 文件生成 Docker 包</p>
+<p>镜像必须存储摘要，这需要与 Docker Registry 进行交互。如果没有为所有镜像存储摘要，可以使用<code>docker-compose pull</code>或<code>docker-compose push</code>来获取。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bundle [options]</span><br><span class="line">    --push-images              在打包时自动推送已使用build指定的服务的镜像</span><br><span class="line">    -o, --output PATH          包文件路径，默认为&quot;项目名.dab&quot;</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>config</code>**：校验并查看 compose 文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">config [options]</span><br><span class="line">    --resolve-image-digests  将镜像标签写入摘要</span><br><span class="line">    -q, --quiet              静默模式，只校验配置，不打印信息</span><br><span class="line">    --services               列出所有服务</span><br><span class="line">    --volumes                列出所有数据卷</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>down</code>**：停止并删除容器、网络、镜像、数据卷</p>
+<p>默认能删除的内容：</p>
+<ul>
+<li>Compose 文件中定义的服务的容器</li>
+<li>Compose 文件的<code>networks</code>中定义的网络</li>
+<li>默认网络（如果使用）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">down [options]</span><br><span class="line">    --rmi type              删除镜像，必须指定类型：</span><br><span class="line">                              &#x27;all&#x27;: 删除任何服务使用的所有镜像</span><br><span class="line">                              &#x27;local&#x27;: 只删除没有通过image指定自定义标签的镜像</span><br><span class="line">    -v, --volumes           删除在Compose文件的&quot;volumes&quot;中声明的命名卷和附加到容器的匿名卷。</span><br><span class="line">    --remove-orphans        为服务删除没有在compose文件中声明的容器</span><br><span class="line">    -t, --timeout TIMEOUT   指定几秒后关闭（默认10s）</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>events</code>**：从容器接收实时事件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">events [options] [SERVICE...]</span><br><span class="line">    --json      使用json格式输出事件</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>exec</code>**：在运行的容器中执行命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">exec [options] [-e KEY=VAL...] SERVICE COMMAND [ARGS...]</span><br><span class="line">    -d, --detach      后台运行命令</span><br><span class="line">    --privileged      给进程额外的权限</span><br><span class="line">    -u, --user USER   指定运行命令的用户</span><br><span class="line">    -T                禁止分配伪终端，exec默认分配一个伪终端</span><br><span class="line">    --index=index     设置容器的索引（如果一个服务有多个容器），默认为1</span><br><span class="line">    -e, --env KEY=VAL 设置环境变量</span><br><span class="line">    -w, --workdir DIR 设置工作目录</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>images</code>**：列出镜像</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">images [options] [SERVICE...]</span><br><span class="line">    -q, --quiet  静默模式，只显示镜像号</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>kill</code>**：杀死容器</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kill [options] [SERVICE...]</span><br><span class="line">    -s SIGNAL         发送给容器的SIGNAL，默认为SIGKILL</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>logs</code>**：显示容器的输出</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">logs [options] [SERVICE...]</span><br><span class="line">    --no-color          单色输出</span><br><span class="line">    -f, --follow        按照日志输出</span><br><span class="line">    -t, --timestamps    显示时间戳</span><br><span class="line">    --tail=&quot;all&quot;        显示日志的末尾行数</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>pause</code>**：暂停服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pause [SERVICE...]</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>ps</code>**：列出容器，执行此命令时必须<code>cd</code>到项目的根目录下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ps [options] [SERVICE...]</span><br><span class="line">    -q, --quiet          静默，只显示容器号</span><br><span class="line">    --services           显示服务</span><br><span class="line">    --filter KEY=VAL     根据属性过滤服务</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>port</code>**：显示用于绑定的公共端口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">port [options] SERVICE PRIVATE_PORT</span><br><span class="line">    --protocol=proto  选择协议，tcp或udp，默认tcp</span><br><span class="line">    --index=index     设置容器的索引，默认为1</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>pull</code>**：拉取服务镜像</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pull [options] [SERVICE...]</span><br><span class="line">    --ignore-pull-failures  忽略拉取失败的镜像</span><br><span class="line">    --parallel              并行拉取多个镜像，默认开启，官方不推荐</span><br><span class="line">    --no-parallel           禁止并行拉取多个镜像</span><br><span class="line">    -q, --quiet             静默模式，不显示拉取信息</span><br><span class="line">    --include-deps          同时拉取依赖的服务</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>push</code>**：推送服务镜像</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">push [options] [SERVICE...]</span><br><span class="line">    --ignore-push-failures  忽略推送失败的镜像</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>restart</code>**：重启服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">restart [options] [SERVICE...]</span><br><span class="line">  -t, --timeout TIMEOUT      指定几秒后重启（默认10s）</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>rm</code>**：删除停止的容器</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">rm [options] [SERVICE...]</span><br><span class="line">    -f, --force   不询问确认删除</span><br><span class="line">    -s, --stop    在删除前自动停止容器</span><br><span class="line">    -v            删除任何关联的匿名数据卷，默认不会删除</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>run</code>**：运行一次性命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">run [options] [-v VOLUME...] [-p PORT...] [-e KEY=VAL...] [-l KEY=VALUE...] SERVICE [COMMAND] [ARGS...]</span><br><span class="line">    -d, --detach          后台运行</span><br><span class="line">    --name NAME           设置容器名</span><br><span class="line">    --entrypoint CMD      覆盖容器的ENTRYPOINT</span><br><span class="line">    -e KEY=VAL            设置环境变量</span><br><span class="line">    -l, --label KEY=VAL   添加或覆盖标签</span><br><span class="line">    -u, --user=&quot;&quot;         以指定用户执行，可设置用户名或uid</span><br><span class="line">    --no-deps             不启动相连的服务，默认依赖的服务也会启动</span><br><span class="line">    --rm                  在运行后删除容器，不与-d兼容</span><br><span class="line">    -p, --publish=[]      发布公共端口</span><br><span class="line">    --service-ports       通过已启用并映射到主机的端口执行命令</span><br><span class="line">    --use-aliases         在容器连接的网络中使用服务的网络别名</span><br><span class="line">    -v, --volume=[]       Bind mount挂载一个数据卷</span><br><span class="line">    -T                    禁止分配伪终端（tty），默认run会分配一个</span><br><span class="line">    -w, --workdir=&quot;&quot;      容器中的工作目录</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>start</code>**：启动已存在的容器</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">start [SERVICE...]</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>stop</code>**：停止运行中的容器，并不会删除它们</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">stop [options] [SERVICE...]</span><br><span class="line">  -t, --timeout TIMEOUT      指定几秒后关闭（默认10s）</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>top</code>**：显示服务的进程</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">top [SERVICE...]</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>unpause</code>**：恢复暂停的服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">unpause [SERVICE...]</span><br></pre></td></tr></table></figure></li>
+<li><p>**<code>up</code>**：创建并启动容器</p>
+<p>默认会启动相连的服务。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">up [options] [--scale SERVICE=NUM...] [SERVICE...]</span><br><span class="line">    -d, --detach               后台运行。与--abort-on-container-exit不兼容</span><br><span class="line">    --no-color                 单色输出</span><br><span class="line">    --quiet-pull               静默拉取</span><br><span class="line">    --no-deps                  不启动连接的服务</span><br><span class="line">    --force-recreate           强制重建服务（即使配置和镜像都没变）</span><br><span class="line">    --always-recreate-deps     重建依赖的服务，与--no-recreate不兼容</span><br><span class="line">    --no-recreate              若容器存在就不会重建，与--force-recreate和-V不兼容</span><br><span class="line">    --no-build                 即使镜像丢失也不重建镜像</span><br><span class="line">    --no-start                 在构建服务后不启动该服务</span><br><span class="line">    --build                    在启动容器前先构建镜像</span><br><span class="line">    --abort-on-container-exit  如果任何容器停止，就停止所有容器，与-d不兼容</span><br><span class="line">    -t, --timeout TIMEOUT      设置容器几秒后关闭（默认10s）</span><br><span class="line">    -V, --renew-anon-volumes   重建匿名卷而不是从以前的容器中恢复数据。</span><br><span class="line">    --remove-orphans           删除服务的compose文件中未定义的容器</span><br><span class="line">    --exit-code-from SERVICE   返回指定服务的退出码 Implies --abort-on-container-exit.</span><br><span class="line">    --scale SERVICE=NUM        将SERVICE扩展到NUM个实例。会覆盖Compose文件中的&quot;scale&quot;设置（如果存在）</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="Compose-文件格式"><a href="#Compose-文件格式" class="headerlink" title="Compose 文件格式"></a>Compose 文件格式</h1><p>Compose 文件采用 YAML，文件名以<code>.yml</code>或<code>.yaml</code>结尾，默认应存放在项目的根目录中，文件名应为<code>docker-compose.yml</code>。在 Compose 文件中无需再指定 Dockerfile 中已定义的项。</p>
+<p>文件格式为 3.7，所以 compose 文件最开始要写上<code>version: &quot;3&quot;</code></p>
+<p>然后定义服务<code>services</code>，在<code>services:</code>下添加服务，开始对服务的配置。</p>
+<p><code>build</code>：用于指定在构建时应用的配置选项。</p>
+<p><code>context</code>：用于指定构建上下文。</p>
+<p><code>dockerfile</code>：用于指定 Dockerfile 文件</p>
+<p><code>args</code>：用于给 Dockerfile 文件中<code>ARG</code>定义的参数传参</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">version: &quot;3&quot;</span><br><span class="line">services:</span><br><span class="line">  webapp:</span><br><span class="line">    build: ./dir     可以这样直接指定上下文路径</span><br><span class="line"></span><br><span class="line">  webapp:</span><br><span class="line">    build:           也可以作为具有在上下文中指定的路径的对象</span><br><span class="line">      context: ./dir 然后通过context指定上下文路径</span><br><span class="line">      当提供的值是相对路径时，context被解释为相对于Compose文件的位置。此目录也是发送到Docker daemon的构建上下文</span><br><span class="line">    build:</span><br><span class="line">      context: .</span><br><span class="line">      dockerfile: webapp.dockerfile   还可以指定Dockerfile文件</span><br><span class="line">      args:          可以为Dockerfile文件传参</span><br><span class="line">        args1: 123</span><br><span class="line">        args2: 345</span><br><span class="line">      也可以这样表示：</span><br><span class="line">      args:</span><br><span class="line">      - args1=123</span><br><span class="line">      - args2=345</span><br><span class="line">    image: webapp:tag  可以指定构建镜像，会生成一个名为webapp，并打上tag标签的镜像</span><br><span class="line">    在群集模式下使用Compose文件（版本3）部署堆栈时，将忽略image选项。 docker stack命令仅接受预先构建的图像。</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注：YAML 布尔值（true，false，yes，no，on，off）必须用引号括起来，以便解析器将它们解释为字符串。</p>
+</blockquote>
+<p><code>cache_from</code>：指定 Docker 引擎用于实现缓存的镜像列表</p>
+<p><code>labels</code>：使用标签将元数据添加到生成的镜像中，可使用数组或字典</p>
+<p><code>shm_size</code>：为构建的容器设置<code>/dev/shm</code>分区的大小，指定字节数或字节值字符串，如<code>2mb</code>或<code>2000000</code></p>
+<p><code>target</code>：根据 Dockerfile 中的定义构建指定的阶段</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">build:</span><br><span class="line">  context: .</span><br><span class="line">  target: prod</span><br></pre></td></tr></table></figure>
+
+<p><code>cap_add</code>和<code>cap_drop</code>：添加或删除容器功能</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cap_add:</span><br><span class="line">  - ALL</span><br><span class="line"></span><br><span class="line">cap_drop:</span><br><span class="line">  - NET_ADMIN</span><br><span class="line">  - SYS_ADMIN</span><br></pre></td></tr></table></figure>
+
+<p><code>command</code>：覆盖容器启动后默认执行的命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">command: bundle exec thin -p 3000</span><br><span class="line">或使用列表表示：</span><br><span class="line">command: [&quot;bundle&quot;, &quot;exec&quot;, &quot;thin&quot;, &quot;-p&quot;, &quot;3000&quot;]</span><br></pre></td></tr></table></figure>
+
+<p><code>container_name</code>：自定义该容器名称。由于 Docker 容器名称必须是唯一的，因此如果指定了自定义名称，则无法将服务扩展到多个容器</p>
+<p><code>volumes</code>：卷挂载路径设置。格式：<code>宿主机源路径:容器目的路径[:访问权限]</code>，默认访问权限为读写。可使用相对路径，相对于 compose 文件所在目录。</p>
+<p><code>links</code>：链接到另一个服务中的容器，格式：<code>服务名[:别名]</code></p>
+<p><code>external-links</code>：链接到 docker-compose.yml 外部的容器，甚至并非 Compose 管理的容器。</p>
+<p><code>expose</code>：暴露端口，但不映射到宿主机，只被连接的服务访问。最好使用字符串表示数字，因为 YAML 会解析<code>xx:yy</code>这种数字格式为 60 进制，容器端口小于 60 可能出错。</p>
+<p><code>ports</code>：暴露端口信息，格式：<code>[宿主机IP:][端口:]容器端口</code>，可用<code>-</code>表示一个端口范围</p>
+<h1 id="docker-compose-示例"><a href="#docker-compose-示例" class="headerlink" title="docker-compose 示例"></a>docker-compose 示例</h1><h2 id="官方-wordpress-案例"><a href="#官方-wordpress-案例" class="headerlink" title="官方 wordpress 案例"></a>官方 wordpress 案例</h2><p>只需要一个<code>docker-compose.yml</code>文件即可</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3.3&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">db:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">mysql:5.7</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db_data:/var/lib/mysql</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">MYSQL_ROOT_PASSWORD:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">MYSQL_DATABASE:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">MYSQL_USER:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">MYSQL_PASSWORD:</span> <span class="string">wordpress</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">wordpress:</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">wordpress:latest</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8000:80&quot;</span></span><br><span class="line">    <span class="attr">restart:</span> <span class="string">always</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_HOST:</span> <span class="string">db:3306</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_USER:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_PASSWORD:</span> <span class="string">wordpress</span></span><br><span class="line">      <span class="attr">WORDPRESS_DB_NAME:</span> <span class="string">wordpress</span></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">db_data:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后通过 8000 端口访问。<br>命令<code>docker-compose down</code>删除容器和默认网络，但保留 WordPress 数据库。</p>
+<p>命令<code>docker-compose down --volumes</code>删除容器，默认网络和 WordPress 数据库。</p>
+<h2 id="官方-Django-案例"><a href="#官方-Django-案例" class="headerlink" title="官方 Django 案例"></a>官方 Django 案例</h2><p>配置 Dockerfile</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> python</span><br><span class="line"><span class="keyword">ENV</span> PYTHONUNBUFFERED <span class="number">1</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">mkdir</span> /code</span></span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /code</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> requirements.txt /code/</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> pip install -r requirements.txt</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . /code/</span></span><br></pre></td></tr></table></figure>
+
+<p>配置 requirements.txt</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Django&gt;=2.0</span><br><span class="line">psycopg2&gt;=2.7</span><br></pre></td></tr></table></figure>
+
+<p>配置 compose 文件</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">db:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">postgres</span></span><br><span class="line">  <span class="attr">web:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">command:</span> <span class="string">python</span> <span class="string">manage.py</span> <span class="string">runserver</span> <span class="number">0.0</span><span class="number">.0</span><span class="number">.0</span><span class="string">:8000</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">.:/code</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;8000:8000&quot;</span></span><br><span class="line">    <span class="attr">depends_on:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">db</span></span><br></pre></td></tr></table></figure>
+
+<p>创建 Django 项目</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker-compose run web django-admin startproject djangoapp .</span><br></pre></td></tr></table></figure>
+
+<p>启动后，django 项目就创建完成了，当前目录就是 django 的根目录，编辑<code>settings.py</code>，修改数据库配置</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">DATABASES = &#123;</span><br><span class="line">    <span class="string">&#x27;default&#x27;</span>: &#123;</span><br><span class="line">        <span class="string">&#x27;ENGINE&#x27;</span>: <span class="string">&#x27;django.db.backends.postgresql&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;NAME&#x27;</span>: <span class="string">&#x27;postgres&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;USER&#x27;</span>: <span class="string">&#x27;postgres&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;HOST&#x27;</span>: <span class="string">&#x27;db&#x27;</span>,</span><br><span class="line">        <span class="string">&#x27;PORT&#x27;</span>: <span class="number">5432</span>,</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>同时根据 compose 文件中的暴露地址修改 settings 中的 <code>ALLOWED_HOSTS</code></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">ALLOWED_HOSTS = [<span class="string">&#x27;0.0.0.0&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>然后<code>docker-compose up</code>启动，通过配置的 8000 端口访问</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ docker-compose ps</span><br><span class="line">     Name                    Command               State           Ports</span><br><span class="line">---------------------------------------------------------------------------------</span><br><span class="line">djangoapp_db_1    docker-entrypoint.sh postgres    Up      5432/tcp</span><br><span class="line">djangoapp_web_1   python manage.py runserver ...   Up      0.0.0.0:8000-&gt;8000/tcp</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">$ docker ps -a</span><br><span class="line">CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES</span><br><span class="line">17743c2c1145        djangoapp_web       &quot;python manage.py ru…&quot;   10 minutes ago      Up 17 seconds       0.0.0.0:8000-&gt;8000/tcp   djangoapp_web_1</span><br><span class="line">4a5e0f4f5559        postgres            &quot;docker-entrypoint.s…&quot;   43 minutes ago      Up 18 seconds       5432/tcp                 djangoapp_db_1</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="官方-Flask-案例"><a href="#官方-Flask-案例" class="headerlink" title="官方 Flask 案例"></a>官方 Flask 案例</h2><p>创建<code>app.py</code></p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> redis</span><br><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask</span><br><span class="line"></span><br><span class="line">app = Flask(__name__)</span><br><span class="line">cache = redis.Redis(host=<span class="string">&#x27;redis&#x27;</span>, port=<span class="number">6379</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">get_hit_count</span>():</span><br><span class="line">    retries = <span class="number">5</span></span><br><span class="line">    <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            <span class="keyword">return</span> cache.incr(<span class="string">&#x27;hits&#x27;</span>)</span><br><span class="line">        <span class="keyword">except</span> redis.exceptions.ConnectionError <span class="keyword">as</span> exc:</span><br><span class="line">            <span class="keyword">if</span> retries == <span class="number">0</span>:</span><br><span class="line">                <span class="keyword">raise</span> exc</span><br><span class="line">            retries -= <span class="number">1</span></span><br><span class="line">            time.sleep(<span class="number">0.5</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route(<span class="params"><span class="string">&#x27;/&#x27;</span></span>)</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">hello</span>():</span><br><span class="line">    count = get_hit_count()</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&#x27;Hello World! I have been seen &#123;&#125; times.\n&#x27;</span>.<span class="built_in">format</span>(count)</span><br></pre></td></tr></table></figure>
+
+<p>配置<code>requirements.txt</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">flask</span><br><span class="line">redis</span><br></pre></td></tr></table></figure>
+
+<p>创建 Dockerfile</p>
+<figure class="highlight dockerfile"><table><tr><td class="code"><pre><span class="line"><span class="keyword">FROM</span> python:<span class="number">3.7</span>-alpine</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /code</span></span><br><span class="line"><span class="keyword">ENV</span> FLASK_APP app.py</span><br><span class="line"><span class="keyword">ENV</span> FLASK_RUN_HOST <span class="number">0.0</span>.<span class="number">0.0</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> apk add --no-cache gcc musl-dev linux-headers</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> requirements.txt requirements.txt</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> pip install -r requirements.txt</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> . .</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">&quot;flask&quot;</span>, <span class="string">&quot;run&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<p>创建 compose 文件</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">web:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">&quot;redis:alpine&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>然后<code>docker-compose up</code>启动即可，通过 5000 端口访问<br>也可添加 volume，存储项目代码</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">version:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">web:</span></span><br><span class="line">    <span class="attr">build:</span> <span class="string">.</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;5000:5000&quot;</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">.:/code</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">FLASK_ENV:</span> <span class="string">development</span></span><br><span class="line">  <span class="attr">redis:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">&quot;redis:alpine&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>参考文章</strong></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/vchy_zhao/article/details/70238413">Docker 三剑客之 Compose-一</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/vchy_zhao/article/details/70238432">Docker 三剑客之 Compose-二</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/vchy_zhao/article/details/70238461">Docker 三剑客之 Compose-三</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/pushiqiang/article/details/78682323">docker-compose 教程（安装，使用, 快速入门）</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/compose/">docker-compose 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/ee900222/p/docker_5.html">Docker 系列之（五）：使用 Docker Compose 编排容器</a></li>
+</ul>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/docker/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>docker</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/docker-compose/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>docker-compose</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>云计算</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AE%B9%E5%99%A8%E7%BC%96%E6%8E%92/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>容器编排</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/BGP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>BGP学习笔记</p>
+          <p class='content'>基于华三网络学习笔记（理论）
+本篇包含以下内容
+
+BGP 特性与基本术语
+BGP 消息与状态机
+BGP 路由属性
+BGP 选路规则
+控制 BGP 路由
+
+
+BGP 补充知识点
+
+
+
+BGP 特性...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/Kubernetes/'>
+          <p class='title'>Kubernetes<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>Kubernetes 概述Kubernetes 协调一个高可用的计算机集群，这些计算机连接起来作为一个单元工作，以更有效的方式自动化跨集群分发和调度应用程序容器。kubernetes 具有完备的...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#docker-compose-%E4%BB%8B%E7%BB%8D"><span class="toc-text">docker-compose 介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Compose-%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F"><span class="toc-text">Compose 文件格式</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#docker-compose-%E7%A4%BA%E4%BE%8B"><span class="toc-text">docker-compose 示例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9-wordpress-%E6%A1%88%E4%BE%8B"><span class="toc-text">官方 wordpress 案例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9-Django-%E6%A1%88%E4%BE%8B"><span class="toc-text">官方 Django 案例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9-Flask-%E6%A1%88%E4%BE%8B"><span class="toc-text">官方 Flask 案例</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Docker Compose学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

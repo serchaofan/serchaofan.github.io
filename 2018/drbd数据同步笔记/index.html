@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>DRBD数据同步笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="高可用,集群,同步,DRBD">
+  
+
+  
+    <meta name="description" content="
+DRBD 概述
+DRBD 功能
+
+
+DRBD 基础搭建
+准备
+搭建
+
+
+">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        DRBD数据同步笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E5%BA%94%E7%94%A8%E8%BF%90%E7%BB%B4/">应用运维</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年9月30日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <ul>
+<li><a href="#drbd-%E6%A6%82%E8%BF%B0">DRBD 概述</a><ul>
+<li><a href="#drbd-%E5%8A%9F%E8%83%BD">DRBD 功能</a></li>
+</ul>
+</li>
+<li><a href="#drbd-%E5%9F%BA%E7%A1%80%E6%90%AD%E5%BB%BA">DRBD 基础搭建</a><ul>
+<li><a href="#%E5%87%86%E5%A4%87">准备</a></li>
+<li><a href="#%E6%90%AD%E5%BB%BA">搭建</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+
+<h1 id="DRBD-概述"><a href="#DRBD-概述" class="headerlink" title="DRBD 概述"></a>DRBD 概述</h1><p><strong>Distributed Replicated Block Device 分布式复制块设备</strong>是一种基于软件的，无共享，复制的存储解决方案。可以实现在网络中的两台服务器之间<strong>基于块设备级别</strong>的实时或异步镜像或同步复制，类似于 rsync+inotify，是基于 TCP/IP 网络的 RAID1。DRBD 是基于文件系统底层的，即 block 层级同步，效率较 rsync 更快。块设备可以是磁盘分区、LVM 逻辑卷、磁盘等。</p>
+<p>DRBD 工作在文件系统的层级以下，比文件系统更加靠近操作系统内核以及 I/O。当 DRBD 使用在两台 HA 服务器上，一旦数据写入其中一台的本地磁盘，则该数据会被实时发送到另一台主机，以相同形式记录在文件系统中，实现主备数据同步。</p>
+<p>DRBD 镜像的特点：</p>
+<ul>
+<li>实时：应用程序修改设备上的数据时，会不断进行复制。</li>
+<li>透明：应用程序无需知道数据存储在多个主机上。</li>
+<li>同步或异步。使用同步镜像，在所有主机上执行<strong>写入后</strong>，应用程序会收到写入完成的通知。使用异步镜像，当<strong>写入在本地完成时</strong>，应用程序会收到写入完成的通知，这通常是在数据传播到其他主机之前。</li>
+</ul>
+<p>DRBD 的核心功能是通过 Linux 内核模块实现的。具体而言，DRBD 构成虚拟块设备的驱动程序，因此 DRBD 位于系统 I / O 堆栈的底部附近。因为 DRBD 的定义以及 Linux 内核体系结构强制要求，DRBD 不依赖于它上面的层，也就无法管理上一层（即文件系统层），例如 DRBD 无法自动检测文件系统损坏。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042019.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042019.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>其中，<strong>File system</strong>为 API 向外输出的接口，<strong>Buffer cache</strong>用来缓存数据与元数据的，<strong>Disk Scheduler</strong>是用来排序内存中即将要写入磁盘的数据合并读请求。</p>
+<p>DRBD 的两种同步模式：</p>
+<ul>
+<li>实时同步：当数据写入到本地磁盘和远端所有服务器磁盘都成功后才返回成功写入信息，可以防止本地和远端数据丢失或不一致，在生产环境中最常用。</li>
+<li>异步同步：当数据写入到本地服务器成功后就直接返回成功写入信息，不管远端服务器是否写入成功。</li>
+</ul>
+<h2 id="DRBD-功能"><a href="#DRBD-功能" class="headerlink" title="DRBD 功能"></a>DRBD 功能</h2><p>两种工作模式：</p>
+<ul>
+<li><strong>单主模式（Single-primary mode）</strong>：资源在任何给定时间仅在一个集群节点上的主要角色（primary role）中。由于保证只有一个集群节点可以随时处理数据，因此该模式可以与任何传统文件系统（ext3，ext4，XFS 等）一起使用。<strong>在单主模式下部署 DRBD 是高可用性（具有故障切换功能）集群的规范方法。</strong></li>
+<li><strong>双主模式（Dual-primary mode）</strong>：资源在任何给定时间都在集群节点上的主要角色中。由于可以同时访问数据，因此该模式<strong>需要使用利用分布式锁管理器的共享集群文件系统</strong>，如 GFS 和 OCFS2。在双主模式下部署 DRBD 是<strong>负载均衡集群</strong>的首选方法，这些集群需要从两个节点进行并发数据访问。默认禁用此模式，必须在 DRBD 的配置文件中显式启用。</li>
+</ul>
+<p><strong>复制模型（Replication modes）</strong>：DRBD 支持三种不同的复制模式，允许三种复制同步性。</p>
+<ul>
+<li><p><strong>Protocol A：异步复制协议</strong>。一旦<strong>本地磁盘写入完成</strong>，则认为主节点上的本地写入操作已完成，并且复制数据包已放置在本地 TCP 发送缓冲区中。在强制故障转移的情况下，可能会发生数据丢失。<strong>故障转移后备用节点上的数据是一致的，但是崩溃之前执行的最新更新可能会丢失</strong>。<strong>协议 A 最常用于远程复制方案</strong>。与 DRBD Proxy 结合使用时，它可以提供有效的灾难恢复解决方案。</p>
+</li>
+<li><p><strong>Protocol B：内存同步（半同步）复制协议。</strong> 一旦发生本地磁盘写入，<strong>并且复制数据包已到达对端节点</strong>，则认为主节点上的本地写入操作已完成。通常，<strong>在强制故障转移的情况下不会丢失写入</strong>。但是，<strong>如果两个节点同时出现电源故障并且主要数据存储的并发</strong>，出现不可逆转的破坏，则在主节点上完成的最近写入可能会丢失。</p>
+</li>
+<li><p><strong>Protocol C：同步复制协议。</strong>只有在<strong>确认了本地和远程磁盘写入后</strong>，才认为主节点上的本地写操作已完成。因此，单个节点的宕机不会导致任何数据丢失。但是如果两个节点（或其存储子系统）同时被不可逆转地销毁，数据丢失也是不可避免的。</p>
+<p><strong>生产环境最常用的就是协议 C</strong></p>
+</li>
+</ul>
+<blockquote>
+<p>复制协议的选择会影响部署的两个要素：保护（protection）和延迟（latency）。吞吐量（thoughput）很大程度上与所选的复制协议无关。</p>
+</blockquote>
+<p><strong>脑裂与自动修复</strong></p>
+<p>DRBD 脑裂：节点间由于网络故障或集群软件错误导致 DRBD 两个节点都切换为主节点而断开连接。在 8 版本后，DRBD 实现了脑裂的自动修复以及脑裂通知。DRBD 提供以下的修复策略：</p>
+<ul>
+<li>丢弃较新的主节点的修改，即因脑裂升为主节点的节点。</li>
+<li>丢弃老的主节点的修改</li>
+<li>丢弃修改较少的主节点的修改。会先比较两个节点的数据，再丢弃修改较少的节点的数据</li>
+<li>一个节点数据没有发生变化的情况下完美修复脑裂</li>
+</ul>
+<h1 id="DRBD-基础搭建"><a href="#DRBD-基础搭建" class="headerlink" title="DRBD 基础搭建"></a>DRBD 基础搭建</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>实验继续沿用 heartbeat 的实验环境：</p>
+<ul>
+<li><p>Ubuntu18.04，heartbeat3.0</p>
+</li>
+<li><p>ubuntu-s1：172.16.246.155（ens33）</p>
+<p>heartbeat（ens37）：192.168.60.100</p>
+</li>
+<li><p>ubuntu-s2：172.16.246.156（ens33）</p>
+<p>heartbeat（ens37）：192.168.60.101</p>
+</li>
+</ul>
+<p>heartbeat 配置沿用实验的。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ha.cf的配置</span><br><span class="line">node    ubuntu-s1</span><br><span class="line">node    ubuntu-s2</span><br><span class="line">auto_failback on</span><br><span class="line">mcast ens33 225.0.0.1 694 1 0</span><br><span class="line">bcast   ens37</span><br><span class="line">debugfile /var/log/ha-debug</span><br><span class="line">logfile /var/log/heartbeat.log</span><br><span class="line">logfacility     local2</span><br><span class="line">keepalive 2</span><br><span class="line">deadtime 30</span><br><span class="line">warntime 10</span><br><span class="line">initdead 120</span><br><span class="line"></span><br><span class="line"># authkeys的配置</span><br><span class="line">auth 1</span><br><span class="line">1 sha1 3c767c41afb12ada140190ed82db3fd930e2efa3</span><br><span class="line"></span><br><span class="line"># haresources的配置</span><br><span class="line">ubuntu-s1 IPaddr::172.16.246.200/24/ens33</span><br><span class="line">ubuntu-s2 IPaddr::172.16.246.201/24/ens33</span><br></pre></td></tr></table></figure>
+
+<p>重启 heartbeat 服务，查看两台主机的 IP 地址</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ubuntu-s1</span><br><span class="line">inet 172.16.246.155/24 brd 172.16.246.255 scope global dynamic ens33</span><br><span class="line">inet 172.16.246.200/24 brd 172.16.246.255 scope global secondary ens33:6</span><br><span class="line"># ubuntu-s2</span><br><span class="line">inet 172.16.246.156/24 brd 172.16.246.255 scope global dynamic ens33</span><br><span class="line">inet 172.16.246.201/24 brd 172.16.246.255 scope global secondary ens33:6</span><br></pre></td></tr></table></figure>
+
+<p>并且<strong>一定要做到时间同步</strong>。两台虚拟机都加上一块硬盘，大小设为 1G。并且对新加磁盘<code>sdb</code>分区。分两个主分区，一个约 800M，一个约 200M。800M 的作为存储实际业务数据的分区，200M 的作为 meta data 分区，存储 drbd 同步的状态信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Device     Boot   Start     End Sectors  Size Id Type</span><br><span class="line">/dev/sdb1          2048 1640447 1638400  800M 83 Linux</span><br><span class="line">/dev/sdb2       1640448 2097151  456704  223M 83 Linux</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>在生产环境中，meta data 分区一般给 1-2G 大小。</p>
+</blockquote>
+<p>分区完后，meta data 分区不要格式化建文件系统，且暂时都不要挂载。在<code>sdb1</code>上建文件系统。<code>mkfs.ext4 /dev/sdb1</code></p>
+<blockquote>
+<p>注：如果数据大小超过 2T，则需要用<code>parted</code>命令分区，不能用<code>fdisk</code>了。</p>
+</blockquote>
+<p>安装 DRBD，在 ubuntu18.04 的库中软件叫做<code>drbd-utils</code>，安装即可，版本为 8.9，两台都要装。</p>
+<p>安装完成后，查看 drbd 模块是否加载</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lsmod | grep drbd</span><br><span class="line">drbd                  360448  0</span><br><span class="line">lru_cache              16384  1 drbd</span><br><span class="line">libcrc32c              16384  4 nf_conntrack,nf_nat,drbd,raid456</span><br></pre></td></tr></table></figure>
+
+<p>源码编译安装 drbd 驱动，版本为 9.0.16。<a target="_blank" rel="noopener" href="https://www.linbit.com/en/drbd-community/drbd-download/">下载源码包</a>，进入解压目录。</p>
+<p>直接<code>make &amp;&amp; make install</code>，然后要<code>modprobe drbd</code>。在查看是否加载成功</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lsmod | grep drbd</span><br><span class="line">drbd                  550058  0</span><br><span class="line">libcrc32c              12644  4 xfs,drbd,nf_nat,nf_conntrack</span><br></pre></td></tr></table></figure>
+
+<p>还是该网站下载 drbd-utils，版本需要看编译驱动后的说明。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Again: to manage DRBD 9 kernel modules and above,</span><br><span class="line">you want drbd-utils &gt;= 9.3 from above url.</span><br></pre></td></tr></table></figure>
+
+<p>这里下载了 drbd-utils-9.6 的包，进入解压目录</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./configure --prefix=/usr/local/drbd9  \</span><br><span class="line">            --with-heartbeat \         允许heartbeat的haresources脚本</span><br><span class="line">            --sysconfdir=/etc/         设置配置文件目录</span><br></pre></td></tr></table></figure>
+
+<p>然后<code>make &amp;&amp; make install</code>即可。</p>
+<p>可能会报错<code>make[1]: *** [drbdsetup.8] 错误 4</code>，需要安装依赖<code>docbook-style-xsl</code></p>
+<h2 id="搭建"><a href="#搭建" class="headerlink" title="搭建"></a>搭建</h2><p>drbd 的配置文件为<code>/etc/drbd.conf</code>和<code>/etc/drbd.d/</code>中的<code>global_common.conf</code>以及所有<code>.res</code>结尾文件，<code>.res</code>结尾的文件是专门用来配置资源的。用于配置 drbd 参数的文件是<code>global_common.conf</code>，有模板文件<code>/usr/share/doc/drbd-utils/examples/drbd.conf.example.gz</code>参考。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">global &#123;        # 全局配置</span><br><span class="line">  usage-count no;     # 不允许网站统计开源软件的安装量</span><br><span class="line">&#125;</span><br><span class="line">common &#123;</span><br><span class="line">  handlers &#123; &#125;</span><br><span class="line">  startup &#123; &#125;</span><br><span class="line">  options &#123; &#125;</span><br><span class="line">  disk &#123; &#125;</span><br><span class="line">  net &#123;</span><br><span class="line">    protocol C;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建资源配置文件<code>heartbeat.res</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">resource data &#123;   # 资源名，随便起</span><br><span class="line">	protocol C;     # 采用协议C</span><br><span class="line"></span><br><span class="line">	disk &#123;          # 磁盘配置，可不配</span><br><span class="line">		on-io-error detach;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	on ubuntu-s1 &#123;   # 服务器配置</span><br><span class="line">    device    /dev/drbd1;   # drbd会用专门的设备写数据</span><br><span class="line">    disk      /dev/sdb1;    # 数据存放磁盘</span><br><span class="line">    address   192.168.60.200:7789;   # 主机的心跳线IP地址，后面的端口不用改</span><br><span class="line">    meta-disk /dev/sdb2[0]; # 存放meta data的分区</span><br><span class="line">  &#125;</span><br><span class="line">  on ubuntu-s2 &#123;</span><br><span class="line">    device    /dev/drbd1;</span><br><span class="line">    disk      /dev/sdb1;</span><br><span class="line">    address   192.168.60.201:7789;</span><br><span class="line">    meta-disk /dev/sdb2[0];</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>初始化 DRBD 的 meta data，创建 DRBD 记录信息的 meta data 分区元数据。</p>
+<p><code>drbdadm create-md data</code>，其中 data 就是在 res 文件中配置的资源名</p>
+<p>初始化启动 DRBD<code>drbdadm up data</code>，没报错说明启动成功。查看进程</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ps -ef | grep drbd</span><br><span class="line">root        507      2  0 17:25 ?        00:00:00 [drbd-reissue]</span><br><span class="line">root       2682      2  0 20:15 ?        00:00:00 [drbd1_submit]</span><br><span class="line">root       2689      2  0 20:15 ?        00:00:00 [drbd_w_data]</span><br><span class="line">root       2877      2  0 21:06 ?        00:00:00 [drbd_r_data]</span><br><span class="line">root       2902      2  0 21:11 ?        00:00:00 [drbd_a_data]</span><br><span class="line">root       2903      2  0 21:11 ?        00:00:00 [drbd_as_data]</span><br></pre></td></tr></table></figure>
+
+<p>如果报错，可能是磁盘分区的问题，或者 drbd 的 meta data 创建的问题。</p>
+<p>可以通过<code>cat /proc/drbd</code>查看 DRBD 的状态。以下是初始时的状态。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">version: 8.4.10 (api:1/proto:86-101)</span><br><span class="line">srcversion: 17A0C3A0AF9492ED4B9A418</span><br><span class="line"></span><br><span class="line"> 1: cs:WFConnection ro:Secondary/Unknown ds:Inconsistent/DUnknown C r-----</span><br><span class="line">    ns:0 nr:0 dw:0 dr:0 al:8 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:818944</span><br></pre></td></tr></table></figure>
+
+<p>如果 ro 为<code>Secondary/Unknown</code>，说明 DRBD 没有连通，是网络的问题，检查网卡、路由。修复后再查看。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1: cs:Connected ro:Secondary/Secondary ds:Inconsistent/Inconsistent C r-----</span><br><span class="line">    ns:0 nr:0 dw:0 dr:0 al:8 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:818944</span><br></pre></td></tr></table></figure>
+
+<p>两台 drbd 都是<code>Secondary/Secondary</code>则成功。<code>ds</code>为<code>Inconsistent</code>表示两端的数据还不一致。</p>
+<p>在 ubuntu-s1 上使自身成为 primary 节点，<code>drbdadm primary data</code>，如果报错，可以加<code>--force</code>强制执行。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1: State change failed: (-2) Need access to UpToDate data</span><br></pre></td></tr></table></figure>
+
+<p>再查看两台主机的<code>/proc/drbd</code>，两台主机的 ro 是相反的。并且已完成了同步</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ubuntu-s1</span><br><span class="line"> 1: cs:SyncSource ro:Primary/Secondary ds:UpToDate/Inconsistent C r-----</span><br><span class="line">    ns:16976 nr:0 dw:0 dr:17616 al:0 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:802224</span><br><span class="line">	[&gt;....................] sync&#x27;ed:  3.0% (802224/819200)K</span><br><span class="line">	finish: 0:04:39 speed: 2,828 (2,828) K/sec</span><br><span class="line"></span><br><span class="line"># ubuntu-s2</span><br><span class="line">1: cs:SyncTarget ro:Secondary/Primary ds:Inconsistent/UpToDate C r-----</span><br><span class="line">    ns:0 nr:41984 dw:41984 dr:0 al:0 bm:0 lo:1 pe:1 ua:0 ap:0 ep:1 wo:f oos:777216</span><br><span class="line">	[&gt;...................] sync&#x27;ed:  6.0% (777216/819200)K</span><br><span class="line">	finish: 0:03:05 speed: 4,196 (4,196) want: 8,120 K/sec</span><br></pre></td></tr></table></figure>
+
+<p>如果状态为<code>Secondary/Unknown</code>，还有可能是出现了脑裂。可以在备节点上操作</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">drbdadm secondary data</span><br><span class="line">drbdadm connect --discard-my-data data</span><br></pre></td></tr></table></figure>
+
+<p>然后在主节点操作<code>drbdadm connect data</code>，再查看是否解决。</p>
+<p>在主节点挂载 DRBD 设备<code>mount /dev/drbd1 /data</code>，备节点是不能挂载的。</p>
+<p>在主节点上测试<code>dd if=/dev/zero of=/data/zero count=1000000</code>，然后在备节点上查看<code>/proc/drbd</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1: cs:Connected ro:Secondary/Primary ds:UpToDate/UpToDate C r-----</span><br><span class="line">   ns:0 nr:575700 dw:575700 dr:0 al:0 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0</span><br></pre></td></tr></table></figure>
+
+<p>容量也同步为 500 多 M，说明数据同步成功。</p>
+<blockquote>
+<p>参考文章</p>
+<p><a target="_blank" rel="noopener" href="http://www.ywnds.com/?p=6619">DRBD 工作原理及安装配置详解</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/guoting1202/p/3975685.html">DRBD 原理知识</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.linbit.com/docs/users-guide-8.4">DRBD 官方文档</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wylfengyujiancheng/article/details/50669947">【高可用 HA】HA 之 DRBD 详解（基于 CentOS7.0）</a></p>
+</blockquote>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>高可用</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E9%9B%86%E7%BE%A4/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>集群</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%90%8C%E6%AD%A5/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>同步</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/DRBD/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>DRBD</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/MySQL%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>MySQL高可用笔记</p>
+          <p class='content'>
+MySQL 高可用概述
+MySQL 多实例
+MySQL 主从复制
+MySQL 常用调优策略
+硬件层优化
+磁盘 I/O 优化
+文件系统层优化
+内核参数优化
+
+
+
+
+
+MySQL 高可用概述MyS...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/Heartbeat%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>Heartbeat笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+Heartbeat 概念
+脑裂
+heartbeat 消息类型
+heartbeat IP 地址接管及故障转移
+
+
+Heartbeat 配置
+配置文件参数
+ha.cf
+authkeys
+hares...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#DRBD-%E6%A6%82%E8%BF%B0"><span class="toc-text">DRBD 概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#DRBD-%E5%8A%9F%E8%83%BD"><span class="toc-text">DRBD 功能</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#DRBD-%E5%9F%BA%E7%A1%80%E6%90%AD%E5%BB%BA"><span class="toc-text">DRBD 基础搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%A4%87"><span class="toc-text">准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%90%AD%E5%BB%BA"><span class="toc-text">搭建</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="DRBD数据同步笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

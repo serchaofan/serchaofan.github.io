@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>LVM逻辑卷与RAID磁盘阵列学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="Linux,LVM,RAID">
+  
+
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        LVM逻辑卷与RAID磁盘阵列学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E7%B3%BB%E7%BB%9F%E8%BF%90%E7%BB%B4/">系统运维</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年8月1日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <span id="more"></span>
+
+<h1 id="LVM-逻辑卷"><a href="#LVM-逻辑卷" class="headerlink" title="LVM 逻辑卷"></a>LVM 逻辑卷</h1><h2 id="LVM-概述"><a href="#LVM-概述" class="headerlink" title="LVM 概述"></a>LVM 概述</h2><p>LVM(<code>Logical Volume Manager</code>)逻辑卷管理器，可以灵活调整存储空间大小，并不会对现有数据造成任何损坏。红帽系的系统全部默认开启了 LVM。</p>
+<p>几个关键术语：</p>
+<ul>
+<li>PV(<code>Physical Volume</code>，物理卷)：最低层的存储设备（硬盘，分区）</li>
+<li>VG(<code>Volume Group</code>，卷组)：单个或多个 PV 构成的存储资源池，不能直接存放数据</li>
+<li>LV(<code>Logical Volume</code>，逻辑卷)：从 VG 中划分出的存储空间，可直接存放数据</li>
+<li>PE(<code>Physical Extend</code>，物理扩展单元)：逻辑层面上最小的存储单元（类似 block），一个 PE 大小 4MB，是告诉 PV，表明存储单元位于 PV 的哪个位置。PE 大小必须满足 2 的指数幂</li>
+<li>LE(<code>Logical Extend</code>，逻辑扩展单元)：与 PE 类似，默认情况下，PE 与 LE 一样大。LE 告诉 LV，表明存储单元处于 VG 的哪个位置</li>
+</ul>
+<p>LVM 创建流程：</p>
+<ol>
+<li>使用几块硬盘或分区（未创建文件系统）创建物理卷，并将分区的识别号设置为 LVM，即<code>8e</code></li>
+<li>将多个物理卷组合成一个卷组，卷组会根据指定的 PE 大小将空间划分为多个 PE，在 LVM 中存储以 PE 为单元</li>
+<li>在卷组中分出逻辑卷，这些逻辑卷在外界看来就是多个独立的硬盘分区</li>
+<li>对逻辑卷制作文件系统，并挂载</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029437.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120029437.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>LVM 写入机制：<br>LV 是从 VG 中划分出来的，LV 中的 PE 很可能来自于多个 PV。在向 LV 存储数据时，有多种存储机制，其中两种是：</p>
+<ul>
+<li>线性模式(<code>linear</code>)：先写完来自于同一个 PV 的 PE，再写来自于下一个 PV 的 PE。</li>
+<li>条带模式(<code>striped</code>)：一份数据拆分成多份，分别写入该 LV 对应的每个 PV 中，所以读写性能较好，类似于 RAID 0。</li>
+</ul>
+<p>尽管<code>striped</code>读写性能较好也不建议使用该模式，因为 lvm 的着重点在于弹性容量扩展而非性能，要实现性能应该使用 RAID 来实现，而且使用<code>striped</code>模式时要进行容量的扩展和收缩将比较麻烦。默认的是使用线性模式。</p>
+<blockquote>
+<p>引用自<a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7049233.html#auto_id_1">骏马金龙的 LVM 详解</a></p>
+</blockquote>
+<h2 id="LVM-创建与调整"><a href="#LVM-创建与调整" class="headerlink" title="LVM 创建与调整"></a>LVM 创建与调整</h2><p>实验环境：</p>
+<ul>
+<li>CentOS7</li>
+<li><code>/dev/sdb</code>　大小 20G</li>
+<li>将<code>/dev/sdb</code>分为 4 个分区，每个分区 5G，并将磁盘标识号设为<code>8e</code>，表示 LVM</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># fdisk -l /dev/sdb</span><br><span class="line"></span><br><span class="line">Disk /dev/sdb: 21.5 GB, 21474836480 bytes, 41943040 sectors</span><br><span class="line">Units = sectors of 1 * 512 = 512 bytes</span><br><span class="line">Sector size (logical/physical): 512 bytes / 512 bytes</span><br><span class="line">I/O size (minimum/optimal): 512 bytes / 512 bytes</span><br><span class="line">Disk label type: dos</span><br><span class="line">Disk identifier: 0xde948938</span><br><span class="line"></span><br><span class="line">   Device Boot      Start         End      Blocks   Id  System</span><br><span class="line">/dev/sdb1            2048    10487807     5242880   8e  Linux LVM</span><br><span class="line">/dev/sdb2        10487808    20973567     5242880   8e  Linux LVM</span><br><span class="line">/dev/sdb3        20973568    31459327     5242880   8e  Linux LVM</span><br><span class="line">/dev/sdb4        31459328    41943039     5241856   8e  Linux LVM</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>准备裸磁盘与裸分区，制作 PV<br>使用<code>pvcreate [裸磁盘/裸分区]</code>创建 PV</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># pvcreate /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4</span><br><span class="line">  Physical volume &quot;/dev/sdb1&quot; successfully created.</span><br><span class="line">  Physical volume &quot;/dev/sdb2&quot; successfully created.</span><br><span class="line">  Physical volume &quot;/dev/sdb3&quot; successfully created.</span><br><span class="line">  Physical volume &quot;/dev/sdb4&quot; successfully created.</span><br></pre></td></tr></table></figure>
+
+<p>可使用<code>pvdisplay [磁盘/分区]</code>查看 pv 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pvdisplay选项列表</span><br><span class="line">  若不指定磁盘或分区，就是查看所有PV</span><br><span class="line">  -m    # 查看该设备中PE的使用分布图</span><br><span class="line">  -s    # 查看pv简短信息</span><br></pre></td></tr></table></figure>
+
+<p><code>pvs</code>或<code>pvscan</code>也可查看所有 PV 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># pvscan</span><br><span class="line">  PV /dev/sda2   VG centos          lvm2 [&lt;19.00 GiB / 0    free]</span><br><span class="line">  PV /dev/sdb4                      lvm2 [&lt;5.00 GiB]</span><br><span class="line">  PV /dev/sdb2                      lvm2 [5.00 GiB]</span><br><span class="line">  PV /dev/sdb1                      lvm2 [5.00 GiB]</span><br><span class="line">  PV /dev/sdb3                      lvm2 [5.00 GiB]</span><br><span class="line">  Total: 5 [&lt;39.00 GiB] / in use: 1 [&lt;19.00 GiB] / in no VG: 4 [&lt;20.00 GiB]</span><br><span class="line">  最后一行显示的是&quot;pv的总容量/已使用的pv容量/空闲的pv容量&quot;</span><br></pre></td></tr></table></figure>
+
+<p><code>pvremove [分区]</code>删除 PV<br><code>pvmove [分区]</code>删除 PV 中的所有数据</p>
+<ol start="2">
+<li>制作 VG<br><code>vgcreate [VG名][多个裸磁盘]</code>制作卷组</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vgcreate选项列表</span><br><span class="line">  -s    # 指定PE大小。不指定默认大小4M</span><br><span class="line">  -l    # 卷组上允许创建的最大逻辑卷数</span><br><span class="line">  -p    # 卷组中允许添加的最大物理卷数</span><br><span class="line">  在创建VG后，只有VG没有数据时才能修改属性，如PE大小</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># vgcreate -s 8M my_vg1 /dev/sdb1 /dev/sdb2</span><br><span class="line">  Volume group &quot;my_vg1&quot; successfully created</span><br><span class="line"># vgcreate -s 8M my_vg2 /dev/sdb3 /dev/sdb4</span><br><span class="line">  Volume group &quot;my_vg2&quot; successfully created</span><br></pre></td></tr></table></figure>
+
+<p><code>vgdisplay [VG名]</code>查看 VG 信息<br><code>vgs</code>和<code>vgscan</code>也可显示所有 VG 信息</p>
+<p><code>vgreduce [VG名] [PV名]</code>从 VG 中删除指定 PV<br><code>vgextend [VG名] [PV名]</code>添加 PV 到 VG 中</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># vgreduce my_vg1 /dev/sdb2</span><br><span class="line">  Removed &quot;/dev/sdb2&quot; from volume group &quot;my_vg1&quot;</span><br><span class="line"># vgextend my_vg1 /dev/sdb2</span><br><span class="line">  Volume group &quot;my_vg1&quot; successfully extended</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vgchange [选项] [VG名]  修改卷组的属性</span><br><span class="line">经常被用来设置卷组是处于活动状态或非活动状态。</span><br><span class="line">处于活动状态的卷组无法被删除，必须使用vgchange命令将卷组设置为非活动状态后才能删除。</span><br><span class="line">  -a y|n 设置卷组的活跃|非活跃状态</span><br></pre></td></tr></table></figure>
+
+<p><code>vgremove [VG名]</code>删除 VG</p>
+<ol start="3">
+<li>创建逻辑卷 LV<br><code>lvcreate -L N -n [LV名][VG名]</code>创建逻辑卷</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">lvcreate选项列表</span><br><span class="line">  -L N    # 指定逻辑卷大小N，若N不是PE的整数倍，系统会自动将LV大小变大为PE整数倍</span><br><span class="line">  -n      # 指定LV名</span><br><span class="line">  -l n    # 指定PE个数，即通过PE个数指定逻辑卷大小</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lvcreate -L 6G -n my_lv1 my_vg1</span><br><span class="line">  Logical volume &quot;my_lv1&quot; created.</span><br><span class="line"># lvcreate -l 1000 -n my_lv2 my_vg2</span><br><span class="line">  Logical volume &quot;my_lv2&quot; created.</span><br><span class="line"></span><br><span class="line"># lvscan</span><br><span class="line">  ACTIVE            &#x27;/dev/centos/swap&#x27; [2.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#x27;/dev/centos/root&#x27; [&lt;17.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#x27;/dev/my_vg2/my_lv2&#x27; [7.81 GiB] inherit</span><br><span class="line">  ACTIVE            &#x27;/dev/my_vg1/my_lv1&#x27; [6.00 GiB] inherit</span><br></pre></td></tr></table></figure>
+
+<p><code>lvdisplay [LV名]</code>查看指定或所有 LV 详细信息<br><code>lvs</code>和<code>lvscan</code>可查看全部 LV 信息</p>
+<p><code>lvextend [选项] +[扩容大小] [LV]</code>用于扩展逻辑卷的空间大小，而不中断应用程序对逻辑卷的访问</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">lvextend选项</span><br><span class="line">  -L 指定逻辑卷的大小</span><br><span class="line">  -l 指定逻辑卷的大小（LE数）</span><br><span class="line">  若不添加加号，则要指定扩容后的大小（一定要比增容前大）</span><br><span class="line">  若添加加号，则要指定要扩容的大小</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lvextend -L +100M /dev/my_vg1/my_lv1</span><br><span class="line">  Rounding size to boundary between physical extents: 104.00 MiB.</span><br><span class="line">  Size of logical volume my_vg1/my_lv1 changed from 6.00 GiB (768 extents) to 6.10 GiB (781 extents).</span><br><span class="line">  Logical volume my_vg1/my_lv1 successfully resized.</span><br><span class="line"></span><br><span class="line"># lvextend -l +10 /dev/my_vg2/my_lv2</span><br><span class="line">  Size of logical volume my_vg2/my_lv2 changed from 7.81 GiB (1000 extents) to 7.89 GiB (1010 extents).</span><br><span class="line">  Logical volume my_vg2/my_lv2 successfully resized.</span><br></pre></td></tr></table></figure>
+
+<p><code>lvreduce [选项] -[缩小大小] [LV]</code>减少 LVM 逻辑卷占用的空间大小。有可能会删除逻辑卷上已有的数据<br>参数与用法与<code>lvextend</code>一致<br><code>lvresize [选项] [+|-][扩大或缩小大小] [LV]</code>调整 LVM 逻辑卷的空间大小，可以增大空间和缩小空间，可能会使逻辑卷上已有的数据丢失<br>参数与用法与<code>lvextend</code>与<code>lvreduce</code>一致。</p>
+<p>若该 LV 已制作完文件系统并挂载完成，而要对该 LV 进行容量的改变操作，首先需要<code>umount</code>将挂载取消，然后使用上述命令进行容量改变操作，然后再制作文件系统并挂载。<br><strong>然而，通过任何查看命令都会发现 LV 大小并没有改变。因此，在改变大小后，还要继续以下操作。</strong></p>
+<ul>
+<li>若文件系统为<code>ext4</code>，则需要执行<code>resize2fs [LV路径]</code></li>
+<li>若文件系统为<code>xfs</code>，则需要执行<code>xfs_growfs [LV路径]</code><br><strong>xfs 文件系统只支持增大分区空间的情况，不支持减小的情况</strong>。硬要减小的话，只能在减小后将逻辑分区重新通过 mkfs.xfs 命令重新格式化才能挂载上，这样的话这个逻辑分区上原来的数据就丢失了。<br><code>xfs</code>是不支持裁剪的，<code>ext</code>是支持裁剪的，所以<code>xfs</code>尽量不要缩小 LV</li>
+</ul>
+<p>建议在修改容量后执行<code>e2fsck -f [LV路径]</code>检查是否修改后的大小会影响数据。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># e2fsck -f /dev/my_vg1/my_lv1</span><br><span class="line">e2fsck 1.42.9 (28-Dec-2013)</span><br><span class="line">Pass 1: Checking inodes, blocks, and sizes</span><br><span class="line">Pass 2: Checking directory structure</span><br><span class="line">Pass 3: Checking directory connectivity</span><br><span class="line">Pass 4: Checking reference counts</span><br><span class="line">Pass 5: Checking group summary information</span><br><span class="line">/dev/my_vg1/my_lv1: 11/400624 files (0.0% non-contiguous), 64167/1599488 blocks</span><br></pre></td></tr></table></figure>
+
+<p><code>lvremove [LV名]</code>删除指定 LV</p>
+<h2 id="LVM-快照"><a href="#LVM-快照" class="headerlink" title="LVM 快照"></a>LVM 快照</h2><p>LVM 提供快照功能，可将逻辑卷的数据进行备份，并可快速恢复</p>
+<p>实验选用<code>/dev/my_vg1/my_lv1</code>，并将该 LV 挂载在<code>/my_lv1</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lvdisplay /dev/my_vg1/my_lv1</span><br><span class="line">  --- Logical volume ---</span><br><span class="line">  LV Path                /dev/my_vg1/my_lv1</span><br><span class="line">  LV Name                my_lv1</span><br><span class="line">  VG Name                my_vg1</span><br><span class="line">......</span><br><span class="line">  LV Size                6.10 GiB</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p><code>lvcreate -s -n [快照名] -L [快照大小] [LV路径]</code>创建快照</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-s 创建快照</span><br><span class="line">-n 指定快照名</span><br><span class="line">-L 快照大小</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lvcreate -s -L 1G -n my_snapshot /dev/my_vg1/my_lv1</span><br><span class="line">  Using default stripesize 64.00 KiB.</span><br><span class="line">  Logical volume &quot;my_snapshot&quot; created.</span><br><span class="line"></span><br><span class="line">可通过lvscan查看，最后多了一条快照信息</span><br><span class="line"># lvscan</span><br><span class="line">  ACTIVE            &#x27;/dev/centos/swap&#x27; [2.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#x27;/dev/centos/root&#x27; [&lt;17.00 GiB] inherit</span><br><span class="line">  ACTIVE            &#x27;/dev/my_vg2/my_lv2&#x27; [7.89 GiB] inherit</span><br><span class="line">  ACTIVE   Original &#x27;/dev/my_vg1/my_lv1&#x27; [6.10 GiB] inherit</span><br><span class="line">  ACTIVE   Snapshot &#x27;/dev/my_vg1/my_snapshot&#x27; [1.00 GiB] inherit</span><br></pre></td></tr></table></figure>
+
+<p>在<code>/my_lv1</code>中创建文件<code>dd if=/dev/zero of=/my_lv1/files count=1 bs=100M</code><br>然后将该 LV 卸载<code>umount /my_lv1</code><br>最后将快照恢复<code>lvconvert --merge /dev/my_vg1/my_snapshot</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lvconvert --merge /dev/my_vg1/my_snapshot</span><br><span class="line">  Merging of volume my_vg1/my_snapshot started.</span><br><span class="line">  my_lv1: Merged: 69.90%</span><br><span class="line">  my_lv1: Merged: 100.00%</span><br><span class="line">快照恢复过后会自动删除</span><br></pre></td></tr></table></figure>
+
+<p>将 LV 重新挂载到<code>/my_lv1</code>，发现文件夹中已经没有任何文件了，说明快照恢复成功。</p>
+<h1 id="RAID-磁盘阵列"><a href="#RAID-磁盘阵列" class="headerlink" title="RAID 磁盘阵列"></a>RAID 磁盘阵列</h1><h2 id="RAID-概述"><a href="#RAID-概述" class="headerlink" title="RAID 概述"></a>RAID 概述</h2><p>Redundant Array of Independent Disks 独立硬盘组，作用是防止硬盘物理损坏以及增加存储设备的吞吐量。<br>常见的 RAID 形式有：<code>RAID 0</code>、<code>RAID 1</code>、<code>RAID 3</code>、<code>RAID 5</code>、<code>RAID 6</code>、<code>RAID 10</code>、<code>RAID 01</code>、<code>RAID 50</code>。</p>
+<ul>
+<li><code>RAID 0</code>：将多个磁盘合并为 1 个大磁盘，读写速度极大提高，但不具冗余，因为通过硬件或软件串联，数据是依次被写入各个硬盘，所以任何一块损坏都会导致数据丢失。</li>
+<li><code>RAID 1</code>：两组以上的 N 个硬盘相互做镜像，让数据被多块硬盘同时写入。一块损坏可立刻通过热交换恢复数据。由于做备份，硬盘空间只有 50%。</li>
+<li><code>RAID 3</code>：将数据条块化分布于不同的硬盘上，使用简单的奇偶校验，并用单块磁盘存放奇偶校验信息。如果一块磁盘失效，奇偶盘及其他数据盘可以重新产生数据;如果奇偶盘失效则不影响数据使用。RAID 3 对于大量的连续数据可提供很好的传输率，但对于随机数据来说，奇偶盘会成为写操作的瓶颈。</li>
+<li><code>RAID 5</code>：使用硬盘分割技术，至少需 3 块硬盘。既提高传输速度，也可实现镜像备份。但采用奇偶校验信息，写速度相当慢，读速度与 RAID0 相近，且镜像保障程度也不及 RAID1。空间利用率高。是在所有磁盘上交叉存储数据与奇偶校验信息，并不是单独保存在某块内存中，而是分别互相保存在每一块硬盘，raid5 并不是备份实际硬盘数据，而是在硬盘出现故障后通过奇偶校验信息尝试恢复数据。<br><code>RAID5</code>的利用率为总可用盘容量的<code>(n-1)/n</code></li>
+<li><code>RAID 6</code>：相较 RAID5 增加第二个独立的奇偶校验信息块，数据可靠性非常高，需要四个以上硬盘</li>
+<li><code>RAID 7</code>：全称是最优化的异步高 I/O 速率和高数据传输率，不仅仅是一种技术，它还是一个独立存储计算机，自身带的操作系统和管理工具，完全可以独立运行。采用了非同步访问，极大地减轻了数据写瓶颈，提高了 I/O 速度，存储计算机操作系统可使主机 I/O 传递性能达到最佳，能够自动执行恢复操作，并可管理备份磁盘的重建过程。该技术已被 raid7 公司垄断。</li>
+<li><code>RAID 10（企业主要用）/01</code>：<ul>
+<li>10 为 1+0 先镜射再分割数据，两个两个组成 raid1，再两组两组组成 raid0，拥有较高速度与较高数据保护性，但需要 4 块以上且数量为偶数的硬盘数，因为使用 raid1，所以利用率也是 50%。安全性比 01 强，速度也比 01 强，恢复速度快于 5</li>
+<li>01 为 0+1 先分割再镜射，两个两个组 raid0，再两组两组组 raid1</li>
+</ul>
+</li>
+<li><code>RAID 50</code>：至少需要 6 块硬盘，将数据分为条带同时存入多个磁盘，以数据校验位保证数据安全，目的在于提高 RAID5 的读写性能</li>
+</ul>
+<h2 id="RAID-基础搭建"><a href="#RAID-基础搭建" class="headerlink" title="RAID 基础搭建"></a>RAID 基础搭建</h2><p>RAID 的创建管理由<code>mdadm</code>命令实现</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">mdadm [模式] [RAID设备名] [选项] [成员设备]</span><br><span class="line">  -a    # 检测设备名</span><br><span class="line">  -As   # 激活raid（停止的时候）</span><br><span class="line">  -n    # 指定设备数量</span><br><span class="line">  -c    # 指定数据块大小</span><br><span class="line">  -l    # 指定raid级别</span><br><span class="line">  -C    # 创建</span><br><span class="line">  -v    # 显示过程</span><br><span class="line">  -G    # 修改raid</span><br><span class="line">  -f    # 模拟设备损坏</span><br><span class="line">  -r    # 移除设备</span><br><span class="line">  [raid] -a [磁盘] 将磁盘添加到raid阵列</span><br><span class="line">  [raid] -r [磁盘] 将磁盘移出raid阵列</span><br><span class="line">  -Q    # 查看摘要信息</span><br><span class="line">  -D    # 查看详细信息（cat /proc/mdstat查看阵列状态）</span><br><span class="line">  -S    # 停止阵列</span><br><span class="line">  -x    # 备份盘个数</span><br><span class="line">  --detail   # 查看RAID阵列</span><br></pre></td></tr></table></figure>
+
+<p>实验目的：搭建<code>RAID 10</code><br>实验环境</p>
+<ul>
+<li>CentOS7</li>
+<li><code>/dev/sdb</code>分出 4 分区，每个 5G 大小</li>
+</ul>
+<p><code>mdadm -Cv /dev/md0 -a yes -n 4 -l 10 /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4</code>创建 RAID</p>
+<p>可通过<code>cat /proc/mstat</code>查看简要 RAID 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># cat /proc/mdstat</span><br><span class="line">Personalities : [raid10]</span><br><span class="line">md0 : active raid10 sdb4[3] sdb3[2] sdb2[1] sdb1[0]</span><br><span class="line">      10475520 blocks super 1.2 512K chunks 2 near-copies [4/4] [UUUU]</span><br></pre></td></tr></table></figure>
+
+<p>也可通过<code>mdadm -D /dev/md0</code>查看指定 RAID 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># mdadm -D /dev/md0</span><br><span class="line">/dev/md0:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Thu Aug  2 09:56:25 2018</span><br><span class="line">        Raid Level : raid10</span><br><span class="line">        Array Size : 10475520 (9.99 GiB 10.73 GB)</span><br><span class="line">      # Array Size总共能使用的空间，因为是raid10，所以总可用空间为400M左右，除去元数据，大于370M左右</span><br><span class="line">     Used Dev Size : 5237760 (5.00 GiB 5.36 GB)</span><br><span class="line">   # Used Dev Size每颗raid组或设备上的可用空间，也即每个RAID1组可用大小为190M左右</span><br><span class="line">      Raid Devices : 4   # raid中设备的个数</span><br><span class="line">     Total Devices : 4   # 总设备个数，包括raid中设备个数，备用设备个数等</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Thu Aug  2 09:57:17 2018</span><br><span class="line">             State : clean</span><br><span class="line">      # 当前raid状态，有clean/degraded(降级)/recovering/resyncing</span><br><span class="line">    Active Devices : 4</span><br><span class="line">   Working Devices : 4</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 0</span><br><span class="line"></span><br><span class="line">            Layout : near=2</span><br><span class="line">   # RAID10数据分布方式，有near/far/of set，默认为near，即数据的副本存储在相邻设备的相同偏移上。</span><br><span class="line">   # near=2表示要备份2份数据</span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line">              Name : bogon:0  (local to host bogon)</span><br><span class="line">              UUID : 1aa0ce46:4762919a:71542e42:47b8bc7b</span><br><span class="line">            Events : 17</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync set-A   /dev/sdb1</span><br><span class="line">       1       8       18        1      active sync set-B   /dev/sdb2</span><br><span class="line">       2       8       19        2      active sync set-A   /dev/sdb3</span><br><span class="line">       3       8       20        3      active sync set-B   /dev/sdb4</span><br></pre></td></tr></table></figure>
+
+<p>制作文件系统并挂载该 RAID<br><code>mkfs.ext4 /dev/md0 &amp;&amp; mount /dev/md0 /mnt/md0</code></p>
+<p>模拟 RAID 损坏，这里模拟损坏<code>/dev/sdb3</code><br><code>mdadm /dev/md0 -f /dev/sdb3</code><br>此时查看 RAID 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># mdadm -D /dev/md0</span><br><span class="line">......</span><br><span class="line">             State : clean, degraded</span><br><span class="line">    Active Devices : 3   # 活跃的设备仅3台</span><br><span class="line">   Working Devices : 3   # 工作中的设备仅3台</span><br><span class="line">    Failed Devices : 1   # 出现故障的设备1台</span><br><span class="line">     Spare Devices : 0</span><br><span class="line">......</span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync set-A   /dev/sdb1</span><br><span class="line">       1       8       18        1      active sync set-B   /dev/sdb2</span><br><span class="line">       -       0        0        2      removed</span><br><span class="line">       3       8       20        3      active sync set-B   /dev/sdb4</span><br><span class="line"></span><br><span class="line">       2       8       19        -      faulty   /dev/sdb3</span><br><span class="line">　　　　# /dev/sdb3的状态为faulty</span><br></pre></td></tr></table></figure>
+
+<p>由于 raid10 允许一组 raid1 存在故障，不会影响使用。</p>
+<p>进行恢复，首先要卸载文件系统<code>umount /mnt/md0</code><br>然后移除<code>/dev/sdb3</code>，<code>mdadm /dev/md0 -r /dev/sdb3</code><br>最后再次添加进 RAID 组，<code>mdadm /dev/md0 -a /dev/sdb3</code><br>立刻查看 RAID 状态</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># mdadm -D /dev/md0</span><br><span class="line">......</span><br><span class="line">   Active Devices : 3</span><br><span class="line">   Working Devices : 4</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 1</span><br><span class="line"></span><br><span class="line">            Layout : near=2</span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line">    Rebuild Status : 38% complete</span><br><span class="line"></span><br><span class="line">              Name : bogon:0  (local to host bogon)</span><br><span class="line">              UUID : 1aa0ce46:4762919a:71542e42:47b8bc7b</span><br><span class="line">            Events : 30</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync set-A   /dev/sdb1</span><br><span class="line">       1       8       18        1      active sync set-B   /dev/sdb2</span><br><span class="line">       4       8       19        2      spare rebuilding   /dev/sdb3</span><br><span class="line">       3       8       20        3      active sync set-B   /dev/sdb4</span><br><span class="line">可以看出此时活跃设备仍为3台，但工作设备已变为4台，空闲设备为1台</span><br><span class="line">Rebuild Status : 38% complete 表示正在重建该设备</span><br><span class="line">在/dev/sdb3的状态上也可看出正在重建rebuilding</span><br></pre></td></tr></table></figure>
+
+<p>若要彻底停用该阵列，只需要先卸载文件系统，然后执行<code>mdadm -S /dev/md0</code>即可。</p>
+<h3 id="使用RAID-5进行备份"><a href="#使用RAID-5进行备份" class="headerlink" title="使用RAID 5进行备份"></a>使用<code>RAID 5</code>进行备份</h3><p><code>mdadm -Cv /dev/md0 -n 3 -x 1 -l 5 /dev/sdb1 /dev/sdb2 /dev/sdb3 /dev/sdb4</code><br>其中<code>-n 3</code>表示选择 3 块磁盘做主盘，<code>-x 1</code>表示选 1 张做备份盘，加起来一共 4 张磁盘。<br>此时查看 RAID 信息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># mdadm -D /dev/md0</span><br><span class="line">/dev/md0:</span><br><span class="line">           Version : 1.2</span><br><span class="line">     Creation Time : Thu Aug  2 10:35:01 2018</span><br><span class="line">        Raid Level : raid5</span><br><span class="line">        Array Size : 10475520 (9.99 GiB 10.73 GB)</span><br><span class="line">     Used Dev Size : 5237760 (5.00 GiB 5.36 GB)</span><br><span class="line">      Raid Devices : 3</span><br><span class="line">     Total Devices : 4</span><br><span class="line">       Persistence : Superblock is persistent</span><br><span class="line"></span><br><span class="line">       Update Time : Thu Aug  2 10:35:28 2018</span><br><span class="line">             State : clean</span><br><span class="line">    Active Devices : 3</span><br><span class="line">   Working Devices : 4</span><br><span class="line">    Failed Devices : 0</span><br><span class="line">     Spare Devices : 1</span><br><span class="line"></span><br><span class="line">            Layout : left-symmetric</span><br><span class="line">        Chunk Size : 512K</span><br><span class="line"></span><br><span class="line">Consistency Policy : resync</span><br><span class="line"></span><br><span class="line">              Name : bogon:0  (local to host bogon)</span><br><span class="line">              UUID : 9d0e9a0d:38372c14:2ad4666f:feb13f5c</span><br><span class="line">            Events : 18</span><br><span class="line"></span><br><span class="line">    Number   Major   Minor   RaidDevice State</span><br><span class="line">       0       8       17        0      active sync   /dev/sdb1</span><br><span class="line">       1       8       18        1      active sync   /dev/sdb2</span><br><span class="line">       4       8       19        2      active sync   /dev/sdb3</span><br><span class="line"></span><br><span class="line">       3       8       20        -      spare   /dev/sdb4</span><br><span class="line">可看出/dev/sdb4做了备份盘，状态为空闲</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><blockquote>
+<p><a target="_blank" rel="noopener" href="https://baike.baidu.com/item/RAID%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97/10588130?fr=aladdin">百度百科–RAID 磁盘阵列</a> &gt; <a target="_blank" rel="noopener" href="http://blog.itpub.net/787018/viewspace-666280/">RAID 基础，RAID10 与 RAID01 比较，RAID10 与 RAID5 比较</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7049501.html">骏马金龙–RAID</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7049233.html">骏马金龙–LVM</a> &gt; <a target="_blank" rel="noopener" href="http://www.hack520.com/169.html">图文并茂 RAID 技术全解</a><br>Linux 就该这么学</p>
+</blockquote>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Linux/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Linux</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/LVM/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>LVM</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/RAID/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>RAID</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/Linux%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Linux性能监控与优化</p>
+          <p class='content'>
+
+所有工具进行系统性能分析的思路都是相同的。
+top 与 htoptop查看动态进程状态，默认每 5 秒刷新一次。
+top  -d：指定top刷新的时间间隔，默认是5 秒  -b：批处理模式，...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/STP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>STP学习笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>基于华三网络
+
+STP
+RSTP
+
+
+
+STP生成树协议（Spinning Tree Protocol，IEEE 802.1D）是二层网络中用于消除环路的协议。
+简单实现原理：
+
+通过阻断冗余链...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#LVM-%E9%80%BB%E8%BE%91%E5%8D%B7"><span class="toc-text">LVM 逻辑卷</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#LVM-%E6%A6%82%E8%BF%B0"><span class="toc-text">LVM 概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LVM-%E5%88%9B%E5%BB%BA%E4%B8%8E%E8%B0%83%E6%95%B4"><span class="toc-text">LVM 创建与调整</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LVM-%E5%BF%AB%E7%85%A7"><span class="toc-text">LVM 快照</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#RAID-%E7%A3%81%E7%9B%98%E9%98%B5%E5%88%97"><span class="toc-text">RAID 磁盘阵列</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#RAID-%E6%A6%82%E8%BF%B0"><span class="toc-text">RAID 概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RAID-%E5%9F%BA%E7%A1%80%E6%90%AD%E5%BB%BA"><span class="toc-text">RAID 基础搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8RAID-5%E8%BF%9B%E8%A1%8C%E5%A4%87%E4%BB%BD"><span class="toc-text">使用RAID 5进行备份</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="LVM逻辑卷与RAID磁盘阵列学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

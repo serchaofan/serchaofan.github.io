@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Tomcat学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="server,Tomcat,web,java">
+  
+
+  
+    <meta name="description" content="tomcat9.0.13，jdk1.8
+
+Tomcat 概述
+Tomcat 结构
+Tomcat 与 HTTP 的通信方式
+Connector
+Container
+Tomcat 连接器
+
+
+
+
+Tomcat 环境搭建
+Tomcat 目录结构
+server.xml
+webapp 结构
+
+
+配置 WEB 应用
+
+
+">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Tomcat学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年8月1日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>tomcat9.0.13，jdk1.8</p>
+<ul>
+<li><a href="#tomcat-%E6%A6%82%E8%BF%B0">Tomcat 概述</a><ul>
+<li><a href="#tomcat-%E7%BB%93%E6%9E%84">Tomcat 结构</a><ul>
+<li><a href="#tomcat-%E4%B8%8E-http-%E7%9A%84%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F">Tomcat 与 HTTP 的通信方式</a></li>
+<li><a href="#connector">Connector</a></li>
+<li><a href="#container">Container</a></li>
+<li><a href="#tomcat-%E8%BF%9E%E6%8E%A5%E5%99%A8">Tomcat 连接器</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#tomcat-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA">Tomcat 环境搭建</a><ul>
+<li><a href="#tomcat-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84">Tomcat 目录结构</a><ul>
+<li><a href="#serverxml">server.xml</a></li>
+<li><a href="#webapp-%E7%BB%93%E6%9E%84">webapp 结构</a></li>
+</ul>
+</li>
+<li><a href="#%E9%85%8D%E7%BD%AE-web-%E5%BA%94%E7%94%A8">配置 WEB 应用</a></li>
+</ul>
+</li>
+</ul>
+<span id="more"></span>
+
+<h1 id="Tomcat-概述"><a href="#Tomcat-概述" class="headerlink" title="Tomcat 概述"></a>Tomcat 概述</h1><p>Tomcat 是 Apache 基金会下的一个核心项目，是一个轻量级的 web 应用服务器，主要用于作为 JSP 应用与 Servlet 的后端服务器。最早项目名叫 catalina，后改名为 tomcat。</p>
+<p>Tomcat 注重于 servlet 引擎，对静态页面的加载不如 apache，因此常常 tomcat 与 apache 组网，apache 用于静态页面生成，动态请求会转发给 tomcat 处理。</p>
+<h2 id="Tomcat-结构"><a href="#Tomcat-结构" class="headerlink" title="Tomcat 结构"></a>Tomcat 结构</h2><p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120105193.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120105193.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>Server 为 Tomcat 的一个实例，一个 JVM 只能包含一个 Tomcat 实例。Server 的端口号为 8005，监听的是 shutdown 命令，若接收到 shutdown 信息，则关闭 tomcat。可在<code>server.xml</code>中看到</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Server port=&quot;8005&quot; shutdown=&quot;SHUTDOWN&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<p>Service 包含两个部分：</p>
+<ul>
+<li>Connector：处理连接相关事务，提供 socket 与（request 和 response）的转化</li>
+<li>Container：封装和管理 servlet，具体处理 request 请求</li>
+</ul>
+<p>一个 Service 只有一个 Container，可有多个 Connector。</p>
+<p>有两个默认的 service：</p>
+<ul>
+<li>一个端口为 8080，负责建立 http 连接</li>
+<li>一个端口为 8009，负责与其他 http 服务器建立连接</li>
+</ul>
+<h3 id="Tomcat-与-HTTP-的通信方式"><a href="#Tomcat-与-HTTP-的通信方式" class="headerlink" title="Tomcat 与 HTTP 的通信方式"></a>Tomcat 与 HTTP 的通信方式</h3><p>有两种方式：</p>
+<ol>
+<li>Tomcat 提供专门的插件 JK，负责 Tomcat 与 HTTP 服务通信，把 JK 插件安装在对方 HTTP 服务器上，当 http 服务器收到请求会先通过 JK 过滤 URL，决定是否把请求发送到 Tomcat。</li>
+<li>AJP 协议（Apache JServ Protocol）。Tomcat 为实现与 HTTP 通信而定制的协议，有很高效率。过程如下：<ol>
+<li>请求到达 Tomcat，经过 Service 交给 Connector，将请求封装为 Request 和 Response 处理</li>
+<li>封装后交给 Container 处理</li>
+<li>再返回给 Container，Connector 通过 Socket 将结果返回给客户端</li>
+</ol>
+</li>
+</ol>
+<h3 id="Connector"><a href="#Connector" class="headerlink" title="Connector"></a>Connector</h3><p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106099.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106099.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>Connector 使用 ProtocolHandler 处理请求，不同 ProtocolHandler 代表不同连接类型</p>
+<p>ProtocolHandler 包含三个部件：</p>
+<ol>
+<li>Endpoint：处理底层 socket 连接，用来实现 TCP/IP。Endpoint 的抽象实现 AbstractEndpoint 定义了两个内部类 Acceptor 和 AsyncTimeout，以及一个接口 Handler<ul>
+<li>Acceptor 用于监听请求</li>
+<li>AsyncTimeout 用于检查异步 Request 超时</li>
+<li>Handler 用于处理接收到的 socket，交给 Processor</li>
+</ul>
+</li>
+<li>Processor：将 Endpoint 收到的 socket 封装成 Request，用来实现 HTTP</li>
+<li>Adapter：将 Request 交给 Container（Servlet 容器）进行具体处理</li>
+</ol>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106059.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106059.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<h3 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h3><p>Container 用于封装 Servlet 以及具体处理 Request 请求</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106376.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106376.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>Container 包含四个子容器：</p>
+<ol>
+<li>Engine：用于管理多个站点，一个 Service 最多一个 Engine</li>
+<li>Host：站点，每个 Host 代表一个虚拟主机，可通过配置 Host 添加站点</li>
+<li>Context：应用，对应程序或一个 （WEB-INF 目录以及下面的 web.xml 文件）</li>
+<li>Wrapper：Servlet</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">webapps</span><br><span class="line">|-- ROOT</span><br><span class="line">|-- docs</span><br><span class="line">|-- examples</span><br><span class="line">|-- host-manager</span><br><span class="line">`-- manager</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>webapps 目录下每个文件夹都是一个 context，ROOT 存放主应用，其他目录存放子应用，整个 webaapps 就是一个 Host 站点。<br>ROOT 下可直接通过域名访问，其他子应用通过域名+路径访问</p>
+<p>Container 使用的 pipeline-valve 处理请求。Pipeline-Valve 是责任链模式</p>
+<blockquote>
+<p>责任链模式：在一个请求处理过程中有很多处理者（handler）依次对请求处理，每个处理者负责自己相应的处理，处理完后将处理后的请求返回，依次让下一个处理者处理。</p>
+</blockquote>
+<p>Pipeline-valve 与普通责任链不同的地方：</p>
+<ul>
+<li>每个 pipeline 都有特定 valve，而且在管道的最后一个执行，称为 Basevalve，该 valve 不可删除</li>
+<li>上层容器的管道 Basevalve 会调用下层容器的管道</li>
+</ul>
+<p>四个子容器的 Basevalve 分别在：</p>
+<ul>
+<li>StandardEngineValve</li>
+<li>StandardHostValve</li>
+<li>StandardContextValve</li>
+<li>StandardWrapperValve</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106386.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120106386.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>Connector 接收的请求会传给最上层的 EnginePipeline，依次执行最终到 StandardWrapperValve。<br>此时 StandardWrapperValve 会创建 Filterchain，调用其 doFilter 方法处理请求，Filterchain 包含配置的与请求匹配的 Filter 和 Servlet，doFilter 会依次调用所有的 Filter 的 doFilter 和 Servlet 的 service 方法，请求即被处理。<br>所有的 PipelineValve 执行完成后，将结果返回给 Connector，Connector 再通过 socket 将结果返回给客户端。</p>
+<h3 id="Tomcat-连接器"><a href="#Tomcat-连接器" class="headerlink" title="Tomcat 连接器"></a>Tomcat 连接器</h3><p>Tomcat 连接器分为两类：</p>
+<ol>
+<li>HTTP 连接器</li>
+<li>Web 服务器连接器</li>
+</ol>
+<p>HTTP 连接器有三种：</p>
+<ul>
+<li>基于 java 的 HTTP/1.1 连接器：Tomcat 默认使用的连接器，即 Coyote；它是 Tomcat 作为 standalone 模式工作时所用到的连接器，可直接响应来自用户浏览器的关于 JSP、servlet 和 HTML 的请求；此连接器是一个 Java 类，定义在 server.xml 当中，默认使用 8080 端口</li>
+<li>高性能 NIO HTTP/1.1 连接器（java 开发）：支持非阻塞式 IO 和 Comnet，在基于库向 tomcat 发起请求时，此连接器表现不俗</li>
+<li>native APR HTTP/1.1 连接器（C++开发）：在负载较大的场景中，此连接器可以提供非常好的性能</li>
+</ul>
+<h1 id="Tomcat-环境搭建"><a href="#Tomcat-环境搭建" class="headerlink" title="Tomcat 环境搭建"></a>Tomcat 环境搭建</h1><p>搭建 Tomcat，首先要配置 JAVA 环境，下载 jdk，解压<code>/usr/local/jdk8</code>。<br>或者直接安装 openjdk，选择版本 1.8</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">debian/ubuntu：</span><br><span class="line">apt-get install openjdk-8-jre openjdk-8-jdk</span><br><span class="line"></span><br><span class="line">设置JAVA_HOME为/usr/lib/jvm/java-8-openjdk-amd64/</span><br><span class="line"></span><br><span class="line">centos/redhat/fedora：</span><br><span class="line">yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel</span><br><span class="line"></span><br><span class="line">设置JAVA_HOME为/usr/lib/jvm/java-1.8.0-openjdk/</span><br></pre></td></tr></table></figure>
+
+<p>然后在<code>/etc/profile</code>配置环境变量</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">export JAVA_HOME=/usr/local/jdk8</span><br><span class="line">export CLASSPATH=$JAVA_HOME/lib</span><br><span class="line">export PATH=$JAVA_HOME/bin:$PATH</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>java -version</code>和<code>javac -version</code>检查是否安装及配置成功</p>
+<h2 id="Tomcat-目录结构"><a href="#Tomcat-目录结构" class="headerlink" title="Tomcat 目录结构"></a>Tomcat 目录结构</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># tree -d -L 1</span><br><span class="line">.</span><br><span class="line">├── bin         # 存放启动和关闭Tomcat的脚本文件</span><br><span class="line">├── conf        # 存放配置文件</span><br><span class="line">├── lib         # 存放服务器支撑jar包</span><br><span class="line">├── logs        # 存放日志文件</span><br><span class="line">├── temp        # 存放临时文件</span><br><span class="line">├── webapps     # web应用目录</span><br><span class="line">└── work        # Tomcat工作目录</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>bin</code>目录</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">├── catalina.sh        # Tomcat的核心脚本文件，用于启动、停止tomcat等操作</span><br><span class="line">├── ciphers.sh</span><br><span class="line">├── configtest.sh</span><br><span class="line">├── daemon.sh</span><br><span class="line">├── digest.sh</span><br><span class="line">├── makebase.sh</span><br><span class="line">├── setclasspath.sh</span><br><span class="line">├── shutdown.sh        # Tomcat停止脚本</span><br><span class="line">├── startup.sh         # Tomcat启动脚本，相当于catalina.sh run，而且是后台运行</span><br><span class="line">├── tool-wrapper.sh</span><br><span class="line">└── version.sh         # 显示Tomcat版本信息</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>conf</code>目录</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">conf/</span><br><span class="line">|-- catalina.policy</span><br><span class="line">|-- catalina.properties</span><br><span class="line">|-- context.xml</span><br><span class="line">|-- jaspic-providers.xml</span><br><span class="line">|-- jaspic-providers.xsd</span><br><span class="line">|-- logging.properties</span><br><span class="line">|-- server.xml</span><br><span class="line">|-- tomcat-users.xml</span><br><span class="line">|-- tomcat-users.xsd</span><br><span class="line">`-- web.xml</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>server.xml：Tomcat 的主配置文件，包含 Service, Connector, Engine, Realm, Valve, Hosts 主组件的相关配置信息；</li>
+<li>web.xml：遵循 Servlet 规范标准的配置文件，用于配置 servlet，并为所有的 Web 应用程序提供包括 MIME 映射等默认配置信息；</li>
+<li>context.xml：所有 host 的默认配置信息；</li>
+<li>tomcat-users.xml：Realm 认证时用到的相关角色、用户和密码等信息；Tomcat 自带的 manager 默认情况下会用到此文件；在 Tomcat 中添加/删除用户，为用户指定角色等将通过编辑此文件实现；</li>
+<li>catalina.policy：Java 相关的安全策略配置文件，在系统资源级别上提供访问控制的能力；</li>
+<li>catalina.properties：Tomcat 内部 package 的定义及访问相关的控制，也包括对通过类装载器装载的内容的控制；Tomcat6 在启动时会事先读取此文件的相关设置；</li>
+</ul>
+<p>Tomcat 以面向对象的方式运行，它可以在运行时动态加载配置文件中定义的对象结构，这有点类似于 apache 的 httpd 模块的调用方式。server.xml 中定义的每个主元素都会被创建为对象，并以某特定的层次结构将这些对象组织在一起。</p>
+<h3 id="server-xml"><a href="#server-xml" class="headerlink" title="server.xml"></a>server.xml</h3><p>配置层次：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;server&gt;</span><br><span class="line">  &lt;service&gt;</span><br><span class="line">    &lt;connector /&gt;</span><br><span class="line">    &lt;engine&gt;</span><br><span class="line">      &lt;host&gt;</span><br><span class="line">        &lt;context&gt;</span><br><span class="line">        &lt;/context&gt;</span><br><span class="line">      &lt;/host&gt;</span><br><span class="line">      &lt;host&gt;</span><br><span class="line">      .....</span><br><span class="line">      &lt;/host&gt;</span><br><span class="line">    &lt;/engine&gt;</span><br><span class="line">  &lt;/service&gt;</span><br><span class="line">&lt;/server&gt;</span><br></pre></td></tr></table></figure>
+
+<p>组件类别：</p>
+<ul>
+<li>顶级组件：位于配置顶层<ul>
+<li>server</li>
+</ul>
+</li>
+<li>容器类组件：可包含其他组件<ul>
+<li>service：</li>
+<li>engine：</li>
+<li>host：</li>
+<li>context：</li>
+<li>webapp：</li>
+</ul>
+</li>
+<li>连接器组件：连接用户请求到 tomcat<ul>
+<li>connector</li>
+</ul>
+</li>
+<li>嵌套类组件：位于容器中，不包含其他组件<ul>
+<li>valve：</li>
+<li>access log valve：</li>
+<li>remote address filter valve：</li>
+<li>logger：</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>Server<br>示例：<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Server port=&quot;8005&quot; shutdown=&quot;SHUTDOWN&quot;&gt;</span><br><span class="line">    &lt;Listener className=&quot;org.apache.catalina.startup.VersionLoggerListener&quot; /&gt;</span><br><span class="line">    ......</span><br><span class="line">&lt;/Server&gt;</span><br></pre></td></tr></table></figure>
+相关属性：<br><code>className</code>: 用于实现此 Server 容器的完全限定类的名称；<br><code>port</code>: 接收 shutdown 指令的端口，默认仅允许通过本机访问，默认为 8005；<br><code>shutdown</code>: 发往此 Server 用于实现关闭 tomcat 实例的命令字符串，默认为 SHUTDOWN；</li>
+<li>Service<br>示例：<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Service name=&quot;Catalina&quot;&gt;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="webapp-结构"><a href="#webapp-结构" class="headerlink" title="webapp 结构"></a>webapp 结构</h3><p>webapp 有特定的组织格式，是一种层次型目录结构；通常包含了 servlet 代码文件、jsp 页面文件、类文件、部署描述符文件等等，一般会打包成归档格式</p>
+<p>示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">examples/</span><br><span class="line">|-- WEB-INF</span><br><span class="line">|   |-- classes</span><br><span class="line">|   |-- jsp</span><br><span class="line">|   |-- jsp2</span><br><span class="line">|   |-- lib</span><br><span class="line">|   |-- tags</span><br><span class="line">|   `-- web.xml</span><br><span class="line">|-- index.html</span><br><span class="line">|-- jsp</span><br><span class="line">|   |--......</span><br><span class="line">|   |-- images</span><br><span class="line">|   |-- include</span><br><span class="line">|   |-- index.html</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>/</code>：web 应用的根目录，ROOT 为根目录内容</li>
+<li><code>/WEB-INF</code>：包含当前 webapp 的 deploy 描述符，如所有的 servlets 和 JSP 等动态文件的详细信息，会话超时时间和数据源等；通常用于定义当前 webapp 特有的资源，通常 web.xml 和 context.xml 均放置于此目录</li>
+<li><code>/WEB-INF/classes</code>：包含所有服务器端类及当前应用程序相关的其它第三方类等</li>
+<li><code>/WEB-INF/lib</code>：包含 JSP 所用到的 JAR 文件，此 webapp 自有能够被打包为 jar 格式的类</li>
+</ul>
+<h2 id="配置-WEB-应用"><a href="#配置-WEB-应用" class="headerlink" title="配置 WEB 应用"></a>配置 WEB 应用</h2><p>有五种方法配置 web 应用</p>
+<ul>
+<li>在<code>conf</code>目录中<code>context.xml</code>中配置，配置会被所有 web 应用加载</li>
+<li>在<code>conf</code>目录中引擎目录(<code>catalina</code>)的主机目录(<code>localhost</code>)下新建<code>server.xml.default</code>配置，会被主机的所有 web 应用加载</li>
+<li>在<code>conf</code>目录中<code>catalina</code>的<code>localhost</code>目录中创建任意一个<code>.xml</code>文件，在文件中添加上下文，而文件名会被用作 web 应用的名称（虚拟站点名）。一个 web 应用可以映射多个虚拟目录。</li>
+<li>在主机目录下<code>META-INF/</code>中<code>context.xml</code></li>
+<li>在<code>conf</code>目录下<code>server.xml</code>中在<code>&lt;Host&gt;</code>中添加上下文（就是 web 应用路径）</li>
+</ul>
+<blockquote>
+<p>参考文章<br><a target="_blank" rel="noopener" href="https://dbaplus.cn/news-134-1930-1.html">四张图带你了解 Tomcat 系统架构</a> &gt; <a target="_blank" rel="noopener" href="http://www.ttlsa.com/tomcat/tomcat-install-and-configure/">Tomcat 安装及配置详解</a></p>
+</blockquote>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/server/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>server</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Tomcat/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Tomcat</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/web/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>web</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/java/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>java</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/Postfix%E9%82%AE%E4%BB%B6%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>Postfix邮件服务器笔记</p>
+          <p class='content'>
+邮件服务概述
+Mail 与 DNS 的相关性
+邮件传送流程
+
+
+常见邮件服务或协议
+SMTP
+使用 SMTP 协议发送邮件
+
+
+POP
+IMAP
+
+
+邮件服务器搭建
+参考文章
+
+
+
+邮件服务概...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>SSH与SSL协议学习笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+SSL/TLS 概念
+SSL 协议架构
+
+
+OpenSSL 概念
+SSH 协议
+sshd 服务
+sshd_config 配置
+密钥分发命令
+
+
+
+
+参考文章
+
+
+
+SSL/TLS 概念SSL（...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Tomcat-%E6%A6%82%E8%BF%B0"><span class="toc-text">Tomcat 概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat-%E7%BB%93%E6%9E%84"><span class="toc-text">Tomcat 结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Tomcat-%E4%B8%8E-HTTP-%E7%9A%84%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F"><span class="toc-text">Tomcat 与 HTTP 的通信方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Connector"><span class="toc-text">Connector</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Container"><span class="toc-text">Container</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Tomcat-%E8%BF%9E%E6%8E%A5%E5%99%A8"><span class="toc-text">Tomcat 连接器</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Tomcat-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-text">Tomcat 环境搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Tomcat-%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84"><span class="toc-text">Tomcat 目录结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#server-xml"><span class="toc-text">server.xml</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#webapp-%E7%BB%93%E6%9E%84"><span class="toc-text">webapp 结构</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE-WEB-%E5%BA%94%E7%94%A8"><span class="toc-text">配置 WEB 应用</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Tomcat学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

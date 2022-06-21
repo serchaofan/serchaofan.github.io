@@ -1,0 +1,1658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Cacti监控学习 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="运维,监控,Cacti,server">
+  
+
+  
+    <meta name="description" content="本篇笔记包含以下内容：
+
+Cacti 原理与安装
+Cacti 安装
+
+
+参考文章
+">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Cacti监控学习
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E7%B3%BB%E7%BB%9F%E8%BF%90%E7%BB%B4/">系统运维</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年9月15日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>本篇笔记包含以下内容：</p>
+<ul>
+<li><a href="#cacti-%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%89%E8%A3%85">Cacti 原理与安装</a><ul>
+<li><a href="#cacti-%E5%AE%89%E8%A3%85">Cacti 安装</a></li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+
+<h1 id="Cacti-原理与安装"><a href="#Cacti-原理与安装" class="headerlink" title="Cacti 原理与安装"></a>Cacti 原理与安装</h1><p>Cacti 是一套基于 PHP，MySQL，SNMP 及 RRDTool 开发的网络流量监测图形分析工具。使用 SNMP 服务获取数据，用 rrdtool 存储和更新数据，并可以使用 rrdtool 生成图表。因此 SNMP 和 RRDtool 是 Cacti 的关键。注意，<strong>Cacti 仅仅是一个展示工具，是一个 PHP 网页，真正实现数据收集以及绘图的是 SNMP 和 RRDtool。</strong></p>
+<p>MySQL 与 PHP 用来存储一些变量数据并对变量进行调用，如主机名、主机 IP、Snmp 团体名、端口号、模板信息等，Snmp 抓取的数据并不存放在 MySQL 中，而是存放在 rrdtool 生成的 RRD 文件中，rrdtool 对数据的更新和存储就是对 RRD 文件的处理，RRD 文件是大小固定的档案文件，能存储的数据量在创建时就被定义好了。</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/1.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/1.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p><strong>Cacti 特点：</strong></p>
+<ul>
+<li>提供图形化页面操作实现<code>rrdtool create</code>命令</li>
+<li>周期性执行能取得数据的命令，并将取回的数据存储在 rrd 文件中</li>
+<li>通过 rrdtool 绘图并展示</li>
+<li>强大的用户管理机制</li>
+<li>丰富的插件库，如 thold，并提供插件框架允许自定义模板</li>
+</ul>
+<p>Cacti 模板分为三类：</p>
+<ul>
+<li>图形模板：定义图形的绘制</li>
+<li>数据模板：定义如何获得数据，如何保存数据</li>
+<li>主机模板：就是分好类的图形模板和数据模板，可直接应用于一个或一类主机</li>
+</ul>
+<p><strong>SNMP 简介</strong></p>
+<p>Simple Network Management Protocol 简单网络管理协议，由一组网络管理的标准组成，包含一个应用层协议、数据库模型（database schema）和一组资源对象。该协议能够支持网络管理系统，用以监测连接到网络上的设备是否有任何引起管理上关注的情况。</p>
+<p>SNMP 管理的网络主要由三部分组成：</p>
+<ul>
+<li>被管理的设备</li>
+<li>SNMP 代理（Agent）</li>
+<li>网络管理系统（NMS）</li>
+</ul>
+<p>三部分之间的关系：</p>
+<ul>
+<li>网络中被管理的每一个设备都存在一个管理信息库（MIB）用于收集并储存管理信息。通过 SNMP 协议，NMS 能获取这些信息。被管理设备，又称为网络单元或网络节点，可以是支持 SNMP 协议的路由器、交换机、服务器或者主机等等。</li>
+<li>SNMP 代理是被管理设备上的一个网络管理软件模块，拥有本地设备的相关管理信息，并用于将它们转换成与 SNMP 兼容的格式，传递给 NMS。</li>
+<li>NMS 运行应用程序来实现监控被管理设备的功能。另外，NMS 还为网络管理提供大量的处理程序及必须的储存资源。</li>
+</ul>
+<blockquote>
+<p>上述资料引用自百度百科 snmp</p>
+</blockquote>
+<p><strong>RRDtool 简介</strong></p>
+<p>Round Robin Database Tool 轮询式数据库工具，是一个强大的绘图的引擎。其中，<code>Round Robin</code>是一种存储数据的方式，使用固定大小的空间来存储数据，并有一个指针指向最新的数据的位置。RRDtool 针对处理的是时序型数据(time-series data)，比如网络带宽，温度，CPU 负载等等这些和时间相关联的数据或者说指标。</p>
+<blockquote>
+<p>上述资料引用自百度百科 rrdtool 和<a target="_blank" rel="noopener" href="https://www.cnblogs.com/yaoyao-start/p/5122289.html">RRDtool 入门详解</a></p>
+</blockquote>
+<h2 id="Cacti-安装"><a href="#Cacti-安装" class="headerlink" title="Cacti 安装"></a>Cacti 安装</h2><p>首先需要搭建 LAMP 环境<code>yum install httpd php php-devel php-gd gd gd-devel gcc glibc openssl* mariadb* zlib* php-xml libxml libjpeg libpng freetype cairo-devel pango-devel</code></p>
+<blockquote>
+<p>cairo 是一个 2D 图形库</p>
+<p>Pango 是一个用于布局和呈现文本的库</p>
+<p>gd 也是一个图形库，用于动态生成图片</p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">yum install net-snmp \</span><br><span class="line">            net-snmp-devel \</span><br><span class="line">            net-snmp-utils \</span><br><span class="line">            lm_sensors \</span><br><span class="line">            rrdtool*</span><br></pre></td></tr></table></figure>
+
+<p>安装 snmp 主程序及相关监控工具。<code>net-snmp</code>会提供两个命令<code>snmpwalk</code>和<code>snmpget</code></p>
+<blockquote>
+<p><code>lm_sensors</code>：是一款基于 linux 系统的硬件监控的软件。可以监控主板，CPU 的工作电压，温度等数据。</p>
+</blockquote>
+<p>开启<code>snmpd</code>和<code>snmptrapd</code>服务<code>systemctl start snmpd snmptrapd</code></p>
+<p>修改 snmp 配置文件<code>/etc/snmp/snmpd.conf</code>，找到<code>com2sec notConfigUser default public</code>一行，复制到下一行并修改</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">com2sec  myuser  127.0.0.1  mycommunity</span><br><span class="line"># 127.0.0.1可配置为要监控的主机或网段</span><br></pre></td></tr></table></figure>
+
+<p>找到下面的 group 配置，同样复制一行并修改</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">group  mygroup  v2c  myuser</span><br></pre></td></tr></table></figure>
+
+<p>再下面，找到 view 配置，添加一行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">view    all     included   .1</span><br></pre></td></tr></table></figure>
+
+<p>保存并重启 snmpd 服务。执行<code>snmpwalk -c mycommunity 127.0.0.1 -v2c</code>可看到大量信息。</p>
+<p>注：如果是被监控主机，只需要安装<code>net-snmp</code>和<code>lm_sensors</code>即可。</p>
+<p>cacti 安装完成后，会在<code>/etc/httpd/conf.d/</code>中生成一个<code>cacti.conf</code>配置文件，可以不用改动，文件中指定的网页存储位置为<code>/usr/share/cacti/</code>，该目录中存放着所有 php 网页。</p>
+<p>cacti 的 sql 数据存放在<code>/usr/share/doc/cacti/cacti.sql</code>需要导入数据库。首先要进入 mariadb，创建数据库<code>cactidb</code>，退出后，<code>mysql -u root -p cactidb &lt; /usr/share/doc/cacti/cacti.sql</code>导入数据库。</p>
+<p>在数据库中创建用户管理<code>cactidb</code>，进入数据库<code>grant all on cactidb.* to cactiadmin@localhost identified by &quot;cactiadmin&quot;;</code>并<code>flush privileges;</code></p>
+<p>设置 httpd 虚拟主机，使用户通过<code>cacti.example.com</code>直接访问</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">  ServerName cacti.example.com</span><br><span class="line">  DocumentRoot &quot;/usr/share/cacti&quot;</span><br><span class="line">  ErrorLog &quot;log/cacti-access.log&quot;</span><br><span class="line">  CustomLog &quot;log/cacti-error.log&quot; common</span><br><span class="line">&lt;/VirtualHost&gt;</span><br><span class="line">&lt;Directory &quot;/usr/share/cacti&quot;&gt;</span><br><span class="line">  Require all granted</span><br><span class="line">  Options Indexes</span><br><span class="line">  AllowOverride None</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>修改管理 Cacti 的配置文件<code>/usr/share/cacti/include/config.php</code>，修改以下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$database_default  = &#x27;cactidb&#x27;;       设置数据库名</span><br><span class="line">$database_username = &#x27;cactiadmin&#x27;;    设置数据库中cacti用户名</span><br><span class="line">$database_password = &#x27;cactiadmin&#x27;;    设置数据库中cacti用户密码</span><br><span class="line">$url_path = &#x27;/&#x27;;     网页访问的路径，可改可不改，若不改就是通过http://localhost/cacti访问</span><br></pre></td></tr></table></figure>
+
+<p>创建普通用户用于周期性执行获取数据的 php 脚本，因为为了安全性，不能让管理员执行。<code>useradd cactiuser</code>，并且将<code>cacti</code>目录中<code>log</code>和<code>rra</code>目录的所属人和所属组都改为<code>cactiuser</code>，<code>chown -R cactiuser:cactiuser /usr/share/cacti/log /usr/share/cacti/rra</code></p>
+<p>至此，安装配置完毕，重启 Apache，浏览器输入<code>cacti.example.com</code>访问，开始网页配置。</p>
+<p>若遇到以下报错：</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/2.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/2.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>说明 cacti 数据库管理员<code>cactiadmin</code>没有对<code>mysql.time_zone_name</code>表的<code>select</code>权限，需要授权。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">grant select on mysql.time_zone_name to cactiadmin@localhost;</span><br><span class="line">flush privileges;</span><br></pre></td></tr></table></figure>
+
+<p>并且要修改<code>/etc/my.cnf</code>配置，在<code>[mysqld]</code>下添加：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">default-time-zone = &#x27;+8:00&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>重启并进入 mysql，使用命令验证</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">show variables like &#x27;%time_zone%&#x27;;</span><br><span class="line">+------------------+--------+</span><br><span class="line">| Variable_name    | Value  |</span><br><span class="line">+------------------+--------+</span><br><span class="line">| system_time_zone | CST    |</span><br><span class="line">| time_zone        | +08:00 |</span><br><span class="line">+------------------+--------+</span><br></pre></td></tr></table></figure>
+
+<p><strong>退出 MySQL，使用命令<code>mysql_tzinfo_to_sql tz_file tz_name | mysql -u root -p mysql</code></strong></p>
+<p><code>tz_file</code>指 timezone 文件，存放在<code>/usr/share/zoneinfo</code>中</p>
+<p>执行<code>mysql_tzinfo_to_sql /usr/share/zoneinfo/Asia/Shanghai Shanghai | mysql -u root -p mysql</code></p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/3.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/3.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>说明 php 的 timezone 没设置，修改<code>/etc/php.ini</code>，把<code>;date.timezone =</code>注释去除，设置为<code>date.timezone = Asia/Shanghai</code>。<a target="_blank" rel="noopener" href="http://www.php.net/manual/zh/timezones.php">支持的时区表</a></p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/4.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/4.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>网页下拉还有类似的问题，需要修改 mysql 表中相应参数。修改<code>/etc/my.cnf</code>文件，在<code>[mysqld]</code>下添加报错项，只要满足即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">max_heap_table_size=2048M</span><br><span class="line">tmp_table_size=2048M</span><br><span class="line">join_buffer_size=2048M</span><br><span class="line">innodb_buffer_pool_size=2048M</span><br><span class="line">innodb_doublewrite=off</span><br><span class="line">innodb_flush_log_at_timeout=10</span><br><span class="line">innodb_read_io_threads=32</span><br><span class="line">innodb_write_io_threads=16</span><br></pre></td></tr></table></figure>
+
+<p>修改完后重启 php 和 mysql</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">systemctl restart mariadb.service</span><br><span class="line">systemctl restart php-fpm.service</span><br></pre></td></tr></table></figure>
+
+<p>重新访问<code>cacti.example.com</code>。进入安装选项页面：</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/5.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/5.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>有两种选项：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">New Primary Server：若是主节点就选这项</span><br><span class="line">New Remote Poller：若是用于收集主节点无法访问的服务器的信息，就选这项</span><br></pre></td></tr></table></figure>
+
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/6.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/6.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>Cacti 的各个路径已自动设置好。由于 Spine 还没有安装，所以会提示错误，但不影响安装。</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/7.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/7.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>安装模板，若为 Linux 或 unix 主机，必选<code>Local Linux Machine</code>，若为 Windows 主机，必选<code>Windows Device</code>。</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/8.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/8.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>用户登录界面，初始的管理员用户名和密码都是<code>admin</code>，登陆后会强制要求更改。</p>
+<p><strong>密码设置有几个条件必须满足：</strong></p>
+<ul>
+<li>大于 8 位</li>
+<li>含有字母大小写</li>
+<li>至少包含一个数字</li>
+<li>至少包含一个特殊字符</li>
+</ul>
+<blockquote>
+<p><strong>若想绕过这些规则，可直接进入 mysql 的 cactidb 库，执行<code>update user_auth set password = md5(&quot;密码&quot;) where username=&quot;admin&quot;;</code></strong></p>
+</blockquote>
+<p>然后就进入了 cacti 主界面。</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/9.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/9.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>查看 Graph 页面，出现以下报错：</p>
+<img src="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/10.png" class="lazyload" data-srcset="/2018/Cacti%E7%9B%91%E6%8E%A7%E5%AD%A6%E4%B9%A0/10.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>是因为没有运行<code>/usr/share/cacti/poller.php</code>，这个是 cacti 自带的脚本，用于收集数据，并生成图表。默认 cacti 每 5 分钟收集一次信息，所以要设置定时，每五分钟运行该脚本。而 cacti 安装后已生成一个文件<code>/etc/cron.d/cacti</code>，内容如下：若带有注释，就将注释去除，并要修改用户名。需要确定<code>crond</code>服务是否启动。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">*/5 * * * * cactiuser /usr/bin/php /usr/share/cacti/poller.php &gt; /dev/null 2&gt;&amp;1</span><br></pre></td></tr></table></figure>
+
+<p>最好通过<code>crontab -e -u cactiuser</code>输入<code>*/5 * * * * /usr/bin/php /usr/share/cacti/poller.php &gt; /dev/null 2&gt;&amp;1</code>设置 cron。</p>
+<p>先手动执行一次<code>php /usr/share/cacti/poller.php &gt; /dev/null 2&gt;&amp;1</code>，可通过查看<code>/var/log/cacti/cacti.log</code>确认是否能获取数据。然后查看<code>/usr/share/cacti/rra/</code>是否有 rrd 文件。然后重启 httpd，访问 cacti 的 Graph。</p>
+
+
+<p>有可能没有启动的原因是系统时间和 BIOS 时间不符，通过<code>hwclock -s</code>同步。</p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><ul>
+<li>Cacti 实战</li>
+<li>Linux 运维之道（第二版）</li>
+<li>高性能网站构建实战</li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/nov5026/p/7486091.html">Cacti 完全使用手册 ( 让你快速个性化使用 Cacti )</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.51cto.com/13555423/2068654">服务器监控系统 cacti</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.tianfeiyu.com/?p=1620">cacti 安装与配置</a></li>
+<li><a target="_blank" rel="noopener" href="https://linux.cn/article-5746-1.html">使用 SNMP 和 Cacti 监控 Linux 服务器 </a></li>
+</ul>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E8%BF%90%E7%BB%B4/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>运维</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E7%9B%91%E6%8E%A7/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>监控</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Cacti/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Cacti</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/server/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>server</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/%E9%87%8D%E5%AD%A6%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>重学数据结构与算法笔记</p>
+          <p class='content'>使用 C 与 python 实现。
+学习目录：
+
+数据结构与算法分析概念
+线性表
+顺序表
+链式表
+
+
+
+
+
+数据结构与算法分析概念数据：是对客观事物的符号表示，是可被计算机识别并加工处理的对象。...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/SQLite%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>SQLite学习笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'></p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Cacti-%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%89%E8%A3%85"><span class="toc-text">Cacti 原理与安装</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Cacti-%E5%AE%89%E8%A3%85"><span class="toc-text">Cacti 安装</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Cacti监控学习";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

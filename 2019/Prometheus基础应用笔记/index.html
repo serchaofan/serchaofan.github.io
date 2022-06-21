@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Prometheus基础应用笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="监控,云计算,Prometheus">
+  
+
+  
+    <meta name="description" content="Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Prometheus基础应用笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E4%BA%91%E8%AE%A1%E7%AE%97/">云计算</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2019年12月13日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具包。Prometheus 于 2016 年加入了 CNCF，这是继 Kubernetes 之后的第二个托管项目。</p>
+<span id="more"></span>
+
+<ul>
+<li><a href="#prometheus-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5">Prometheus 基本概念</a><ul>
+<li><a href="#%E7%89%B9%E7%82%B9">特点</a></li>
+<li><a href="#%E7%BB%84%E6%88%90">组成</a></li>
+<li><a href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B">工作流程</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B">数据模型</a></li>
+<li><a href="#%E5%9B%9B%E7%A7%8D-metric-%E7%B1%BB%E5%9E%8B">四种 Metric 类型</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E9%87%87%E9%9B%86">数据采集</a></li>
+<li><a href="#instance-%E5%92%8C-jobs">instance 和 jobs</a></li>
+<li><a href="#prometheus-server">Prometheus Server</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8-promql-%E6%9F%A5%E8%AF%A2%E7%9B%91%E6%8E%A7%E6%95%B0%E6%8D%AE">使用 PromQL 查询监控数据</a></li>
+<li><a href="#%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0">常用函数</a></li>
+</ul>
+</li>
+<li><a href="#prometheus-server-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E7%BB%86%E8%AF%B4%E6%98%8E">Prometheus Server 配置文件详细说明</a><ul>
+<li><a href="#%E6%8A%93%E5%8F%96%E9%85%8D%E7%BD%AE">抓取配置</a></li>
+<li><a href="#%E5%B0%86-prometheus-%E6%95%B0%E6%8D%AE%E8%87%AA%E5%8A%A8%E5%86%99%E5%85%A5-influxdb">将 prometheus 数据自动写入 influxdb</a></li>
+</ul>
+</li>
+<li><a href="#%E5%B8%B8%E8%A7%81exporter">常见exporter</a><ul>
+<li><a href="#node-exporter">Node exporter</a></li>
+</ul>
+</li>
+<li><a href="#alertmanager-%E6%8A%A5%E8%AD%A6">AlertManager 报警</a></li>
+<li><a href="#http-api">HTTP API</a><ul>
+<li><a href="#%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%AF%B7%E6%B1%82">表达式请求</a></li>
+<li><a href="#%E8%AF%B7%E6%B1%82%E5%85%83%E6%95%B0%E6%8D%AE">请求元数据</a></li>
+<li><a href="#targets">targets</a></li>
+<li><a href="#rules">rules</a></li>
+<li><a href="#alerts">alerts</a></li>
+<li><a href="#alertmanager">alertmanager</a></li>
+<li><a href="#status">status</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="Prometheus-基本概念"><a href="#Prometheus-基本概念" class="headerlink" title="Prometheus 基本概念"></a>Prometheus 基本概念</h2><h3 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h3><p>强大的多维度数据模型：</p>
+<ul>
+<li>时间序列数据通过 metric 名和键值对来区分。</li>
+<li>所有的 metrics 都可以设置任意的多维标签。</li>
+<li>数据模型更随意，不需要刻意设置为以点分隔的字符串。</li>
+<li>可以对数据模型进行聚合，切割和切片操作。</li>
+<li>支持双精度浮点类型，标签可以设为全 unicode。</li>
+<li>灵活而强大的查询语句（PromQL）：在同一个查询语句，可以对多个 metrics 进行乘法、加法、连接、取分数位等操作。</li>
+<li>易于管理： Prometheus server 是一个单独的二进制文件，可直接在本地工作，不依赖于分布式存储。</li>
+<li>高效：平均每个采样点仅占 3.5 bytes，且一个 Prometheus server 可以处理数百万的 metrics。</li>
+<li>使用 pull 模式采集时间序列数据，这样不仅有利于本机测试而且可以避免有问题的服务器推送坏的 metrics。</li>
+<li>可以采用 push gateway 的方式把时间序列数据推送至 Prometheus server 端。</li>
+<li>可以通过服务发现或者静态配置去获取监控的 targets。</li>
+<li>有多种可视化图形界面。</li>
+<li>易于伸缩。</li>
+</ul>
+<blockquote>
+<p>由于数据采集可能会有丢失，所以 Prometheus 不适用对采集数据要 100% 准确的情形</p>
+</blockquote>
+<h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><ul>
+<li>Prometheus Server: 用于收集和存储时间序列数据。Prometheus Server 本身就是一个时序数据库，将采集到的监控数据按照时间序列的方式存储在本地磁盘当中。</li>
+<li>Client Library: 客户端库，为需要监控的服务生成相应的 metrics 并暴露给 Prometheus server。当 Prometheus server 来 pull 时，直接返回实时状态的 metrics。</li>
+<li>Exporters: Exporter 将监控数据采集的端点通过 HTTP 服务的形式暴露给 Prometheus Server，Prometheus Server 通过访问该 Exporter 提供的 Endpoint 端点，即可获取到需要采集的监控数据<br>一般来说可以将 Exporter 分为 2 类：<ul>
+<li>直接采集：这一类 Exporter 直接内置了对 Prometheus 监控的支持，比如 cAdvisor，Kubernetes，Etcd，Gokit 等，都直接内置了用于向 Prometheus 暴露监控数据的端点。</li>
+<li>间接采集：间接采集，原有监控目标并不直接支持 Prometheus，因此我们需要通过 Prometheus 提供的 Client Library 编写该监控目标的监控采集程序。例如： Mysql Exporter，JMX Exporter，Consul Exporter 等。</li>
+</ul>
+</li>
+<li>Alertmanager: 在 Prometheus Server 中支持基于 PromQL 创建告警规则，如果满足 PromQL 定义的规则，则会产生一条告警，而告警的后续处理流程则由 AlertManager 进行管理。在 AlertManager 中我们可以与邮件，Slack 等等内置的通知方式进行集成，也可以通过 Webhook 自定义告警处理方式。<br>AlertManager 即 Prometheus 体系中的告警处理中心。从 Prometheus server 端接收到 alerts 后，会进行去除重复数据，分组，并路由到对收的接受方式，发出报警。常见的接收方式有：电子邮件，pagerduty，OpsGenie, webhook 等。</li>
+<li>Push Gateway: 主要用于短期的 jobs。由于这类 jobs 存在时间较短，可能在 Prometheus 来 pull 之前就消失了。为此，这次 jobs 可以直接向 Prometheus server 端推送它们的 metrics。这种方式主要用于服务层面的 metrics，对于机器层面的 metrices，需要使用 node exporter。</li>
+</ul>
+<h3 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h3><p>Prometheus server 定期从配置好的 jobs 或者 exporters 中拉 metrics，或者接收来自 Pushgateway 发过来的 metrics，或者从其他的 Prometheus server 中拉 metrics。<br>Prometheus server 在本地存储收集到的 metrics，并运行已定义好的 alert.rules，记录新的时间序列或者向 Alertmanager 推送报警。<br>Alertmanager 根据配置文件，对接收到的报警进行处理，发出告警。<br>在图形界面中，可视化采集数据。</p>
+<h3 id="数据模型"><a href="#数据模型" class="headerlink" title="数据模型"></a>数据模型</h3><p>Prometheus 中存储的数据为时间序列，是由 metric 的名字和一系列的标签（键值对）唯一标识的，不同的标签则代表不同的时间序列。</p>
+<ul>
+<li>metric name：该名字应该具有语义，一般用于表示 metric 的功能，例如：<code>http*requests_total</code>, 表示 http 请求的总数。其中，metric 名字由 ASCII 字符，数字，下划线，以及冒号组成，且必须满足正则表达式 <code>[a-zA-Z*:][a-zA-Z0-9_:]\_</code>。</li>
+<li>标签 label：使同一个时间序列有了不同维度的识别。例如 <code>http*requests_total&#123;method=&quot;Get&quot;&#125;</code> 表示所有 http 请求中的 Get 请求。当 method=”post” 时，则为新的一个 metric。标签中的键由 ASCII 字符，数字，以及下划线组成，且必须满足正则表达式 <code>[a-zA-Z*:][a-zA-Z0-9_:]\_</code>。</li>
+<li>样本 timestamp + value：实际的时间序列，每个序列包括一个 float64 的值和一个毫秒级的时间戳。</li>
+<li>格式：<code>&lt;metric name&gt;&#123;&lt;label name&gt;=&lt;label value&gt;, …&#125;</code>，例如：<code>http_requests_total&#123;method=&quot;POST&quot;,endpoint=&quot;/api/tracks&quot;&#125;</code>。</li>
+</ul>
+<h3 id="四种-Metric-类型"><a href="#四种-Metric-类型" class="headerlink" title="四种 Metric 类型"></a>四种 Metric 类型</h3><p>Prometheus 客户端库主要提供四种主要的 metric 类型：</p>
+<ul>
+<li>Counter<br>一种累加的 metric，只增不减（除非系统发生重置），典型的应用如：<code>http_requests_total</code>，<code>node_cpu</code> 等等。<br>例如，查询 <code>http_requests_total&#123;method=&quot;get&quot;, job=&quot;Prometheus&quot;, handler=&quot;query&quot;&#125;</code> 返回 <code>8</code>，10 秒后，再次查询，则返回<code>14</code>。<br>一般在定义 Counter 类型指标的名称时推荐使用_total 作为后缀。</li>
+<li>Gauge<br>一种常规的 metric，典型的应用如：温度，运行的 goroutines 的个数。Gauge 类型的指标侧重于反应系统的当前状态。<br>可以任意加减。<br>例如：<code>go_goroutines&#123;instance=&quot;172.17.0.2&quot;, job=&quot;Prometheus&quot;&#125;</code> 返回值 <code>147</code>，10 秒后返回 <code>124</code>。</li>
+<li>Histogram<br>可以理解为柱状图，典型的应用如：请求持续时间，响应大小。<br>可以对观察结果采样，分组及统计。</li>
+<li>Summary<br>类似于 Histogram, 典型的应用如：请求持续时间，响应大小。<br>提供观测值的 count 和 sum 功能。<br>提供百分位的功能，即可以按百分比划分跟踪结果。</li>
+</ul>
+<p>Histogram 和 Summary 主用用于统计和分析样本的分布情况。</p>
+<p>在大多数情况下人们都倾向于使用某些量化指标的平均值，例如 CPU 的平均使用率、页面的平均响应时间。这种方式的问题很明显，以系统 API 调用的平均响应时间为例：如果大多数 API 请求都维持在 100ms 的响应时间范围内，而个别请求的响应时间需要 5s，那么就会导致某些 WEB 页面的响应时间落到中位数的情况，而这种现象被称为长尾问题。</p>
+<p>为了区分是平均的慢还是长尾的慢，最简单的方式就是按照请求延迟的范围进行分组。例如，统计延迟在 0<del>10ms 之间的请求数有多少而 10</del>20ms 之间的请求数又有多少。通过这种方式可以快速分析系统慢的原因。Histogram 和 Summary 都是为了能够解决这样问题的存在，通过 Histogram 和 Summary 类型的监控指标，我们可以快速了解监控样本的分布情况。</p>
+<p>与 Summary 类型的指标相似之处在于 Histogram 类型的样本同样会反应当前指标的记录的总数(以<code>_count</code> 作为后缀)以及其值的总量（以<code>_sum</code> 作为后缀）。不同在于 Histogram 指标直接反应了在不同区间内样本的个数，区间通过标签 len 进行定义。</p>
+<p>不同在于 Histogram 通过 <code>histogram_quantile</code> 函数是在服务器端计算的分位数。 而 Sumamry 的分位数则是直接在客户端计算完成。因此对于分位数的计算而言，Summary 在通过 PromQL 进行查询时有更好的性能表现，而 Histogram 则会消耗更多的资源。反之对于客户端而言 Histogram 消耗的资源更少。</p>
+<h3 id="数据采集"><a href="#数据采集" class="headerlink" title="数据采集"></a>数据采集</h3><p>Prometheus支持两种数据采集方式：Pull和Push。</p>
+<ul>
+<li>pull：prometheus server去agent拉取数据</li>
+<li>push：agent主动上报数据到prometheus server</li>
+</ul>
+<p>对比：</p>
+<ol>
+<li>Push时效性较好，可将采集数据立即上报。Pull采用周期性采集。若对实时性要求非常高，最好采用Push。</li>
+<li>Push采集后立刻上报，本地不会保存采集数据。Pull正好相反，agent本身需要有一定的数据存储能力，prometheus仅负责简单拉取。</li>
+<li>Push方式，控制方为agent，agent来决定上报周期和内容。Pull的话，prometheus来控制周期和内容。</li>
+<li>Push方式必须在agent配置prometheus的地址。pull方式prometheus可做到与agent解耦，agent不用感知prometheus的存在。</li>
+</ol>
+<p>Prometheus的两种配置更新方式：</p>
+<ol>
+<li>调用prometheus的reload接口，即<code>localhost:9090/-/reload</code>，需要先开启<code>--web.enable-lifecycle</code>，推荐这个方式。</li>
+<li>发送HUP信号给prometheus，即<code>kill -HUP &lt;prometheus进程ID&gt;</code>，需要获取进程id，并不方便。</li>
+</ol>
+<h3 id="instance-和-jobs"><a href="#instance-和-jobs" class="headerlink" title="instance 和 jobs"></a>instance 和 jobs</h3><ul>
+<li>instance: 一个单独 scrape 的目标， 一般对应于一个进程。</li>
+<li>jobs: 一组同种类型的 instances（主要用于保证可扩展性和可靠性）</li>
+</ul>
+<h3 id="Prometheus-Server"><a href="#Prometheus-Server" class="headerlink" title="Prometheus Server"></a>Prometheus Server</h3><p>下载安装：<a target="_blank" rel="noopener" href="https://prometheus.io/download/#prometheus">https://prometheus.io/download/#prometheus</a><br>解压后将目录中的命令（prometheus、promtool、tsdb）放到<code>/usr/local/bin</code> 中。<br>其采集的数据会以文件的形似存储在本地中，默认的存储路径为当前目录的 <code>data/</code>中。若不存在会自动创建。<br>用户也可以通过参数<code>--storage.tsdb.path=&quot;data/&quot;</code>修改本地数据存储的路径。<br><strong>但是启动一定要 <code>prometheus.yml</code> 文件，若没有就启动不了</strong></p>
+<p>默认配置文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">global:</span><br><span class="line">scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.</span><br><span class="line">evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.</span><br><span class="line"></span><br><span class="line">alerting:</span><br><span class="line">alertmanagers:</span><br><span class="line"></span><br><span class="line">- static_configs:</span><br><span class="line">  - targets:</span><br><span class="line"></span><br><span class="line">rule_files:</span><br><span class="line"></span><br><span class="line">scrape_configs:</span><br><span class="line">- job_name: &#x27;prometheus&#x27;</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets: [&#x27;localhost:9090&#x27;]</span><br></pre></td></tr></table></figure>
+
+<p>配置为 systemd 服务：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=Prometheus Server</span><br><span class="line">After=network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">Restart=on-failure</span><br><span class="line">ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/var/lib/prometheus</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>docker 启动：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run -p 9090:9090 -v /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus</span><br></pre></td></tr></table></figure>
+
+<p>启动后，可通过 9090 端口访问 web 页面，或<code>/metrics</code> 访问纯数据</p>
+<p>为了能够让 Prometheus Server 能够从当前 node exporter 获取到监控数据，这里需要修改 Prometheus 配置文件。编辑<code>prometheus.yml</code> 并在 <code>scrape_configs</code> 节点下添加以下内容</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">scrape_configs:</span><br><span class="line">- job_name: &#x27;prometheus&#x27;</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets: [&#x27;localhost:9090&#x27;]</span><br><span class="line"></span><br><span class="line"># 采集 node exporter 监控数据</span><br><span class="line"></span><br><span class="line">- job_name: &#x27;node&#x27;</span><br><span class="line">  static_configs:</span><br><span class="line">  - targets: [&#x27;localhost:9100&#x27;]</span><br></pre></td></tr></table></figure>
+
+
+<p>常见指标：</p>
+<ul>
+<li><code>node*boot_time</code>：系统启动时间</li>
+<li><code>node_cpu</code>：系统 CPU 使用量</li>
+<li><code>nodedisk*</code>：磁盘 IO</li>
+<li><code>nodefilesystem*</code>：文件系统用量</li>
+<li><code>node_load1</code>：系统负载</li>
+<li><code>nodememeory*</code>：内存使用量</li>
+<li><code>nodenetwork*</code>：网络带宽</li>
+<li><code>node_time</code>：当前系统时间</li>
+<li><code>go*_</code>：node exporter 中 go 相关指标</li>
+<li><code>process__</code>：node exporter 自身进程相关运行指标</li>
+</ul>
+<h3 id="使用-PromQL-查询监控数据"><a href="#使用-PromQL-查询监控数据" class="headerlink" title="使用 PromQL 查询监控数据"></a>使用 PromQL 查询监控数据</h3><p>PromQL 是 Prometheus 自定义的一套强大的数据查询语言，除了使用监控指标作为查询关键字以为，还内置了大量的函数，帮助用户进一步对时序数据进行处理。</p>
+<p>可通过<code>node_cpu_seconds_total&#123;mode=&#39;idle&#39;&#125;</code>查找具体的某项的值<br><code>rate(node_cpu_seconds_total&#123;mode=&#39;idle&#39;&#125;[2m])</code> 查看过去 2min 的增长速率</p>
+<p>在 Prometheus 中，每一个暴露监控样本数据的 HTTP 服务称为一个实例。例如在当前主机上运行的 node exporter 可以被称为一个实例(Instance)。<br>当前在每一个 Job 中主要使用了静态配置(static_configs)的方式定义监控目标。除了静态配置每一个 Job 的采集 Instance 地址以外，Prometheus 还支持与 DNS、Consul、E2C、Kubernetes 等进行集成实现自动发现 Instance 实例，并从这些 Instance 上获取监控数据。<br>除了通过使用“up”表达式查询当前所有 Instance 的状态以外，还可以通过 Prometheus UI 中的 Targets 页面查看当前所有的监控采集任务，以及各个任务下所有实例的状态。</p>
+<p>Prometheus 会将所有采集到的样本数据以时间序列（time-series）的方式保存在内存数据库中，并且定时保存到硬盘上。time-series 是按照时间戳和值的序列顺序存放的，我们称之为向量(vector). 每条 time-series 通过指标名称(metrics name)和一组标签集(labelset)命名。</p>
+<p>在 time-series 中的每一个点称为一个样本（sample），样本由以下三部分组成：</p>
+<ul>
+<li>指标(metric)：metric name 和描述当前样本特征的 labelsets;</li>
+<li>时间戳(timestamp)：一个精确到毫秒的时间戳;</li>
+<li>样本值(value)： 一个 float64 的浮点型数据表示当前样本的值。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http_request_total&#123;status=&quot;200&quot;, method=&quot;GET&quot;&#125;@1434417560938 =&gt; 94355</span><br><span class="line">|----metric name--|----------labelsets-------|---timestamp--|--value-|</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>__</code>作为前缀的标签，是系统保留的关键字，只能在系统内部使用。标签的值则可以包含任何 Unicode 编码的字符。在 Prometheus 的底层实现中指标名称实际上是以<code>__name__=&lt;metric name&gt;</code>的形式保存在数据库中的</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http_request_total&#123;status=&quot;200&quot;, method=&quot;GET&quot;&#125; == &#123;__name__=&quot;http_request_total&quot;, status=&quot;200&quot;, method=&quot;GET&quot;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>PromQL 支持用户根据时间序列的标签匹配模式来对时间序列进行过滤，目前主要支持两种匹配模式：完全匹配和正则匹配。<br>PromQL 支持使用=和!=两种完全匹配模式<br>PromQL 还可以支持使用正则表达式作为匹配条件，多个表达式之间使用<code>|</code>进行分离：</p>
+<ul>
+<li>使用<code>label=~regx</code>表示选择那些标签符合正则表达式定义的时间序列；</li>
+<li>反之使用<code>label!~regx</code>进行排除；</li>
+</ul>
+<p>直接查找时，返回值中只会包含该时间序列中的最新的一个样本值，这样的返回结果我们称之为瞬时向量。而相应的这样的表达式称之为瞬时向量表达式。如果我们想过去一段时间范围内的样本数据时，我们则需要使用区间向量表达式，时间范围通过时间范围选择器[]进行定义，通过区间向量表达式查询到的结果我们称为区间向量。时间选择器单位：<code>s - 秒</code>、<code>m - 分钟</code>、<code>h - 小时</code>、<code>d - 天</code>、<code>w - 周</code>、<code>y - 年</code><br>如果想查询，5 分钟前的瞬时样本数据，或昨天一天的区间内的样本数据，可以使用位移操作，位移操作的关键字为 offset。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http_request_total&#123;&#125; offset 5m</span><br><span class="line">http_request_total&#123;&#125;[1d] offset 1d</span><br></pre></td></tr></table></figure>
+
+<p>如果描述样本特征的标签(label)在并非唯一的情况下，通过 PromQL 查询数据，会返回多条满足这些特征维度的时间序列。而 PromQL 提供的聚合操作可以用来对这些时间序列进行处理，形成一条新的时间序列</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 查询系统所有 http 请求的总量</span><br><span class="line">sum(http_request_total)</span><br><span class="line"></span><br><span class="line"># 按照 mode 计算主机 CPU 的平均使用时间</span><br><span class="line">avg(node_cpu) by (mode)</span><br><span class="line"></span><br><span class="line"># 按照主机查询各个主机的 CPU 使用率</span><br><span class="line">sum(sum(irate(node_cpu&#123;mode!=&#x27;idle&#x27;&#125;[5m])) / sum(irate(node_cpu[5m]))) by (instance)</span><br></pre></td></tr></table></figure>
+
+<p>PromQL 还直接支持用户使用标量(Scalar)和字符串(String)。</p>
+<ul>
+<li>标量（Scalar）：一个浮点型的数字值，标量只有一个数字，没有时序。</li>
+<li>字符串（String）：一个简单的字符串值，直接使用字符串，作为 PromQL 表达式，则会直接返回字符串。</li>
+</ul>
+<p>PromQL 还支持丰富的操作符，用户可以使用这些操作符对进一步的对事件序列进行二次加工。这些操作符包括：数学运算符，逻辑运算符，布尔运算符等等。<br>数学运算工作方式：依次找到与左边向量元素匹配（标签完全一致）的右边向量元素进行运算，如果没找到匹配元素，则直接丢弃。同时新的时间序列将不会包含指标名称。<br>布尔运算则支持用户根据时间序列中样本的值，对时间序列进行过滤。瞬时向量与标量进行布尔运算时，PromQL 依次比较向量中的所有时间序列样本的值，如果比较结果为 true 则保留，反之丢弃。瞬时向量与瞬时向量直接进行布尔运算时，同样遵循默认的匹配模式：依次找到与左边向量元素匹配（标签完全一致）的右边向量元素进行相应的操作，如果没找到匹配元素，则直接丢弃。</p>
+<p>布尔运算符的默认行为是对时序数据进行过滤。而在其它的情况下我们可能需要的是真正的布尔结果。这时可以使用 bool 修饰符改变布尔运算的默认行为。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http_requests_total &gt; bool 1000</span><br></pre></td></tr></table></figure>
+
+<p>使用 bool 修改符后，布尔运算不会对时间序列进行过滤，而是直接依次瞬时向量中的各个样本数据与标量的比较结果 0 或者 1。从而形成一条新的时间序列。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">http_requests_total&#123;code=&quot;200&quot;,handler=&quot;query&quot;,instance=&quot;localhost:9090&quot;,job=&quot;prometheus&quot;,method=&quot;get&quot;&#125; 1</span><br><span class="line">http_requests_total&#123;code=&quot;200&quot;,handler=&quot;query_range&quot;,instance=&quot;localhost:9090&quot;,job=&quot;prometheus&quot;,method=&quot;get&quot;&#125; 0</span><br></pre></td></tr></table></figure>
+
+<p>如果是在两个标量之间使用布尔运算，则必须使用 bool 修饰符</p>
+<p>通过集合运算，可以在两个瞬时向量与瞬时向量之间进行相应的集合操作。支持以下集合运算符：<code>and</code> (并且)， <code>or</code> (或者) ，<code>unless</code> (排除)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vector1 and vector2 会产生一个由 vector1 的元素组成的新的向量。该向量包含 vector1 中完全匹配 vector2 中的元素组成。</span><br><span class="line">vector1 or vector2 会产生一个新的向量，该向量包含 vector1 中所有的样本数据，以及 vector2 中没有与 vector1 匹配到的样本数据。</span><br><span class="line">vector1 unless vector2 会产生一个新的向量，新向量中的元素由 vector1 中没有与 vector2 匹配的元素组成。</span><br></pre></td></tr></table></figure>
+
+<p>在 PromQL 操作符中优先级由高到低依次为：</p>
+<ol>
+<li><code>^</code></li>
+<li><code>*</code>, <code>/</code>, <code>%</code></li>
+<li><code>+</code>, <code>-</code></li>
+<li><code>==</code>, <code>!=</code>, <code>&lt;=</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&gt;</code></li>
+<li><code>and</code>, <code>unless</code></li>
+<li><code>or</code></li>
+</ol>
+<p>PromQL 中有两种典型的匹配模式：一对一（one-to-one）,多对一（many-to-one）或一对多（one-to-many）。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vector1 &lt;operator&gt; vector2</span><br></pre></td></tr></table></figure>
+
+<p>在操作符两边表达式标签不一致的情况下，可以使用 on(label list)或者 ignoring(label list）来修改便签的匹配行为。使用 ignoring 可以在匹配时忽略某些便签。而 on 则用于将匹配行为限定在某些便签之内。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; ignoring(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; on(&lt;label list&gt;) &lt;vector expr&gt;</span><br></pre></td></tr></table></figure>
+
+<p>对于样本：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">method_code:http_errors:rate5m&#123;method=&quot;get&quot;, code=&quot;500&quot;&#125; 24</span><br><span class="line">method_code:http_errors:rate5m&#123;method=&quot;get&quot;, code=&quot;404&quot;&#125; 30</span><br><span class="line">method_code:http_errors:rate5m&#123;method=&quot;put&quot;, code=&quot;501&quot;&#125; 3</span><br><span class="line">method_code:http_errors:rate5m&#123;method=&quot;post&quot;, code=&quot;500&quot;&#125; 6</span><br><span class="line">method_code:http_errors:rate5m&#123;method=&quot;post&quot;, code=&quot;404&quot;&#125; 21</span><br><span class="line"></span><br><span class="line">method:http_requests:rate5m&#123;method=&quot;get&quot;&#125; 600</span><br><span class="line">method:http_requests:rate5m&#123;method=&quot;del&quot;&#125; 34</span><br><span class="line">method:http_requests:rate5m&#123;method=&quot;post&quot;&#125; 120</span><br></pre></td></tr></table></figure>
+
+<p>若要对两个关键字进行操作，必须进行限制一方的标签，否则无法匹配，通过 ignoring，将 code 标签忽略</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">method_code:http_errors:rate5m&#123;code=&quot;500&quot;&#125; / ignoring(code) method:http_requests:rate5m</span><br></pre></td></tr></table></figure>
+
+<p>匹配的结果</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;method=&quot;get&quot;&#125; 0.04 // 24 / 600 第一行与第七行</span><br><span class="line">&#123;method=&quot;post&quot;&#125; 0.05 // 6 / 120 第四行与第九行</span><br></pre></td></tr></table></figure>
+
+<p>多对一和一对多两种匹配模式指的是“一”侧的每一个向量元素可以与”多”侧的多个元素匹配的情况。在这种情况下，必须使用 group 修饰符：group_left 或者 group_right 来确定哪一个向量具有更高的基数（充当“多”的角色）。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; ignoring(&lt;label list&gt;) group_left(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; ignoring(&lt;label list&gt;) group_right(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; on(&lt;label list&gt;) group_left(&lt;label list&gt;) &lt;vector expr&gt;</span><br><span class="line">&lt;vector expr&gt; &lt;bin-op&gt; on(&lt;label list&gt;) group_right(&lt;label list&gt;) &lt;vector expr&gt;</span><br></pre></td></tr></table></figure>
+
+<p>多对一和一对多两种模式一定是出现在操作符两侧表达式返回的向量标签不一致的情况。因此需要使用 ignoring 和 on 修饰符来排除或者限定匹配的标签列表。<br>同样用上面的例子，右向量中的元素可能匹配到多个左向量中的元素 因此该表达式的匹配模式为多对一，需要使用 group 修饰符 group_left 指定左向量具有更好的基数。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">method_code:http_errors:rate5m / ignoring(code) group_left method:http_requests:rate5m</span><br></pre></td></tr></table></figure>
+
+<p>匹配结果：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;method=&quot;get&quot;, code=&quot;500&quot;&#125; 0.04 // 24 / 600</span><br><span class="line">&#123;method=&quot;get&quot;, code=&quot;404&quot;&#125; 0.05 // 30 / 600</span><br><span class="line">&#123;method=&quot;post&quot;, code=&quot;500&quot;&#125; 0.05 // 6 / 120</span><br><span class="line">&#123;method=&quot;post&quot;, code=&quot;404&quot;&#125; 0.175 // 21 / 120</span><br></pre></td></tr></table></figure>
+
+<p>group 修饰符只能在比较和数学运算符中使用。在逻辑运算 and,unless 和 or 才注意操作中默认与右向量中的所有元素进行匹配。</p>
+<p>PromQL 聚合可以将瞬时表达式返回的样本数据进行聚合，形成一个具有较少样本值的新的时间序列。</p>
+<ul>
+<li><code>sum</code> (求和)</li>
+<li><code>min</code> (最小值)</li>
+<li><code>max</code> (最大值)</li>
+<li><code>avg</code> (平均值)</li>
+<li><code>stddev</code> (标准差)</li>
+<li><code>stdvar</code> (标准差异)</li>
+<li><code>count</code> (计数)</li>
+<li><code>count_values</code> (对 value 进行计数)</li>
+<li><code>bottomk</code> (样本值最小的 k 个元素)</li>
+<li><code>topk</code> (样本值最大的 k 个元素)</li>
+<li><code>quantile</code> (分布统计)</li>
+</ul>
+<p>这些操作符被用于聚合所有标签维度，或者通过 without 或者 by 子语句来保留不同的维度。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;aggr-op&gt;([parameter,] &lt;vector expression&gt;) [without|by (&lt;label list&gt;)]</span><br></pre></td></tr></table></figure>
+
+<p>其中只有 count_values, quantile, topk, bottomk 支持参数(parameter)。<br>without 用于从计算结果中移除列举的标签，而保留其它标签。by 则正好相反，结果向量中只保留列出的标签，其余标签则移除。通过 without 和 by 可以按照样本的问题对数据进行聚合。</p>
+<p>如果指标 http_requests_total 的时间序列的标签集为 application, instance, 和 group，我们可以通过以下方式计算所有 instance 中每个 application 和 group 的请求总量：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sum(http_requests_total) without (instance)</span><br></pre></td></tr></table></figure>
+
+<p>等价于</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sum(http_requests_total) by (application, group)</span><br></pre></td></tr></table></figure>
+
+<p>如果只需要计算整个应用的 HTTP 请求总量，可以直接使用表达式：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">sum(http_requests_total)</span><br></pre></td></tr></table></figure>
+
+<p><code>count_values</code> 用于时间序列中每一个样本值出现的次数。<code>count_values</code>会为每一个唯一的样本值输出一个时间序列，并且每一个时间序列包含一个额外的标签。这个标签的名字由聚合参数指定，同时这个标签值是唯一的样本值。<br>例如要计算运行每个构建版本的二进制文件的数量：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">count_values(&quot;version&quot;, build_version)</span><br></pre></td></tr></table></figure>
+
+<p>返回结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;count=&quot;641&quot;&#125; 1</span><br><span class="line">&#123;count=&quot;3226&quot;&#125; 2</span><br><span class="line">&#123;count=&quot;644&quot;&#125; 4</span><br></pre></td></tr></table></figure>
+
+<p><code>topk</code> 和 <code>bottomk</code> 则用于对样本值进行排序，返回当前样本值前 n 位，或者后 n 位的时间序列。<br>获取 HTTP 请求数前 5 位的时序样本数据，可以使用表达式：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">topk(5, http_requests_total)</span><br></pre></td></tr></table></figure>
+
+<p><code>quantile</code> 用于计算当前样本数据值的分布情况 <code>quantile(φ, express)</code> ，其中 0 ≤ φ ≤ 1。<br>例如，当 φ 为 0.5 时，即表示找到当前样本数据中的中位数：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">quantile(0.5, http_requests_total)</span><br></pre></td></tr></table></figure>
+
+<p>返回结果如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;&#125; 656</span><br></pre></td></tr></table></figure>
+
+<h3 id="常用函数"><a href="#常用函数" class="headerlink" title="常用函数"></a>常用函数</h3><table>
+<thead>
+<tr>
+<th align="center">函数名</th>
+<th>作用</th>
+<th align="center">函数名</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">abs</td>
+<td>返回绝对值</td>
+<td align="center">absent</td>
+<td>检查是否有样本数据</td>
+</tr>
+<tr>
+<td align="center">ceil</td>
+<td>向上取整</td>
+<td align="center">floor</td>
+<td>向下取整</td>
+</tr>
+<tr>
+<td align="center">changes</td>
+<td>区间向量内每个样本数据值变化的次数</td>
+<td align="center">clamp_max</td>
+<td>样本数据值若大于 max，则改为 max</td>
+</tr>
+<tr>
+<td align="center">clamp_min</td>
+<td>样本数据值若小于 min，则改为 min</td>
+<td align="center">delta</td>
+<td>区间向量第一个元素和最后一个元素之间的差值</td>
+</tr>
+<tr>
+<td align="center">increase</td>
+<td>区间向量中的第一个和最后一个样本并返回其增长量</td>
+<td align="center">irate</td>
+<td>计算区间向量的增长率</td>
+</tr>
+<tr>
+<td align="center">rate</td>
+<td>计算区间向量在时间窗口内平均增长速率</td>
+<td align="center">round</td>
+<td>返回向量中所有样本值的最接近的整数</td>
+</tr>
+<tr>
+<td align="center">sort</td>
+<td>对向量按元素的值进行升序排序</td>
+<td align="center">sort_desc</td>
+<td>对向量按元素的值进行降序排序</td>
+</tr>
+</tbody></table>
+<h2 id="Prometheus-Server-配置文件详细说明"><a href="#Prometheus-Server-配置文件详细说明" class="headerlink" title="Prometheus Server 配置文件详细说明"></a>Prometheus Server 配置文件详细说明</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">global:</span><br><span class="line">  # 查询目标的频率</span><br><span class="line">  [ scrape_interval: &lt;duration&gt; | default = 1m ]</span><br><span class="line"></span><br><span class="line">  # 查询失败的超时时间</span><br><span class="line">  [ scrape_timeout: &lt;duration&gt; | default = 10s ]</span><br><span class="line"></span><br><span class="line">  # 匹配规则的频率</span><br><span class="line">  [ evaluation_interval: &lt;duration&gt; | default = 1m ]</span><br><span class="line"></span><br><span class="line">  # 当与外部系统（外部存储、Alertmanager）联系时，可附加到任意时间序列或告警的标签</span><br><span class="line">  external_labels:</span><br><span class="line">    [ &lt;labelname&gt;: &lt;labelvalue&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 指定规则文件</span><br><span class="line">rule_files:</span><br><span class="line">  [ - &lt;filepath_glob&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 抓取配置</span><br><span class="line">scrape_configs:</span><br><span class="line">  [ - &lt;scrape_config&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 与alertmanager相关的告警配置</span><br><span class="line">alerting:</span><br><span class="line">  alert_relabel_configs:</span><br><span class="line">    [ - &lt;relabel_config&gt; ... ]</span><br><span class="line">  alertmanagers:</span><br><span class="line">    [ - &lt;alertmanager_config&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 配置远端写入特性</span><br><span class="line">remote_write:</span><br><span class="line">  [ - &lt;remote_write&gt; ... ]</span><br><span class="line"></span><br><span class="line"># 配置远端读取特性</span><br><span class="line">remote_read:</span><br><span class="line">  [ - &lt;remote_read&gt; ... ]</span><br></pre></td></tr></table></figure>
+
+<h3 id="抓取配置"><a href="#抓取配置" class="headerlink" title="抓取配置"></a>抓取配置</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">scrape_configs:</span><br><span class="line">  - job_name: &#x27;prometheus&#x27;</span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [&#x27;localhost:9090&#x27;]</span><br><span class="line">  # 采集node exporter监控数据</span><br><span class="line">  - job_name: &#x27;node&#x27;</span><br><span class="line">    static_configs:</span><br><span class="line">      - targets: [&#x27;localhost:9100&#x27;, &quot;192.168.1.13:9100&quot;]</span><br></pre></td></tr></table></figure>
+
+<h3 id="将-prometheus-数据自动写入-influxdb"><a href="#将-prometheus-数据自动写入-influxdb" class="headerlink" title="将 prometheus 数据自动写入 influxdb"></a>将 prometheus 数据自动写入 influxdb</h3><ol>
+<li>安装influxdb，安装1.8版本，非2.0以上版本<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">wget https://dl.influxdata.com/influxdb/releases/influxdb-1.8.10.x86_64.rpm</span><br><span class="line">sudo yum localinstall influxdb-1.8.10.x86_64.rpm</span><br><span class="line"></span><br><span class="line">systemctl start influxdb</span><br></pre></td></tr></table></figure></li>
+<li>进入influxdb，创建prometheus库<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># influx</span><br><span class="line">Connected to http://localhost:8086 version 1.8.10</span><br><span class="line">InfluxDB shell version: 1.8.10</span><br><span class="line">&gt; create database prometheus;</span><br><span class="line">&gt; show databases;</span><br><span class="line">name: databases</span><br><span class="line">name</span><br><span class="line">----</span><br><span class="line">_internal</span><br><span class="line">prometheus</span><br><span class="line">&gt; exit</span><br></pre></td></tr></table></figure></li>
+<li>配置prometheus，在<code>prometheus.yml</code>中添加<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">remote_write:</span><br><span class="line">  - url: &quot;http://192.168.13.41:8086/api/v1/prom/write?db=prometheus&quot;</span><br><span class="line"></span><br><span class="line">remote_read:</span><br><span class="line">  - url: &quot;http://192.168.13.41:8086/api/v1/prom/read?db=prometheus&quot;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://docs.influxdata.com/influxdb/v1.8/supported_protocols/prometheus/">prometheus如何存储influxdb官方文档</a></p>
+</blockquote>
+<h2 id="常见exporter"><a href="#常见exporter" class="headerlink" title="常见exporter"></a>常见exporter</h2><ul>
+<li>node_expoter</li>
+<li>mysqld_exporter</li>
+<li>redis_exporter</li>
+<li>blackbox_exporter</li>
+<li>elasticsearch_exporter<h3 id="Node-exporter"><a href="#Node-exporter" class="headerlink" title="Node exporter"></a>Node exporter</h3></li>
+</ul>
+<p>主要用于暴露 metrics 给 Prometheus，其中 metrics 包括：cpu 的负载，内存的使用情况，网络等。<br>下载安装：<a target="_blank" rel="noopener" href="https://prometheus.io/download/#node_exporter">https://prometheus.io/download/#node_exporter</a><br>解压后将 node_exporter 放到<code>/usr/local/bin</code>中，然后执行。可通过浏览器访问 9100 端口<code>/metrics</code>查看</p>
+<p>可创建 systemd 服务：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=node_exporter</span><br><span class="line">After=network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">ExecStart=/usr/local/bin/node_exporter</span><br><span class="line">Restart=on-failure</span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>docker 启动：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run -d -p 9100:9100 -v /proc:/host/proc -v /sys:/host/sys -v /:/rootfs prom/node-exporter</span><br></pre></td></tr></table></figure>
+<h2 id="AlertManager-报警"><a href="#AlertManager-报警" class="headerlink" title="AlertManager 报警"></a>AlertManager 报警</h2><p>Prometheus 的报警分为两个部分。 Prometheus 服务器中的报警规则将报警发送到 Alertmanager。 然后，报警管理器将重复数据删除，分组，再通过电子邮件，通话通知系统和聊天平台等方法管理这些报警，包括静默，禁止，聚合和发出通知。</p>
+<p>分组（Grouping）将性质相似的警报归类为单个通知。当许多系统同时发生故障，并且可能同时发出数百到数千个警报时，这种方法尤其有用。警报分组、分组通知的定时以及这些通知的接收者由配置文件中的路由树配置。</p>
+<p>抑制（Inhibition）是当某些其他警报已经触发时，抑制某些警报的通知。发出警报，通知整个群集不可访问。 可以将 Alertmanager 配置为使与该群集有关的所有其他警报静音，这样可以防止与实际问题无关的数百或数千个触发警报的通知。通过 Alertmanager 的配置文件配置抑制。</p>
+<p>静默（Sliences）是一种简单地在给定时间内静音警报的简单方法。静默是基于匹配器（matchers）配置的，就像路由树一样。将检查传入警报是否与活动静默的所有相等或正则表达式匹配。如果这样做了，将不会发送该警报的通知。静默是在 Alertmanager 的 web 界面配置的。</p>
+<p>Alertmanager 支持配置以创建高可用性集群。这可以使用<code>——cluster-*</code>标志进行配置。重点是不要在 Prometheus 和它的 Alertmanagers 之间进行负载平衡，而是将 Prometheus 指向一个所有 Alertmanagers 的列表。</p>
+<p>下载：<a target="_blank" rel="noopener" href="https://prometheus.io/download/#alertmanager">https://prometheus.io/download/#alertmanager</a><br>解压后执行 alertmanager 命令，需要当前目录有配置文件，默认配置文件为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">global:</span><br><span class="line">  resolve_timeout: 5m</span><br><span class="line"></span><br><span class="line">route:</span><br><span class="line">  group_by: [&#x27;alertname&#x27;]</span><br><span class="line">  group_wait: 10s</span><br><span class="line">  group_interval: 10s</span><br><span class="line">  repeat_interval: 1h</span><br><span class="line">  receiver: &#x27;web.hook&#x27;</span><br><span class="line">receivers:</span><br><span class="line">- name: &#x27;web.hook&#x27;</span><br><span class="line">  webhook_configs:</span><br><span class="line">  - url: &#x27;http://127.0.0.1:5001/&#x27;</span><br><span class="line">inhibit_rules:</span><br><span class="line">  - source_match:</span><br><span class="line">      severity: &#x27;critical&#x27;</span><br><span class="line">    target_match:</span><br><span class="line">      severity: &#x27;warning&#x27;</span><br><span class="line">    equal: [&#x27;alertname&#x27;, &#x27;dev&#x27;, &#x27;instance&#x27;]</span><br></pre></td></tr></table></figure>
+
+<p>启动 alertmanager，通过 web 的 9093 端口访问</p>
+<p>配置 systemd 服务<code>/usr/lib/systemd/system/alertmanager.service</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[Unit]</span><br><span class="line">Description=Alertmanager</span><br><span class="line">After=network.target</span><br><span class="line"></span><br><span class="line">[Service]</span><br><span class="line">Type=simple</span><br><span class="line">Restart=on-failure</span><br><span class="line">ExecStart=/usr/local/bin/alertmanager --config.file=/etc/prometheus/alertmanager.yml --storage.path=/var/lib/alertmanager</span><br><span class="line"></span><br><span class="line">[Install]</span><br><span class="line">WantedBy=multi-user.target</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="HTTP-API"><a href="#HTTP-API" class="headerlink" title="HTTP API"></a>HTTP API</h2><p>Prometheus API 使用了 JSON 格式的响应内容。 当 API 调用成功后将会返回 2xx 的 HTTP 状态码。当 API 调用失败时可能返回以下几种不同的 HTTP 状态码：</p>
+<ul>
+<li><code>404 Bad Request</code>：参数错误或者缺失</li>
+<li><code>422 Unprocessable Entity</code>：表达式无法执行</li>
+<li><code>503 Service Unavailiable</code>：请求超时或者被中断</li>
+</ul>
+<h3 id="表达式请求"><a href="#表达式请求" class="headerlink" title="表达式请求"></a>表达式请求</h3><p>瞬时数据请求：<code>/api/v1/query</code>，有 GET 和 POST 两种方法。有以下参数，参数间用<code>&amp;</code>连接：</p>
+<ul>
+<li><code>query=</code>：PromQL 表达式</li>
+<li><code>time=&lt;rfc3339 | unix_timestamp&gt;</code>：用于指定用于计算 PromQL 的时间戳。可选参数，默认情况下使用当前系统时间。</li>
+<li><code>timeout=</code>：超时设置。可选参数，默认情况下使用<code>-query.timeout</code> 的全局设置。</li>
+</ul>
+<p>请求结果的<code>data</code>段的结构如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;resultType&quot;: &quot;matrix&quot; | &quot;vector&quot; | &quot;scalar&quot; | &quot;string&quot;,</span><br><span class="line">  &quot;result&quot;: &lt;value&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl &#x27;http://localhost:9090/api/v1/query?query=up&amp;time=2015-07-01T20:10:51.781Z&#x27;</span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : &#123;</span><br><span class="line">      &quot;resultType&quot; : &quot;vector&quot;,</span><br><span class="line">      &quot;result&quot; : [</span><br><span class="line">         &#123;</span><br><span class="line">            &quot;metric&quot; : &#123;</span><br><span class="line">               &quot;__name__&quot; : &quot;up&quot;,</span><br><span class="line">               &quot;job&quot; : &quot;prometheus&quot;,</span><br><span class="line">               &quot;instance&quot; : &quot;localhost:9090&quot;</span><br><span class="line">            &#125;,</span><br><span class="line">            &quot;value&quot;: [ 1435781451.781, &quot;1&quot; ]</span><br><span class="line">         &#125;,</span><br><span class="line">         ...</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>区间数据请求：<code>/api/v1/query_range</code>，支持 GET 和 POST。有以下参数：</p>
+<ul>
+<li><code>query=</code>: PromQL 表达式。</li>
+<li><code>start=</code>: 起始时间。</li>
+<li><code>end=</code>: 结束时间。</li>
+<li><code>step=</code>: 查询步长。</li>
+<li><code>timeout=</code>: 超时设置。可选参数，默认情况下使用<code>-query.timeout</code>的全局设置。</li>
+</ul>
+<p>请求结果的<code>data</code>段结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;resultType&quot;: &quot;matrix&quot;,</span><br><span class="line">  &quot;result&quot;: &lt;value&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl &#x27;http://localhost:9090/api/v1/query_range?query=up&amp;start=2015-07-01T20:10:30.781Z&amp;end=2015-07-01T20:11:00.781Z&amp;step=15s&#x27;</span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : &#123;</span><br><span class="line">      &quot;resultType&quot; : &quot;matrix&quot;,</span><br><span class="line">      &quot;result&quot; : [</span><br><span class="line">         &#123;</span><br><span class="line">            &quot;metric&quot; : &#123;</span><br><span class="line">               &quot;__name__&quot; : &quot;up&quot;,</span><br><span class="line">               &quot;job&quot; : &quot;prometheus&quot;,</span><br><span class="line">               &quot;instance&quot; : &quot;localhost:9090&quot;</span><br><span class="line">            &#125;,</span><br><span class="line">            &quot;values&quot; : [</span><br><span class="line">               [ 1435781430.781, &quot;1&quot; ],</span><br><span class="line">               [ 1435781445.781, &quot;1&quot; ],</span><br><span class="line">               [ 1435781460.781, &quot;1&quot; ]</span><br><span class="line">            ]</span><br><span class="line">         &#125;,</span><br><span class="line">         ...</span><br><span class="line">      ]</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="请求元数据"><a href="#请求元数据" class="headerlink" title="请求元数据"></a>请求元数据</h3><p>请求序列信息：<code>/api/v1/series</code>，有 GET 和 POST 方法。有以下参数：</p>
+<ul>
+<li><code>match[] = &lt;series_selector&gt;</code>：重复的序列选择器参数，用于选择要返回的序列。必须至少提供一个<code>match[]</code>参数。</li>
+<li><code>start = &lt;rfc3339 | unix_timestamp&gt;</code>：开始时间戳。</li>
+<li><code>end = &lt;rfc3339 | unix_timestamp&gt;</code>：结束时间戳。</li>
+</ul>
+<p>查询结果的<code>data</code>部分由一个对象列表组成，这些对象包含标识每个系列的标签名/值对。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -g &#x27;http://localhost:9090/api/v1/series?&#x27; --data-urlencode=&#x27;match[]=up&#x27; --data-urlencode=&#x27;match[]=process_start_time_seconds&#123;job=&quot;prometheus&quot;&#125;&#x27;</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : [</span><br><span class="line">      &#123;</span><br><span class="line">         &quot;__name__&quot; : &quot;up&quot;,</span><br><span class="line">         &quot;job&quot; : &quot;prometheus&quot;,</span><br><span class="line">         &quot;instance&quot; : &quot;localhost:9090&quot;</span><br><span class="line">      &#125;,</span><br><span class="line">      ...</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>获取标签（label）名：<code>/api/v1/labels</code>，支持 GET 和 POST。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl &#x27;localhost:9090/api/v1/labels&#x27;</span><br><span class="line">&#123;</span><br><span class="line">    &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">    &quot;data&quot;: [</span><br><span class="line">        &quot;__name__&quot;,</span><br><span class="line">        &quot;call&quot;,</span><br><span class="line">        &quot;code&quot;,</span><br><span class="line">        &quot;config&quot;,</span><br><span class="line">        &quot;dialer_name&quot;,</span><br><span class="line">        &quot;endpoint&quot;,</span><br><span class="line">        ...</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>获取标签值：<code>/api/v1/label/&lt;label_name&gt;/values</code>，仅支持 GET</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/label/job/values</span><br><span class="line">&#123;</span><br><span class="line">   &quot;status&quot; : &quot;success&quot;,</span><br><span class="line">   &quot;data&quot; : [</span><br><span class="line">      &quot;node&quot;,</span><br><span class="line">      &quot;prometheus&quot;</span><br><span class="line">   ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="targets"><a href="#targets" class="headerlink" title="targets"></a>targets</h3><p>获取 targets：<code>/api/v1/targets</code>，支持 GET。<br>活动（active）目标和已删除（dropped）目标都是响应的一部分。 <code>labels</code>表示在重新标记后的标签集。<code>discoverLabel</code>表示在重新标记之前在服务发现期间检索到的未修改的标签。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/targets</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;activeTargets&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;discoveredLabels&quot;: &#123;</span><br><span class="line">          &quot;__address__&quot;: &quot;127.0.0.1:9090&quot;,</span><br><span class="line">          &quot;__metrics_path__&quot;: &quot;/metrics&quot;,</span><br><span class="line">          &quot;__scheme__&quot;: &quot;http&quot;,</span><br><span class="line">          &quot;job&quot;: &quot;prometheus&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;labels&quot;: &#123;</span><br><span class="line">          &quot;instance&quot;: &quot;127.0.0.1:9090&quot;,</span><br><span class="line">          &quot;job&quot;: &quot;prometheus&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;scrapeUrl&quot;: &quot;http://127.0.0.1:9090/metrics&quot;,</span><br><span class="line">        &quot;lastError&quot;: &quot;&quot;,</span><br><span class="line">        &quot;lastScrape&quot;: &quot;2017-01-17T15:07:44.723715405+01:00&quot;,</span><br><span class="line">        &quot;health&quot;: &quot;up&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;droppedTargets&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;discoveredLabels&quot;: &#123;</span><br><span class="line">          &quot;__address__&quot;: &quot;127.0.0.1:9100&quot;,</span><br><span class="line">          &quot;__metrics_path__&quot;: &quot;/metrics&quot;,</span><br><span class="line">          &quot;__scheme__&quot;: &quot;http&quot;,</span><br><span class="line">          &quot;job&quot;: &quot;node&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="rules"><a href="#rules" class="headerlink" title="rules"></a>rules</h3><p>获取 rules：<code>/api/v1/rules</code>，支持 GET。返回当前加载的报警和记录规则的列表，还返回由每个报警规则的 Prometheus 实例触发的当前活动报警。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/rules</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    &quot;data&quot;: &#123;</span><br><span class="line">        &quot;groups&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;rules&quot;: [</span><br><span class="line">                    &#123;</span><br><span class="line">                        &quot;alerts&quot;: [</span><br><span class="line">                            &#123;</span><br><span class="line">                                &quot;activeAt&quot;: &quot;2018-07-04T20:27:12.60602144+02:00&quot;,</span><br><span class="line">                                &quot;annotations&quot;: &#123;</span><br><span class="line">                                    &quot;summary&quot;: &quot;High request latency&quot;</span><br><span class="line">                                &#125;,</span><br><span class="line">                                &quot;labels&quot;: &#123;</span><br><span class="line">                                    &quot;alertname&quot;: &quot;HighRequestLatency&quot;,</span><br><span class="line">                                    &quot;severity&quot;: &quot;page&quot;</span><br><span class="line">                                &#125;,</span><br><span class="line">                                &quot;state&quot;: &quot;firing&quot;,</span><br><span class="line">                                &quot;value&quot;: &quot;1e+00&quot;</span><br><span class="line">                            &#125;</span><br><span class="line">                        ],</span><br><span class="line">                        &quot;annotations&quot;: &#123;</span><br><span class="line">                            &quot;summary&quot;: &quot;High request latency&quot;</span><br><span class="line">                        &#125;,</span><br><span class="line">                        &quot;duration&quot;: 600,</span><br><span class="line">                        &quot;health&quot;: &quot;ok&quot;,</span><br><span class="line">                        &quot;labels&quot;: &#123;</span><br><span class="line">                            &quot;severity&quot;: &quot;page&quot;</span><br><span class="line">                        &#125;,</span><br><span class="line">                        &quot;name&quot;: &quot;HighRequestLatency&quot;,</span><br><span class="line">                        &quot;query&quot;: &quot;job:request_latency_seconds:mean5m&#123;job=\&quot;myjob\&quot;&#125; &gt; 0.5&quot;,</span><br><span class="line">                        &quot;type&quot;: &quot;alerting&quot;</span><br><span class="line">                    &#125;,</span><br><span class="line">                    &#123;</span><br><span class="line">                        &quot;health&quot;: &quot;ok&quot;,</span><br><span class="line">                        &quot;name&quot;: &quot;job:http_inprogress_requests:sum&quot;,</span><br><span class="line">                        &quot;query&quot;: &quot;sum(http_inprogress_requests) by (job)&quot;,</span><br><span class="line">                        &quot;type&quot;: &quot;recording&quot;</span><br><span class="line">                    &#125;</span><br><span class="line">                ],</span><br><span class="line">                &quot;file&quot;: &quot;/rules.yaml&quot;,</span><br><span class="line">                &quot;interval&quot;: 60,</span><br><span class="line">                &quot;name&quot;: &quot;example&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;status&quot;: &quot;success&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="alerts"><a href="#alerts" class="headerlink" title="alerts"></a>alerts</h3><p>获取 alerts：<code>/api/v1/alerts</code>，支持 GET。返回所有启用的报警的列表。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/alerts</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    &quot;data&quot;: &#123;</span><br><span class="line">        &quot;alerts&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;activeAt&quot;: &quot;2018-07-04T20:27:12.60602144+02:00&quot;,</span><br><span class="line">                &quot;annotations&quot;: &#123;&#125;,</span><br><span class="line">                &quot;labels&quot;: &#123;</span><br><span class="line">                    &quot;alertname&quot;: &quot;my-alert&quot;</span><br><span class="line">                &#125;,</span><br><span class="line">                &quot;state&quot;: &quot;firing&quot;,</span><br><span class="line">                &quot;value&quot;: &quot;1e+00&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;status&quot;: &quot;success&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="alertmanager"><a href="#alertmanager" class="headerlink" title="alertmanager"></a>alertmanager</h3><p>获取 alertmanager 信息：<code>/api/v1/alertmanagers</code>。支持 GET。返回 Prometheus alertmanager 发现的当前状态的概述。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/alertmanagers</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;activeAlertmanagers&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;url&quot;: &quot;http://127.0.0.1:9090/api/v1/alerts&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;droppedAlertmanagers&quot;: [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;url&quot;: &quot;http://127.0.0.1:9093/api/v1/alerts&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="status"><a href="#status" class="headerlink" title="status"></a>status</h3><p>获取该结点的当前的 Prometheus 配置：<code>/api/v1/status/config</code>，支持 GET。<br>配置作为转储的 YAML 文件返回。 由于 YAML 库的限制，不包括 YAML 注释。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/status/config</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;yaml&quot;: &quot;&lt;content of the loaded config file in YAML&gt;&quot;,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>获取配置 Prometheus 的标志值：<code>/api/v1/status/flags</code>，支持 GET。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/status/flags</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;alertmanager.notification-queue-capacity&quot;: &quot;10000&quot;,</span><br><span class="line">    &quot;alertmanager.timeout&quot;: &quot;10s&quot;,</span><br><span class="line">    &quot;log.level&quot;: &quot;info&quot;,</span><br><span class="line">    &quot;query.lookback-delta&quot;: &quot;5m&quot;,</span><br><span class="line">    &quot;query.max-concurrency&quot;: &quot;20&quot;,</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>获取关于 Prometheus 服务器的各种运行时信息属性：<code>/api/v1/status/runtimeinfo</code>，支持 GET。<br>根据运行时属性的性质，返回的值具有不同的类型。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/status/runtimeinfo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;startTime&quot;: &quot;2019-11-02T17:23:59.301361365+01:00&quot;,</span><br><span class="line">    &quot;CWD&quot;: &quot;/&quot;,</span><br><span class="line">    &quot;reloadConfigSuccess&quot;: true,</span><br><span class="line">    &quot;lastConfigTime&quot;: &quot;2019-11-02T17:23:59+01:00&quot;,</span><br><span class="line">    &quot;chunkCount&quot;: 873,</span><br><span class="line">    &quot;timeSeriesCount&quot;: 873,</span><br><span class="line">    &quot;corruptionCount&quot;: 0,</span><br><span class="line">    &quot;goroutineCount&quot;: 48,</span><br><span class="line">    &quot;GOMAXPROCS&quot;: 4,</span><br><span class="line">    &quot;GOGC&quot;: &quot;&quot;,</span><br><span class="line">    &quot;GODEBUG&quot;: &quot;&quot;,</span><br><span class="line">    &quot;storageRetention&quot;: &quot;15d&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>获取关于 Prometheus 服务器的各种构建信息属性：<code>/api/v1/status/buildinfo</code>，支持 GET。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl http://localhost:9090/api/v1/status/buildinfo</span><br><span class="line">&#123;</span><br><span class="line">  &quot;status&quot;: &quot;success&quot;,</span><br><span class="line">  &quot;data&quot;: &#123;</span><br><span class="line">    &quot;version&quot;: &quot;2.13.1&quot;,</span><br><span class="line">    &quot;revision&quot;: &quot;cb7cbad5f9a2823a622aaa668833ca04f50a0ea7&quot;,</span><br><span class="line">    &quot;branch&quot;: &quot;master&quot;,</span><br><span class="line">    &quot;buildUser&quot;: &quot;julius@desktop&quot;,</span><br><span class="line">    &quot;buildDate&quot;: &quot;20191102-16:19:59&quot;,</span><br><span class="line">    &quot;goVersion&quot;: &quot;go1.13.1&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E7%9B%91%E6%8E%A7/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>监控</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E4%BA%91%E8%AE%A1%E7%AE%97/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>云计算</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Prometheus/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Prometheus</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2019/5G-NSA%E4%B8%8ESA%E6%A6%82%E5%BF%B5%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>5G NSA与SA概念笔记</p>
+          <p class='content'>
+5G 组网方案
+SA 组网
+NSA 组网
+3 系组网
+7 系组网
+4 系组网
+
+
+
+
+
+第五代移动通信技术（5th generation mobile networks 或 5th gener...</p>
+        </a>
+      
+      
+        <a class='next' href='/2019/PowerShell%E5%AE%9E%E6%88%98%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>PowerShell实战笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>本笔记主要参照《Windows PowerShell 实战指南》的步骤学习，以及知识点补充。目录参照该书。
+
+
+
+帮助系统
+运行命令
+提供程序
+管道
+终止进程或停止服务
+读取 csv 或 XML...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Prometheus-%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="toc-text">Prometheus 基本概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%B9%E7%82%B9"><span class="toc-text">特点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E6%88%90"><span class="toc-text">组成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-text">工作流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B"><span class="toc-text">数据模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E7%A7%8D-Metric-%E7%B1%BB%E5%9E%8B"><span class="toc-text">四种 Metric 类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E9%87%87%E9%9B%86"><span class="toc-text">数据采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#instance-%E5%92%8C-jobs"><span class="toc-text">instance 和 jobs</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Prometheus-Server"><span class="toc-text">Prometheus Server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-PromQL-%E6%9F%A5%E8%AF%A2%E7%9B%91%E6%8E%A7%E6%95%B0%E6%8D%AE"><span class="toc-text">使用 PromQL 查询监控数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0"><span class="toc-text">常用函数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Prometheus-Server-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E8%AF%A6%E7%BB%86%E8%AF%B4%E6%98%8E"><span class="toc-text">Prometheus Server 配置文件详细说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%93%E5%8F%96%E9%85%8D%E7%BD%AE"><span class="toc-text">抓取配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86-prometheus-%E6%95%B0%E6%8D%AE%E8%87%AA%E5%8A%A8%E5%86%99%E5%85%A5-influxdb"><span class="toc-text">将 prometheus 数据自动写入 influxdb</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81exporter"><span class="toc-text">常见exporter</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Node-exporter"><span class="toc-text">Node exporter</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AlertManager-%E6%8A%A5%E8%AD%A6"><span class="toc-text">AlertManager 报警</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HTTP-API"><span class="toc-text">HTTP API</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%AF%B7%E6%B1%82"><span class="toc-text">表达式请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%B7%E6%B1%82%E5%85%83%E6%95%B0%E6%8D%AE"><span class="toc-text">请求元数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#targets"><span class="toc-text">targets</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rules"><span class="toc-text">rules</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#alerts"><span class="toc-text">alerts</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#alertmanager"><span class="toc-text">alertmanager</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#status"><span class="toc-text">status</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Prometheus基础应用笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

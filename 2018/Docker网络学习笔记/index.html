@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>Docker网络学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="网络,docker">
+  
+
+  
+    <meta name="description" content="主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        Docker网络学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/%E4%BA%91%E8%AE%A1%E7%AE%97/">云计算</a>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年4月27日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p><strong>主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记</strong></p>
+<span id="more"></span>
+
+<h1 id="Docker-网络模式"><a href="#Docker-网络模式" class="headerlink" title="Docker 网络模式"></a>Docker 网络模式</h1><p>目前 Docker 容器共有 5 种网络模式：</p>
+<ul>
+<li>桥接模式（bridge）</li>
+<li>主机模式（host）</li>
+<li>容器模式（container）</li>
+<li>无网络模式（none）</li>
+<li>用户自定义模式（user-defined）</li>
+</ul>
+<p>当安装完 docker 后，会默认创建三个网络，可通过<code>docker network ls</code>查看</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker network ls</span><br><span class="line">NETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">01ec14a3a84c        bridge              bridge              local</span><br><span class="line">56d5a7a9b06c        host                host                local</span><br><span class="line">9cbd2d449df7        none                null                local</span><br></pre></td></tr></table></figure>
+
+<p>用户可在运行容器时通过<code>--network=</code>指定网络。</p>
+<h2 id="桥接模式-bridge"><a href="#桥接模式-bridge" class="headerlink" title="桥接模式 bridge"></a>桥接模式 bridge</h2><p>bridge 是 docker 默认选择的网络，而网桥就是 docker0 通过<code>ifconfig</code>即可看到。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ifconfig</span><br><span class="line">docker0: flags=4099&lt;UP,BROADCAST,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet 172.17.0.1  netmask 255.255.0.0  broadcast 0.0.0.0</span><br><span class="line">		......</span><br></pre></td></tr></table></figure>
+
+<p>创建容器时若未指定 network 或网桥，就会默认挂到 docker0 网桥上。<br>docker0 的网段为 172.17.0.0/16，网关地址为 172.17.0.1，可通过<code>docker inspect bridge</code>查看。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker inspect bridge</span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;bridge&quot;,</span><br><span class="line">        ......</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;172.17.0.0/16&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;172.17.0.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">    ......</span><br></pre></td></tr></table></figure>
+
+<p>docker daemon 会创建一对对等接口：虚拟网桥上的 vethxxx 和容器的 eth0。veth 放置在宿主机的命名空间中，将宿主机上的所有网络为 bridge 的容器都连接到这个内部网络中，同时 daemon 会从网桥的私有地址空间中分配一个 IP 地址和子网给该容器。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057950.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057950.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ifconfig</span><br><span class="line">......</span><br><span class="line">veth7576df5: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::9023:faff:fe28:14b3  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether 92:23:fa:28:14:b3  txqueuelen 0  (Ethernet)</span><br><span class="line">		......</span><br><span class="line"></span><br><span class="line">vethab244c0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500</span><br><span class="line">        inet6 fe80::d047:b2ff:fee4:89c8  prefixlen 64  scopeid 0x20&lt;link&gt;</span><br><span class="line">        ether d2:47:b2:e4:89:c8  txqueuelen 0  (Ethernet)</span><br><span class="line">		......</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>连接同一个 bridge 网络的容器间能够通过 IP 地址互相通信。<br>由于运行容器默认使用 bridge 网络，所以若要运行对外提供访问的服务，如 web 服务，就必须暴露端口，通过<code>-p</code>（指定容器暴露端口）或<code>-P</code>（发布容器所有端口）发布容器暴露的端口。</p>
+<blockquote>
+<p>默认情况下，创建容器时不会将任何端口发布到外部。若通过<code>-p</code>或<code>--publish</code>发布端口，会创建一个防火墙规则，将容器端口映射到宿主机上的端口。</p>
+</blockquote>
+<p>Docker 在 bridge 网络上不支持服务自动发现。如果需要通过容器名实现容器间的互相通信，就要设置连接属性<code>--link=容器名:别名</code>（官方并不推荐，已快被淘汰，官方推荐用<code>user-definded</code>网络实现互通）。<br>容器内所有的环境变量都可供连接到它的容器使用，可能会造成安全隐患。</p>
+<h2 id="主机模式-host"><a href="#主机模式-host" class="headerlink" title="主机模式 host"></a>主机模式 host</h2><p>在此模式下，容器网络与宿主机网络间的隔离将被禁止，容器共享宿主机的网络命名空间，使容器直接暴露在公共网络中。因此，需要通过端口映射（Port Mapping）进行协调。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057367.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057367.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker run -it --network=host alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">br-7673688a6ae1 Link encap:Ethernet  HWaddr 02:42:DC:D4:64:FA</span><br><span class="line">          inet addr:172.22.0.1  Bcast:172.22.255.255  Mask:255.255.0.0</span><br><span class="line">		  ......</span><br><span class="line"></span><br><span class="line">docker0   Link encap:Ethernet  HWaddr 02:42:81:58:18:0C</span><br><span class="line">          inet addr:172.17.0.1  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">		  ......</span><br><span class="line"></span><br><span class="line">ens33     Link encap:Ethernet  HWaddr 00:0C:29:58:0C:12</span><br><span class="line">          inet addr:192.168.163.101  Bcast:192.168.163.255  Mask:255.255.255.0</span><br><span class="line">		  ......</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>由此可知，当使用 host 模式网络时，容器实际上继承了宿主机的 IP 地址，并且在容器中可以看到宿主机的所有网卡。</p>
+<p>因为没有路由开销，因此主机模式会比 bridge 模式更快。但是由于容器直接被暴露在公共网络中，会有安全隐患。</p>
+<h2 id="容器网络-container"><a href="#容器网络-container" class="headerlink" title="容器网络 container"></a>容器网络 container</h2><p>在该模式，新创建的容器和已经存在的一个容器共享一个网络命名空间。两个容器除了网络的命名空间，其他的如文件系统、进程列表等仍然是隔离的。两个容器可以通过环回口进行设备通信。该模式也是 Kubernetes 使用的网络模式。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057940.jpg" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057940.jpg" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>该模式通过<code>--network=container:另一个已存在的容器</code>实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker run -it --name container_A alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:05</span><br><span class="line">          inet addr:172.17.0.5  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">		  ......</span><br><span class="line"></span><br><span class="line"># docker run -it --name container_B --network=container:container_A alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:05</span><br><span class="line">          inet addr:172.17.0.5  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">		  ......</span><br></pre></td></tr></table></figure>
+
+<h2 id="无网络模式-none"><a href="#无网络模式-none" class="headerlink" title="无网络模式 none"></a>无网络模式 none</h2><p>该模式关闭了容器的网络功能，容器处于自己独立的网络命名空间中，且不进行任何配置。</p>
+<p>使用场景：1.容器并不需要网络（例如只需要写磁盘卷的批处理任务，或生成随机密钥）2.自定义网络</p>
+<h2 id="用户自定义模式-user-defined"><a href="#用户自定义模式-user-defined" class="headerlink" title="用户自定义模式 user-defined"></a>用户自定义模式 user-defined</h2><p>本模式使用户可自定义网络中的参数，以满足特定需求，例如 DNS 服务器。同一个自定义网络中，可以使用对方容器的容器名、服务名、网络别名来找到对方。这个时候帮助进行服务发现的是 Docker 内置的 DNS。所以，无论容器是否重启、更换 IP，内置的 DNS 都能正确指定到对方的位置。</p>
+<blockquote>
+<p>docker 内嵌 DNS Server，但只有在用户自定义模式才能使用。</p>
+</blockquote>
+<p>docker 提供的网络驱动：<strong>User-defined bridge</strong>，<strong>overlay</strong>，<strong>macvlan</strong>，<strong>host</strong>，<strong>Third-party network plugins</strong>。</p>
+<p>可通过<code>docker network create --driver=[driver] [network-name] [--subnet] [--gateway]</code>指定网络驱动创建网络，并指定网段和网关。</p>
+<p><strong>bridge</strong>用于在同一主机内的通信。<br><strong>macvlan</strong>和<strong>overlay</strong>用于跨主机通信。</p>
+<p><strong>macvlan</strong>：当从 VM 设置迁移或需要<strong>容器看起来像网络上的物理主机</strong>时使用，可以使<strong>每个容器都具有唯一的 MAC 地址</strong>。</p>
+<p><strong>overlay</strong>：当需要在<strong>不同 Docker 主机上运行的容器</strong>进行通信，或者当<strong>多个应用程序使用 swarm 服务一起工作</strong>时使用。</p>
+<p><strong>host</strong>和网络模式对应的作用相同，host 驱动仅可用于 v17.06 版本以上的 docker swarm 集群。<br><strong>network plugins</strong>是第三方为 docker 制作的网络插件。</p>
+<ul>
+<li>bridge 驱动: 用于创建类似 bridge 网络模式的网络，加入该网络的容器必须在同一台宿主机，仅适合一台主机上的小型网络。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker network create --driver=bridge mybridge --subnet=10.1.1.0/24 --gateway=10.1.1.1</span><br><span class="line"># docker inspect mybridge</span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;mybridge&quot;,</span><br><span class="line">        ......</span><br><span class="line">        &quot;Driver&quot;: &quot;bridge&quot;,</span><br><span class="line">        &quot;EnableIPv6&quot;: false,</span><br><span class="line">        &quot;IPAM&quot;: &#123;</span><br><span class="line">            &quot;Driver&quot;: &quot;default&quot;,</span><br><span class="line">            &quot;Options&quot;: &#123;&#125;,</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;10.1.1.0/24&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;10.1.1.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">......</span><br><span class="line"># docker run -it --network=mybridge alpine</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:0A:01:01:02</span><br><span class="line">          inet addr:10.1.1.2  Bcast:10.1.1.255  Mask:255.255.255.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">		  ......</span><br></pre></td></tr></table></figure>
+
+<p>同主机容器间通信，分为：IP 通信，DNS Server，Joined 容器。</p>
+<p><strong>IP 通信：</strong> 容器处于两个不同网络中，通过<code>docker network connect [对端容器所处网络名][本端容器]</code>连接容器。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--alias 设置对端网络别名</span><br><span class="line">--ip 指定对端网络上该IP地址的容器</span><br><span class="line">--ip6 同上，为IPv6地址</span><br><span class="line">--link 指定连接的容器名</span><br><span class="line">--link-local-ip 为容器添加一个连接本地的地址</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker run -it --name container_A alpine</span><br><span class="line"># docker network connect mybridge container_A</span><br><span class="line"># docker run -it --network=mybridge --name=container_B alpine</span><br><span class="line"># docker inspect container_B -f &#x27;&#123;&#123;.NetworkSettings.Networks.mybridge.IPAddress&#125;&#125;&#x27;</span><br><span class="line">10.1.1.4</span><br><span class="line"></span><br><span class="line"># docker inspect container_A -f &#x27;&#123;&#123;.NetworkSettings.IPAddress&#125;&#125;&#x27;</span><br><span class="line">172.17.0.3</span><br><span class="line"></span><br><span class="line"># docker attach container_A</span><br><span class="line">/ # ping 10.1.1.4</span><br><span class="line">PING 10.1.1.4 (10.1.1.4): 56 data bytes</span><br><span class="line">64 bytes from 10.1.1.4: seq=0 ttl=64 time=0.294 ms</span><br><span class="line">/ # ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:03</span><br><span class="line">          inet addr:172.17.0.3  Bcast:172.17.255.255  Mask:255.255.0.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          ......</span><br><span class="line">eth1      Link encap:Ethernet  HWaddr 02:42:0A:01:01:03</span><br><span class="line">          inet addr:10.1.1.3  Bcast:10.1.1.255  Mask:255.255.255.0</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          ......</span><br></pre></td></tr></table></figure>
+
+<p>原理如图（图为 docker 文档的，ip 地址有偏差），docker 会在本容器上创建一个新的网卡，由指定的网络分配 IP 地址，实现与指定的网桥中容器的连接（如上面 ifconfig 中 eth1）。</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058452.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058452.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p><strong>DNS：</strong> 使用对方容器的容器名、服务名、网络别名来找到对方，无论容器是否重启、更换 IP，内置的 DNS 都能正确指定到对方的位置。</p>
+<p><strong>Joined 容器：</strong> 即 container 网络模式，使两个及以上的容器共享一个网络栈，共享网卡和配置。</p>
+<p><strong>容器访问外网</strong><br>容器默认就能访问外网，这里外网指容器外的网络，不只是互联网。</p>
+<p>处理流程：1.容器发数据包，docker0 收到数据包后查看 IP 头，发现是发往外网的，交给 NAT 处理。2.NAT 将源地址转为宿主机 IP 地址，并从主机网卡发出。</p>
+<p><strong>外网访问容器</strong><br>外网通过端口映射访问容器，每个映射的端口，宿主机都会启动一个 docker-proxy 进程处理访问容器的流量，可在宿主机通过<code>ps -ef | grep docker-proxy</code>查看端口映射情况<br>下图为内外网的完整访问流程图</p>
+<p><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058221.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058221.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<h1 id="跨主机网络"><a href="#跨主机网络" class="headerlink" title="跨主机网络"></a>跨主机网络</h1><p>docker 容器有多种访问外网的方案，其中 docker 提供两个原生方案：overlay 和 macvlan。还可选择第三方方案：flannel，weave，calico。</p>
+<p>众多的 docker 网络方案通过 libnetwork 与容器网络模型（Container Network Model）集成在一起，其中 libnetwork 为 docker 容器网络库，而其核心即为容器网络模型，对容器网络进行了抽象，由以下三个组件组成：</p>
+<ul>
+<li>Sandbox：容器的网络栈，包含容器接口、路由表和 DNS 设置。Sandbox 的实现标准为 Linux Network Namespace，可以包含来自不同 Network 的 Endpoint。</li>
+<li>Endpoint：将 Sandbox 接入 Network，典型实现为 Veth Pair。一个 Endpoint 只属于一个网络，也只属于一个 Sandbox。</li>
+<li>Network：包含一组 Endpoint，同一 Network 的 Endpoint 可以直接通信。</li>
+</ul>
+<h2 id="Overlay"><a href="#Overlay" class="headerlink" title="Overlay"></a>Overlay</h2><p>Overlay 网络驱动创建了多 docker 主机间的分布式网络，允许与其连接的容器互相安全地通信，服务和容器能同时连接多个网络，但也仅能在连接的网络间通信。虽然可以将集群服务和单独的容器都连入一个 overlay 网络，但 overlay 对于集群与单独容器的默认配置是不同的，对于不同对象有不同的选项。</p>
+<p>在创建 overlay 网络之前，需要使用 docker swarm 初始化作为 swarm manager，或者使用<code>docker swarm join</code>将其加入到现有 swarm 中。这两者都创建缺省的 swarm 服务使用的默认 overlay 网络<code>ingress</code>。</p>
+<p><strong>实验环境：</strong><br>swarm manager：192.168.163.102<br>swarm worker：192.168.163.103</p>
+<p>在 manager 上初始化 docker swarm<br><code>docker swarm init</code><br>worker 上加入 docker swarm（将 manager 上生成的命令复制粘贴到 worker 上运行）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker swarm join --token SWMTKN-1-077i43tqnp5df8y29nrrh8apm9y2a4khzggg8nydd2yy8nzzjw-0i1qu8z1xl2s7ngy8y1gcnfnb 192.168.163.102:2377</span><br><span class="line">This node joined a swarm as a worker.</span><br></pre></td></tr></table></figure>
+
+<p>创建 overlay 网络 my_overlay：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker network create -d overlay my_overlay</span><br><span class="line"># docker network ls</span><br><span class="line">NETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">8cc4b6f2ddfa        bridge              bridge              local</span><br><span class="line">5db2b494b1af        docker_gwbridge     bridge              local</span><br><span class="line">5a1cfdddfd60        host                host                local</span><br><span class="line">y6l4bambmqoj        ingress             overlay             swarm</span><br><span class="line">bdv2xdmkujbu        my_overlay          overlay             swarm</span><br><span class="line">7ec96e1718f1        none                null                local</span><br></pre></td></tr></table></figure>
+
+<p>若要创建一个 overlay 网络供群集服务或独立容器与其他 Docker 守护程序上运行的其他独立容器进行通信，要添加<code>--attachable</code>参数。<code>ingress</code>网络创建时没有<code>--attachable</code>选项，说明只有 swarm 服务可以使用它，而不是独立的容器。通过在创建网络时添加<code>--attachable</code>选项使得运行在不同 Docker 守护进程上的独立容器能够进行通信，而无需在各个 Docker 守护进程主机上设置路由。</p>
+<p><strong>容器发现</strong><br>对于大多数情况，应该连接到服务名，而不是单独容器，因为服务是负载均衡的且是由所有服务后的容器（即任务 task）处理的。要获取支持该服务的所有任务（task）的列表，可以执行 DNS 查找<code>tasks.&lt;service-name&gt;</code></p>
+<p><strong>overlay 网络加密</strong><br>默认 docker 对 swarm 服务在 GCM 模式下使用 AES 算法加密，集群中的 manager 节点每 12 小时就轮换用于加密 gossip（反熵算法）数据的密钥。</p>
+<p>要加密应用程序数据，需要在创建 overlay 网络时添加<code>--opt encrypted</code>。这使得 vxlan 级别的 IPSEC 加密成为可能。这种加密会带来不可忽视的性能损失，所以应该在生产中使用它之前对其进行测试。</p>
+<p>当启用 overlay 加密时，Docker 会在所有节点之间创建 IPSEC 隧道，在这些节点上调度连接到 overlay 网络服务的任务。这些通道在 GCM 模式下也使用 AES 算法，manager 节点每 12 小时自动轮换一次密钥。</p>
+<blockquote>
+<p>不要将 Windows 节点添加到加密的 overlay 网络。<br>Windows 上不支持 overlay 网络加密。如果 Windows 节点尝试连接到加密的 overlay 网络，虽不会报告错误，但节点无法通信。</p>
+</blockquote>
+<p><strong>默认 ingress 网络</strong><br>默认 overlay 网络 ingress 的作用：当自动选择的子网与网络中已存在的子网冲突或需要自定义某项低层的网络配置（例如 MTU）时，默认的 ingress 网络会很有用。<br>通常在 Swarm 中创建服务前对 ingress 网络进行删除或重建操作。如果已有发布端口的服务，在删除 ingress 网络前必须先删除这些服务。<br>若没有 ingress 网络且不发布端口的服务在运行却没有进行负载均衡，那么那些发布端口的服务会受到影响。</p>
+<p>可在创建网络时加上<code>--ingress</code>选项创建 ingress 网络并自定义网络参数。只能创建一个 ingress 网络。</p>
+<p><strong>默认 docker_gwbridge 网络</strong><br>docker_gwbridge 是一个虚拟网桥，它将 overlay 网络（包括 ingress 网络）连接到单独的 Docker 守护进程的物理网络。初始化群集或将 Docker 主机加入群集时，Docker 会自动创建它，但它不是 Docker 设备。它存在于 Docker 主机的内核中。如果需要自定义其设置，则必须在将 Docker 主机加入集群之前或临时从集群中暂时删除主机之后执行该自定义操作。</p>
+<p>若要删除 docker_gwbridge 网络，需要先停止 docker，再删除 docker_gwbridge 网络，由于停止了 docker，所以要通过<code>ip link</code>删除该网络。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ip link set docker_gwbridge down</span><br><span class="line"># ip link del docker_gwbridge</span><br></pre></td></tr></table></figure>
+
+<p>再启动 docker，但不要加入或初始化 swarm。重建一个 docker_gwbridge 网络，然后再加入或初始化 swarm。</p>
+<p><strong>在 overlay 网络发布端口</strong><br>连接在同一个 overlay 网络的集群服务可以有效地互相发布所有端口。若要使一个端口能在服务外能访问，必须在<code>docker service create</code>或<code>docker service update</code>后加上<code>-p</code>选项发布指定端口。支持冒号分隔的旧语法<code>-p 8080:80/tcp</code>和逗号分隔的新语法<code>-p published=8080,target=80,protocol=tcp</code>。</p>
+<p><strong>绕过集群服务的路由网格（routing mesh）</strong><br>默认情况下，发布端口的群集服务使用路由网格来完成。当连接到任何 swarm 节点上的已发布端口（无论是否运行给定服务）时，都会透明地重定向到正在运行该服务的 worker。实际上，Docker 充当群集服务的负载平衡器。使用路由网格的服务以虚拟 IP（VIP）模式运行。即使在每个节点上运行的服务（通过<code>--global</code>标志）也使用路由网格。使用路由网格时，不能保证哪个 Docker 节点服务客户端会请求。</p>
+<p>要绕过路由网格，可以通过设置选项<code>--endpoint-mode dnsrr</code>来使用<code>DNS Round Robin（DNSRR）</code>模式启动服务且必须在服务前运行自定义的负载均衡器。对 Docker 主机上服务名的 DNS 查询会返回运行该服务的节点的 IP 地址列表，可以通过配置负载均衡器使用此列表并且平衡各节点间的流量。</p>
+<p><strong>单独控制和数据</strong><br>默认情况下，尽管群集控制流量是加密的，但群集管理和应用程序之间的控制流量运行在同一个网络上，可以配置 Docker 使用单独的网络接口来处理两种不同类型的流量。初始化或加入群集时，分别指定<code>--advertise-addr</code>和<code>--datapath-addr</code>，加入集群的每个节点都要执行此操作。</p>
+<p><strong>实验（根据官方文档的实验）</strong><br>Manager（system2）:192.168.163.102<br>Worker-1（system3）：192.192.168.163.103<br>Worker-2（system4）：192.192.168.163.104</p>
+<p>在 manager 上初始化 swarm，worker 节点加入 swarm。在 manager 上查看节点。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker node ls</span><br><span class="line">ID                            HOSTNAME              STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION</span><br><span class="line">ohfkwg8uu4zkjtyk1l1nbze4p *   system2.example.com   Ready               Active              Leader              18.03.1-ce</span><br><span class="line">6dbboj25t5tws0ohd1pdhsahl     system3.example.com   Ready               Active                                  18.03.1-ce</span><br><span class="line">aug4gnqnm0na4pwu835dku51x     system4.example.com   Ready               Active                                  18.03.1-ce</span><br></pre></td></tr></table></figure>
+
+<p>可通过<code>--filter role=worker|manager</code>过滤节点信息</p>
+<p>在 manager 上创建 overlay 网络。不需要在其他节点上创建 overlay 网络，当其中一个节点开始运行需要 overlay 网络的服务时，它将自动创建。<br><code>docker network create -d overlay nginx-net</code><br>在 manager 上创建一个 nginx 服务（只能在 manager 上创建服务）</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker service create \</span><br><span class="line">--name my-nginx \</span><br><span class="line">-p 80:80 \</span><br><span class="line">--replicas=5 \          #设置创建的任务个数</span><br><span class="line">--network nginx-net \</span><br><span class="line">nginx</span><br><span class="line"></span><br><span class="line"># docker service ls</span><br><span class="line">ID                  NAME                MODE                REPLICAS            IMAGE               PORTS</span><br><span class="line">nvxzb5kzihl6        my-nginx            replicated          5/5                 nginx:latest        *:80-&gt;80/tcp</span><br></pre></td></tr></table></figure>
+
+<p>在 manager 和 worker 上查看 nginx-net 网络情况，以及容器情况<code>docker inspect nginx-net</code></p>
+<p>新建 overlay 网络，将服务更新到新的网络上<br><code>docker network create -d overlay nginx-net-2</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># docker service update \</span><br><span class="line">--network-add nginx-net-2 \  # 将my-nginx添加进nginx-net-2网络中</span><br><span class="line">--network-rm nginx-net \  # 将my-nginx从nginx-net网络中删除</span><br><span class="line">my-nginx</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注：overlay 网络会因为需要自动创建，但不会自动删除（当服务不需要该网络后）。需要手动删除服务和网络。<br><code>docker service rm my-nginx</code> &gt; <code>docker network rm nginx-net nginx-net-2</code></p>
+</blockquote>
+<h2 id="Macvlan"><a href="#Macvlan" class="headerlink" title="Macvlan"></a>Macvlan</h2><p>一些应用类似传统应用或监视网络流量的应用，希望直接连接到物理网络，可以使用 macvlan 网络驱动为每个容器的虚拟网络接口分配 MAC 地址，需要指定宿主机上的物理接口用于 Macvlan，以及 Macvlan 的子网和网关。可以使用不同的物理网络接口来隔离 Macvlan 网络。<br>网络设备需要能够处理“混杂模式”，其中一个物理接口可以分配多个 MAC 地址。网络模式最好是<code>bridge</code>或<code>overlay</code>。可以在 bridge 模式或 vlan 的 trunk 模式中创建 macvlan 网络。</p>
+<p><strong>在 bridge 网络模式中创建 macvlan 网络</strong><br>在<code>docker network create</code>后添加<code>-d macvlan</code>，也可再指定流量通过的实际网卡<code>-o parent=ens33</code>。若要排除在 macvlan 中使用的 IP 地址，可添加选项<code>--aux-addresses=&quot;aux-addr=&quot;</code>，参数值为一组键值对。一张网卡仅能被一个 macvlan 网络设为<code>parent</code>。</p>
+<p><strong>在 vlan trunk 模式中创建 macvlan 网络</strong><br>通过在网卡名后加<code>.[数字]</code>创建网卡子接口，例如<code>-o parent=ens33.10</code>。</p>
+<p><strong>使用 IPvlan</strong><br>可以使用三层 IPvlan 取代二层 Macvlan。通过指定<code>-o ipvlan_mode=l2</code></p>
+<p><strong>macvlan 网络的注意条件</strong></p>
+<ul>
+<li>大多数云提供商会阻塞访问 macvlan 网络，可能需要物理访问网络设备。</li>
+<li>macvlan 网络驱动程序仅适用于 Linux 主机，而 Mac 的 Docker 桌面，Windows 的 Docker 桌面或 Windows Server 的 Docker EE 不支持。</li>
+<li>至少需要 3.9 版的 Linux 内核，建议使用 4.0 或更高版本。</li>
+</ul>
+<h2 id="补充知识点"><a href="#补充知识点" class="headerlink" title="补充知识点"></a>补充知识点</h2><p><strong>支持 IPv6</strong><br>只有 Linux 主机的 docker 支持 IPv6。<br>修改<code>/etc/docker/daemon.json</code>，添加<code>&#123;&quot;ipv6&quot;: true&#125;</code>开启 IPv6。然后重新加载配置文件<code>systemctl daemon-reload</code>或<code>systemctl reload docker</code>。在创建网络的时候可以加上<code>--ipv6</code>选项，在创建容器时加上<code>--ip6</code>选项</p>
+<p><strong>配置 iptables</strong><br>Docker 通过 iptables 规则来提供网络隔离，不应修改 Docker 已设置的 iptables 规则。<br>所有 Docker 的 iptables 规则都被添加到<code>DOCKER</code>链中，不要手动操作此表。如果需要添加能在加载 Docker 规则之前加载的规则，应该将它们添加到<code>DOCKER-USER</code>链中，这些规则在 Docker 自动创建任何规则之前加载。</p>
+<p>默认情况下，所有外部源 IP 都被允许连接到 Docker 守护进程。若要只允许特定的 IP 或网络访问容器，可在<code>DOCKER</code>过滤器链的顶部插入否定规则。</p>
+<p>例：<code>iptables -I DOCKER-USER -i ens33 ! --source 192.168.163.0/24 -j DROP</code><br>为防止 Docker 修改 iptables 策略，在<code>/etc/docker/daemon.json</code>中设置<code>&#123;&quot;iptables&quot;: false&#125;</code>，官方不推荐这样设置，因为这样所有关于 docker 的 iptables 配置都要手动管理。</p>
+<p><strong>DNS 选项</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--dns 指定一个或多个DNS服务器</span><br><span class="line">--dns-search 设置dns搜索域</span><br><span class="line">--dns-opt 键值对，可参考/etc/resolv.conf</span><br><span class="line">--hostname 设置容器的主机名，默认就是容器名</span><br></pre></td></tr></table></figure>
+
+<p><strong>docker 代理</strong><br>在 Docker 客户端上编辑启动容器的用户主目录<code>~/.docker/config.json</code>文件。添加字段，可用<code>httpsProxy</code>或<code>ftpProxy</code>指定代理服务器的类型，并指定代理服务器的地址和端口，可以同时配置多个代理服务器。</p>
+<p>通过将<code>noProxy</code>键设置为一个或多个逗号分隔的 IP 地址或主机，指定排除的代理服务器，支持<code>*</code>字符作为通配符。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line"> &quot;proxies&quot;:</span><br><span class="line"> &#123;</span><br><span class="line">   &quot;default&quot;:</span><br><span class="line">   &#123;</span><br><span class="line">     &quot;httpProxy&quot;: &quot;http://127.0.0.1:3001&quot;,</span><br><span class="line">     &quot;noProxy&quot;: &quot;*.test.example.com,.example.com&quot;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在创建容器时可通过<code>--env</code>设置环境变量，通过环境变量指定代理服务器。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--env HTTP_PROXY=&quot;&quot;</span><br><span class="line">--env HTTPS_PROXY=&quot;&quot;</span><br><span class="line">--env FTP_PROXY=&quot;&quot;</span><br><span class="line">--env NO_PROXY=&quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>参考文档<br>Cloudman 《每天五分钟玩转 docker 容器技术》<br><a target="_blank" rel="noopener" href="https://docs.docker.com/network">docker 官方文档-网络板块</a> &gt; <a target="_blank" rel="noopener" href="http://dockone.io/article/1261">docker 网络模式</a></p>
+</blockquote>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E7%BD%91%E7%BB%9C/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>网络</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/docker/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>docker</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/%E7%BD%91%E7%BB%9CIO%E6%A8%A1%E5%9E%8B/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>网络I/O模型</p>
+          <p class='content'>同步与异步同步和异步描述的是用户线程和内核的交互方式。
+
+同步： 指的是在两个或多个数据库、文件、模块、线程之间用来保持数据内容一致性的机制。用户线程发起I/O请求后需要等待，或者轮询内核I/O...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/%E7%A3%81%E7%9B%98%E7%AE%A1%E7%90%86%E4%B8%8E%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>磁盘管理与文件系统学习笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'></p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Docker-%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F"><span class="toc-text">Docker 网络模式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F-bridge"><span class="toc-text">桥接模式 bridge</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BB%E6%9C%BA%E6%A8%A1%E5%BC%8F-host"><span class="toc-text">主机模式 host</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-container"><span class="toc-text">容器网络 container</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%BC%8F-none"><span class="toc-text">无网络模式 none</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A8%A1%E5%BC%8F-user-defined"><span class="toc-text">用户自定义模式 user-defined</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%A8%E4%B8%BB%E6%9C%BA%E7%BD%91%E7%BB%9C"><span class="toc-text">跨主机网络</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Overlay"><span class="toc-text">Overlay</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Macvlan"><span class="toc-text">Macvlan</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%E7%9F%A5%E8%AF%86%E7%82%B9"><span class="toc-text">补充知识点</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="Docker网络学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>

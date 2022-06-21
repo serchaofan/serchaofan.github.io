@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1'>
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+    
+  
+  <!-- 渲染优化 -->
+  <meta http-equiv='x-dns-prefetch-control' content='on' />
+  <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  
+  <link rel="preload" href="/css/first.css" as="style">
+  
+
+  <!-- 页面元数据 -->
+  
+  <title>无人值守学习笔记 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="无人值守,PXE,Kickstart,Cobbler">
+  
+
+  
+    <meta name="description" content="本篇主要包含以下内容：
+
+PXE 概述
+Kickstart
+Kickstart 概述
+Kickstart 准备
+DHCP 配置
+TFTP 配置
+使用 VSFTP 搭建镜像源
+使用 HTTP 搭建镜像源
+Syslinux 配置
+
+
+网络安装试验
+Kickstart 配置
+手动配置
+system-config-kic...">
+  
+
+  <!-- feed -->
+  
+
+  <!-- import meta -->
+  
+
+  <!-- link -->
+  
+
+  <!-- import link -->
+  
+
+  
+    
+<link rel="stylesheet" href="/css/first.css">
+
+  
+
+  
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+
+  <script id="loadcss"></script>
+
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        '<h1><b>抱歉，您的浏览器无法访问本站</b></h1>'+
+        '<h3>微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>'+
+        '继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</h3><br/>'+
+        '<a target="_blank" rel="noopener" href="https://www.microsoft.com/zh-cn/WindowsForBusiness/End-of-IE-support"><strong>了解详情 ></strong></a>'+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+	</style>
+    <div class="kill-noscript">
+        <h1><b>抱歉，您的浏览器无法访问本站</b></h1>
+        <h3>本页面需要浏览器支持（启用）JavaScript</h3><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+</head>
+
+  <body>
+    
+
+<header id="l_header" class="l_header auto shadow blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fas fa-comments fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+          <li><a id="s-toc" class="s-toc fas fa-list fa-fw" target="_self" href='javascript:void(0)'></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+        
+        <a class="title flat-box" target="_self" href='/'>
+          
+            <img no-lazy class='logo' src='https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg'/>
+          
+          
+          
+        </a>
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fas fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fas fa-search fa-fw" target="_self" href='javascript:void(0)'></a></li>
+				
+				<li>
+          <a class="s-menu fas fa-bars fa-fw" target="_self" href='javascript:void(0)'></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/
+                  
+                  
+                  
+                    id="home"
+                  >
+                  <i class='fas fa-rss fa-fw'></i>博客
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/categories/
+                  
+                  
+                  
+                    id="categories"
+                  >
+                  <i class='fas fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/tags/
+                  
+                  
+                  
+                    id="tags"
+                  >
+                  <i class='fas fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/archives/
+                  
+                  
+                  
+                    id="archives"
+                  >
+                  <i class='fas fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/friends/
+                  
+                  
+                  
+                    id="friends"
+                  >
+                  <i class='fas fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover" href=/about/
+                  
+                  
+                  
+                    id="about"
+                  >
+                  <i class='fas fa-info-circle fa-fw'></i>关于
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+        <div id="full" class='cover-wrapper post dock' style="display: none;">
+          
+            <div class='cover-bg lazyload placeholder' data-bg="https://uploadbeta.com/api/pictures/random/?key=BingEverydayWallpaperPicture"></div>
+          
+          <div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              id="v4getting-started">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              id="faqs">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              id="examples">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              id="contributors">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              id="archives">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              id="https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://cdn.jsdelivr.net/gh/twitter/twemoji@13.0/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+          <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+        </div>
+    
+  
+  </div>
+
+      <div id="safearea">
+        <div class="body-wrapper" id="pjax-container">
+          
+
+<div class='l_main'>
+  <article class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
+  
+
+
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title">
+        无人值守学习笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年8月1日</p>
+  </a>
+</div>
+
+          
+        
+      </div>
+    
+  </div>
+
+
+  
+  
+  <p>本篇主要包含以下内容：</p>
+<ul>
+<li><a href="#pxe-%E6%A6%82%E8%BF%B0">PXE 概述</a></li>
+<li><a href="#kickstart">Kickstart</a><ul>
+<li><a href="#kickstart-%E6%A6%82%E8%BF%B0">Kickstart 概述</a></li>
+<li><a href="#kickstart-%E5%87%86%E5%A4%87">Kickstart 准备</a><ul>
+<li><a href="#dhcp-%E9%85%8D%E7%BD%AE">DHCP 配置</a></li>
+<li><a href="#tftp-%E9%85%8D%E7%BD%AE">TFTP 配置</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8-vsftp-%E6%90%AD%E5%BB%BA%E9%95%9C%E5%83%8F%E6%BA%90">使用 VSFTP 搭建镜像源</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8-http-%E6%90%AD%E5%BB%BA%E9%95%9C%E5%83%8F%E6%BA%90">使用 HTTP 搭建镜像源</a></li>
+<li><a href="#syslinux-%E9%85%8D%E7%BD%AE">Syslinux 配置</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BD%91%E7%BB%9C%E5%AE%89%E8%A3%85%E8%AF%95%E9%AA%8C">网络安装试验</a></li>
+<li><a href="#kickstart-%E9%85%8D%E7%BD%AE">Kickstart 配置</a><ul>
+<li><a href="#%E6%89%8B%E5%8A%A8%E9%85%8D%E7%BD%AE">手动配置</a></li>
+<li><a href="#system-config-kickstart-%E9%85%8D%E7%BD%AE">system-config-kickstart 配置</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#cobbler">Cobbler</a><ul>
+<li><a href="#cobbler-%E5%AE%89%E8%A3%85">Cobbler 安装</a><ul>
+<li><a href="#%E4%BD%BF%E7%94%A8-cobbler-web-%E5%9B%BE%E5%BD%A2%E5%8C%96%E9%85%8D%E7%BD%AE">使用 cobbler-web 图形化配置</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0">参考文章</a></li>
+</ul>
+<span id="more"></span>
+
+<h1 id="PXE-概述"><a href="#PXE-概述" class="headerlink" title="PXE 概述"></a>PXE 概述</h1><p>Preboot Execution Environment 远程预启动执行环境，就是使计算机通过网络启动。</p>
+<p>要达成 PXE 必须要有两个环节：</p>
+<ul>
+<li>客户端的网卡必须要支持 PXE 用户端功能，并且开机时选择从网卡启动，这样系统才会以网卡进入 PXE 客户端的程序</li>
+<li>PXE 服务器必须要提供至少含有 DHCP 以及 TFTP 的服务<ul>
+<li>DHCP 服务必须要能够提供客户端的网络参数，还要告知客户端 TFTP 所在的位置；</li>
+<li>TFTP 则提供客户端的<code>boot loader</code>及<code>kernel file</code>下载路径。</li>
+</ul>
+</li>
+</ul>
+<p>可选的其他服务：NFS、FTP、HTTP 等</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/0.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/0.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>完整的 PXE 交互过程：</p>
+<ol>
+<li>Client 向 DHCP 发送 IP 地址请求消息，DHCP 检测 Client 是否合法（主要是检测 Client 的网卡 MAC 地址），如果合法则返回 Client 的 IP 地址，同时将启动文件 pxelinux.0 的位置信息一并传送给 Client</li>
+<li>Client 向 TFTP 发送获取 pxelinux.0 请求消息，TFTP 接收到消息之后再向 Client 发送 pxelinux.0 大小信息，试探 Client 是否满意，当 TFTP 收到 Client 发回的同意大小信息之后，正式向 Client 发送 pxelinux.0，Client 接收并执行 pxelinux.0 文件</li>
+<li>Client 向 TFTP Server 发送获取针对本机的配置信息文件的请求（在 TFTP 服务的 pxelinux.cfg 目录下，这是系统菜单文件，格式和 isolinux.cfg 格式一样，功能也是类似），TFTP 将配置文件发回 Client，继而 Client 根据配置文件执行后续操作。</li>
+<li>Client 向 TFTP 发送 Linux 内核请求信息，TFTP 接收到消息之后将内核文件发送给 Client</li>
+<li>Client 向 TFTP 发送根文件请求信息，TFTP 接收到消息之后返回 Linux 根文件系统 Client 启动 Linux 内核</li>
+<li>Client 从 FTP 或 HTTP 下载安装源文件，读取自动化安装脚本</li>
+</ol>
+<blockquote>
+<p>引用自<a target="_blank" rel="noopener" href="http://baijiahao.baidu.com/s?id=1601105969236933071&wfr=spider&for=pc">Cobbler 原理解析</a></p>
+</blockquote>
+<h1 id="Kickstart"><a href="#Kickstart" class="headerlink" title="Kickstart"></a>Kickstart</h1><h2 id="Kickstart-概述"><a href="#Kickstart-概述" class="headerlink" title="Kickstart 概述"></a>Kickstart 概述</h2><p>Kickstart 是通过自动应答文件，将安装系统过程中手动设置的语言、密码、网络等参数自动设置。</p>
+<p>Kickstart 文件有三种生成方式：</p>
+<ul>
+<li>手动书写</li>
+<li><code>system-config-kickstart</code>图形化配置</li>
+<li>红帽系系统自带的<code>Anaconda</code>生成</li>
+</ul>
+<h2 id="Kickstart-准备"><a href="#Kickstart-准备" class="headerlink" title="Kickstart 准备"></a>Kickstart 准备</h2><p>服务分工介绍：</p>
+<ul>
+<li>DHCP：为安装的新主机分配 IP 地址</li>
+<li>TFTP：仅仅提供引导文件</li>
+<li>VSFTP|HTTP|NFS：提供系统镜像中所有文件，然后会根据 Kickstart 文件自动选择要安装的软件，并配置</li>
+</ul>
+<p>防止访问出现错误，先将 selinux 设为 Permissive。<code>setenforce 0</code></p>
+<h3 id="DHCP-配置"><a href="#DHCP-配置" class="headerlink" title="DHCP 配置"></a>DHCP 配置</h3><p>首先配置 DHCP 服务。<br><code>yum install dhcp</code><br>修改配置文件<code>/etc/dhcp/dhcpd.conf</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 日志级别</span><br><span class="line">log-facility local7;</span><br><span class="line"># DNS服务器域名</span><br><span class="line">option domain-name-servers system1.example.com;</span><br><span class="line"># 网关</span><br><span class="line">option routers 192.168.10.2;</span><br><span class="line"># 默认分配时间</span><br><span class="line">default-lease-time 600;</span><br><span class="line"># 最大分配时间</span><br><span class="line">max-lease-time 7200;</span><br><span class="line"></span><br><span class="line">subnet 192.168.10.0 netmask 255.255.255.0 &#123;</span><br><span class="line">  # 地址分配范围</span><br><span class="line">  range 192.168.10.101 192.168.10.110;</span><br><span class="line">  # TFTP服务器（重要）</span><br><span class="line">  next-server 192.168.10.100;</span><br><span class="line">  # TFTP服务器上的共享启动文件名（重要）</span><br><span class="line">  filename &quot;pxelinux.0&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>重新加载并设置开机自启<br><code>systemctl restart dhcpd</code><br><code>systemctl enable dhcpd</code><br>若开启了防火墙应该放行服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --add-service=dhcp</span><br><span class="line">firewall-cmd --permanent --add-port=67/tcp --add-port=67/udp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<h3 id="TFTP-配置"><a href="#TFTP-配置" class="headerlink" title="TFTP 配置"></a>TFTP 配置</h3><p>配置 TFTP 服务，首先需要安装<code>xinetd</code>服务，因为 TFTP 是被 Xinetd 动态管理的服务。<br><code>yum install xinetd tftp-server</code><br>修改配置文件<code>/etc/xinetd.d/tftp</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">service tftp</span><br><span class="line">&#123;</span><br><span class="line">        socket_type             = dgram</span><br><span class="line">        protocol                = udp</span><br><span class="line">        wait                    = yes</span><br><span class="line">        user                    = root</span><br><span class="line">        server                  = /usr/sbin/in.tftpd</span><br><span class="line">        # server_args指定共享目录路径</span><br><span class="line">        server_args             = -s /tftpboot</span><br><span class="line">        disable                 = no</span><br><span class="line">        per_source              = 11</span><br><span class="line">        cps                     = 100 2</span><br><span class="line">        flags                   = IPv4</span><br><span class="line">&#125;</span><br><span class="line">disable的值默认为yes，表示禁用tftp，因此要改为no，开启tftp</span><br></pre></td></tr></table></figure>
+
+<p>重启 Xinted 服务<code>systemctl restart xinetd.service</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">通过查看服务是否开启</span><br><span class="line"># ss -aupt | grep xinetd</span><br><span class="line">udp    UNCONN     0      0       *:tftp                  *:*                     users:((&quot;xinetd&quot;,pid=3490,fd=5))</span><br></pre></td></tr></table></figure>
+
+<p>若开启了防火墙，需要放行服务和端口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --add-service=tftp</span><br><span class="line">firewall-cmd --permanent --add-port=69/udp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用-VSFTP-搭建镜像源"><a href="#使用-VSFTP-搭建镜像源" class="headerlink" title="使用 VSFTP 搭建镜像源"></a>使用 VSFTP 搭建镜像源</h3><p>安装 VSFTPD 服务<code>yum install vsftpd</code><br><code>systemctl start vsftpd</code><br><code>systemctl enable vsftpd</code></p>
+<p>将光盘镜像挂载在<code>/var/ftp/pub</code>中。<code>mount /dev/cdrom /var/ftp/pub</code></p>
+<p>若开启了防火墙，应该放行端口和服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port=20/tcp --add-port=21/tcp</span><br><span class="line">firewall-cmd --permanent --add-service=ftp</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<p>在浏览器中输入<code>ftp://192.168.10.100</code>访问成功。</p>
+<h3 id="使用-HTTP-搭建镜像源"><a href="#使用-HTTP-搭建镜像源" class="headerlink" title="使用 HTTP 搭建镜像源"></a>使用 HTTP 搭建镜像源</h3><p>安装 HTTPD 服务<code>yum install httpd</code><br><code>systemctl start httpd</code><br><code>systemctl enable httpd</code></p>
+<p>将光盘镜像挂载在<code>/var/www/html/centos7</code>上。<code>mount /dev/cdrom /var/www/html/centos7</code></p>
+<p>若开启了防火墙，应该放行端口和服务</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">firewall-cmd --permanent --add-port=80/tcp</span><br><span class="line">firewall-cmd --permanent --add-service=http</span><br><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<p>在浏览器中输入<code>192.168.10.100/centos7</code>访问成功。</p>
+<h3 id="Syslinux-配置"><a href="#Syslinux-配置" class="headerlink" title="Syslinux 配置"></a>Syslinux 配置</h3><p>安装 syslinux 服务<br>syslinux 是一个功能强大的引导加载程序，用于获取引导文件。<br><code>yum install syslinux</code><br>将引导文件复制到 TFTP 主目录<code>cp /usr/share/syslinux/pxelinux.0 /tftpboot</code><br>若要图形化菜单功能（仅仅是可以上下键切换，最好一起复制了），可将<code>/usr/share/syslinux</code>中的<code>menu.32</code>或<code>vesamenu.c32</code>复制到<code>/tftpboot</code>。这里就复制<code>vesamenu.c32</code>，比<code>menu.32</code>更好。<br>并在<code>/tftpboot</code>中创建目录<code>pxelinux.cfg</code>用于存放默认开机选项，并在该目录中创建<code>default</code>文件</p>
+<p>创建存放 CentOS7 内核文件的目录<code>mkdir /tftpboot/centos7</code>，并将挂载镜像目录<code>/var/ftp/pub/isolinux/</code>中<code>vmlinuz</code>和<code>initrd.img</code>两个内核文件复制到该目录中。<code>cp /var/ftp/pub/isolinux/&#123;vmlinuz,initrd.img&#125; /tftpboot/centos7/</code><br>最好将<code>isolinux</code>目录下的<code>isolinux.cfg</code>也复制过去，该文件提供了开机选项，可以以它作为修改开机选项和菜单的模板。可以直接将内容拷贝过去，<code>cat /var/ftp/pub/isolinux/isolinux.cfg &gt; /tftpboot/pxelinux.cfg/default</code>。</p>
+<p><code>default</code>即<code>isolinux.cfg</code>简单解析</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">default vesamenu.c32    # 必须指定，填/tftpboot中复制的图形化文件</span><br><span class="line">timeout 10              # 在选择界面停留的时间（若未操作）</span><br><span class="line">display boot.msg   　　　# 选项的说明文件</span><br><span class="line"></span><br><span class="line">菜单的一些显示设置，不用改</span><br><span class="line">menu clear</span><br><span class="line">menu background splash.png</span><br><span class="line">menu title CentOS 7    # 引导是显示的标题</span><br><span class="line">menu vshift 8</span><br><span class="line">menu rows 18</span><br><span class="line">menu margin 8</span><br><span class="line">#menu hidden</span><br><span class="line">menu helpmsgrow 15</span><br><span class="line">menu tabmsgrow 13</span><br><span class="line">.....</span><br><span class="line">在引导界面上显示的选项</span><br><span class="line">label linux</span><br><span class="line">  menu label ^Install CentOS 7</span><br><span class="line">  kernel ./centos7/vmlinuz   # vmlinuz是可引导的、压缩的内核，路径要设为相对路径（相对于tftp根目录）</span><br><span class="line">  append initrd=./centos7/initrd.img ks=ftp://192.168.10.100/ks_config/ks.cfg quiet</span><br><span class="line">  # 设置内核文件，要设置initrd.img的相对路径</span><br><span class="line">  # initrd.img全称boot loader initialized RAM disk， boot loader初始化的内存盘。在linux内核启动前，boot loader会将存储介质中的initrd文件加载到内存，内核启动时会在访问真正的根文件系统前先访问该内存中的initrd文件系统</span><br><span class="line">  # 后面跟着ks=ks.cfg文件的路径，http或ftp都行</span><br><span class="line">  # 后面还可以跟上ksdevice=eth0，当客户端有多块网卡时，此项就会让系统不提示要选择哪块网卡</span><br><span class="line"></span><br><span class="line">label check</span><br><span class="line">  menu label Test this ^media &amp; install CentOS 7</span><br><span class="line">  menu default     # 默认光标停留在此标签（选项）上</span><br><span class="line">  kernel ./centos7/vmlinuz</span><br><span class="line">  append initrd=./centos7/initrd.img inst.stage2=hd:LABEL=CentOS\x207\x20x86_64 rd.live.check quiet</span><br></pre></td></tr></table></figure>
+
+<p>整个<code>/tftpboot</code>的目录结构如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/tftpboot/</span><br><span class="line">├── centos7</span><br><span class="line">│   ├── initrd.img</span><br><span class="line">│   └── vmlinuz</span><br><span class="line">├── pxelinux.0</span><br><span class="line">├── pxelinux.cfg</span><br><span class="line">│   └── default</span><br><span class="line">└── vesamenu.c32</span><br></pre></td></tr></table></figure>
+
+<h2 id="网络安装试验"><a href="#网络安装试验" class="headerlink" title="网络安装试验"></a>网络安装试验</h2><p>做这个实验时，要先修改<code>/tftpboot/pxelinux.cfg/default</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">找到以下内容</span><br><span class="line">label linux</span><br><span class="line">  menu label ^Install CentOS 7</span><br><span class="line">  menu default</span><br><span class="line">  kernel ./centos7/vmlinuz</span><br><span class="line">  append initrd=./centos7/initrd.img inst.stage2=ftp://192.168.10.100/pub quiet</span><br><span class="line">net.ifnames=0 biosdevname=0</span><br><span class="line"></span><br><span class="line">inst.stage2设置FTP镜像源</span><br><span class="line">在quiet后再加上net.ifnames=0 biosdevname=0</span><br><span class="line">让网卡名称为ethN，而不是默认的eno16777728这样的随机名称</span><br></pre></td></tr></table></figure>
+
+<p>创建一个新的虚拟机，不指定镜像。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/1.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<p>进入虚拟机的 BIOS 设置</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/2.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<p>进入 Boot 菜单，通过<code>-</code>或<code>+</code>改变启动顺序，将<code>Network boot from Intel E1000</code>移到最上面。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/4.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<p>保存退出，会自动启动主机，通过网络读取 FTP 镜像源。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/5.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<p>最后进入图形化安装界面</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/6.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/6.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<h2 id="Kickstart-配置"><a href="#Kickstart-配置" class="headerlink" title="Kickstart 配置"></a>Kickstart 配置</h2><h3 id="手动配置"><a href="#手动配置" class="headerlink" title="手动配置"></a>手动配置</h3><p>首先创建<code>ks.cfg</code>，存放在<code>/var/ftp/ks_config</code>（FTP 源）或<code>/var/www/html/centos/ks_config</code>（HTTP 源）。<br>修改<code>/tftpboot/pxelinux.cfg/default</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">仍然找到这段内容，修改initrid后的内容</span><br><span class="line">删除原来的inst.stage2，改为ks=fs.cfg路径，HTTP同理</span><br><span class="line">label linux</span><br><span class="line">  menu label ^Install CentOS 7</span><br><span class="line">  menu default</span><br><span class="line">  kernel ./centos7/vmlinuz</span><br><span class="line">  append initrd=./centos7/initrd.img ks=ftp://192.168.10.100/ks_config/ks.cfg quiet</span><br><span class="line">net.ifnames=0 biosdevname=0</span><br></pre></td></tr></table></figure>
+
+<p>在主目录中有系统自动创建的<code>anaconda-ks.cfg</code>，可以此为模板。在图像化配置安装时就是向该文件中添加配置，直到点击安装时，安装程序就会根据该配置文件安装。</p>
+<p><code>anaconda-ks.cfg</code>简单解析</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">分为三个部分：</span><br><span class="line">1. 选项指令段，用于图形化安装时除包选择外的所有手动操作</span><br><span class="line">2. %packages段，用于选择软件包</span><br><span class="line">3. 脚本段，可选。分为两种：</span><br><span class="line">  %pre：预安装脚本段，在安装系统之前就执行的脚本。很少使用</span><br><span class="line">  %post：后安装脚本段，在系统安装完成后执行的脚本。</span><br><span class="line"></span><br><span class="line">必选选项：</span><br><span class="line"># auth验证选项</span><br><span class="line">auth --enableshadow --passalgo=sha512</span><br><span class="line">  --enableshadow|--useshadow   开启shadow文件验证</span><br><span class="line">  --passalgo　　指定密码加密算法</span><br><span class="line"></span><br><span class="line"># bootloader指定如何安装引导程序</span><br><span class="line">bootloader --append=&quot;crashkernel=auto&quot; --location=mbr --boot-drive=sda</span><br><span class="line">  --append      指定内核参数</span><br><span class="line">  --location    指定引导程序的位置，默认为MBR</span><br><span class="line">  --boot-drive  指定grub安装的分区</span><br><span class="line"></span><br><span class="line"># keyboard键盘类型</span><br><span class="line">keyboard --vckeymap=us --xlayouts=&#x27;us&#x27;</span><br><span class="line">  --vckeymap指定键盘分布，默认为us美式</span><br><span class="line"></span><br><span class="line"># lang指定语言</span><br><span class="line">lang en_US.UTF-8</span><br><span class="line"></span><br><span class="line"># rootpw指定root密码</span><br><span class="line">rootpw --iscrypted $6$D2fmDfXJI30ZbG0x$lenXfD98spplf7jHTmfiJ0m7CgQqJM.ddQ5hu07qiU3A5fJcRhSQA5KZolrWoSfGm2oIwJUglnRwoXth9rDGc0</span><br><span class="line">  --iscrypted 使用加密密码</span><br><span class="line"></span><br><span class="line">可选选项：</span><br><span class="line">install   表示是安装系统，若为install还需指定安装方式：</span><br><span class="line">  cdrom      表示从光盘安装</span><br><span class="line">  harddrive  硬盘安装，硬盘必须是VFAT或EXT文件系统</span><br><span class="line">    --dir    指定从包含安装树（install-tree）的目录安装</span><br><span class="line">    --partition  指定从哪个分区安装</span><br><span class="line">  nfs</span><br><span class="line">    --server   指定NFS服务器主机名或IP地址</span><br><span class="line">    --dir      指定安装树目录</span><br><span class="line">    --opts     指定NFS的挂载选项</span><br><span class="line">  url</span><br><span class="line">    --url 后面跟上地址</span><br><span class="line">update    表示是升级系统</span><br><span class="line"></span><br><span class="line">graphical 表示图形模式下执行kickstart安装，默认</span><br><span class="line">text　　 文本模式下根据kickstart执行安装（手动创建一定是text）</span><br><span class="line">firstboot 安装后第一次启动默认会有需要手动配置的界面，应该禁用</span><br><span class="line">  --enable|--disable  启用|禁用</span><br><span class="line">ignoredisk 指定忽略的磁盘</span><br><span class="line">  --only-use=sda</span><br><span class="line">network  配置网络</span><br><span class="line">  --bootproto      地址协议，dhcp或static。若为static需要配置IP、掩码、网关、DNS</span><br><span class="line">  --device=ens33   设置网卡名</span><br><span class="line">  --onboot=off     是否在引导系统时启用设备</span><br><span class="line">  --ipv6=auto 　　　开启IPv6</span><br><span class="line">  --no-activate</span><br><span class="line">  --hostname=localhost.localdomain　主机名</span><br><span class="line">若协议为static，则需要以下选项：</span><br><span class="line">  --ip=</span><br><span class="line">  --netmask=</span><br><span class="line">  --gateway=</span><br><span class="line">  --nameserver=</span><br><span class="line"></span><br><span class="line">repo    设置repo源</span><br><span class="line">  --name=</span><br><span class="line">  --baseurl=</span><br><span class="line">services      设置服务是否启用</span><br><span class="line">  --disabled=</span><br><span class="line">  --enabled=</span><br><span class="line">timezone Asia/Shanghai --isUtc --nontp  指定时区</span><br><span class="line">selinux     设置selinux</span><br><span class="line">  --enforcing</span><br><span class="line">  --permissive</span><br><span class="line">  --disabled</span><br><span class="line">firewall  是否开启防火墙</span><br><span class="line">  --disable|--enable</span><br><span class="line">xconfig  --startxonboot</span><br><span class="line">autostep     交互式，和interactive类似</span><br><span class="line">interactive  使用kickstart文件指定的参数交互式安装，但仍会给出每一步的选择项，如果直接下一步就使用kickstart参数</span><br><span class="line">cmdline      在完全非交互的命令行模式下进行安装</span><br><span class="line">driverdisk   指定驱动程序所在位置</span><br><span class="line">  --source=</span><br><span class="line">autopart     自动分区</span><br><span class="line">  --type=lvm</span><br><span class="line">zerombr      清除磁盘的MBR</span><br><span class="line">clearpart    在安装系统前清除分区</span><br><span class="line">  --all      清除所有分区</span><br><span class="line">  --initlabel   创建标签，对于没有MBR或者GPT的新硬盘，该选项是必须的</span><br><span class="line">  --drives=sda  清除指定的分区</span><br><span class="line">  --Linux    清除Linux分区</span><br><span class="line">  --none     不清除分区</span><br><span class="line">  常用cleanpart --all --initlabel</span><br><span class="line"></span><br><span class="line">part [分区]  　创建分区</span><br><span class="line">  --fstype    文件系统类型</span><br><span class="line">  --asprimary 强制为主分区</span><br><span class="line">  --size      设置大小（单位Mb）</span><br><span class="line">  --grow      使用所有可用空间，即为其分配所有剩余空间。</span><br><span class="line">  对于根分区至少需要3G空间（即使是--grow，也还是需要指定--size）</span><br><span class="line"></span><br><span class="line">user    在系统中生成一个新用户</span><br><span class="line">  --name      指定用户名</span><br><span class="line">  --groups    指定辅助组，非默认组</span><br><span class="line">  --homedir   用户家目录，如果不指定则默认为/home/&lt;username&gt;</span><br><span class="line">  --password  该用户的密码，如果不指定或省略则创建后该用户处于锁定状态</span><br><span class="line">  --shell     用户的shell，不指定则默认</span><br><span class="line">  --uid       用户UID，不指定则自动分配一个非系统用户的UID</span><br><span class="line">loggin      指定安装过程中的错误日志位置</span><br><span class="line">  --host    指定日志将发送到那台主机上</span><br><span class="line">  --port    如果远程主机的rsyslog使用非默认端口，则应该指定该端口选项</span><br><span class="line">  --level   指定日志级别</span><br><span class="line">halt|reboot   安装完成后操作，halt为关机，reboot为重启，默认是halt</span><br><span class="line"></span><br><span class="line"># 软件包或软件包组</span><br><span class="line"># @表示包组，@base和@core默认包含</span><br><span class="line">%packages</span><br><span class="line">@^graphical-server-environment</span><br><span class="line">@base</span><br><span class="line">@core</span><br><span class="line">@desktop-debugging</span><br><span class="line">@dial-up</span><br><span class="line">@fonts</span><br><span class="line">@gnome-desktop</span><br><span class="line">@guest-agents</span><br><span class="line">@guest-desktop-agents</span><br><span class="line">@hardware-monitoring</span><br><span class="line">@input-methods</span><br><span class="line">@internet-browser</span><br><span class="line">@multimedia</span><br><span class="line">@print-client</span><br><span class="line">@x11</span><br><span class="line">kexec-tools</span><br><span class="line">%end</span><br><span class="line"></span><br><span class="line">%addon com_redhat_kdump --enable --reserve-mb=&#x27;auto&#x27;</span><br><span class="line">%end</span><br><span class="line"></span><br><span class="line">%anaconda</span><br><span class="line">pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty</span><br><span class="line">pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok</span><br><span class="line">pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty</span><br><span class="line">%end</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注：<code>%addon</code>、<code>%anaconda</code>、<code>%packages</code>、<code>%onerror</code>、<code>%pre</code>、<code>%post</code>必须以<code>%end</code>结尾</strong></p>
+</blockquote>
+<p>官方并不建议手工创建 kickstart 文件，因为太过复杂，且容易出错。因此，可通过<code>system-config-kickstart</code>图形化工具快速生成 kickstart 文件。</p>
+<h3 id="system-config-kickstart-配置"><a href="#system-config-kickstart-配置" class="headerlink" title="system-config-kickstart 配置"></a>system-config-kickstart 配置</h3><p>需要安装该工具<code>yum install system-config-kickstart</code><br>打开工具后，按照以下界面配置即可。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/10.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/10.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/11.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/11.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/12.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/12.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/13.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/13.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/14.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/14.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/15.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/15.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/16.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/16.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/17.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/17.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/18.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/18.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>若需要修改，则直接打开修改即可。若图形化无法添加安装软件包，就在生成的<code>ks.cfg</code>中添加。最终修改后的<code>ks.cfg</code>文件如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">install</span><br><span class="line">keyboard &#x27;us&#x27;</span><br><span class="line">rootpw --iscrypted $1$8.DdzSgf$UIjrFmFh/4Mavb/4q7z8U.</span><br><span class="line">url --url=&quot;ftp://192.168.10.100/pub&quot;</span><br><span class="line">lang en_US</span><br><span class="line">firewall --disabled</span><br><span class="line">auth  --useshadow  --passalgo=sha512</span><br><span class="line">graphical</span><br><span class="line">selinux --disabled</span><br><span class="line">skipx</span><br><span class="line"></span><br><span class="line">network  --bootproto=dhcp --device=eth0</span><br><span class="line">network  --hostname=system10.example.com</span><br><span class="line">reboot</span><br><span class="line">timezone Asia/Shanghai</span><br><span class="line">bootloader --location=mbr</span><br><span class="line">zerombr</span><br><span class="line">clearpart --all --initlabel</span><br><span class="line">part /boot --fstype=&quot;xfs&quot; --size=200</span><br><span class="line">part / --fstype=&quot;xfs&quot; --size=5</span><br><span class="line">part /var --fstype=&quot;xfs&quot; --size=10</span><br><span class="line">services --enabled=httpd</span><br><span class="line"></span><br><span class="line">%packages</span><br><span class="line">@base</span><br><span class="line">@core</span><br><span class="line">tree</span><br><span class="line">nmap</span><br><span class="line">wget</span><br><span class="line">httpd</span><br><span class="line">%end</span><br></pre></td></tr></table></figure>
+
+<p>再次进行安装，进入下面画面时，发现配置已根据 kickstart 文件填写完成。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/19.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/19.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<h1 id="Cobbler"><a href="#Cobbler" class="headerlink" title="Cobbler"></a>Cobbler</h1><p>Cobbler 与 Kickstart 类似，是一个 Linux 服务器快速网络安装的服务，可以通过 PXE 快速安装、重装物理服务器和虚拟机。基于 Python 开发，支持命令行管理、<strong>web 界面管理</strong>、提供 API 接口。可以管理 DHCP，DNS，TFTP、RSYNC 以及 yum 仓库、构造系统 ISO 镜像。</p>
+<p>Cobbler 会在请求内核文件后，再请求 Kickstart 文件（即 ks.cfg）和 OS 镜像。然后 Cobbler 加载 Kickstart 文件并接收安装 OS 镜像。</p>
+<p>Cobbler 常见术语：</p>
+<ul>
+<li>distro：发行版，相当于一个操作系统镜像，包含内核和 initrd 信息以及软件包等</li>
+<li>repository：保存一个 yum 或 rsync 存储库的镜像信息</li>
+<li>profile：配置文件，包含 distro、kickstart 文件和 repository 等信息，作用为了修改<code>/tftpboot/pxelinux.cfg/default</code>文件，每生成或修改一次 profile，都会在 default 文件中修改或追加对应的 label</li>
+<li>system：目标系统，即要安装的主机，包含配置文件或镜像，IP 地址等信息</li>
+<li>image：系统镜像</li>
+</ul>
+<blockquote>
+<p>system、image、repository 用的很少，主要用 distro 和 profile。</p>
+</blockquote>
+<h2 id="Cobbler-安装"><a href="#Cobbler-安装" class="headerlink" title="Cobbler 安装"></a>Cobbler 安装</h2><p>仍然使用之前 Kickstart 的环境。<strong>必须关闭 selinux</strong>。<br>首先安装<code>epel-release</code>，因为 Cobbler 位于 epel 源中。<br>然后安装 Cobbler 及其他工具程序<br><code>yum install cobbler cobbler-web pykickstart</code><br>其中 cobbler-web 是 cobbler 的网页端配置工具，可不用安装。<br>pykickstart 是用于检查 kickstart 文件语法的工具<br>cobbler 的运行依赖于 dhcp、tftp、rsync 及 dns 服务，因此在现有环境下还要安装 rsync。<code>yum install rsync</code><br><code>systemctl enable rsyncd</code><br><code>systemctl start rsyncd</code><br><code>systemctl enable cobblerd.service</code><br><code>systemctl start cobblerd.service</code></p>
+<p>使用命令<code>cobbler check</code>进行检查，对查出的错误一一解决。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1 : The &#x27;server&#x27; field in /etc/cobbler/settings must be set to something other than localhost,</span><br><span class="line">or kickstarting features will not work.</span><br><span class="line">This should be a resolvable hostname</span><br><span class="line">or IP for the boot server as reachable by all machines that will use it.</span><br><span class="line">2 : For PXE to be functional, the &#x27;next_server&#x27; field in /etc/cobbler/settings</span><br><span class="line">must be set to something other than 127.0.0.1,</span><br><span class="line">and should match the IP of the boot server on the PXE network.</span><br></pre></td></tr></table></figure>
+
+<p>这两个问题需要设置<code>/etc/cobbler/settings</code>，修改以下内容：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 将127.0.0.1修改为本机的IP地址</span><br><span class="line">next_server: 192.168.10.100</span><br><span class="line">server: 192.168.10.100</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">3 : Some network boot-loaders are missing from /var/lib/cobbler/loaders, you may run &#x27;cobbler get-loaders&#x27; to download them, or, if you only want to handle x86/x86_64 netbooting, you may ensure that you have installed a *recent* version of the syslinux package installed and can ignore this message entirely.  Files in this directory, should you want to support all architectures, should include pxelinux.0, menu.c32, elilo.efi, and yaboot. The &#x27;cobbler get-loaders&#x27; command is the easiest way to resolve these requirements.</span><br></pre></td></tr></table></figure>
+
+<p>问题是需要获取 bootloaders 文件，执行<code>cobbler get-loaders</code>自动下载，但要求联网。也可复制，但需要的文件很多，有的不好找，最好直接执行命令。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">4 : debmirror package is not installed, it will be required to manage debian deployments and repositories</span><br></pre></td></tr></table></figure>
+
+<p>安装<code>debmirror</code>软件包并将<code>/etc/debmirror.conf</code>中的<code>dists</code>和<code>arches</code>注释。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#@dists=&quot;sid&quot;;</span><br><span class="line">#@arches=&quot;i386&quot;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">5 : The default password used by the sample templates for newly installed machines (default_password_crypted in /etc/cobbler/settings) is still set to &#x27;cobbler&#x27; and should be changed, try: &quot;openssl passwd -1 -salt &#x27;random-phrase-here&#x27; &#x27;your-password-here&#x27;&quot; to generate new one</span><br></pre></td></tr></table></figure>
+
+<p>需要使用 openssl 生成加密密码来取代默认的密码。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">openssl passwd -1 -salt &#x27;cobbler&#x27; &#x27;123456&#x27;</span><br><span class="line">  passwd  表示生成密码</span><br><span class="line">  -1      表示使用MD5加密</span><br><span class="line">  -salt   表示使用后面提供的参数生成，后面跟上用户名和密码</span><br><span class="line">会生成一个加密密码，将这串字符替换掉原来的默认密码</span><br><span class="line">default_password_crypted: &quot;$1$cobbler$52QDrGSqGlT9d5qbjg7QY/&quot;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">6 : fencing tools were not found, and are required to use the (optional) power management features. install cman or fence-agents to use them</span><br></pre></td></tr></table></figure>
+
+<p>安装<code>cman</code>和<code>fence-agents</code>，<code>cman</code>可能会找不到这个包，但只安装<code>fence-agents</code>就够了。</p>
+<p>最后使用命令<code>cobbler sync</code>应用调整的参数或重启<code>cobblerd</code>服务，再执行一次<code>cobbler check</code>检查，若还有错就继续排错，若没有错误就会显示<code>No configuration problems found. All systems go.</code></p>
+<p>Cobbler 默认管理 tftp 服务，默认不管理 dhcp，因此 tftp 的根目录变为<code>/var/lib/tftpboot</code>。如果让 Cobbler 管理 DHCP，则 Cobbler 管理 DHCP 的模板文件<code>/etc/cobbler/dhcp.template</code>会覆盖<code>/etc/dhcp/dhcpd.conf</code>。</p>
+<p>将光盘挂载到本地，<code>mount /dev/cdrom /mnt/mirror</code>，然后执行<code>cobbler import --name=CentOS7 --path=/mnt/mirror</code>生成 distro，从本地导入的过程实际上是将系统镜像中的文件复制到<code>/var/www/cobbler/ks_mirror/CentOS7</code>中。在<code>/var/www/cobbler/images</code>中也会生成一个<code>CentOS7-x86_64</code>的目录，其中存放了<code>initrd.img</code>和<code>vmlinuz</code>文件。</p>
+<p>然后，需要提供 kickstart 文件，这里继续使用 Kickstart 实验用的<code>ks.cfg</code>文件，将文件移动到<code>/var/lib/cobbler/kickstarts</code>中，并改名为<code>CentOS7.ks</code>，需要修改以下内容。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">#如果存在ignoredisk设置，一定要注释掉，cobbler编译时不支持此语法</span><br><span class="line">修改镜像安装源</span><br><span class="line">url  --url=&quot;http://http://192.168.10.100/cobbler/ks_mirror/CentOS7/&quot;</span><br></pre></td></tr></table></figure>
+
+<p>在导入镜像生成 distro 的过程中，会自动生成一个 profile。使用<code>cobbler profile list</code>查看。使用<code>cobbler profile report --name=CentOS7-x86_64</code>查看 profile 信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># cobbler profile report --name=CentOS7-x86_64</span><br><span class="line">其中profile默认使用的kickstart文件有误</span><br><span class="line">Kickstart                      : /var/lib/cobbler/kickstarts/sample_end.ks</span><br></pre></td></tr></table></figure>
+
+<p>需要通过<code>cobbler profile edit --name=CentOS7-x86_64 --kickstart=/var/lib/cobbler/kickstarts/CentOS7.ks</code>修改。</p>
+<p>最好再修改内核启动参数<code>net.ifnames</code>和<code>biosdevname</code>使网卡名为<code>ethN</code>系列而不是用<code>enoXXXXXX</code>随机名。<code>cobbler profile edit --name=CentOS7-x86_64 --kopts=&quot;net.ifnames=0 biosdevname=0&quot;</code></p>
+<p>若要手动添加一个 profile，可使用<code>cobbler profile add --name=XXX --distro=distro名 --kickstart=ks文件路径</code>。每添加一个 profile，就是在<code>/var/lib/tftpboot/pxelinux.cfg/default</code>中添加一个 label，一个 label 就是开机启动时的引导选项。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">LABEL CentOS7-x86_64</span><br><span class="line">        kernel /images/CentOS7-x86_64/vmlinuz</span><br><span class="line">        MENU LABEL CentOS7-x86_64</span><br><span class="line">        append initrd=/images/CentOS7-x86_64/initrd.img ksdevice=bootif lang=  text net.ifnames=0 biosdevname=0 kssendmac  ks=http://192.168.10.100/cblr/svc/op/ks/profile/CentOS7-x86_64</span><br><span class="line">        ipappend 2</span><br></pre></td></tr></table></figure>
+
+<p>在配置完成后，执行<code>cobbler sync</code>同步设置。</p>
+<p>通过浏览器访问<code>default</code>文件中<code>ks</code>参数指定的 ks 文件路径，看是否能访问，若能显示文件内容，则配置没有问题。</p>
+<p>重启<code>xinetd</code>、<code>cobblerd</code>、<code>dhcpd</code>服务，以防配置未刷新。</p>
+<p>仍然使用一台裸机进行安装，会自动进入安装界面。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/20.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/20.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<h3 id="使用-cobbler-web-图形化配置"><a href="#使用-cobbler-web-图形化配置" class="headerlink" title="使用 cobbler-web 图形化配置"></a>使用 cobbler-web 图形化配置</h3><p>如果开启了防火墙，需要放行 443 端口和 https 服务，因为 Cobbler 在 CentOS7 只支持 https。</p>
+<p>在浏览器访问<code>https://IP地址/cobbler_web</code>即可，输入账号密码，均为<code>cobbler</code>。</p>
+<p>首先进行镜像的导入，左侧菜单的<code>Import DVD</code>选项配置。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/21.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/21.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>菜单的<code>Events</code>查看事件日志。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/22.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/22.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>进入<code>distros</code>配置，添加内核选项。也可以通过<code>profiles</code>配置。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/23.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/23.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>设置网卡名为 ethN 系列</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/24.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/24.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>修改或编写 ks 文件</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/25.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/25.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<p>也可进入菜单<code>system</code>进行 system 配置。</p>
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/26.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/26.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/27.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/27.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<img src="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/28.png" class="lazyload" data-srcset="/2018/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/28.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII=" class=" lazyload">
+
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><blockquote>
+<p><a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7342919.html">骏马金龙–无人值守 CentOS7</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7342022.html">kickstart 文件详解</a> &gt; <a target="_blank" rel="noopener" href="http://www.zyops.com/autoinstall-kickstart/">KICKSTART 无人值守安装</a> &gt; <a target="_blank" rel="noopener" href="http://blog.51cto.com/1767340368/2045496">Cobbler-自动化部署神器</a> &gt; <a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7347883.html">cobbler 无人值守批量安装 Linux 系统</a> &gt; <a target="_blank" rel="noopener" href="http://baijiahao.baidu.com/s?id=1601105969236933071&wfr=spider&for=pc">Cobbler 原理解析</a><br>Linux 就该这么学<br>Linux 运维之道（第二版）</p>
+</blockquote>
+
+  
+  
+    
+    <div class='footer'>
+      
+      
+      
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E6%97%A0%E4%BA%BA%E5%80%BC%E5%AE%88/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>无人值守</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PXE/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>PXE</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kickstart/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Kickstart</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Cobbler/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Cobbler</p></a></div>
+
+
+        
+      
+    </div>
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/SSH%E4%B8%8ESSL%E5%8D%8F%E8%AE%AE%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>SSH与SSL协议学习笔记</p>
+          <p class='content'>
+SSL/TLS 概念
+SSL 协议架构
+
+
+OpenSSL 概念
+SSH 协议
+sshd 服务
+sshd_config 配置
+密钥分发命令
+
+
+
+
+参考文章
+
+
+
+SSL/TLS 概念SSL（...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/Rsync%E6%96%87%E4%BB%B6%E5%90%8C%E6%AD%A5%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>Rsync文件同步服务器学习笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+Rsync 介绍与搭建
+quick check 算法介绍
+rsync 的工作方式
+rsync 命令使用
+规则解析
+Rsync 服务器搭建
+Rsync 部分报错解决
+
+
+Rsync+Inotif...</p>
+        </a>
+      
+    </div>
+  
+</article>
+
+
+  
+
+  <article class="post white-box reveal shadow" id="comments">
+    <p ct><i class='fas fa-comments'></i> 评论</p>
+    
+    <div id="valine_container" class="valine_thread">
+  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
+</div>
+
+  </article>
+
+
+
+
+
+
+</div>
+<aside class='l_side'>
+  
+  
+    
+    
+
+
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#PXE-%E6%A6%82%E8%BF%B0"><span class="toc-text">PXE 概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kickstart"><span class="toc-text">Kickstart</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Kickstart-%E6%A6%82%E8%BF%B0"><span class="toc-text">Kickstart 概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kickstart-%E5%87%86%E5%A4%87"><span class="toc-text">Kickstart 准备</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DHCP-%E9%85%8D%E7%BD%AE"><span class="toc-text">DHCP 配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TFTP-%E9%85%8D%E7%BD%AE"><span class="toc-text">TFTP 配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-VSFTP-%E6%90%AD%E5%BB%BA%E9%95%9C%E5%83%8F%E6%BA%90"><span class="toc-text">使用 VSFTP 搭建镜像源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-HTTP-%E6%90%AD%E5%BB%BA%E9%95%9C%E5%83%8F%E6%BA%90"><span class="toc-text">使用 HTTP 搭建镜像源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Syslinux-%E9%85%8D%E7%BD%AE"><span class="toc-text">Syslinux 配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%AE%89%E8%A3%85%E8%AF%95%E9%AA%8C"><span class="toc-text">网络安装试验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kickstart-%E9%85%8D%E7%BD%AE"><span class="toc-text">Kickstart 配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E9%85%8D%E7%BD%AE"><span class="toc-text">手动配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#system-config-kickstart-%E9%85%8D%E7%BD%AE"><span class="toc-text">system-config-kickstart 配置</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Cobbler"><span class="toc-text">Cobbler</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Cobbler-%E5%AE%89%E8%A3%85"><span class="toc-text">Cobbler 安装</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-cobbler-web-%E5%9B%BE%E5%BD%A2%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="toc-text">使用 cobbler-web 图形化配置</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol>
+    </div>
+  </section>
+
+
+  
+
+
+</aside>
+
+
+
+		  
+		  <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.postTitle="无人值守学习笔记";
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  // header 这里无论是否开启pjax都需要
+  var l_header=document.getElementById("l_header");
+  
+  l_header.classList.add("show");
+  
+  
+    // cover
+    var cover_wrapper=document.querySelector('.cover-wrapper');
+    
+    cover_wrapper.id="none";
+    cover_wrapper.style.display="none";
+    
+  
+</script>
+
+        </div>
+        
+  
+  <footer class="footer clearfix">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+      
+        本站使用
+        <a href="https://github.com/volantis-x/hexo-theme-volantis/tree/4.3.1" target="_blank" class="codename">Volantis</a>
+        作为主题
+      
+    
+      
+        <div class='copyright'>
+        <p>苏ICP备19069282号</p>
+
+        </div>
+      
+    
+  </footer>
+
+
+        <a id="s-top" class="fas fa-arrow-up fa-fw" href="javascript:void(0)"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+/************这个文件存放不需要重载的全局变量和全局函数*********/
+window.volantis={};
+window.volantis.loadcss=document.getElementById("loadcss");
+/******************** Pjax ********************************/
+function VPjax(){
+	this.list=[] // 存放回调函数
+	this.start=()=>{
+	  for(var i=0;i<this.list.length;i++){
+		this.list[i].run();
+	  }
+	}
+	this.push=(fn,name)=>{
+		var f=new PjaxItem(fn,name);
+		this.list.push(f);
+	}
+	// 构造一个可以run的对象
+	function PjaxItem(fn,name){
+		// 函数名称
+		this.name = name || fn.name
+		// run方法
+		this.run=()=>{
+			fn()
+		}
+	}
+}
+volantis.pjax={}
+volantis.pjax.method={
+	complete: new VPjax(),
+	error: new VPjax(),
+	send: new VPjax()
+}
+volantis.pjax={
+	...volantis.pjax,
+	push: volantis.pjax.method.complete.push,
+	error: volantis.pjax.method.error.push,
+	send: volantis.pjax.method.send.push
+}
+/********************脚本懒加载函数********************************/
+// 已经加入了setTimeout
+function loadScript(src, cb) {
+	setTimeout(function() {
+		var HEAD = document.getElementsByTagName('head')[0] || document.documentElement;
+		var script = document.createElement('script');
+		script.setAttribute('type','text/javascript');
+		if (cb) script.onload = cb;
+		script.setAttribute('src', src);
+		HEAD.appendChild(script);
+	});
+}
+//https://github.com/filamentgroup/loadCSS
+var loadCSS = function( href, before, media, attributes ){
+	var doc = window.document;
+	var ss = doc.createElement( "link" );
+	var ref;
+	if( before ){
+		ref = before;
+	}
+	else {
+		var refs = ( doc.body || doc.getElementsByTagName( "head" )[ 0 ] ).childNodes;
+		ref = refs[ refs.length - 1];
+	}
+	var sheets = doc.styleSheets;
+	if( attributes ){
+		for( var attributeName in attributes ){
+			if( attributes.hasOwnProperty( attributeName ) ){
+				ss.setAttribute( attributeName, attributes[attributeName] );
+			}
+		}
+	}
+	ss.rel = "stylesheet";
+	ss.href = href;
+	ss.media = "only x";
+	function ready( cb ){
+		if( doc.body ){
+			return cb();
+		}
+		setTimeout(function(){
+			ready( cb );
+		});
+	}
+	ready( function(){
+		ref.parentNode.insertBefore( ss, ( before ? ref : ref.nextSibling ) );
+	});
+	var onloadcssdefined = function( cb ){
+		var resolvedHref = ss.href;
+		var i = sheets.length;
+		while( i-- ){
+			if( sheets[ i ].href === resolvedHref ){
+				return cb();
+			}
+		}
+		setTimeout(function() {
+			onloadcssdefined( cb );
+		});
+	};
+	function loadCB(){
+		if( ss.addEventListener ){
+			ss.removeEventListener( "load", loadCB );
+		}
+		ss.media = media || "all";
+	}
+	if( ss.addEventListener ){
+		ss.addEventListener( "load", loadCB);
+	}
+	ss.onloadcssdefined = onloadcssdefined;
+	onloadcssdefined( loadCB );
+	return ss;
+};
+</script>
+<script>
+  
+  loadCSS("https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.14/css/all.min.css", window.volantis.loadcss);
+  
+  
+  
+  
+</script>
+<!-- required -->
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5/dist/jquery.min.js"></script>
+
+<script>
+  function pjax_fancybox() {
+    $(".md .gallery").find("img").each(function () { //渲染 fancybox
+      var element = document.createElement("a"); // a 标签
+      $(element).attr("class", "fancybox");
+      $(element).attr("pjax-fancybox", "");  // 过滤 pjax
+      $(element).attr("href", $(this).attr("src"));
+      if ($(this).attr("data-original")) {
+        $(element).attr("href", $(this).attr("data-original"));
+      }
+      $(element).attr("data-fancybox", "images");
+      var caption = "";   // 描述信息
+      if ($(this).attr('alt')) {  // 判断当前页面是否存在描述信息
+        $(element).attr('data-caption', $(this).attr('alt'));
+        caption = $(this).attr('alt');
+      }
+      var div = document.createElement("div");
+      $(div).addClass("fancybox");
+      $(this).wrap(div); // 最外层套 div ，其实主要作用还是 class 样式
+      var span = document.createElement("span");
+      $(span).addClass("image-caption");
+      $(span).text(caption); // 加描述
+      $(this).after(span);  // 再套一层描述
+      $(this).wrap(element);  // 最后套 a 标签
+    })
+    $(".md .gallery").find("img").fancybox({
+      selector: '[data-fancybox="images"]',
+      hash: false,
+      loop: false,
+      closeClick: true,
+      helpers: {
+        overlay: {closeClick: true}
+      },
+      buttons: [
+        "zoom",
+        "close"
+      ]
+    });
+  };
+  function SCload_fancybox() {
+    if ($(".md .gallery").find("img").length == 0) return;
+    loadCSS("https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css", document.getElementById("loadcss"));
+    loadScript('https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js', pjax_fancybox)
+  };
+  $(function () {
+    SCload_fancybox();
+  });
+  function Pjax_SCload_fancybox(){
+	if (typeof $.fancybox == "undefined") {
+	 SCload_fancybox();
+    } else {
+	 pjax_fancybox();
+    }
+  }
+  volantis.pjax.push(Pjax_SCload_fancybox)
+  volantis.pjax.send(()=>{
+      if (typeof $.fancybox != "undefined") {
+        $.fancybox.close();    // 关闭弹窗
+      }
+  },'fancybox')
+</script>
+
+
+<!-- internal -->
+
+
+
+
+<script>
+  function loadIssuesJS() {
+    if ($(".md").find(".issues-api").length == 0) return;
+	
+	  loadScript('/js/issues.js');
+	
+  };
+  $(function () {
+    loadIssuesJS();
+  });
+  volantis.pjax.push(()=>{
+	if (typeof IssuesAPI == "undefined") {
+	  loadIssuesJS();
+	}
+  },"IssuesJS")
+</script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.1.0/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: [],
+	maxRPS: 5,
+	hoverDelay: 25
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/gh/gijo-varghese/flying-pages@2.1.2/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+<script src="/js/valine.js"></script>
+
+
+<script>
+  function emoji(path, idx, ext) {
+    return path + "/" + path + "-" + idx + "." + ext;
+  }
+  var emojiMaps = {};
+  for (var i = 1; i <= 54; i++) {
+    emojiMaps['tieba-' + i] = emoji('tieba', i, 'png');
+  }
+  for (var i = 1; i <= 101; i++) {
+    emojiMaps['qq-' + i] = emoji('qq', i, 'gif');
+  }
+  for (var i = 1; i <= 116; i++) {
+    emojiMaps['aru-' + i] = emoji('aru', i, 'gif');
+  }
+  for (var i = 1; i <= 125; i++) {
+    emojiMaps['twemoji-' + i] = emoji('twemoji', i, 'png');
+  }
+  for (var i = 1; i <= 4; i++) {
+    emojiMaps['weibo-' + i] = emoji('weibo', i, 'png');
+  }
+  function pjax_valine() {
+    if(!document.querySelectorAll("#valine_container")[0])return;
+    let pagePlaceholder = pdata.commentPlaceholder || "快来评论吧~";
+    let path = pdata.commentPath;
+    if (path.length == 0) {
+      let defaultPath = '';
+      path = defaultPath || decodeURI(window.location.pathname);
+    }
+    var valine = new Valine();
+    valine.init(Object.assign({"path":null,"placeholder":"快来评论吧~","appId":null,"appKey":null,"meta":["nick","mail","link"],"requiredFields":["nick","mail"],"enableQQ":true,"recordIP":false,"avatar":"robohash","pageSize":10,"lang":"zh-cn","highlight":true,"mathJax":false}, {
+      el: '#valine_container',
+      path: path,
+      placeholder: pagePlaceholder,
+      emojiCDN: 'https://cdn.jsdelivr.net/gh/volantis-x/cdn-emoji/valine/',
+      emojiMaps: emojiMaps,
+    }))
+  }
+  $(function () {
+    pjax_valine();
+  });
+  volantis.pjax.push(pjax_valine);
+</script>
+
+
+
+
+
+
+  
+<script src="/js/app.js"></script>
+
+
+
+<!-- optional -->
+
+  <script>
+const SearchServiceimagePath="https://cdn.jsdelivr.net/gh/volantis-x/cdn-volantis@master/img/";
+const ROOT =  ("/" || "/").endsWith('/') ? ("/" || "/") : ("//" || "/" );
+
+$('.input.u-search-input').one('focus',function(){
+	
+		loadScript('/js/search/hexo.js',setSearchService);
+	
+})
+
+function listenSearch(){
+  
+    customSearch = new HexoSearch({
+      imagePath: SearchServiceimagePath
+    });
+  
+}
+function setSearchService() {
+	listenSearch();
+	
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  <script defer>
+
+  const LCCounter = {
+    app_id: 'u9j57bwJod4EDmXWdxrwuqQT-MdYXbMMI',
+    app_key: 'jfHtEKVE24j0IVCGHbvuFClp',
+    custom_api_server: '',
+
+    // 查询存储的记录
+    getRecord(Counter, url, title) {
+      return new Promise(function (resolve, reject) {
+        Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({url})))
+          .then(resp => resp.json())
+          .then(({results, code, error}) => {
+            if (code === 401) {
+              throw error;
+            }
+            if (results && results.length > 0) {
+              var record = results[0];
+              resolve(record);
+            } else {
+              Counter('post', '/classes/Counter', {url, title: title, times: 0})
+                .then(resp => resp.json())
+                .then((record, error) => {
+                  if (error) {
+                    throw error;
+                  }
+                  resolve(record);
+                }).catch(error => {
+                console.error('Failed to create', error);
+                reject(error);
+              });
+            }
+          }).catch((error) => {
+          console.error('LeanCloud Counter Error:', error);
+          reject(error);
+        });
+      })
+    },
+
+    // 发起自增请求
+    increment(Counter, incrArr) {
+      return new Promise(function (resolve, reject) {
+        Counter('post', '/batch', {
+          "requests": incrArr
+        }).then((res) => {
+          res = res.json();
+          if (res.error) {
+            throw res.error;
+          }
+          resolve(res);
+        }).catch((error) => {
+          console.error('Failed to save visitor count', error);
+          reject(error);
+        });
+      });
+    },
+
+    // 构建自增请求体
+    buildIncrement(objectId) {
+      return {
+        "method": "PUT",
+        "path": `/1.1/classes/Counter/${ objectId }`,
+        "body": {
+          "times": {
+            '__op': 'Increment',
+            'amount': 1
+          }
+        }
+      }
+    },
+
+    // 校验是否为有效的 UV
+    validUV() {
+      var key = 'LeanCloudUVTimestamp';
+      var flag = localStorage.getItem(key);
+      if (flag) {
+        // 距离标记小于 24 小时则不计为 UV
+        if (new Date().getTime() - parseInt(flag) <= 86400000) {
+          return false;
+        }
+      }
+      localStorage.setItem(key, new Date().getTime().toString());
+      return true;
+    },
+
+    addCount(Counter) {
+      var enableIncr = '' === 'true' && window.location.hostname !== 'localhost';
+      enableIncr = true;
+      var getterArr = [];
+      var incrArr = [];
+      // 请求 PV 并自增
+      var pvCtn = document.querySelector('#lc-sv');
+      if (pvCtn || enableIncr) {
+        var pvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-sv', 'Visits').then((record) => {
+          incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-sv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + 1;
+              if (pvCtn) {
+                pvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(pvGetter);
+      }
+
+      // 请求 UV 并自增
+      var uvCtn = document.querySelector('#lc-uv');
+      if (uvCtn || enableIncr) {
+        var uvGetter = this.getRecord(Counter, 'https://coconutmilktaro.top' + '/#lc-uv', 'Visitors').then((record) => {
+          var vuv = this.validUV();
+          vuv && incrArr.push(this.buildIncrement(record.objectId))
+          var eles = document.querySelectorAll('#lc-uv #number');
+          if (eles.length > 0) {
+            eles.forEach((el,index,array)=>{
+              el.innerText = record.times + (vuv ? 1 : 0);
+              if (uvCtn) {
+                uvCtn.style.display = 'inline';
+              }
+            })
+          }
+        });
+        getterArr.push(uvGetter);
+      }
+
+      // 请求文章的浏览数，如果是当前页面就自增
+      var allPV = document.querySelectorAll('#lc-pv');
+      if (allPV.length > 0 || enableIncr) {
+        for (i = 0; i < allPV.length; i++) {
+          let pv = allPV[i];
+          let title = pv.getAttribute('data-title');
+          var url = 'https://coconutmilktaro.top' + pv.getAttribute('data-path');
+          if (url) {
+            var viewGetter = this.getRecord(Counter, url, title).then((record) => {
+              // 是当前页面就自增
+              let curPath = window.location.pathname;
+              if (curPath.includes('index.html')) {
+                curPath = curPath.substring(0, curPath.lastIndexOf('index.html'));
+              }
+              if (pv.getAttribute('data-path') == curPath) {
+                incrArr.push(this.buildIncrement(record.objectId));
+              }
+              if (pv) {
+                var ele = pv.querySelector('#lc-pv #number');
+                if (ele) {
+                  if (pv.getAttribute('data-path') == curPath) {
+                    ele.innerText = (record.times || 0) + 1;
+                  } else {
+                    ele.innerText = record.times || 0;
+                  }
+                  pv.style.display = 'inline';
+                }
+              }
+            });
+            getterArr.push(viewGetter);
+          }
+        }
+      }
+
+      // 如果启动计数自增，批量发起自增请求
+      if (enableIncr) {
+        Promise.all(getterArr).then(() => {
+          incrArr.length > 0 && this.increment(Counter, incrArr);
+        })
+      }
+
+    },
+
+
+    fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${ api_server }/1.1${ url }`, {
+          method,
+          headers: {
+            'X-LC-Id': this.app_id,
+            'X-LC-Key': this.app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      this.addCount(Counter);
+    },
+
+    refreshCounter() {
+      var api_server = this.app_id.slice(-9) !== '-MdYXbMMI' ? this.custom_api_server : `https://${ this.app_id.slice(0, 8).toLowerCase() }.api.lncldglobal.com`;
+      if (api_server) {
+        this.fetchData(api_server);
+      } else {
+        fetch('https://app-router.leancloud.cn/2/route?appId=' + this.app_id)
+          .then(resp => resp.json())
+          .then(({api_server}) => {
+            this.fetchData('https://' + api_server);
+          });
+      }
+    }
+
+  };
+
+  LCCounter.refreshCounter();
+
+  document.addEventListener('pjax:complete', function () {
+    LCCounter.refreshCounter();
+  });
+</script>
+
+
+
+
+  <script>
+const rootElement = document.documentElement;
+const darkModeStorageKey = "user-color-scheme";
+const rootElementDarkModeAttributeName = "data-user-color-scheme";
+
+const setLS = (k, v) => {
+    localStorage.setItem(k, v);
+};
+
+const removeLS = (k) => {
+    localStorage.removeItem(k);
+};
+
+const getLS = (k) => {
+    return localStorage.getItem(k);
+};
+
+const getModeFromCSSMediaQuery = () => {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+};
+
+const resetRootDarkModeAttributeAndLS = () => {
+  rootElement.removeAttribute(rootElementDarkModeAttributeName);
+  removeLS(darkModeStorageKey);
+};
+
+const validColorModeKeys = {
+  dark: true,
+  light: true,
+};
+
+const applyCustomDarkModeSettings = (mode) => {
+  const currentSetting = mode || getLS(darkModeStorageKey);
+
+  if (currentSetting === getModeFromCSSMediaQuery()) {
+    resetRootDarkModeAttributeAndLS();
+  } else if (validColorModeKeys[currentSetting]) {
+    rootElement.setAttribute(rootElementDarkModeAttributeName, currentSetting);
+  } else {
+    resetRootDarkModeAttributeAndLS();
+  }
+};
+
+const invertDarkModeObj = {
+  dark: "light",
+  light: "dark",
+};
+
+/**
+ * get target mode
+ */
+const toggleCustomDarkMode = () => {
+  let currentSetting = getLS(darkModeStorageKey);
+
+  if (validColorModeKeys[currentSetting]) {
+    currentSetting = invertDarkModeObj[currentSetting];
+  } else if (currentSetting === null) {
+    currentSetting = invertDarkModeObj[getModeFromCSSMediaQuery()];
+  } else {
+    return;
+  }
+  setLS(darkModeStorageKey, currentSetting);
+  return currentSetting;
+};
+
+/**
+ * bind click event for toggle button
+ */
+var btn=$("#wrapper .toggle-mode-btn,#rightmenu-wrapper .toggle-mode-btn");
+function bindToggleButton() {
+    btn.on('click',(e) => {
+      const mode = toggleCustomDarkMode();
+      applyCustomDarkModeSettings(mode);
+    });
+}
+
+applyCustomDarkModeSettings();
+document.addEventListener("DOMContentLoaded", bindToggleButton);
+volantis.pjax.push(bindToggleButton);
+volantis.pjax.send(()=>{
+	btn.unbind('click');
+},'toggle-mode-btn-unbind');
+</script>
+
+
+
+
+
+
+
+
+<script>
+function listennSidebarTOC() {
+  const navItems = document.querySelectorAll(".toc li");
+  if (!navItems.length) return;
+  const sections = [...navItems].map((element) => {
+    const link = element.querySelector(".toc-link");
+    const target = document.getElementById(
+      decodeURI(link.getAttribute("href")).replace("#", "")
+    );
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.scrollTo({
+		top: target.offsetTop + 100,
+		
+		behavior: "smooth"
+		
+	  });
+    });
+    return target;
+  });
+
+  function activateNavByIndex(target) {
+    if (target.classList.contains("active-current")) return;
+
+    document.querySelectorAll(".toc .active").forEach((element) => {
+      element.classList.remove("active", "active-current");
+    });
+    target.classList.add("active", "active-current");
+    let parent = target.parentNode;
+    while (!parent.matches(".toc")) {
+      if (parent.matches("li")) parent.classList.add("active");
+      parent = parent.parentNode;
+    }
+  }
+
+  function findIndex(entries) {
+    let index = 0;
+    let entry = entries[index];
+    if (entry.boundingClientRect.top > 0) {
+      index = sections.indexOf(entry.target);
+      return index === 0 ? 0 : index - 1;
+    }
+    for (; index < entries.length; index++) {
+      if (entries[index].boundingClientRect.top <= 0) {
+        entry = entries[index];
+      } else {
+        return sections.indexOf(entry.target);
+      }
+    }
+    return sections.indexOf(entry.target);
+  }
+
+  function createIntersectionObserver(marginTop) {
+    marginTop = Math.floor(marginTop + 10000);
+    let intersectionObserver = new IntersectionObserver(
+      (entries, observe) => {
+        let scrollHeight = document.documentElement.scrollHeight + 100;
+        if (scrollHeight > marginTop) {
+          observe.disconnect();
+          createIntersectionObserver(scrollHeight);
+          return;
+        }
+        let index = findIndex(entries);
+        activateNavByIndex(navItems[index]);
+      },
+      {
+        rootMargin: marginTop + "px 0px -100% 0px",
+        threshold: 0,
+      }
+    );
+    sections.forEach((element) => {
+      element && intersectionObserver.observe(element);
+    });
+  }
+  createIntersectionObserver(document.documentElement.scrollHeight);
+}
+
+document.addEventListener("DOMContentLoaded", listennSidebarTOC);
+document.addEventListener("pjax:success", listennSidebarTOC);
+</script>
+
+<!-- more -->
+
+ 
+	   
+	    
+
+
+<script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox])',
+        selectors: [
+          "title",
+          
+          "#pjax-container",
+          "#pjax-header-nav-list"
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      window.subData = null; // 移除标题（用于一二级导航栏切换处）
+
+      volantis.$switcher.removeClass('active'); // 关闭移动端激活的搜索框
+      volantis.$header.removeClass('z_search-open'); // 关闭移动端激活的搜索框
+      volantis.$wrapper.removeClass('sub'); // 跳转页面时关闭二级导航
+
+      // 解绑事件 避免重复监听
+      volantis.$topBtn.unbind('click');
+      $('.menu a').unbind('click');
+      $(window).unbind('resize');
+      $(window).unbind('scroll');
+      $(document).unbind('scroll');
+      $(document).unbind('click');
+      $('body').unbind('click');
+	  // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      $('.nav-main').find('.list-v').not('.menu-phone').removeAttr("style",""); // 移除小尾巴的移除
+      $('.menu-phone.list-v').removeAttr("style",""); // 移除小尾巴的移除
+      $('script[data-pjax], .pjax-reload script').each(function () {
+        $(this).parent().append($(this).remove());
+      });
+      try{
+		// 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+		volantis.pjax.method.complete.start();
+      } catch (e) {
+        console.log(e);
+      }
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+	  // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+	  volantis.pjax.method.error.start();
+      window.location.href = e.triggerElement.href;
+    });
+</script>
+ 
+	  
+    </div>
+  </body>
+</html>
