@@ -3,32 +3,9 @@ title: LVS负载均衡学习笔记
 date: 2018-05-27 23:21:51
 tags: [server, LVS, keepalived, 负载均衡]
 categories: [应用运维]
+comment: false
 ---
-
-本篇笔记包含以下内容
-
-- [LVS 原理](#lvs-%e5%8e%9f%e7%90%86)
-  - [LVS 集群的通用体系结构](#lvs-%e9%9b%86%e7%be%a4%e7%9a%84%e9%80%9a%e7%94%a8%e4%bd%93%e7%b3%bb%e7%bb%93%e6%9e%84)
-  - [三种 IP 负载均衡技术](#%e4%b8%89%e7%a7%8d-ip-%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e6%8a%80%e6%9c%af)
-  - [LVS 两种调度方式与八种算法](#lvs-%e4%b8%a4%e7%a7%8d%e8%b0%83%e5%ba%a6%e6%96%b9%e5%bc%8f%e4%b8%8e%e5%85%ab%e7%a7%8d%e7%ae%97%e6%b3%95)
-  - [LVS 持久连接](#lvs-%e6%8c%81%e4%b9%85%e8%bf%9e%e6%8e%a5)
-- [KeepAlived 原理](#keepalived-%e5%8e%9f%e7%90%86)
-- [LVS 与 KeepAlived 搭建](#lvs-%e4%b8%8e-keepalived-%e6%90%ad%e5%bb%ba)
-  - [NAT 模式搭建](#nat-%e6%a8%a1%e5%bc%8f%e6%90%ad%e5%bb%ba)
-  - [DR 模式搭建](#dr-%e6%a8%a1%e5%bc%8f%e6%90%ad%e5%bb%ba)
-  - [持久化配置](#%e6%8c%81%e4%b9%85%e5%8c%96%e9%85%8d%e7%bd%ae)
-  - [Keepalived 配置](#keepalived-%e9%85%8d%e7%bd%ae)
-  - [Keepalived 双实例双主模式配置](#keepalived-%e5%8f%8c%e5%ae%9e%e4%be%8b%e5%8f%8c%e4%b8%bb%e6%a8%a1%e5%bc%8f%e9%85%8d%e7%bd%ae)
-  - [Nginx 负载均衡配合 Keepalived](#nginx-%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1%e9%85%8d%e5%90%88-keepalived)
-  - [解决服务监听网卡上不存在 IP 地址的问题](#%e8%a7%a3%e5%86%b3%e6%9c%8d%e5%8a%a1%e7%9b%91%e5%90%ac%e7%bd%91%e5%8d%a1%e4%b8%8a%e4%b8%8d%e5%ad%98%e5%9c%a8-ip-%e5%9c%b0%e5%9d%80%e7%9a%84%e9%97%ae%e9%a2%98)
-  - [解决高可用服务只针对物理服务器的问题](#%e8%a7%a3%e5%86%b3%e9%ab%98%e5%8f%af%e7%94%a8%e6%9c%8d%e5%8a%a1%e5%8f%aa%e9%92%88%e5%af%b9%e7%89%a9%e7%90%86%e6%9c%8d%e5%8a%a1%e5%99%a8%e7%9a%84%e9%97%ae%e9%a2%98)
-  - [解决多组 keepalived 服务器在一个局域网的冲突问题](#%e8%a7%a3%e5%86%b3%e5%a4%9a%e7%bb%84-keepalived-%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%9c%a8%e4%b8%80%e4%b8%aa%e5%b1%80%e5%9f%9f%e7%bd%91%e7%9a%84%e5%86%b2%e7%aa%81%e9%97%ae%e9%a2%98)
-  - [配置指定文件接受 Keepalived 日志](#%e9%85%8d%e7%bd%ae%e6%8c%87%e5%ae%9a%e6%96%87%e4%bb%b6%e6%8e%a5%e5%8f%97-keepalived-%e6%97%a5%e5%bf%97)
-  - [开发监测 Keepalived 裂脑脚本](#%e5%bc%80%e5%8f%91%e7%9b%91%e6%b5%8b-keepalived-%e8%a3%82%e8%84%91%e8%84%9a%e6%9c%ac)
-- [参考文档](#%e5%8f%82%e8%80%83%e6%96%87%e6%a1%a3)
-
 <!-- more -->
-
 # LVS 原理
 
 LVS（Linux Virtual Server）Linux 虚拟服务器是由章文嵩于 1998 年开发的负载均衡软件，提供**传输层**和**应用层**的负载均衡，传输层的负载均衡工具为 IPVS，应用层的负载均衡工具为 KTCPVS。

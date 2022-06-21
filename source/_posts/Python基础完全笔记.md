@@ -23,8 +23,6 @@ tags: [Python, lang]
 - [数据库编程](#数据库编程)
 - [文本处理](#文本处理)
 - [协程与异步 IO](#协程与异步-io)
-- [Redis 编程](#redis-编程)
-- [RabbitMQ 编程](#rabbitmq-编程)
 - [Web 编程](#web-编程)
 - [常见内建模块](#常见内建模块)
 
@@ -552,9 +550,6 @@ while True:
 
 # 协程与异步 IO
 
-# Redis 编程
-
-# RabbitMQ 编程
 
 # Web 编程
 

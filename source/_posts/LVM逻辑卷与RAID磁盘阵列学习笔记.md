@@ -5,18 +5,6 @@ tags: [LVM, RAID, Linux]
 categories: [系统运维]
 ---
 
-本篇包含以下内容
-
-- [LVM 逻辑卷](#lvm-逻辑卷)
-  - [LVM 概述](#lvm-概述)
-  - [LVM 创建与调整](#lvm-创建与调整)
-  - [LVM 快照](#lvm-快照)
-- [RAID 磁盘阵列](#raid-磁盘阵列)
-  - [RAID 概述](#raid-概述)
-  - [RAID 基础搭建](#raid-基础搭建)
-    - [使用`RAID 5`进行备份](#使用raid-5进行备份)
-- [参考资料](#参考资料)
-
 <!-- more -->
 
 # LVM 逻辑卷

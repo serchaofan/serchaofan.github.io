@@ -5,13 +5,6 @@ tags: [Memcached, 缓存]
 categories: [应用运维]
 ---
 
-- [Memcached 概述](#memcached-概述)
-- [Memcached 简单部署](#memcached-简单部署)
-  - [安装与简单操作](#安装与简单操作)
-  - [部署在 LNMP 环境中](#部署在-lnmp-环境中)
-- [Memcached 架构优化](#memcached-架构优化)
-- [参考书目](#参考书目)
-
 <!--more-->
 
 # Memcached 概述
