@@ -4,34 +4,7 @@ date: 2018-05-02 17:19:50
 tags: [server, Apache, http, LAMP, LAMT]
 categories: [应用运维]
 ---
-
-{% asset_img 0.png %}
-
-  <!-- more -->
-
-本片包含以下内容：
-
-- [Apache-httpd 服务器介绍](#apache-httpd-%e6%9c%8d%e5%8a%a1%e5%99%a8%e4%bb%8b%e7%bb%8d)
-- [httpd 服务器安装](#httpd-%e6%9c%8d%e5%8a%a1%e5%99%a8%e5%ae%89%e8%a3%85)
-- [httpd 配置文件](#httpd-%e9%85%8d%e7%bd%ae%e6%96%87%e4%bb%b6)
-- [httpd 虚拟主机](#httpd-%e8%99%9a%e6%8b%9f%e4%b8%bb%e6%9c%ba)
-- [httpd 认证授权](#httpd-%e8%ae%a4%e8%af%81%e6%8e%88%e6%9d%83)
-- [.htaccess 文件](#htaccess-%e6%96%87%e4%bb%b6)
-  - [.htaccess 文件的常用示例](#htaccess-%e6%96%87%e4%bb%b6%e7%9a%84%e5%b8%b8%e7%94%a8%e7%a4%ba%e4%be%8b)
-- [页面重定向](#%e9%a1%b5%e9%9d%a2%e9%87%8d%e5%ae%9a%e5%90%91)
-- [CGI](#cgi)
-- [动态 httpd](#%e5%8a%a8%e6%80%81-httpd)
-- [httpd 与 SSL](#httpd-%e4%b8%8e-ssl)
-- [httpd 日志](#httpd-%e6%97%a5%e5%bf%97)
-  - [日志切割](#%e6%97%a5%e5%bf%97%e5%88%87%e5%89%b2)
-  - [Webalizer 分析统计日志](#webalizer-%e5%88%86%e6%9e%90%e7%bb%9f%e8%ae%a1%e6%97%a5%e5%bf%97)
-- [httpd 代理](#httpd-%e4%bb%a3%e7%90%86)
-- [Apache-MPM 模式](#apache-mpm-%e6%a8%a1%e5%bc%8f)
-- [Apache 实用第三方模块](#apache-%e5%ae%9e%e7%94%a8%e7%ac%ac%e4%b8%89%e6%96%b9%e6%a8%a1%e5%9d%97)
-  - [Gzip 压缩](#gzip-%e5%8e%8b%e7%bc%a9)
-  - [防 DDOS 攻击](#%e9%98%b2-ddos-%e6%94%bb%e5%87%bb)
-- [LAMP 环境搭建](#lamp-%e7%8e%af%e5%a2%83%e6%90%ad%e5%bb%ba)
-    - [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
+<!-- more -->
 
 # Apache-httpd 服务器介绍
 
@@ -369,7 +342,7 @@ AuthGroupFile  指定组认证文件，文件中分组格式为"组名: 组成�
 
 重启 httpd，通过浏览器访问，会提示输入用户名密码。
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337946.png)
 
 创建组认证文件`echo "group1: mike" > /etc/httpd/auth_group`，修改配置文件：
 
@@ -469,7 +442,7 @@ SetHandler cgi-script
 
 CGI（common gateway interface，通用网关接口）是 Web 服务器运行时外部程序的规范，按 CGI 编写的程序**可以扩展服务器功能**，处理动态内容。CGI 应用程序**能与浏览器进行交互**，还可**通过数据库 API 与数据库服务器等外部数据源进行通信**,从数据库服务器中获取数据。对于 HTTP，只有 get 和 post 方法允许执行 cgi 脚本。
 
-{% asset_img 9.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212339137.png)
 
 常见的 CGI 术语：
 
@@ -538,7 +511,7 @@ SSL 协议的工作流程包括**服务器认证阶段**和**用户认证阶段*
 - 服务器向客户端发起提问（封装在数字签名中）
 - 客户端返回答案和公钥，提供认证信息
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338275.png)
 
 HTTPS 安全超文本传输协议，内置在浏览器中，对数据压缩和解密。HTTPS 就是用 SSL 作为 HTTP 应用层的子层，使用 TCP443 端口。
 
@@ -593,7 +566,7 @@ openssl req -new -x509 -key /etc/pki/tls/private/server.key -out /etc/pki/tls/ce
 
 通过浏览器访问`http://system1.example.com`，会出现不安全提示
 
-{% asset_img 8.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338145.png)
 
 确认添加例外后，就能自动跳转到`https://system1.example.com`。
 
@@ -730,11 +703,11 @@ webalizer [options] [log file]
 
 <center>index.html</center>
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338510.png)
 
 <center>usage_日期.html</center>
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338001.png)
 
 # httpd 代理
 
@@ -769,17 +742,17 @@ LoadModule mpm_event_module modules/mod_mpm_event.so
 - `prefork`：实现了一个非线程、预派生的工作模式。在 Apache 启动之初，就会**预派生一些子进程**，然后等待连接。可以减少频繁创建和销毁进程的开销，**每个子进程只有一个线程**。成熟稳定，可以**兼容新老模块**，也**不需要担心线程安全问题**。**效率比`worker`略高**
   - 缺点：**一个进程相对地占用更多的资源，消耗大量内存，不擅长处理高并发的场景**。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212336497.png)
 
 - `worker`：使用了**多进程和多线程的混合模式**，也同样会预派生一些子进程，然后每个子进程创建一些线程，同时包括**一个监听线程**，每个请求过来会被分配到一个线程来服务。**占用内存少，适合高并发环境**
   - **使用线程的原因：**线程比进程更加轻量级，因为**线程通常会共享父进程的内存地址的，因此内存占用会减少一些**。如果一个线程异常挂了，会**导致父进程和它的其他正常子线程都挂了，只会影响 Apache 的一部分**，而不是整个服务。
   - 缺点：**必须考虑线程安全问题**，因为多个子进程时共享父进程的内存地址的。若使用 keepalive 的长连接方式，某个线程一直占据，若过多的线程被占用，会导致高并发时无服务线程可用。
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337868.png)
 
 - `event`：从 Apache2.2 才被加入 MPM，Apache2.4 开始成为默认 MPM。类似 worker 模式，但解决了 keepalive 问题。有一个**专门的线程来管理这些 keep-alive 线程**，当有真实请求过来的时候，将请求传递给服务线程，**执行完毕后，又允许它释放**，这样增强了在高并发场景下的请求处理能力。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337612.png)
 
 **各 MPM 模式的简单优化：** 若是 rpm 安装，就在`httpd.conf`中添加，若为源码安装，就在`/usr/local/httpd-2.4/conf/extra/httpd-mpm.conf`中找到对应模块修改。以下参数基本采用配置文件默认值。
 

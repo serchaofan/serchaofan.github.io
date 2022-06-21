@@ -4,70 +4,8 @@ date: 2018-05-02 17:20:03
 tags: [server, Nginx, LNMP, 集群, 缓存, 代理, 负载均衡]
 categories: [应用运维]
 ---
-
 基于 Nginx1.14-1.16
-
 <!-- more -->
-
-- [Nginx 介绍](#nginx-介绍)
-- [Nginx 安装](#nginx-安装)
-- [Nginx 配置文件解析](#nginx-配置文件解析)
-  - [全局配置](#全局配置)
-    - [main 块](#main-块)
-  - [模块配置](#模块配置)
-    - [events 块](#events-块)
-    - [http 块](#http-块)
-    - [server 块](#server-块)
-    - [location 块](#location-块)
-- [访问控制、身份认证与 SSL](#访问控制身份认证与-ssl)
-- [Nginx 日志](#nginx-日志)
-  - [日志切割](#日志切割)
-- [Nginx 的其他常见 HTTP 功能](#nginx-的其他常见-http-功能)
-  - [文件查找规则](#文件查找规则)
-  - [域名解析](#域名解析)
-  - [客户端交互](#客户端交互)
-- [Nginx 缓存](#nginx-缓存)
-  - [清除缓存](#清除缓存)
-- [Nginx 负载均衡](#nginx-负载均衡)
-  - [轮询](#轮询)
-  - [权重](#权重)
-  - [ip_hash](#ip_hash)
-- [Nginx 反向代理](#nginx-反向代理)
-  - [非 HTTP 型上游服务器](#非-http-型上游服务器)
-    - [Memcached 服务器](#memcached-服务器)
-    - [FastCGI 服务器](#fastcgi-服务器)
-- [Nginx 邮件服务](#nginx-邮件服务)
-- [重写与重定向](#重写与重定向)
-  - [重写](#重写)
-- [Nginx 优化](#nginx-优化)
-  - [安全优化](#安全优化)
-    - [隐藏 Nginx 版本号](#隐藏-nginx-版本号)
-    - [文件解析漏洞](#文件解析漏洞)
-    - [CRLF注入漏洞](#crlf注入漏洞)
-    - [目录遍历漏洞](#目录遍历漏洞)
-    - [服务器请求伪造漏洞](#服务器请求伪造漏洞)
-    - [整数溢出漏洞](#整数溢出漏洞)
-  - [性能优化](#性能优化)
-    - [nginx 单个进程允许的客户端最大连接数](#nginx-单个进程允许的客户端最大连接数)
-    - [worker 进程最大打开文件数](#worker-进程最大打开文件数)
-    - [优化服务器域名的散列表](#优化服务器域名的散列表)
-    - [nginx 连接参数优化](#nginx-连接参数优化)
-    - [上传文件大小限制](#上传文件大小限制)
-    - [FastCGI 优化](#fastcgi-优化)
-    - [gzip 压缩](#gzip-压缩)
-    - [expires 缓存](#expires-缓存)
-  - [放盗链](#放盗链)
-  - [防爬虫](#防爬虫)
-  - [CDN 加速](#cdn-加速)
-  - [Nginx 降权](#nginx-降权)
-- [Nginx 与 PHP](#nginx-与-php)
-- [Nginx 常见模块](#nginx-常见模块)
-  - [gzip 压缩](#gzip-压缩-1)
-- [LNMP 分布式集群方案](#lnmp-分布式集群方案)
-  - [搭建 Nginx+PHP 环境](#搭建-nginxphp-环境)
-  - [Nginx+Apache 动静分离](#nginxapache-动静分离)
-- [参考文章](#参考文章)
-
 # Nginx 介绍
 
 Nginx 有以下功能：
@@ -98,7 +36,7 @@ master 进程用于启动管理多个 worker 进程，若取消 master 进程，
 - 消息通知：select、poll、rt signals
 - 模块类型：核心模块、标准 http 模块、可选 http 模块、邮件模块、第三方模块
 
-{% asset_img nginx_jiagou.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212340851.png)
 
 **Master 进程完成的工作：**
 
@@ -513,9 +451,9 @@ CA 为服务器认证证书
 
 在`/etc/hosts`中确定配置了 system3 的条目。在浏览器上输入`https://system3.example.com`会说明此连接不安全。是因为当前的证书是服务器自己作为 CA 签名的，所以浏览器无法信任。点添加例外，可查看该证书，与配置的一致。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212341552.png)
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212341973.png)
 
 添加安全例外后，即可访问网页
 
@@ -766,11 +704,11 @@ server {
 
 通过浏览器访问`http://web`。如果是第一次访问，会发现状态是 MISS
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212341317.png)
 
 若再次访问，则状态会变为 HIT。
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212341818.png)
 
 并且可以看到缓存目录下已建立缓存
 
@@ -1596,13 +1534,13 @@ fastcgi_param  DOCUMENT_ROOT      $document_root;
 
 在`index.php`中写入`<? phpinfo(); ?>`。刷新配置，浏览器访问。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212342627.png)
 
 ## Nginx+Apache 动静分离
 
 Nginx 提供外部访问，静态请求直接由 Nginx 处理，动态请求转交给 Apache 处理，实现动静分离。
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212342323.png)
 
 首先要确保 Apache 已支持 PHP。确保 Apache 是`--enable-so`的，会在 Apache 的`bin/`下有一个`apxs`命令，是 Apache 的一个扩展工具（Apache extension tools），用于编译模块。php 的 configure 可用 apxs 编译用于 Apache 访问 PHP 的模块。
 

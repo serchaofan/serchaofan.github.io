@@ -127,7 +127,7 @@ Transmission Control Protocol 传输控制协议，协议号 6
 
 TCP 报文头：
 
-{% asset_img 1.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212331132.jpg)
 
 1. Source Port(16 bit)：源端口
 
@@ -162,7 +162,7 @@ TCP 报文头：
 
 3. A 收到 B 的 SYN 报文，回应 ACK（ack=y+1）进入 Established 状态，TCP 连接建立
 
-{% asset_img 2.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212331266.jpg)
 
 四次挥手：连接终止
 
@@ -174,7 +174,7 @@ TCP 报文头：
 
 4. A 接收到后向 B 确认，发送 ACK
 
-{% asset_img 3.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212332987.jpg)
 
 滑动窗口：限制每次发送的包数
 
@@ -184,7 +184,7 @@ TCP 报文头：
 
 3.此后 A 便会按照要求长度发送数据包
 
-{% asset_img 4.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212332602.jpg)
 
 ## UDP
 
@@ -194,7 +194,7 @@ User Datagram Protocol 用户数据报协议，协议号 17
 
 报文头：
 
-{% asset_img 5.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212332962.jpg)
 
 1. Source Port(16 bit) #源端口
 
@@ -226,7 +226,7 @@ IP 作用：
 
 IP 头（20 字节）
 
-{% asset_img 6.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212332756.jpg)
 
 1. Version(4 bit)：当前 IP 版本
 
@@ -407,11 +407,11 @@ TCP 或 UDP（基本是 UDP）协议，端口号 53，采用 C/S 模式，解析
 
 1. 递归：服务器收到请求时，若不能解析，则把请求转发到下一台服务器直到有一台解析成功
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212333508.png)
 
 2. 迭代：服务器收到请求时，若不能解析，则按根域 -> 一级域名 -> 二级域名 -> 三级域名依次询问，直到解析成功
 
-{% asset_img 8.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212333178.png)
 
 反向查询：根据 IP 解析域名，使用特殊域 in-addr.arpa 域，该域的子域是按照点分十进制表示法编号的 IP 地址相反顺序构造，即 IP 地址的四段倒置形成该域。
 
@@ -477,7 +477,7 @@ _华三路由器的 Telnet 默认关闭。_
 
 实验环境：两台交换机（需要配 IP 地址）或路由器
 
-{% asset_img 10.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212334650.png)
 
 SW2 作为 telnet server，SW1 作为 telnet client
 
@@ -527,7 +527,7 @@ SSH 协议基本框架：
 
 主要包含三个协议：1.传输层协议 2.用户认证协议 3.连接协议
 
-{% asset_img 9.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206212333075.jpg)
 
 连接建立过程：
 
