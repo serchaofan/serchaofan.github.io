@@ -574,28 +574,6 @@ echo "source <(kubectl completion bash)" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-若要拉取镜像，可使用开源脚本[xuxinkun/littleTools](https://github.com/xuxinkun/littleTools)
-
-```
-git clone https://github.com/xuxinkun/littleTools
-cd littleTools
-chmod +x install.sh
-./install.sh
-source /etc/profile
-```
-
-然后直接使用命令`azk8spull`拉取镜像即可，该作者在 Azure 上搭建了镜像站，脚本就是从该镜像站上 pull 镜像并打 tag。
-
-```
-azk8spull k8s.gcr.io/kube-apiserver:v1.18.0
-azk8spull k8s.gcr.io/kube-controller-manager:v1.18.0
-azk8spull k8s.gcr.io/kube-scheduler:v1.18.0
-azk8spull k8s.gcr.io/kube-proxy:v1.18.0
-azk8spull k8s.gcr.io/pause:3.1
-azk8spull k8s.gcr.io/etcd:3.4.3-0
-azk8spull k8s.gcr.io/coredns:1.6.5
-```
-
 确认关闭 swap，并将`/proc/sys/net/bridge/bridge-nf-call-iptables`设为 1。在 Node 上也要这样设置
 
 ```
@@ -669,7 +647,7 @@ net.netfilter.nf_conntrack_max=2310720
   ```
 - 在 pod 和本地之间复制文件
   ```
-  kubectl cp nginx:<文件> <路径>
+  kubectl cp pod名:<容器内路径> <宿主机本地路径>
   ```
 - 资源对象的标签设置
   ```

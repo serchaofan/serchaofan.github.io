@@ -183,6 +183,45 @@ spec:
           memory: "55M"
 ```
 
+CPU的资源值是绝对值，不是相对值，比如0.1CPU在单核或多核机器上都是一样的，都严格等于0.1CPU core。
+
+内存的资源值计量单位为字节数，值的表示方式为`整数+国际单位制`
+
+国际单位制包含两类：
+- 十进制：E、P、T、G、M、K、m
+- 二进制：Ei、Pi、Ti、Gi、Mi、Ki
+
+CPU只能使用十进制的m单位或者不加单位，m表示千分之一单位，即`200m`表示0.2 cpu core。
+
+对于内存，十进制和二进制区别如下：
+- 1 KB (KiloByte) = 1000 Bytes = 8000 Bits
+- 1 KiB (KibiByte) = 1024 Bytes = 8192 Bits
+
+Pod的requests和limits是这个pod中所有容器的requests和limits的总和，例如：
+```yaml
+spec:
+  containers:
+    - name: myapp1
+      image: <Image>
+      resources:
+        limits:
+          memory: "200Mi"
+          cpu: "200m"
+        requests:
+          cpu: "100m"
+          memory: "100Mi"
+    - name: myapp2
+      image: <Image>
+      resources:
+        limits:
+          memory: "200Mi"
+          cpu: "200m"
+        requests:
+          cpu: "100m"
+          memory: "100Mi"
+```
+则这个Pod的CPU总体requests为200m，limits为400Mi，内存同理。
+
 ## Pod的QoS服务质量
 根据指定资源requests与limits的不同，创建的Pod会有三个不同的QoS（服务质量）属性。K8S提供三种QoS类，并使用QoS类决定Pod的调度与驱逐策略。
 - Guaranteed 有保证
@@ -268,6 +307,102 @@ K8S根据QoS进行的回收策略：
 - 也就是说，当资源不足时，最先被kill掉的是BestEffort的pod，最晚被安排Kill掉的是Guaranteed的pod
 - 若资源充足，且想要提高资源利用率，资源限制按照Guaranteed配置。
 
+## LimitRange
+LimitRange用于设置容器的默认资源限制，就是说当pod未设置limits或requests时，则会采用limitrange定义的限制值。
+
+LimitRang支持两种type，一种为container，一种为pod。其中，pod与container都可以设置`min`、`max`、`maxLimitRequestRatio`参数，container可以设置`default`和`defaultRequest`参数，而Pod不可以。
+
+对以上几个参数的解释：
+- `min`指的是`requests`的下限，`max`指的是`limits`的上限。若是在container中指定的，则是每个容器的，若是pod中指定的，则是pod中所有容器的总和。`min`和`max`指的就不是默认值了，而是真正的限制，若容器或pod的资源设置超过min和max的范围，则pod根本不会启动，就是`kubectl get pod`找不到这个pod。
+- 对于同一资源类型，必须满足：`min <= default <= defaultRequest <= max`
+- container的`maxLimitRequestRatio`限制的是pod中所有容器的limits值与requests值的比例上限，若是pod则是pod中所有容器的limits值与requests**值的总和**的比例上限。
+
+例如先创建一个LimitRange类型的资源，设置默认资源限制，内存的`requests=256Mi`，`limits=512Mi`
+
+，以下展示两种类型。
+```yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mem-limit-range-container
+spec:
+  limits:
+  - default:
+      memory: 512Mi
+    defaultRequest:
+      memory: 256Mi
+    type: Container
+
+# kubectl describe limitranges
+Name:       mem-limit-range-container
+Namespace:  default
+Type        Resource  Min  Max  Default Request  Default Limit  Max Limit/Request Ratio
+----        --------  ---  ---  ---------------  -------------  -----------------------
+Container   memory    -    -    256Mi            512Mi          -
+```
+其中，`default`指定的是`limits`值，`defaultRequest`指定的是`requests`值。
+```yaml
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: mem-limit-range-pod
+spec:
+  limits:
+  - max:
+      memory: 512Mi
+    min:
+      memory: 256Mi
+    type: Pod
+
+# kubectl describe limitranges
+Name:       mem-limit-range-pod
+Namespace:  default
+Type        Resource  Min    Max    Default Request  Default Limit  Max Limit/Request Ratio
+----        --------  ---    ---    ---------------  -------------  -----------------------
+Pod         memory    256Mi  512Mi  -                -              -
+```
+其中，`max`指定的是`limits`值，`min`指定的是`requests`值。
+
+
+再创建一个deployment或者Pod，没有定义resources限制
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: app1
+  template:
+    metadata:
+      labels:
+        app: app1
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: Always
+        name: app1
+```
+此时再查看pod的信息
+```yaml
+# kubectl describe pod app1-668c794b77-wv8sp
+Name:         app1-668c794b77-wv8sp
+Namespace:    default
+......
+Containers:
+  app1:
+  ......
+    Limits:
+      memory:  512Mi
+    Requests:
+      memory:     256Mi
+```
+
+
+
+
 # Pod 驱逐机制
 
 # Pod Disruption Budget
@@ -280,15 +415,7 @@ K8S根据QoS进行的回收策略：
 
 # 审计机制
 
-# Dashboard
-
 # Helm
-
-# 查看系统 Event
-
-# 查看容器日志
-
-# 查看服务日志
 
 # 常见问题
 
