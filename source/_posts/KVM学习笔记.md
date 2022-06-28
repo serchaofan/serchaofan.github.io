@@ -28,7 +28,7 @@ KVM（Kernel-based Virtual Machine）基于内核的虚拟机，是一个 Linux 
 
 若用 VMware 虚拟机，需要在虚拟机的 settings 中开启虚拟化选项
 
-{% asset_img 0.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290252182.png)
 
 确保已关闭 selinux。
 
@@ -84,7 +84,7 @@ disk size: 0`
 
 若硬盘空间不够，就添加虚拟硬盘。注意，需要在虚拟机里有安装的镜像，所以要在虚拟机设置中把镜像设置连接。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290252341.png)
 
 然后创建镜像，把`/dev/cdrom`复制到一个容量足够的目录中。`dd if=/dev/cdrom of=/disk/sdb1/fedora25.iso`
 

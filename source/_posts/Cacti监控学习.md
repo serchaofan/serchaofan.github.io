@@ -7,9 +7,9 @@ categories: [系统运维]
 
 本篇笔记包含以下内容：
 
-- [Cacti 原理与安装](#cacti-%e5%8e%9f%e7%90%86%e4%b8%8e%e5%ae%89%e8%a3%85)
-  - [Cacti 安装](#cacti-%e5%ae%89%e8%a3%85)
-- [参考文章](#%e5%8f%82%e8%80%83%e6%96%87%e7%ab%a0)
+- [Cacti 原理与安装](#cacti-原理与安装)
+  - [Cacti 安装](#cacti-安装)
+- [参考文章](#参考文章)
 
 <!-- more -->
 
@@ -19,7 +19,7 @@ Cacti 是一套基于 PHP，MySQL，SNMP 及 RRDTool 开发的网络流量监测
 
 MySQL 与 PHP 用来存储一些变量数据并对变量进行调用，如主机名、主机 IP、Snmp 团体名、端口号、模板信息等，Snmp 抓取的数据并不存放在 MySQL 中，而是存放在 rrdtool 生成的 RRD 文件中，rrdtool 对数据的更新和存储就是对 RRD 文件的处理，RRD 文件是大小固定的档案文件，能存储的数据量在创建时就被定义好了。
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290238902.png)
 
 **Cacti 特点：**
 
@@ -143,7 +143,7 @@ $url_path = '/';     网页访问的路径，可改可不改，若不改就是�
 
 若遇到以下报错：
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239798.png)
 
 说明 cacti 数据库管理员`cactiadmin`没有对`mysql.time_zone_name`表的`select`权限，需要授权。
 
@@ -176,11 +176,11 @@ show variables like '%time_zone%';
 
 执行`mysql_tzinfo_to_sql /usr/share/zoneinfo/Asia/Shanghai Shanghai | mysql -u root -p mysql`
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239565.png)
 
 说明 php 的 timezone 没设置，修改`/etc/php.ini`，把`;date.timezone =`注释去除，设置为`date.timezone = Asia/Shanghai`。[支持的时区表](http://www.php.net/manual/zh/timezones.php)
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239615.png)
 
 网页下拉还有类似的问题，需要修改 mysql 表中相应参数。修改`/etc/my.cnf`文件，在`[mysqld]`下添加报错项，只要满足即可。
 
@@ -204,7 +204,7 @@ systemctl restart php-fpm.service
 
 重新访问`cacti.example.com`。进入安装选项页面：
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239126.png)
 
 有两种选项：
 
@@ -213,15 +213,15 @@ New Primary Server：若是主节点就选这项
 New Remote Poller：若是用于收集主节点无法访问的服务器的信息，就选这项
 ```
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239108.png)
 
 Cacti 的各个路径已自动设置好。由于 Spine 还没有安装，所以会提示错误，但不影响安装。
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239869.png)
 
 安装模板，若为 Linux 或 unix 主机，必选`Local Linux Machine`，若为 Windows 主机，必选`Windows Device`。
 
-{% asset_img 8.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239428.png)
 
 用户登录界面，初始的管理员用户名和密码都是`admin`，登陆后会强制要求更改。
 
@@ -236,11 +236,11 @@ Cacti 的各个路径已自动设置好。由于 Spine 还没有安装，所以�
 
 然后就进入了 cacti 主界面。
 
-{% asset_img 9.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290239517.png)
 
 查看 Graph 页面，出现以下报错：
 
-{% asset_img 10.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290240987.png)
 
 是因为没有运行`/usr/share/cacti/poller.php`，这个是 cacti 自带的脚本，用于收集数据，并生成图表。默认 cacti 每 5 分钟收集一次信息，所以要设置定时，每五分钟运行该脚本。而 cacti 安装后已生成一个文件`/etc/cron.d/cacti`，内容如下：若带有注释，就将注释去除，并要修改用户名。需要确定`crond`服务是否启动。
 
@@ -252,7 +252,7 @@ Cacti 的各个路径已自动设置好。由于 Spine 还没有安装，所以�
 
 先手动执行一次`php /usr/share/cacti/poller.php > /dev/null 2>&1`，可通过查看`/var/log/cacti/cacti.log`确认是否能获取数据。然后查看`/usr/share/cacti/rra/`是否有 rrd 文件。然后重启 httpd，访问 cacti 的 Graph。
 
-{% asset_img 11.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290240367.png)
 
 有可能没有启动的原因是系统时间和 BIOS 时间不符，通过`hwclock -s`同步。
 

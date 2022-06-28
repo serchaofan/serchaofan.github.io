@@ -36,7 +36,7 @@ Virtual Private Network 虚拟私有网，利用共享公共网络仿真 WAN 设
 - 提高了基础资源的利用率
 - 简化了用户端的配置和维护工作
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290253287.png)
 
 **概念术语**
 
@@ -45,7 +45,7 @@ Virtual Private Network 虚拟私有网，利用共享公共网络仿真 WAN 设
 - 载荷协议：最初封装数据包的协议
 - 隧道协议：决定如何实现隧道的协议
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290253159.png)
 
 **主要 VPN 技术**
 L2 VPN 技术
@@ -64,15 +64,15 @@ L2 VPN 技术
 Generic Routing Encapsulation 通用路由封装，是一种能在任意协议中封装任意协议的封装方法，可以直接使用 GRE 封装建立 GRE 隧道，为 IP 协议，协议号 47。以下为
 GRE 封装包的格式。
 
-{% asset_img 3.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290253898.jpg)
 
 GRE 头包含了 2 字节的`Protocol Type`，用于指示载荷协议类型，`IP`协议为`0x0800`。此外还有扩展 GRE 头，增加了`Key`和`Sequence Number`，具备标识数据流和分组次序的能力。
 IP 协议使用协议号 47 标识 GRE 头，说明 IP 头后跟着 GRE 头。而 GRE 头中 protocol type 若为 0x0800，说明 GRE 头后跟着 IP 头。
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290253349.png)
 
 双方通过 Tunnel 接口（逻辑接口）建立隧道，再通过实际物理接口进行转发。tunnel 口为载荷协议服务，物理口为承载协议服务。
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290253628.png)
 
 GRE 隧道通信过程：
 
@@ -135,7 +135,9 @@ L2TP 组件：
 
 L2TP 封装：
 L2TP 以 UDP/IP 为承载协议，UDP 端口号为 1701。
-{% asset_img 6.png %}
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290254069.png)
+
 L2TP 头中`Type`字段标识消息类型，若为 1 表示控制消息，若为 0 表示数据消息。
 `Tunnel ID`字段标识 L2TP 控制连接，即隧道标识符，是在隧道建立时通过`Assigned Tunnel ID AVP`交换的。
 `Session ID`字段用于标识一个隧道中的各个会话，是在隧道建立时通过`Assigned Session ID AVP`交换的。
@@ -185,10 +187,12 @@ LAC 端对远程系统用户的 AAA 验证包括：
 - 远程验证：需要与 RADIUS 或 TACACS 服务器协同验证，需要在 RADIUS 或 TACACS 服务器上配置用户验证信息，LAC 将用户输入的信息发送给验证服务器进行验证。
 
 <center>下图为：独立LAC隧道会话建立</center>
-{% asset_img 7.png %}
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290254190.png)
 
 <center>下图为：客户LAC隧道会话建立</center>
-{% asset_img 8.png %}
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290255494.png)
 
 ## IPSEC-VPN
 
@@ -240,7 +244,7 @@ IKE：因特网密钥交换。基于 UDP 协议，端口号 500，为 IPSec 提�
    其中协商属性包括：加密算法，散列算法（MD5、SHA 等），验证方法（预共享密钥、DSS、RSA），DH 组信息（默认 MODP 768），DH 公共值，IKE 生存时间，身份信息
 2. DH 交换：A 向 B 发起密钥生成信息，B 生成密钥并回应。
 3. ID 交换验证：A 向 B 发送身份和验证数据，B 回应身份验证。
-   {% asset_img 13.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290256309.png)
 
 野蛮模式：远程拨号时，由于拨号用户 IP 无法确定，可以使用野蛮模式
 
@@ -248,7 +252,7 @@ IKE：因特网密钥交换。基于 UDP 协议，端口号 500，为 IPSec 提�
 2. B 查找匹配策略，回应验证信息
 3. A 接收确认信息并验证，生成密钥，向 B 发送验证载荷
 4. B 验证
-   {% asset_img 14.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290256525.png)
 
 - 阶段 2：在 IKE SA 的保护下完成 IPSec SA 的协商。采用快速模式
 
@@ -301,12 +305,12 @@ IPSec 有两种工作模式：
   - **传输模式**
     原 IP 包、AH 头与密钥通过散列函数（如 RSA）生成校验值。
     将校验值封装在 AH 头中，再由 TCP 和原 IP 头封装。
-    {% asset_img 9.png %}
+    ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290255719.png)
 
   - **隧道模式**
     新 IP 头（根据隧道起点终点建立隧道 IP 头）、AH 头与原 IP 包生成校验值。
     将校验值封装在 AH 头中，封装原 IP 包，再用新 IP 头封装。
-    {% asset_img 10.png %}
+    ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290255526.png)
 
 - **ESP**
 
@@ -314,13 +318,13 @@ IPSec 有两种工作模式：
     原 IP 包（不包括原 IP 头）、ESP 尾与密钥加密（通过 DES 等算法）生成密文。
     将生成的密文与 ESP 头和验证密钥通过数字签名算法（通过 RSA）生成校验值。
     最后将用 ESP 头和原 IP 头封装密文和校验值。
-    {% asset_img 11.png %}
+    ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290255216.png)
 
   - **隧道模式**
     将整个原 IP 包、ESP 尾、加密密钥通过加密算法（如 DES）生成密文。
     将密文与 ESP 头和验证密钥通过散列函数（如 RSA）生成校验值。
     用 ESP 头和新 IP 头封装密文和校验值。
-    {% asset_img 12.png %}
+    ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290255597.png)
 
 ### GRE-OVER-IPSEC
 
@@ -339,7 +343,7 @@ IPSec 有两种工作模式：
 
 封装：原始 IP 包被封装在 GRE 隧道包中。GRE 隧道包被封装在 IPSec 包中。
 
-{% asset_img 15.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290256206.png)
 
 ### IPSEC-OVER-GRE
 
@@ -368,7 +372,7 @@ MPLS 标签：4 个字节。分为四个字段
 2. EXP：标识 QoS 优先级，3 位
 3. S：栈底标识，1 位，若为 1 说明是最后一个标签，若为 0 说明后面还有 MPLS 标签。可实现多层 MPLS 标签嵌套
 4. TTL：存活时间，8 位，每经过一台 LSR，TTL 就减 1
-   {% asset_img 16.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290256228.png)
 
 链路层协议为 MPLS 分配的标识：
 
@@ -401,7 +405,7 @@ LDP 会话建立维护：
 
 LDP 邻居状态机：
 **两台 LDP 邻居间建立`LDP Session`后，状态会维持在`Operational`**
-{% asset_img 17.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290256981.png)
 
 标签分配过程：
 上下游根据数据转发方向而定。`LDP Session`建立后路由器根据路由表分配标签，生成 MPLS 标签转发表
@@ -448,7 +452,7 @@ LDP 邻居状态机：
 - P：公网核心路由器，负责路由与快速转发
 
 实现：将一台路由器划分为多个 VRF，每个 VRF 相互独立，拥有各自的路由表、端口、协议，每个 VRF 类似一台虚拟路由器。未划分 VRF 的路由在公网路由表中。各个 VRF 与各自的网络运行一个实例，该实例学到的路由只能加入该 VPN 路由表。实例与所属 VPN 进行绑定。并且，端口与 VPN 绑定，与 VRF 绑定的接口只会出现在该 VRF 对应的路由表中，当报文从该接口进入路由器后只能查询该 VRF 对应的路由表。确保了不同 VRF 数据间不会冲突。
-{% asset_img 18.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290257660.png)
 
 多 VRF 与路由协议多实例：各 VRF 与各自用户网络之间运行一个路由实验，该路由实例学习到的路由只能加入该 VPN 的路由表。各个路由实例与所属 VPN 绑定，互相独立，只能学到各自的邻居信息。
 
@@ -469,13 +473,16 @@ MP-BGP 相对于 BGP 的新增特性：
 **VPNv4 地址族主要用于 PE 路由器间传递 VPN 路由，并只存在于 MP-BGP 路由信息和 PE 设备的私网路由表中，即只出现在路由的发布学习过程中，在穿越 ISP 公网时，数据包头是没有 VPNv4 地址的。**
 
 <center>下图为MP_REACH_NLRI属性</center>
-{% asset_img 20.png %}
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290257506.png)
+
 <center>下图为MP_UNREACH_NLRI属性</center>
-{% asset_img 21.png %}
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290257134.png)
 
 BGP 的扩展团体属性：RT（Route Target）路由目标。本质是每个 VPN 实例表达自己的路由取舍方式。
 RT 的格式有三种，都表示 RT。
-{% asset_img 22.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290257445.png)
 
 - `0x0002`：2 字节的 AS 号，加上 4 字节的用户自定义数字，如`100:1`、`200:1`
 - `0x0102`：4 字节的 IP 地址，加上 2 字节的用户自定义数字，如`192.168.1.1:1`、`10.1.1.1:2`
@@ -491,7 +498,7 @@ RT 由两个部分组成：`Export Target`和`Import Target`。MP-BGP 在 PE 间
 通过对 RT 的操作可实现两种模式：`Hub-Spoke`和`Extranet`。
 `Hub-Spoke`模式：用户总部可与每个分布互通，但每个 VPN 分布之间禁止互通。
 `Extranet`模式：使指定的节点可以与其他节点互通。
-{% asset_img 23.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290258619.png)
 
 RD（Route Distinguisher）路由区分。本质就是用于私网路由的撤销，因为在撤销路由时是不能携带属性值的（包括 RT），PE 在删除路由时无法判断撤销哪个 VPN 的路由。长度 6 字节。
 RD 有两种格式：

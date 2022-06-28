@@ -71,7 +71,7 @@ Elasticsearch 主要特点：
 
 **运行报错**
 
-{% asset_img 1.jpg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290241549.jpg)
 
 ```
 bootstrap checks failed  #bootstrap检查失败
@@ -416,9 +416,10 @@ Logstash 对于每一行数据（称为 event）按流水线三个部分进行�
 - filter：负责数据处理与转换，包括过滤，分类等操作。不是必须配置。
 - output：负责数据的输出，可输出到数据分析或存储的软件，如 Elasticsearch，nagios，kibana 等数据处理软件。是必须配置
 
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244846.png)
 Logstash 开箱即用，包含许多聚合（aggregation）和突变（mutation），以及模式匹配（pattern matching），地理映射（geo mapping）和动态查找（dynamic lookup）功能。
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290243196.png)
 
 ## Logstash 安装
 
@@ -874,15 +875,15 @@ curl -X PUT -H "Content-Type: application/json" localhost:9200/tech/employee/1 -
 
 然后刷新 kibana，进入 Management 中的 Kibana，选 Index pattern，并创建。
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244380.png)
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244292.png)
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244348.png)
 
 创建完成后，进入 Discover 菜单，可查看插入的数据
 
-{% asset_img 8.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245798.png)
 
 ### 使用 kibana 提供的数据进行分析
 
@@ -893,19 +894,19 @@ curl -X PUT -H "Content-Type: application/json" localhost:9200/tech/employee/1 -
 curl -H 'Content-Type: application/x-ndjson' -XPOST 'localhost:9200/bank/account/_bulk?pretty' --data-binary @accounts.json
 ```
 
-{% asset_img 10.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245453.png)
 
 为数据创建报表，进入 Visualize 菜单，可根据需要选择报表形式，此处选 Pie 饼图，然后再选择 bank 即可进入定制界面。
 
-{% asset_img 11.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245590.png)
 
-{% asset_img 12.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245324.png)
 
 选择 split slices，然后在聚合（aggregation）中选择 range，然后进行自定义数据范围
 
-{% asset_img 13.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290246237.png)
 
-{% asset_img 14.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290246537.png)
 
 ## ELK 架构
 
