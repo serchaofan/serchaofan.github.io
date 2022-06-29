@@ -4,9 +4,38 @@ date: 2018-09-28 18:23:06
 tags: [zabbix, 监控, 运维]
 ---
 
-- [zabbix 概述](#zabbix概述)
-- [zabbix 搭建](#zabbix搭建)
-- [zabbix 操作](#zabbix操作)
+- [zabbix 概述](#zabbix-概述)
+- [zabbix 搭建](#zabbix-搭建)
+  - [LNMP/LAMP 环境搭建 Zabbix](#lnmplamp-环境搭建-zabbix)
+- [zabbix 操作](#zabbix-操作)
+  - [监控一台主机](#监控一台主机)
+    - [配置用户](#配置用户)
+    - [配置主机](#配置主机)
+    - [添加监控项](#添加监控项)
+    - [新建触发器](#新建触发器)
+    - [设置通知](#设置通知)
+    - [使用服务器本地邮箱发送报警邮件](#使用服务器本地邮箱发送报警邮件)
+    - [新建模板](#新建模板)
+    - [新建图表](#新建图表)
+  - [详细配置操作](#详细配置操作)
+    - [主机资产管理](#主机资产管理)
+    - [批量更新](#批量更新)
+    - [Zabbix 事件](#zabbix-事件)
+    - [触发器](#触发器)
+    - [action](#action)
+    - [自动发现与自动注册](#自动发现与自动注册)
+    - [低级别发现](#低级别发现)
+    - [自定义监控项](#自定义监控项)
+  - [zabbix 主动与被动模式](#zabbix-主动与被动模式)
+- [zabbix 实战](#zabbix-实战)
+  - [监控 MySQL](#监控-mysql)
+  - [监控 Apache](#监控-apache)
+  - [监控 Nginx](#监控-nginx)
+  - [监控 PHP-FTPM](#监控-php-ftpm)
+  - [监控 Tomcat](#监控-tomcat)
+  - [监控 Redis](#监控-redis)
+  - [zabbix 与微信整合](#zabbix-与微信整合)
+  - [zabbix 与 Logstash 整合](#zabbix-与-logstash-整合)
 
 <!--more-->
 
@@ -32,7 +61,7 @@ Zabbix 是一个企业级开源的分布式监控套件，可以监控网络和�
 
 zabbix 也可用于监控 java 应用，可基于 JMX 组件监控 JVM
 
-{% asset_img 1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291812857.png)
 
 **zabbix 服务进程：**
 
@@ -43,7 +72,7 @@ zabbix 也可用于监控 java 应用，可基于 JMX 组件监控 JVM
 - zabbix_proxy：zabbix proxy 的守护进程。需要安装 zabbix-proxy-mysql|pgsql|sqlite3
 - zabbix_java_gateway：java 网关，用于监控 java 应用环境，类似 agentd。只能主动推送数据。
 
-{% asset_img  1-1.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291813066.png)
 
 **常用术语：**
 
@@ -59,7 +88,7 @@ zabbix 也可用于监控 java 应用，可基于 JMX 组件监控 JVM
 - 应用程序 application：一组 item 的集合
 - web 场景 web scennaria：用于检测 web 站点可用性的一个或多个 http 请求
 
-{% asset_img 2.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291813029.png)
 
 **Zabbix 特点：**
 
@@ -236,7 +265,7 @@ date.timezone = Asia/Shanghai
 
 全部修改完成后重启 php-fpm 和 httpd。再次访问安装界面，完成安装。默认登录用户为`admin`，默认登录密码`zabbix`
 
-{% asset_img 3.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291813985.png)
 
 在监控主机上需要修改配置文件`/etc/zabbix/zabbix_agentd.conf`
 
@@ -273,11 +302,11 @@ User=zabbix   # 运行agentd的用户，需要取消注释
 
 创建一个用户
 
-{% asset_img 4.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814214.png)
 
 设置用户媒介（如何通知）
 
-{% asset_img 5.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814590.png)
 
 [官方文档详细配置说明](https://www.zabbix.com/documentation/4.0/zh/manual/config/hosts/host)
 
@@ -289,13 +318,13 @@ User=zabbix   # 运行agentd的用户，需要取消注释
 
 注：如果是虚拟机主机，则需要在同一个网段
 
-{% asset_img 6.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814565.png)
 
 ### 添加监控项
 
 > Configuration --> Hosts --> Items --> create items
 
-{% asset_img 7.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814343.png)
 
 有几个需要填写的项：
 
@@ -305,13 +334,13 @@ User=zabbix   # 运行agentd的用户，需要取消注释
 
 [其他选项详情](https://www.zabbix.com/documentation/4.0/manual/config/items/item#configuration)
 
-{% asset_img 8.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814603.png)
 
 第一次获得的监控项值最多需要 60 秒才能到达。然后，默认 30 秒更新一次，可通过 Update interval 修改
 
 然后在 Monitoring 的 Lateset data 中添加显示的主机或主机组。然后在下面添加项的右侧 Graph 查看图像。
 
-{% asset_img 9.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814452.png)
 
 ### 新建触发器
 
@@ -319,11 +348,11 @@ User=zabbix   # 运行agentd的用户，需要取消注释
 
 触发器表达式可直接 Add 选择，也可手动编写，[触发器表达式语法](https://www.zabbix.com/documentation/4.0/manual/config/triggers/expression)
 
-{% asset_img 10.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814674.png)
 
 可在 Monitroing 的 Problems 中添加问题报告的主机和触发器。
 
-{% asset_img 11.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291814802.png)
 
 触发器表达式格式：
 
@@ -358,7 +387,7 @@ zabbix 中提供的几种媒介（Media）类型：
 - Jabber：jabber 消息。Jabber 是一个开放的基于 XML 的协议，能实现基于 Internet 的即时通讯服务
 - 自定义脚本通知：调用位于配置文件的`AlertScriptsPath`变量定义的脚本目录中的脚本
 
-{% asset_img 12.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291815076.png)
 
 ### 使用服务器本地邮箱发送报警邮件
 
@@ -371,34 +400,36 @@ echo "test" | mail -s "test" xxxx@qq.com
 然后进入 zabbix web 的 Administration 中 Media types 新建一个媒介
 
 一个媒体类型必须通过发送地址来关联用户，否则它将无法生效。
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291815082.png)
 
 发送通知是 Zabbix 中动作（actions）执行的操作之一，因此为了建立一个通知，需要创建动作。
 
 > Configuration --> Actions --> Create action
 
-{% asset_img 14.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291815159.png)
 
 ### 新建模板
 
 > Configuration --> Templates --> Create template
 
-{% asset_img 17.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291816950.png)
 
 在 Configuration 的 Hosts 中选择一个主机的 item，并点击 Copy 进行复制，在复制界面选择目的模板
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291821058.png)
 
-{% asset_img 19.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291821010.png)
 
 通过此法向模板中添加监控项。
 
 在 Host 的主机配置表中，选择 Templates，然后添加模板，先点 select 选模板，然后 add 添加。
 
-{% asset_img 20.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291821760.png)
 
 ### 新建图表
 
 > Configuration --> Hosts --> Graphs --> Create graph
 
-{% asset_img 15.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291815322.png)
 
 - show legend：是否显示图例
 
@@ -410,7 +441,7 @@ echo "test" | mail -s "test" xxxx@qq.com
 
   - Stacked：堆图
 
-    {% asset_img 16.png %}
+    ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291816287.png)
 
   - Pie：饼图
 
@@ -438,7 +469,7 @@ system.sw.packages[package,manager,short|full] - 默认是 [all,all,full], packa
 
 可在 Inventory 中的 Hosts 查看配置的主机现有资产数据。
 
-{% asset_img 21.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291821977.png)
 
 ### 批量更新
 
@@ -448,7 +479,7 @@ system.sw.packages[package,manager,short|full] - 默认是 [all,all,full], packa
 
 选中多个主机，点下方的 Mass update。
 
-{% asset_img 22.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291822765.png)
 
 Host 选项卡：
 
@@ -522,19 +553,19 @@ zabbix 会周期性扫描网络发现规则中的 IP 段，动作是对发现的
 
 配置自动发现需在 Coufiguration 的 Discovery 配置。修改 IP Range 和 Update interval，并添加 Checks 中选项，指定类型为 zabbix agent，并指定键值，zabbix server 会尝试去指定网段内的所有主机获取该值，若能获取则自动发现成功。
 
-{% asset_img 23.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291823670.png)
 
 配置自动发现动作在 Configuration 的 Actions，选择右上角的事件源为 discovery，然后创建 action。
 
-{% asset_img 24.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291823930.png)
 
 进入配置后可修改计算方式、触发条件，或创建新的触发条件
 
-{% asset_img 25.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291823286.png)
 
 可进入 Operations 修改或添加操作
 
-{% asset_img 26.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291823886.png)
 
 自动注册用于 Agent 主动向 Server 注册，且主要适用于条件未知情况（agent 的 IP 地址段或 agent 的操作系统信息等）。
 
@@ -555,15 +586,15 @@ zabbix 会周期性扫描网络发现规则中的 IP 段，动作是对发现的
 
    在 Configuration 中 actions 的选项 auto-registration 并创建
 
-   {% asset_img 27.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824830.png)
 
    然后直接配置 condition，选择条件包含的内容
 
-   {% asset_img 28.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824806.png)
 
    继续配置 operations，添加几个操作
 
-   {% asset_img 29.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824767.png)
 
 ### 低级别发现
 
@@ -636,7 +667,7 @@ StartTrappers=200  # 负责处理agentd推送数据的进程调大
 
 然后需要在网页端配置，将监控类型从`zabbix agent`改为`zabbix agent(active)`
 
-{% asset_img 30.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824159.png)
 
 # zabbix 实战
 
@@ -745,19 +776,19 @@ UserParameter=mysql.version,/usr/bin/mysql -V
 
 1. 添加主机，配置 host name 和 agent interfaces
 
-   {% asset_img 31.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824456.png)
 
 2. 在主机配置中设置模板为`Template DB MySQL`
 
-   {% asset_img 32.png %}
+   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824780.png)
 
 然后在 hosts 的 item 中查看是否全部启用
 
-{% asset_img 33.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291824916.png)
 
 并在 Monitoring 的 Latest Data 查看数据
 
-{% asset_img 34.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291825748.png)
 
 ## 监控 Apache
 
@@ -784,17 +815,17 @@ UserParameter=zapache[*],/etc/zabbix/shell/zapache $1
 
 在 zabbix web 上添加 zapache 的模板配置
 
-{% asset_img 37.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291825047.png)
 
-{% asset_img 38.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826240.png)
 
-{% asset_img 39.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826569.png)
 
-{% asset_img 40.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826914.png)
 
 能在 LatestData 里查看配置的 item
 
-{% asset_img 41.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826466.png)
 
 ## 监控 Nginx
 
@@ -863,15 +894,15 @@ UserParameter=nginx.status[*],/etc/zabbix/shell/nginx-status.sh $1
 
 然后同理导入模板
 
-{% asset_img 42.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826888.png)
 
 同理在主机上添加模板
 
-{% asset_img 43.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826776.png)
 
 去 Latest Data 中查看数据是否获取成功
 
-{% asset_img 44.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826843.png)
 
 ## 监控 PHP-FTPM
 
@@ -955,9 +986,9 @@ UserParameter=php-fpm.status[*],/usr/bin/curl -s "http://localhost/status?xml" |
 
 然后在<https://www.ixdba.net/zabbix/zbx_php-fpm_templates.zip>下载模板文件。同理在 web 中导入
 
-{% asset_img 45.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826952.png)
 
-{% asset_img 46.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826388.png)
 
 ## 监控 Tomcat
 
@@ -965,7 +996,7 @@ UserParameter=php-fpm.status[*],/usr/bin/curl -s "http://localhost/status?xml" |
 
 zabbix 监控 java 的数据获取顺序：java poller——>java gateway:10052——>tomcat:12345
 
-{% asset_img 47.jpeg %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291826431.jpeg)
 
 java 主机配置 java 环境
 
@@ -1151,37 +1182,37 @@ UserParameter=Redis.Status,/usr/bin/redis-cli -h 127.0.0.1 -p 6379 ping|grep -c 
 
 同理在 web 上导入模板文件，并添加到主机
 
-{% asset_img 48.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827295.png)
 
-{% asset_img 49.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827815.png)
 
 ## zabbix 与微信整合
 
 [进入企业微信网页](https://work.weixin.qq.com/) 按要求填写，并扫码
 
-{% asset_img 50.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827000.png)
 
 邀请成员
 
-{% asset_img 51.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827656.png)
 
 进入我的企业->微工作台，可复制下面的二维码，使成员通过微信关注微工作台，即可在微信中接收企业通知和使用企业应用，成员无需下载企业微信客户端。
 
-{% asset_img 52.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827193.png)
 
 当成员关注了企业的微工作台，成员信息详情中的”微工作台“状态变为“已关注”。
 
-{% asset_img 53.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827634.png)
 
 进入应用管理，创建应用
 
-{% asset_img 54.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827042.png)
 
-{% asset_img 55.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827120.png)
 
 创建完成后，应用主界面如下，需要注意 AgentID 和 Secret，需要配置到 zabbix 中
 
-{% asset_img 56.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291827767.png)
 
 且“我的企业”中“企业信息”的“企业 ID” 也要注意，也要配置到 zabbix 中的。
 
@@ -1216,18 +1247,18 @@ Usage of /usr/lib/zabbix/alertscripts/weixin:
 
 > 若是 zabbix 是英语环境，则需要媒介名字为英文，否则添加不了。
 
-{% asset_img 57.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291828991.png)
 
 进入 Users，选择一个用于发监控的用户，配置媒介。
 SendTo 填微信用户账号。
-{% asset_img 58.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291828888.png)
 
 进入 Actions，创建动作
-{% asset_img 59.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291828743.png)
 
 添加操作
 
-{% asset_img 60.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291828031.png)
 
 可修改消息内容
 
@@ -1250,8 +1281,8 @@ Original problem ID: {EVENT.ID}
 还可以通过 Recovery Operations 修改回复以后的通知
 
 修改系统文件即可触发
-{% asset_img 61.png %}
-{% asset_img 62.png %}
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291828304.png)
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206291828575.png)
 
 ## zabbix 与 Logstash 整合
 
