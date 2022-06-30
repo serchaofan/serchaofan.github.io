@@ -3,6 +3,7 @@ title: JVM内存分配与垃圾回收
 tags: [JVM, Java]
 categories: [Java]
 date: 2020-01-07 21:50:08
+comments: false
 ---
 
 本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。
