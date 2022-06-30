@@ -96,6 +96,49 @@ Zookeeper 消息由两阶段构成：
 
 ZooKeeper是一个整体协议，并不关注单个提议，而是将提议作为一个整体来看待。通过严格的排序，使Zookeeper能够高效地做到这一点，并极大地简化了Zookeeper的协议，领导者激活体现了这一整体概念。只有当达到一定数量的追随者和领导者同步时，该领导者才会被激活(领导者也算作追随者，可以给自己投票)，他们拥有相同的状态，这个状态包括领导者认为已经提交的所有提议，以及跟随领导者的提议，即NEW_LEADER 提议。
 
+
+# Zookeeper集群安装
+**确保集群的服务器数量为奇数个**。 确保java环境已安装完成。
+
+到官网的[下载页面](https://zookeeper.apache.org/releases.html)下载软件包，解压到集群中每台服务器的指定目录，例如`/data/zookeeper`。
+
+查看配置文件`conf/zoo.cfg`，如果没有可以复制同目录下的`zoo.cfg.example`文件。
+```yaml
+tickTime=2000   # Client与Server间或者Server间的通信心跳时间间隔，单位为毫秒。
+
+initLimit=10    # Leader与Follower初始通信时限，即初始连接时能容忍的最多心跳数
+
+syncLimit=5     # Leader与Follower同步通信时限，即请求与应答间能容忍的最多心跳数
+
+dataDir=/var/data/zookeeper  # 数据目录
+
+clientPort=2181  # 客户端连接端口
+
+server.1=192.168.15.xxx:2888:3888
+server.2=192.168.15.xxx:2888:3888
+server.3=192.168.15.xxx:2888:3888
+```
+当配置完成后，还需要在每个节点的数据目录中创建一个文件，叫`myid`，里面写入序号，且这个需要要和该集群上配置的`server.N`的N一致。例如，在`server.1`这台机器上，需要在myid文件中写入`1`。
+
+之后启动集群即可，在zookeeper的目录下执行命令`bin/zkServer.sh start`，如果要前台启动，则执行`bin/zkServer.sh start-foreground`
+
+如果想使用supervisor托管服务，则可以添加配置`/etc/supervisord.d/zookeeper.ini`，写入以下内容：
+```yaml
+[program:zookeeper]
+command=/data/zookeeper/bin/zkServer.sh start-foreground
+user=root
+autostart=true
+autorestart=true
+startsecs=10
+stdout_logfile=/data/logs/zookeeper.log
+redirect_stderr=true
+environment=JAVA_HOME=/usr/local/jdk1.8.0_241
+```
+
+> 注：如果使用supervisor托管，必须前台启动，即start-foreground，否则会无法正常启动。
+
+
 > 参考文章
 > https://zookeeper.apache.org/doc/r3.4.13/zookeeperOver.html
 > https://zookeeper.apache.org/doc/r3.4.13/zookeeperInternals.html
+> https://www.cnblogs.com/skyl/p/4854553.html
