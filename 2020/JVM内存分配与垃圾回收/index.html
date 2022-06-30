@@ -22,9 +22,13 @@
 
   <!-- 页面元数据 -->
   
-  <title>Zookeeper笔记 - TianyiGu&#39;s Blog</title>
+  <title>JVM内存分配与垃圾回收 - TianyiGu&#39;s Blog</title>
+  
+    <meta name="keywords" content="JVM,Java">
   
 
+  
+    <meta name="description" content="本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。">
   
 
   <!-- feed -->
@@ -34,6 +38,8 @@
   
 
   <!-- link -->
+  
+    <link rel="shortcut icon" type='image/x-icon' href="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
   
 
   <!-- import link -->
@@ -439,12 +445,19 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     
     
       <h1 class="title">
-        Zookeeper笔记
+        JVM内存分配与垃圾回收
       </h1>
       <div class='new-meta-box'>
         
           
             
+  <div class='new-meta-item category'>
+    <a class='notlink'>
+      <i class="fas fa-folder-open fa-fw" aria-hidden="true"></i>
+      <a class="category-link" href="/categories/Java/">Java</a>
+    </a>
+  </div>
+
 
           
         
@@ -452,7 +465,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2020年2月29日</p>
+    <p>发布于：2020年1月7日</p>
   </a>
 </div>
 
@@ -465,7 +478,16 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   
   
-  
+  <p>本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。</p>
+<span id="more"></span>
+
+<h1 id="JVM概念"><a href="#JVM概念" class="headerlink" title="JVM概念"></a>JVM概念</h1><p>JVM（Java Virtual Machine，Java虚拟机）为Java的核心技术，所有Java程序都运行在JVM内部，JVM相当于一个虚拟计算机，常见的JVM为Sun公司Hotspot VM，是jdk与openjdk的默认自带的虚拟机。</p>
+<p>JVM是JRE（Java Runtime Environment）的一部分，因此安装了Jre后，也就有了JVM。</p>
+<h1 id="JVM运行时内存区结构"><a href="#JVM运行时内存区结构" class="headerlink" title="JVM运行时内存区结构"></a>JVM运行时内存区结构</h1><p>JVM中每个区域都有各自的用途，存储各自的数据类型，但都有一个本质，就是存储程序的运行时数据。<br><img src="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207010324443.png" class="lazyload" data-srcset="https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207010324443.png" srcset="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAABGdBTUEAALGPC/xhBQAAADhlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAAqACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAADa6r/EAAAAC0lEQVQIHWNgAAIAAAUAAY27m/MAAAAASUVORK5CYII="></p>
+<p>JVM中的内存区可根据受访权限的不同定义为<strong>线程共享</strong>与<strong>线程私有</strong>两大类，<strong>线程共享内存区</strong>指的是可以允许被所有线程共享访问的一类内存区，包含<strong>堆区</strong>、<strong>方法区</strong>和<strong>运行时常量池</strong>三个内存区。</p>
+<h2 id="堆区"><a href="#堆区" class="headerlink" title="堆区"></a>堆区</h2><p>Java堆区在JVM启动的时候被创建，且在实际的内存空间中可以是不连续的，堆区是一块用于存储对象实例的内存区，也是GC（Garbage Collection，垃圾收集器）执行垃圾回收的重点区域。</p>
+<p>存储在JVM中的java对象可以被划分为两类，一类是生命周期较短的瞬时对象，这类对象的创建与消亡都非常迅速；另一类是生命周期较长的对象。对于不同生命周几的java对象，应该采取不用的垃圾收集策略，因此分代收集诞生。</p>
+
   
   
     
@@ -485,6 +507,9 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
         
           
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/JVM/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>JVM</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Java/" rel="nofollow"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i><p>Java</p></a></div>
+
 
         
       
@@ -498,38 +523,20 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
     <div class="prev-next">
       
-        <a class='prev' href='/2020/OpenStack%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5%E6%95%B4%E7%90%86/'>
-          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>OpenStack基础概念整理</p>
-          <p class='content'>
-OpenStack 概述
-
-
-
-OpenStack 概述OpenStack 项目是一个开源云计算平台，支持所有类型的云环境。 该项目旨在实现简单的实现，大规模的可伸缩性和丰富的功能。OpenS...</p>
+        <a class='prev' href='/2020/RabbitMQ%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fas fa-chevron-left" aria-hidden="true"></i>RabbitMQ基础笔记</p>
+          <p class='content'></p>
         </a>
       
       
-        <a class='next' href='/2020/%E3%80%8A%E9%98%BF%E6%A3%AE%E5%AE%9E%E6%88%98%E7%BD%91%E7%BB%9C%E8%AE%BE%E8%AE%A1%E3%80%8B%E7%AC%94%E8%AE%B0/'>
-          <p class='title'>《阿森实战网络设计》笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'></p>
+        <a class='next' href='/2019/Influxdb%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>Influxdb基础笔记<i class="fas fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>InfluxDB 是一个开源时间序列平台，包括用于存储和查询数据，在后台处理数据以实现 ETL 或监视和警报目的的 API，用户仪表板以及可视化和探索数据的 API 等。本笔记根据 influx...</p>
         </a>
       
     </div>
   
 </article>
-
-
-  
-
-  <article class="post white-box reveal shadow" id="comments">
-    <p ct><i class='fas fa-comments'></i> 评论</p>
-    
-    <div id="valine_container" class="valine_thread">
-  <i class="fas fa-cog fa-spin fa-fw fa-2x"></i>
-</div>
-
-  </article>
-
 
 
 
@@ -543,6 +550,20 @@ OpenStack 概述OpenStack 项目是一个开源云计算平台，支持所有类
     
 
 
+
+  <section class="widget toc-wrapper shadow desktop mobile" id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#JVM%E6%A6%82%E5%BF%B5"><span class="toc-text">JVM概念</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JVM%E8%BF%90%E8%A1%8C%E6%97%B6%E5%86%85%E5%AD%98%E5%8C%BA%E7%BB%93%E6%9E%84"><span class="toc-text">JVM运行时内存区结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E5%8C%BA"><span class="toc-text">堆区</span></a></li></ol></li></ol>
+    </div>
+  </section>
 
 
   
@@ -559,7 +580,7 @@ OpenStack 概述OpenStack 项目是一个开源云计算平台，支持所有类
 <script>
   window.pdata={}
   pdata.ispage=true;
-  pdata.postTitle="Zookeeper笔记";
+  pdata.postTitle="JVM内存分配与垃圾回收";
   pdata.commentPath="";
   pdata.commentPlaceholder="";
   // header 这里无论是否开启pjax都需要
