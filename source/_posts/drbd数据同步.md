@@ -1,5 +1,5 @@
 ---
-title: DRBD数据同步笔记
+title: DRBD数据同步
 date: 2018-09-30 20:50:41
 tags: [DRBD, 同步, 集群, 高可用]
 categories: [存储]

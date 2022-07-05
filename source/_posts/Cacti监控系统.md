@@ -1,5 +1,5 @@
 ---
-title: Cacti监控学习
+title: Cacti监控系统
 date: 2018-09-15 11:27:44
 tags: [Cacti, 运维, 监控]
 categories: [监控]

@@ -1,0 +1,6 @@
+---
+title: NginxIngress
+tags: []
+categories: []
+date: 2022-07-05 23:12:07
+---

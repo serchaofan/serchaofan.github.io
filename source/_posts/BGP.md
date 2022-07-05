@@ -1,5 +1,5 @@
 ---
-title: BGP学习笔记
+title: BGP
 date: 2018-07-31 09:19:44
 tags: [BGP, 网络]
 categories: [网络]

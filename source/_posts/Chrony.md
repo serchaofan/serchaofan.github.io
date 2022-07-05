@@ -1,5 +1,5 @@
 ---
-title: Chrony学习笔记
+title: Chrony
 date: 2018-01-31 22:42:55
 tags: [Chrony, NTP]
 categories: [系统运维]

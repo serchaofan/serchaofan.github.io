@@ -1,5 +1,5 @@
 ---
-title: ELK日志架构笔记
+title: ELK日志架构
 date: 2018-09-24 16:28:34
 tags: [Elasticsearch, ELK, Kafka, Kibana, Logstash, 运维, 日志, Filebeat]
 categories: [日志]

@@ -1,5 +1,5 @@
 ---
-title: Ansible基础学习笔记
+title: Ansible基础
 date: 2018-05-28 00:01:18
 tags: [ansible, 运维, 监控, 自动化]
 categories: [自动化运维]
