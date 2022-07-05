@@ -93,12 +93,38 @@ Zookeeper 消息协议中的三个概念：
 zxid包含两部分：epoch和计数器。zxid为一个64bit的数字，高32位表示epoch，低32位表示计数器。当数字改变即可代表leader的改变，每当产生一个新leader，就有一个数字特定表示这个新leader。
 
 Zookeeper 消息由两阶段构成：
-- 领导者激活（Leader activation）：在这个阶段，会先选出一个leader，并由这个leader建立系统正确的状态，并准备好开始接收提议。
-- Active messaging：在这个阶段，一个领导者会接收消息提议并协调消息传递。
+- leader激活（Leader activation）：在这个阶段，会先选出一个leader，并由这个leader建立系统正确的状态，并准备好开始接收提议。
+- 激活消息（Active messaging）：在这个阶段，一个leader会接收消息提议并协调消息传递。
 
-ZooKeeper是一个整体协议，并不关注单个提议，而是将提议作为一个整体来看待。通过严格的排序，使Zookeeper能够高效地做到这一点，并极大地简化了Zookeeper的协议，领导者激活体现了这一整体概念。只有当达到一定数量的追随者和领导者同步时，该领导者才会被激活(领导者也算作追随者，可以给自己投票)，他们拥有相同的状态，这个状态包括领导者认为已经提交的所有提议，以及跟随领导者的提议，即NEW_LEADER 提议。
+ZooKeeper是一个整体协议，并不关注单个提议，而是将提议作为一个整体来看待。通过严格的排序，使Zookeeper能够高效地做到这一点，并极大地简化了Zookeeper的协议，leader激活体现了这一整体概念。只有当达到一定数量的追随者和领导者同步时，该领导者才会被激活(领导者也算作追随者，可以给自己投票)，他们拥有相同的状态，这个状态包括领导者认为已经提交的所有提议，以及跟随领导者的提议，即NEW_LEADER 提议。
 
+### Leader激活
+Leader激活包括Leader选举（leader election）。目前在ZooKeeper中有两种leader选举算法:LeaderElection和FastLeaderElection。ZooKeeper消息并不关心选举leader的具体方法，只要满足以下要求：
+- leader的zxid必须是follower中最高的
+- 将法定数量的server提交给leader
 
+Leader激活的主要步骤：
+1. follower在和leader同步过后，会确认收到一个NEW_LEADER提议。
+2. follower只会在收到一个单独server的特定zxid的NEW_LEADER提议时才会确认
+3. 当法定数量的follower都确认时，新的leader将提交这个NEW_LEADER提议。
+4. 当NEW_LEADER提议提交后，follower会提交所有接收自这个leader的状态。
+5. 这个leader必须在NEW_LEADER提议被提交通过后，才能接收其他新的提议。
+
+若leader选举过程意外结束，由于NEW_LEADER提议还未被提交通过，所以该leader没有任何选票，不会出任何问题。**当意外发生后，当前的leader和其他follower都会因连不上而timeout，然后重新开始新的leader选举。**
+
+### 激活消息
+一旦一个laeder被确认，这个leader就开始接收提议，只要这个leader还在，就不会有其他的leader（因为若有其他leader，这些leader得不到任何选票，也就不会被选举成为leader），若新leader产生，则旧的leader不再承担leader工作，新leader会清理在leader激活期间剩下的任何事务问题。
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207052144086.png)
+
+所有的联系通道都是FIFO，所有的处理都是有顺序的。有以下操作限制：
+1. leader发送提议给所有server是挨个发送的，因此每个server接收到请求也是依序接收
+2. server按顺序处理收到的消息，意味着每个消息都必须按顺序确认，且leader也是按顺序收到确认的消息。若消息m被写入持久化存储，则m被写入前，被提议的消息也都被写入持久化存储。
+3. 一旦法定人数的follower同意这个提议，leader会发布一个COMMIT消息给所有的server，由于消息被一个一个确认了，COMMIT消息会一个一个发送给server，每个server也会都接收到。
+4. COMMIT消息会被server按顺序处理，每个server会在该提议提交时一起传递消息。
+
+### Quorum机制
+quorum保证了自动广播和leader选举的系统一致性，默认情况下，ZooKeeper使用多数仲裁（majority quorum，或者叫多数派投票），这意味着每次提议的投票必须有多个server通过。典型就是leader选举提议：leader只有在大部分投票都认可这个提议的情况下才能被确认。
 
 # Zookeeper集群安装
 **确保集群的服务器数量为奇数个**。 确保java环境已安装完成。
