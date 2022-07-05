@@ -2,7 +2,8 @@
 title: MFS分布式文件系统笔记
 date: 2018-12-06 17:13:31
 tags: [MFS, 文件系统, 分布式, 存储]
-categories: [应用运维]
+categories: [存储]
+comments: false
 ---
 
 - [分布式文件系统](#分布式文件系统)

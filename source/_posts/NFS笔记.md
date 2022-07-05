@@ -1,8 +1,9 @@
 ---
 title: NFS基础笔记
 date: 2018-05-02 17:18:46
-tags: [server, nfs]
-categories: [应用运维]
+tags: [NFS]
+categories: [存储]
+comments: false
 ---
 
 - [NFS 原理](#nfs-原理)

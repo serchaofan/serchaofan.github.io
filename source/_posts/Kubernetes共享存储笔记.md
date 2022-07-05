@@ -1,8 +1,9 @@
 ---
 title: Kubernetes共享存储笔记
 tags: []
-categories: []
 date: 2020-04-05 19:06:54
+categories: [Kubernetes]
+comments: false
 ---
 
 - [PV](#pv)

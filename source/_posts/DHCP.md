@@ -1,8 +1,9 @@
 ---
-title: DHCP笔记
+title: DHCP
 date: 2018-06-05 23:59:29
 tags: [server, dhcp]
-categories: [应用运维]
+categories: [系统运维]
+comments: false
 ---
 
 本篇包含以下内容

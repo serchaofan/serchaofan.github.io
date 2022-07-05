@@ -1,8 +1,9 @@
 ---
 title: Linux-Namespace学习笔记
 tags: [namespace]
-categories: [Linux原理]
 date: 2018-12-30 14:42:04
+categories: [Linux]
+comments: false
 ---
 
 学习 Namespace 的笔记与 C 语言 Demo 参考书目：《Docker 容器与容器云》

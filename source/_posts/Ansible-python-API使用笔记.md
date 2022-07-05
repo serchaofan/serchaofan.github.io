@@ -1,8 +1,9 @@
 ---
 title: Ansible-python-API使用笔记
 tags: [API, python, ansible]
-categories: [Python开发]
 date: 2020-01-07 22:49:09
+categories: [Python]
+comments: false
 ---
 **Ansible python API v2.9.4  , Ansible v2.9.4**
 

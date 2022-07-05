@@ -2,6 +2,8 @@
 title: 常见VPN技术笔记
 date: 2018-06-18 09:00:37
 tags: [vpn, 网络]
+categories: [SRE]
+comments: false
 ---
 
 **华三网络学习笔记（理论）**

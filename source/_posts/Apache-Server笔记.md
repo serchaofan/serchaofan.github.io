@@ -2,7 +2,8 @@
 title: Apache-Server笔记
 date: 2018-05-02 17:19:50
 tags: [server, Apache, http, LAMP, LAMT]
-categories: [应用运维]
+categories: [Web服务器与负载]
+comments: false
 ---
 <!-- more -->
 

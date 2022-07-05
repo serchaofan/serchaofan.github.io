@@ -1,7 +1,9 @@
 ---
 title: Squid笔记
 date: 2018-05-31 12:00:16
-tags: [squid, 缓存, server, 代理]
+tags: [squid, 缓存, 代理]
+categories: [Web服务器与负载]
+comments: false
 ---
 
 - [Squid 介绍](#squid-%e4%bb%8b%e7%bb%8d)

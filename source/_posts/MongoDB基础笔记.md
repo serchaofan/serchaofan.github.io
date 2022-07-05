@@ -2,7 +2,8 @@
 title: MongoDB基础笔记
 date: 2018-10-29 11:41:54
 tags: [MongoDB, 数据库]
-categories: [应用运维]
+categories: [数据库]
+comments: false
 ---
 
 基于 MongoDB 4.0.3

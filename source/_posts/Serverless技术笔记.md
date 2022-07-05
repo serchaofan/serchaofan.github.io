@@ -1,8 +1,9 @@
 ---
 title: Serverless技术笔记
 tags: []
-categories: []
 date: 2020-02-13 19:19:50
+categories: [网络]
+comments: false
 ---
 
 - [Serverless 简介](#serverless-简介)

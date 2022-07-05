@@ -2,15 +2,16 @@
 date: 2018-01-29 8:32:43
 title: iSCSI学习笔记
 tags: [server, iSCSI]
-categories: [应用运维]
+categories: [存储]
+comments: false
 ---
 
 **iSCSI 笔记包含以下内容**
 
-- [iSCSI 介绍](#iscsi-%e4%bb%8b%e7%bb%8d)
-  - [常见存储方式](#%e5%b8%b8%e8%a7%81%e5%ad%98%e5%82%a8%e6%96%b9%e5%bc%8f)
-  - [SCSI 与 iSCSI](#scsi-%e4%b8%8e-iscsi)
-- [iSCSI 基础搭建](#iscsi-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
+- [iSCSI 介绍](#iscsi-介绍)
+  - [常见存储方式](#常见存储方式)
+  - [SCSI 与 iSCSI](#scsi-与-iscsi)
+- [iSCSI 基础搭建](#iscsi-基础搭建)
 
 <!-- more -->
 

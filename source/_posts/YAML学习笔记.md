@@ -2,6 +2,8 @@
 title: YAML学习笔记
 date: 2018-04-29 15:28:40
 tags: [Lang, YAML]
+categories: [系统运维]
+comments: false
 ---
 
 

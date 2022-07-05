@@ -3,6 +3,7 @@ title: 5G NSA与SA概念笔记
 tags: [网络, 5G]
 categories: [网络]
 date: 2019-12-13 11:46:36
+comments: false
 ---
 
 - [5G 组网方案](#5g-组网方案)

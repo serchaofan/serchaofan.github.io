@@ -1,8 +1,9 @@
 ---
 title: Influxdb基础笔记
 tags: [influxdb, 数据库]
-categories: [数据库]
 date: 2019-12-15 14:37:59
+categories: [数据库]
+comments: false
 ---
 
 InfluxDB 是一个开源时间序列平台，包括用于存储和查询数据，在后台处理数据以实现 ETL 或监视和警报目的的 API，用户仪表板以及可视化和探索数据的 API 等。

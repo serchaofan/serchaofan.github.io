@@ -2,7 +2,8 @@
 title: Docker存储学习笔记
 date: 2018-07-06 13:33:01
 tags: [docker, 存储]
-categories: [云计算]
+categories: [Docker]
+comments: false
 ---
 
 **主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**

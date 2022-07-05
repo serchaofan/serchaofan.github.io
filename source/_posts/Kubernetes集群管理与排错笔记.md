@@ -1,8 +1,8 @@
 ---
 title: Kubernetes集群管理与排错笔记
 tags: [kubernetes]
-categories: []
 date: 2020-04-05 19:06:01
+categories: [Kubernetes]
 comments: false
 ---
 <!--more-->

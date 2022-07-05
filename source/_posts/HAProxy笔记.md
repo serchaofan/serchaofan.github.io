@@ -2,9 +2,9 @@
 title: HAProxy笔记
 date: 2018-05-31 12:01:06
 tags: [HAproxy, 代理, server, 负载均衡]
-categories: [应用运维]
+categories: [Web服务器与负载]
+comments: false
 ---
-
 
 本篇包含以下内容：
 

@@ -2,6 +2,8 @@
 title: Zabbix搭建笔记
 date: 2018-09-28 18:23:06
 tags: [zabbix, 监控, 运维]
+categories: [监控]
+comments: false
 ---
 
 - [zabbix 概述](#zabbix-概述)

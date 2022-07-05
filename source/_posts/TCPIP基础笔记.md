@@ -2,6 +2,8 @@
 title: TCP/IP基础笔记
 date: 2019-03-21 19:00:08
 tags: [TCP/IP, 网络]
+categories: [网络]
+comments: false
 ---
 
 本篇包含计算机网络和 TCP/IP 结构的重要知识点，以及华三设备的一些操作。

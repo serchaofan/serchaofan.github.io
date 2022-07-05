@@ -2,6 +2,8 @@
 title: Rsync文件同步服务器学习笔记
 date: 2018-08-01 20:58:22
 tags: [Rsync, server, 同步]
+categories: [系统运维]
+comments: false
 ---
 
 - [Rsync 介绍与搭建](#rsync-介绍与搭建)

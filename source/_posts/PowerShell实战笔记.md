@@ -2,6 +2,8 @@
 title: PowerShell实战笔记
 date: 2019-06-01 21:25:28
 tags: [PowerShell]
+categories: [Shell]
+comments: false
 ---
 
 本笔记主要参照《Windows PowerShell 实战指南》的步骤学习，以及知识点补充。目录参照该书。

@@ -2,7 +2,8 @@
 title: Ansible基础学习笔记
 date: 2018-05-28 00:01:18
 tags: [ansible, 运维, 监控, 自动化]
-categories: [应用运维]
+categories: [自动化运维]
+comments: false
 ---
 
 Ansible 是一个部署一群远程主机的工具，使用 SSH 实现管理节点和远程节点间的通信，实现批量自动化操作。

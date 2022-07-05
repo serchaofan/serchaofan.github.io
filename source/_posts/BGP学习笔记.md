@@ -3,6 +3,7 @@ title: BGP学习笔记
 date: 2018-07-31 09:19:44
 tags: [BGP, 网络]
 categories: [网络]
+comments: false
 ---
 
 **基于华三网络学习笔记（理论）**

@@ -1,7 +1,9 @@
 ---
 title: Samba基础学习笔记
 date: 2018-05-02 17:18:06
-tags: [server, Samba]
+tags: [Samba]
+categories: [系统运维]
+comments: false
 ---
 
 本篇笔记包含以下内容：

@@ -3,6 +3,7 @@ title: Iptables、Selinux与防火墙笔记
 date: 2018-06-06 00:04:20
 tags: [iptables, 安全, Linux, Selinux, 防火墙, firewalld]
 categories: [系统运维]
+comments: false
 ---
 
 本片包含以下内容：

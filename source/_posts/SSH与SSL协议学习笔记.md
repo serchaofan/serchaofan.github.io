@@ -2,6 +2,8 @@
 title: SSH与SSL协议学习笔记
 date: 2018-08-01 21:02:56
 tags: [OpenSSL, SSL, server, SSH]
+categories: [网络]
+comments: false
 ---
 
 - [SSL/TLS 概念](#ssltls-概念)

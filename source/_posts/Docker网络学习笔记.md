@@ -2,7 +2,8 @@
 title: Docker网络学习笔记
 date: 2018-04-27 13:04:48
 tags: [docker, 网络]
-categories: [云计算]
+categories: [Docker]
+comments: false
 ---
 
 **主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**

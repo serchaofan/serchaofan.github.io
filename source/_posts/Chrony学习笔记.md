@@ -1,15 +1,16 @@
 ---
-title: Chrony/NTP学习笔记
+title: Chrony学习笔记
 date: 2018-01-31 22:42:55
-tags: [server, Chrony, NTP]
+tags: [Chrony, NTP]
 categories: [系统运维]
+comments: false
 ---
 
 **本篇包含以下内容**
 
-- [NTP 协议介绍](#ntp-%e5%8d%8f%e8%ae%ae%e4%bb%8b%e7%bb%8d)
-  - [Chrony 基础搭建](#chrony-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
-  - [ntpd 基础搭建](#ntpd-%e5%9f%ba%e7%a1%80%e6%90%ad%e5%bb%ba)
+- [NTP 协议介绍](#ntp-协议介绍)
+- [Chrony 基础搭建](#chrony-基础搭建)
+- [ntpd 基础搭建](#ntpd-基础搭建)
 
 <!-- more -->
 
@@ -27,7 +28,7 @@ NTP 全称 Network Time Protocol 网络时间协议，用于同步计算机时�
 - chronyd 可以快速适应时钟速率的突然变化，ntpd 则需要一段时间才能稳定。
 - chronyd 提供对孤立网络的支持，手动输入校准时间，并通过算法计算实时时间，估计计算机增减时间的速率，从而调整时间。
 
-## Chrony 基础搭建
+# Chrony 基础搭建
 
 环境
 
@@ -98,7 +99,7 @@ chronyc sources //查看同步源，结果与上一条类似
 
 若要局域网内同步时间，只要客户端都安装 chrony，且配置文件的 server 设置为此服务器 ip 即可。
 
-## ntpd 基础搭建
+# ntpd 基础搭建
 
 1. 安装 ntpd 服务
    `yum install ntp`

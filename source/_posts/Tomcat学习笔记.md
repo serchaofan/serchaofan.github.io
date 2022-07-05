@@ -2,6 +2,8 @@
 title: Tomcat学习笔记
 date: 2018-08-01 21:04:02
 tags: [Tomcat, server, web, java]
+categories: [Web服务器与负载]
+comments: false
 ---
 
 tomcat9.0.13，jdk1.8

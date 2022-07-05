@@ -1,8 +1,9 @@
 ---
 title: Gitlab服务搭建笔记
 tags: []
-categories: []
 date: 2020-02-14 16:14:41
+categories: [SRE]
+comments: false
 ---
 
 GitLab 是利用 Ruby On Rails 一个开源的版本管理系统，实现一个自托管的 Git 项目仓库，可通过 Web 界面进行访问公开的或者私人项目。它拥有与 GitHub 类似的功能，能够浏览源代码，管理缺陷和注释。

@@ -2,6 +2,8 @@
 title: Postfix邮件服务器笔记
 date: 2018-08-01 21:04:56
 tags: [Postfix, 邮件服务, sendmail]
+categories: [系统运维]
+comments: false
 ---
 
 - [邮件服务概述](#邮件服务概述)

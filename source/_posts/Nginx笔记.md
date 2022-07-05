@@ -2,7 +2,8 @@
 title: Nginx笔记
 date: 2018-05-02 17:20:03
 tags: [server, Nginx, LNMP, 集群, 缓存, 代理, 负载均衡]
-categories: [应用运维]
+categories: [Web服务器与负载]
+comments: false
 ---
 基于 Nginx1.14-1.16
 <!-- more -->

@@ -2,6 +2,8 @@
 title: OSPF学习笔记
 date: 2018-07-31 12:36:00
 tags: [OSPF, 网络]
+categories: [网络]
+comments: false
 ---
 
 **基于华三网络学习笔记（理论）**

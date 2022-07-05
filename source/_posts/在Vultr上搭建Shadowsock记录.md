@@ -2,6 +2,8 @@
 title: 在Vultr上搭建Shadowsocks记录
 date: 2018-12-25 22:46:01
 tags: [Vultr, Shadowsocks]
+categories: [网络]
+comments: false
 ---
 
 

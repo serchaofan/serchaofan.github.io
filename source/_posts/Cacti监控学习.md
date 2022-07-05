@@ -1,8 +1,9 @@
 ---
 title: Cacti监控学习
 date: 2018-09-15 11:27:44
-tags: [Cacti, 运维, 监控, server]
-categories: [系统运维]
+tags: [Cacti, 运维, 监控]
+categories: [监控]
+comments: false
 ---
 
 本篇笔记包含以下内容：

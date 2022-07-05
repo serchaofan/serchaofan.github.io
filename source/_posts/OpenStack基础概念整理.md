@@ -1,8 +1,9 @@
 ---
 title: OpenStack基础概念整理
 tags: []
-categories: []
 date: 2020-03-23 16:29:58
+categories: [虚拟化]
+comments: false
 ---
 
 - [OpenStack 概述](#openstack-概述)

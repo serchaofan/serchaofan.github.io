@@ -1,8 +1,9 @@
 ---
 date: 2018-01-28 20:22:42
-title: DNS学习笔记
-tags: [server, DNS]
-categories: [应用运维]
+title: DNS
+tags: [DNS]
+categories: [系统运维]
+comments: false
 ---
 
 **本篇 DNS 笔记包含以下内容**

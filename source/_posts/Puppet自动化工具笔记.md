@@ -2,6 +2,8 @@
 title: Puppet自动化工具笔记
 date: 2018-10-01 10:48:31
 tags: [Puppet, 运维, 自动化]
+categories: [自动化运维]
+comments: false
 ---
 
 - [Puppet 概述](#puppet-概述)

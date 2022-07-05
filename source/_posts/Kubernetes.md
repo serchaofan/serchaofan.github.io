@@ -1,8 +1,8 @@
 ---
 title: Kubernetes
 date: 2018-07-13 20:33:37
-tags: [云计算, Kubernetes]
-categories: [云计算]
+tags: [Kubernetes]
+categories: [Kubernetes]
 comments: false
 ---
 

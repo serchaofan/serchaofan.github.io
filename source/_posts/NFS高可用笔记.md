@@ -1,8 +1,9 @@
 ---
 title: NFS高可用笔记
 date: 2018-11-27 08:27:27
-tags: [nfs, 高可用]
-categories: [应用运维]
+tags: [NFS, 高可用]
+categories: [存储]
+comments: false
 ---
 
 - [NFS 高可用概述](#nfs-高可用概述)

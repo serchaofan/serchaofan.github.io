@@ -1,8 +1,9 @@
 ---
 title: Etcd基础笔记
-tags: []
-categories: []
+tags: [Etcd]
 date: 2020-04-10 12:28:43
+categories: [数据库]
+comments: false
 ---
 
 - [etcd 数据模型](#etcd-%e6%95%b0%e6%8d%ae%e6%a8%a1%e5%9e%8b)

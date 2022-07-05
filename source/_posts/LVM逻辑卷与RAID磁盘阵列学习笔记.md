@@ -2,7 +2,8 @@
 title: LVM逻辑卷与RAID磁盘阵列学习笔记
 date: 2018-08-01 20:55:08
 tags: [LVM, RAID, Linux]
-categories: [系统运维]
+categories: [存储]
+comments: false
 ---
 
 <!-- more -->

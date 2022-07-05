@@ -2,7 +2,8 @@
 title: MySQL完全笔记
 date: 2018-04-30 09:10:31
 tags: [数据库, MySQL]
-categories: [应用运维]
+categories: [数据库]
+comments: false
 ---
 
 **基于 MySQL5.7**

@@ -1,7 +1,9 @@
 ---
 title: Python基础完全笔记
 date: 2019-02-03 12:56:22
-tags: [Python, lang]
+tags: [Python]
+categories: [Python]
+comments: false
 ---
 
 - [函数式编程](#函数式编程)

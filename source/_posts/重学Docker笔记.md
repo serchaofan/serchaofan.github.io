@@ -1,7 +1,9 @@
 ---
 title: 重学Docker笔记
 date: 2018-10-12 12:21:24
-tags: [docker, 云计算]
+tags: [docker]
+categories: [Docker]
+comments: false
 ---
 
 重新学习 Docker 整理，docker 版本 18.06

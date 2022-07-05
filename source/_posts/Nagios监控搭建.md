@@ -2,7 +2,8 @@
 title: Nagios监控搭建
 date: 2018-05-31 11:56:48
 tags: [运维, 监控, Nagios]
-categories: [应用运维]
+categories: [监控]
+comments: false
 ---
 
 本篇包含以下内容

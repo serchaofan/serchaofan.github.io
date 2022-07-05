@@ -1,8 +1,9 @@
 ---
 title: Kubernetes网络学习笔记
 tags: []
-categories: []
 date: 2020-01-07 22:48:17
+categories: [Kubernetes]
+comments: false
 ---
 
 - [K8s网络基础架构](#k8s网络基础架构)

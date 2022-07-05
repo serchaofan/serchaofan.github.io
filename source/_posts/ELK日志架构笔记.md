@@ -2,7 +2,8 @@
 title: ELK日志架构笔记
 date: 2018-09-24 16:28:34
 tags: [Elasticsearch, ELK, Kafka, Kibana, Logstash, 运维, 日志, Filebeat]
-categories: [大数据, 日志, 架构]
+categories: [日志]
+comments: false
 ---
 
 本篇文章将完整描述基于ELK的日志系统的设计与部署，以及所有涉及的知识点。

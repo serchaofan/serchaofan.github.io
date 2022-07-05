@@ -2,7 +2,8 @@
 title: FTP笔记
 date: 2018-06-06 00:07:17
 tags: [ftp, server]
-categories: [应用运维]
+categories: [系统运维]
+comments: false
 ---
 
 本篇笔记包含以下内容

@@ -1,8 +1,9 @@
 ---
 title: Kafka基础笔记
-tags: []
-categories: []
+tags: [Kafka]
 date: 2020-01-07 22:45:38
+categories: [消息中间件]
+comments: false
 ---
 
 - [消息队列](#消息队列)

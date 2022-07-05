@@ -2,7 +2,8 @@
 title: DRBD数据同步笔记
 date: 2018-09-30 20:50:41
 tags: [DRBD, 同步, 集群, 高可用]
-categories: [应用运维]
+categories: [存储]
+comments: false
 ---
 
 - [DRBD 概述](#drbd-概述)

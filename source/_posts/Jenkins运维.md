@@ -1,7 +1,9 @@
 ---
-title: Jenkins学习笔记
+title: Jenkins运维
 date: 2019-01-21 23:28:13
-tags:
+tags: [Jenkins, SRE, DevOps]
+categories: [SRE]
+comments: false
 ---
 
 - [jenkins 介绍](#jenkins-介绍)

@@ -1,8 +1,8 @@
 ---
 title: Supervisor使用
 tags: [Supervisor]
-categories: []
 date: 2019-12-15 14:34:32
+categories: [系统运维]
 comments: false
 ---
 

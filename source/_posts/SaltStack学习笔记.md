@@ -2,6 +2,8 @@
 title: SaltStack学习笔记
 date: 2018-11-16 16:09:09
 tags: [SaltStack, 运维, 自动化]
+categories: [自动化运维]
+comments: false
 ---
 
 <!--more-->

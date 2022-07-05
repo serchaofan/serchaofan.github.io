@@ -1,8 +1,9 @@
 ---
-title: Django使用Whoosh实现全文检索笔记
+title: Django使用Whoosh实现全文检索
 date: 2019-02-01 15:33:18
 tags: [Django, Whoosh, 全文检索, python]
-categories: [后端开发]
+categories: [Python]
+comments: false
 ---
 
 在 Django 编写博客时添加简单的全文搜索的功能。使用到了 haystack、whoosh 和 jieba 三个项目

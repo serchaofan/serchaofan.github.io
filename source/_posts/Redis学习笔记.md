@@ -2,6 +2,8 @@
 title: Redis基础学习笔记
 date: 2018-05-17 19:01:43
 tags: [数据库, Redis]
+categories: [数据库]
+comments: false
 ---
 
 本篇笔记主要包含以下内容

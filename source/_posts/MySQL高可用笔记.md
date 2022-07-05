@@ -2,7 +2,8 @@
 title: MySQL高可用笔记
 date: 2018-10-01 10:45:25
 tags: [MySQL, 高可用]
-categories: [应用运维]
+categories: [数据库]
+comments: false
 ---
 
 - [MySQL 高可用概述](#mysql-高可用概述)

@@ -1,8 +1,9 @@
 ---
 title: Istio
 tags: []
-categories: []
 date: 2020-04-05 19:09:24
+categories: [服务网格]
+comments: false
 ---
 
 本文内容包括Istio的基础概念以及常见用例，大量概念摘抄自《深入浅出Istio：Service Mesh快速入门与实践》一书，仅用作学习参考。

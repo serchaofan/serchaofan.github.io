@@ -2,6 +2,8 @@
 title: Sed、Awk与Shell编程
 date: 2018-09-29 12:08:18
 tags: [sed, awk, Linux]
+categories: [Shell]
+comments: false
 ---
 
 - [Sed](#sed)

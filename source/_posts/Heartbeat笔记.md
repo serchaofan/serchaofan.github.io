@@ -2,7 +2,8 @@
 title: Heartbeat笔记
 date: 2018-09-30 18:27:26
 tags: [heartbeat, server, 高可用, 集群]
-categories: [应用运维]
+categories: [Web服务器与负载]
+comments: false
 ---
 
 - [Heartbeat 概念](#heartbeat-概念)

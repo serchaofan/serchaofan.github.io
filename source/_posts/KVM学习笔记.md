@@ -3,6 +3,7 @@ title: KVM学习笔记
 date: 2018-10-03 08:33:46
 tags: [KVM, 虚拟化]
 categories: [虚拟化]
+comments: false
 ---
 
 - [虚拟化概述](#虚拟化概述)

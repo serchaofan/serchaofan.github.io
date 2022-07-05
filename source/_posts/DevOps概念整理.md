@@ -1,8 +1,9 @@
 ---
 title: DevOps概念整理
 tags: []
-categories: []
 date: 2020-02-14 18:39:56
+categories: [SRE]
+comments: false
 ---
 
 - [DevOps](#devops)

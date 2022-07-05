@@ -2,6 +2,8 @@
 title: PPP协议基础笔记
 date: 2019-03-21 19:40:08
 tags: [PPP, 网络, 华三]
+categories: [网络]
+comments: false
 ---
 
 PPP 协议基础，根据华三网络整理

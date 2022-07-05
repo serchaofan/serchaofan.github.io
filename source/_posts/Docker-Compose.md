@@ -1,8 +1,9 @@
 ---
-title: Docker Compose学习笔记
+title: Docker Compose
 date: 2018-07-30 17:32:29
-tags: [docker, docker-compose, 云计算, 容器编排]
-categories: [云计算]
+tags: [docker, docker-compose, 容器编排]
+categories: [Docker]
+comments: false
 ---
 
 环境：docker：18.06.1，docker-compose：1.22.0
