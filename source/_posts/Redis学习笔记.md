@@ -33,7 +33,13 @@ comments: false
   - [通信协议](#通信协议)
   - [一些管理命令](#一些管理命令)
 - [Redis 配置文件常用参数](#redis-配置文件常用参数)
-  - [在 Docker 上搭建 Redis](#在-docker-上搭建-redis)
+  - [服务本身相关](#服务本身相关)
+  - [连接相关](#连接相关)
+  - [内存相关](#内存相关)
+  - [持久化相关](#持久化相关)
+  - [主从复制相关](#主从复制相关)
+  - [定时任务相关](#定时任务相关)
+- [K8S集群内部署Redis](#k8s集群内部署redis)
 - [FAQ](#faq)
   - [Redis 报错问题](#redis-报错问题)
 - [参考资料](#参考资料)
@@ -1205,52 +1211,61 @@ set foo bar
 
 `monitor`命令十分影响 redis 的性能，会降低近一半的负载能力，因此只适合进行排错和调试。
 
-- `config get <指定配置>`：获取服务器配置信息（就是配置文件中的参数）。
 
 # Redis 配置文件常用参数
-
-按照配置文件中的出现顺序
-
+`config get <指定配置>`：获取服务器配置信息（就是配置文件中的参数）。
+可以用`config get *`获取当前所有配置参数信息
+## 服务本身相关
 - `bind <IPaddr>`： 指定 Redis 只接收该地址的请求。默认接收所有 IP 地址的请求，这样会造成安全隐患，最好填写需要调用 redis 的服务器的 IP 地址，或者直接写`127.0.0.1`仅允许本地用户调用。
-
 - `daemonize yes|no`：是否在后台运行。默认在前台运行
-
 - `pidfile`：PID 文件路径。若运行多个 Redis，则需要在各自的配置文件中指定不同的 PID 文件路径和端口
-
 - `port`：Redis 监听的端口，默认为 6379
-
-- `timeout`：客户端连接超时时间，单位秒。若客户端在超时前没发出任何指令，则会关闭连接。
-
 - `logfile`：日志文件路径
-
 - `loglevel`：日志等级，分为四个：debug、verbose、notice、warning，默认为 notice
-
 - `databases`：数据库个数，默认设为 16 个
+- `protected-mode`：默认为yes开启，若开启需要配置`bind`或设置密码`requirepass`，若关闭则外部网络可直接访问
+- `supervised`：默认为`no`，若为no，则不支持使用upstart或systemd管理redis。可以设为`systemd`或`upstart`。如果是ubuntu系统，则要设为`systemd`
+- 
 
-- `save <seconds> <changes>`：redis 进行备份的频率。在多少秒内进行几次更新操作，就会触发备份，将数据同步到 RDB 文件。详见持久化
-
-- `rdbcompression yes|no`：是否开启 rdb 备份时压缩，默认开启
-
-- `dbfilename`：rdb 备份的文件名，默认为`dump.rdb`
-
-- `dir`：rdb 备份文件存放路径。路径和文件名要分开配置，因为 Redis 备份时会先将当前数据库的状态写入一个临时文件，等备份完成后再把该文件替换为指定文件。
-
-- `slaveof <masterip> <masteport>`：在从数据库上设置，指定主数据库
-
-- `masterauth <master-password>` ：当主数据库连接需要密码验证时，在此指定密码
-
-- `requirepass`：设置客户端连接后进行任何其他操作前需要的密码。
-
-  > 因为 Redis 速度快，所以外部用户可以每秒进行 150000 次密码尝试，若密码简单，很容易被破解。
-
-- `maxmemory <bytes>`：设置 Redis 最大能使用的内存，单位字节。当分配的内存完全被占用后，若再接收到 set 命令，则 Redis 会先删除设置了 expire 的键，无论是否到期。若所有 expire 的键都被删除了，则 redis 不再进行 set 操作，只允许 get 操作。此参数适合把 redis 当做类似 Memcached 缓存来使用
+## 连接相关
+- `timeout`：客户端连接超时时间，单位秒。若客户端在超时前没发出任何指令，则会关闭连接。
 - `maxclients`：限制同时连接的客户数。当连接数超过该值，则不再接收，并返回 error。
-- `appendonly yes|no` ：默认情况下，redis 会在后台异步把数据库镜像备份到此磁盘，但这样备份非常耗时，且不能很频繁，若断电会造成大量数据丢失。若开启 appendonly，则 redis 会将接收到的每一次写操作追加到`appendonly.aof`中，当 redis 重启时，会从该文件恢复到之前的状态。但这样容易造成该文件过大。可通过指令`BGREWRITEAOF`对该文件整理。
-- `appendfsync always|everysec|no`：详见持久化
+- `requirepass`：设置客户端连接后进行任何其他操作前需要的密码。
+  > 因为 Redis 速度快，所以外部用户可以每秒进行 150000 次密码尝试，若密码简单，很容易被破解。
+- `tcp-keepalive`：客户端发送的最后一个数据包与redis发送的第一个保活探测报文之间的时间间隔（单位秒），默认为300
+- `tcp-backlog`：TCP连接中已完成队列(完成三次握手之后)的长度。必须不大于Linux系统定义的`/proc/sys/net/core/somaxconn`值。默认是511。当系统并发量大并且客户端速度缓慢的时候需要参考设置这两个值
+
+## 内存相关
+- `maxmemory <bytes>`：设置 Redis 最大能使用的内存，单位字节。当分配的内存完全被占用后，若再接收到 set 命令，则 Redis 会先删除设置了 expire 的键，无论是否到期。若所有 expire 的键都被删除了，则 redis 不再进行 set 操作，只允许 get 操作。此参数适合把 redis 当做类似 Memcached 缓存来使用
 - `vm-enabled`：是否开启虚拟内存支持。当内存不够时，会把 value 存放到交换区（swap）中。性能基本不受影响。同时要将`vm-max-memory`设置足够大以存放所有 key
 - `vm-max-memory`：开启虚拟内存后 redis 可用的最大内存大小，默认为 0。在生产环境中，最好不要设为 0，根据实际情况调整。
 
-## 在 Docker 上搭建 Redis
+
+## 持久化相关
+- `save <seconds> <changes>`：redis 进行备份的频率。在多少秒内进行几次更新操作，就会触发备份，将数据同步到 RDB 文件。详见持久化
+- `appendonly yes|no` ：默认情况下，redis 会在后台异步把数据库镜像备份到此磁盘，但这样备份非常耗时，且不能很频繁，若断电会造成大量数据丢失。若开启 appendonly，则 redis 会将接收到的每一次写操作追加到`appendonly.aof`中，当 redis 重启时，会从该文件恢复到之前的状态。但这样容易造成该文件过大。可通过指令`BGREWRITEAOF`对该文件整理。
+- `appendfsync always|everysec|no`：详见持久化
+- `dbfilename`：rdb 备份的文件名，默认为`dump.rdb`
+- `dir`：rdb 备份文件存放路径。路径和文件名要分开配置，因为 Redis 备份时会先将当前数据库的状态写入一个临时文件，等备份完成后再把该文件替换为指定文件。
+- `rdbcompression yes|no`：是否开启 rdb 备份时压缩，默认开启
+
+
+## 主从复制相关
+- `slaveof <masterip> <masteport>`：在从数据库上设置，指定主数据库
+- `masterauth <master-password>` ：当主数据库连接需要密码验证时，在此指定密码
+- `repl-ping-slave-period`：SLAVE周期性的ping MASTER间隔。默认10
+- `repl-ping-replica-period`：同上，一个东西
+- `repl-timeout`：多长时间内均PING不通时，判定心跳超时。一定不能小于`repl-ping-replica-period`，可以考虑为`repl-ping-replica-period`的3倍或更大。默认60
+
+
+## 定时任务相关
+- `hz`：指定Redis定期任务的执行频率，这些任务包括关闭超时的客户端连接、主动清除过期key等
+- `dynamic-hz`：同上，是动态的，默认为`yes`开启，若还配置了`hz`，则以`hz`为基线进行动态调整。（5.0版本新增）
+
+
+# K8S集群内部署Redis
+
+
 
 # FAQ
 

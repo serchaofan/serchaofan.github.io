@@ -6,6 +6,8 @@ date: 2020-02-21 15:19:44
 comments: false
 ---
 
+Apache Hadoop框架允许用户使用简单的编程模型来实现计算机集群的大型数据集的分布式处理，目的是支持从单一服务器到上千台服务器的扩展。充分利用每台机器的计算和存储资源，而不是依靠硬件来提供高可用性，其本身被设计成在应用层监测和处理故障的库，对计算机集群来说，其中每台机器的顶层都被设计成可容错的，以便提供一个可用的服务。
+
 <!--more-->
 
 # Hadoop生态
@@ -17,11 +19,12 @@ Hadoop生态系统是一个平台或套件，可提供各种服务来解决大�
 - **MapReduce：数据并行处理程序**
 - **Hadoop Common：Hadoop基础功能库**
 - Spark：内存中的数据处理
-- PIG, HIVE: 基于查询(类SQL)的数据服务处理
+- Pig：高层次数据流并行计算语言和执行框架
+- Hive：数仓基础设施，提供数据汇总和特定查询
 - HBase: NoSQL kv数据库
 - Mahout, Spark MLLib: 机器学习算法库
 - Solar, Lucene: 检索与索引
-- Zookeeper: 分布式集群调度管理
+- Zookeeper: 分布式集群应用调度管理
 - Oozie: 任务调度
 - Flume, Sqoop：数据收集服务
 
@@ -64,6 +67,9 @@ Cloudera Manager（简称 CM）是为了便于在集群中进行 Hadoop 服务�
 
 
 # HBase
+Apache HBase是一个分布式、面向列的开源数据库，技术源自谷歌的Bigtable，HBase在Hadoop上提供了类似于Bigtable的能力。HBase不同于一般的关系型数据库，是一个适合于非结构化数据存储的数据库，因为它是基于列的。
+
+## Bigtable
 
 
 # Flume
