@@ -1,19 +1,14 @@
 ---
-title: Kubernetes集群安全笔记
-tags: []
+title: Kubernetes集群安全
+tags: [Kubernetes, 安全]
 date: 2020-04-05 19:05:37
 categories: [Kubernetes]
 comments: false
 ---
 
-- [Admission Control](#admission-control)
-- [Service Account](#service-account)
-- [Secret](#secret)
-- [Pod 安全策略配置](#pod-安全策略配置)
-
 <!--more-->
 
-## 云原生安全概述
+# 云原生安全概述
 
 云原生安全的 4 个 C 分别是云（Cloud）、集群（Cluster）、容器（Container）和代码（Code）。
 
@@ -61,13 +56,13 @@ comments: false
 - 在必要时允许将管理员权限赋给普通用户
 - 允许拥有 Secret 数据的应用在集群中运行
 
-## K8S API 访问控制
+# K8S API 访问控制
 用户使用kubectl、客户端库或构造REST请求来访问K8S API，当请求到达API Server时，会经历以下阶段：
 1. 认证（Authentication）
 2. 鉴权（Authorization）
 3. 准入控制（Admission Control）
 
-### 认证
+## 认证
 在API Server与建立TLS连接后，HTTP请求进入认证步骤。API Server上运行着一个或多个身份认证组件，服务器依次尝试每个验证模块，直到其中一个成功。
 
 认证步骤的输入是整个HTTP请求，但通常情况组件只检查头部和客户端证书。
@@ -81,7 +76,7 @@ comments: false
 
 如果请求认证不通过，服务器将以HTTP状态码`401`拒绝该请求。反之，该用户被认证为特定的`username`，并且该用户名可用于后续步骤。
 
-### 鉴权
+## 鉴权
 将请求验证为来自特定的用户后，请求必须被鉴权。
 
 请求必须包含**请求者的用户名、请求的行为以及受该操作影响的对象**。如果现有策略声明用户有权完成请求的操作，那么该请求被鉴权通过。
@@ -107,7 +102,7 @@ yes
 yes
 ```
 
-### 准入控制
+## 准入控制
 准入控制模块是可以修改或拒绝请求的软件模块。除鉴权模块可用的属性外，准入控制模块还可以访问正在创建或修改的对象的内容。
 
 准入控制器对创建、修改、删除或（通过代理）连接对象的请求进行操作。准入控制器不会对仅读取对象的请求起作用。有多个准入控制器被配置时，服务器将依次调用它们。
@@ -250,7 +245,7 @@ ABAC 授权算法：API server 收到请求后，先识别请求携带的策略�
 }
 ```
 
-## RBAC
+### RBAC
 
 RBAC 的优势：
 
@@ -292,10 +287,178 @@ RBAC 有 4 个顶级资源对象：
   ClusterRole 不受限于命名空间，所以无须设置 metadata 的 namespace
 - RoleBinding 和 ClusterRoleBinding：用于将一个角色绑定到一个目标上，目标可以是 user 或 group 或 Service Account
 
-# Admission Control
 
-# Service Account
+### Admission Control
+请求通过认证和鉴权后，还不能得到响应，需要先经过Admission Control准入控制链，才能得到响应。
+
+在kube-apiserver服务器上执行以下命令，就能看到默认已开启的准入控制器以及全部控制器列表
+```
+# kube-apiserver -h | grep enable-admission-plugins
+      --enable-admission-plugins strings      
+```
+
+以下为默认开启：
+- NamespaceLifecycle
+- LimitRanger
+- ServiceAccount
+- TaintNodesByCondition
+- Priority
+- DefaultTolerationSeconds
+- DefaultStorageClass
+- PersistentVolumeClaimResize
+- RuntimeClass
+- CertificateApproval
+- CertificateSigning
+- CertificateSubjectRestriction
+- DefaultIngressClass
+- MutatingAdmissionWebhook
+- ValidatingAdmissionWebhook
+- ResourceQuota
+
+以下为非默认开启：
+- AlwaysAdmit
+- AlwaysDeny
+- AlwaysPullImages
+- DenyEscalatingExec
+- DenyExecOnPrivileged
+- EventRateLimit
+- ExtendedResourceToleration
+- ImagePolicyWebhook
+- LimitPodHardAntiAffinityTopology
+- MutatingAdmissionWebhook
+- NamespaceAutoProvision
+- NamespaceExists
+- NodeRestriction
+- OwnerReferencesPermissionEnforcement
+- PersistentVolumeClaimResize
+- PersistentVolumeLabel
+- PodNodeSelector
+- PodPreset
+- PodSecurityPolicy
+- PodTolerationRestriction
+- SecurityContextDeny
+- StorageObjectInUseProtection
+
+### Service Account
+
 
 # Secret
+Secret用于保管私密数据，如密码、Token、SSH key等信息。
+
+|内置类型	|用法|
+|--|--|
+|Opaque	                             | 用户定义的任意数据|
+|kubernetes.io/service-account-token | 服务账号令牌|
+|kubernetes.io/dockercfg             | ~/.dockercfg 文件的序列化形式|
+|kubernetes.io/dockerconfigjson	     | ~/.docker/config.json 文件的序列化形式|
+|kubernetes.io/basic-auth            | 用于基本身份认证的凭据|
+|kubernetes.io/ssh-auth              | 用于 SSH 身份认证的凭据|
+|kubernetes.io/tls                   | 用于 TLS 客户端或者服务器端的数据|
+|bootstrap.kubernetes.io/token       | 启动引导令牌数据|
+
+通过`type` 字段设置Secret的类型。如果 `type` 值为空字符串（即没设置type参数），则被视为 `Opaque` 类型。
+
+注：data域的各子域的值必须为BASE64编码
+
+当pod被APIserver创建是，APIserver不会校验该pod引用的secert是否存在，一旦这个pod被调度，则kubelet会尝试获取该secert值。
+
+若secert不存在或暂时无法连接到APIserver，kubelet会按一定时间间隔定期重试获取该secert值，并发送一个Event解释pod没有启动的原因。
+一旦secert被pod获取，则kubelet会创建并挂载包含secert的volume。只有所有的volume都挂载成功，pod中的container才会被启动。**在kubelet启动pod中的container后，container中和secert相关的volume将不会被改变，即使secret本身被修改**，因此若要让pod使用更新后的secret，则需要重启pod。
+
+## 创建Opaque类型
+### 通过yaml创建
+创建一个包含username=admin，password=123456的secret
+首先对值进行base64编码，echo后的`-n`一定要加，不加就会把`\n`也一起编码了
+```
+echo -n "admin" | base64
+echo -n "123456" | base64
+```
+编写以下yaml文件
+```yaml
+apiVersion: v1
+data:
+  password: MTIzNDU2
+  username: YWRtaW4=
+kind: Secret
+metadata:
+  name: secret-test
+  namespace: default
+type: Opaque
+```
+
+### 通过命令行创建
+- `--from-literal`
+  ```
+  kubectl create secret generic secret-test --from-literal=username=admin --from-literal=password=123456
+  ```
+- `--from-env-file`
+  ```
+  # 先编写account.env文件（名字随意）
+  # cat account.env
+  username=admin
+  password=123456
+
+  # kubectl create secret generic secret-test --from-env-file=account.env
+  ```
+- `--from-file`
+  ```
+  # kubectl create secret generic my-secret --from-file=ssh-privatekey=/root/.ssh/id_rsa
+
+  apiVersion: v1
+  data:
+  ssh-privatekey: LS0tLS1CRUdJTiBSU0EgUFJJV.........................
+  kind: Secret
+  metadata:
+    name: my-secret
+  type: Opaque
+  ```
+
+## 创建dockerconfigjson类型
+
+### 通过yaml创建
+先对~/.docker/config.json文件进行base64编码
+```
+# cat /root/.docker/config.json | base64
+```
+将加密后的字符串填入yaml文件
+```yaml
+apiVersion: v1
+data:
+  .dockerconfigjson: |
+    ................................
+kind: Secret
+metadata:
+  name: my-secret
+type: kubernetes.io/dockerconfigjson
+```
+
+### 通过命令行创建
+
+- 命令行中输入仓库信息
+  ```
+  # kubectl create secret docker-registry my-secret --docker-server=DOCKER_REGISTRY_SERVER --docker-username=DOCKER_USER --docker-password=DOCKER_PASSWORD --docker-email=DOCKER_EMAIL
+  ``` 
+- 从已有的config.json创建
+  ```
+  # kubectl create secret docker-registry my-secret --from-file=.dockerconfigjson=path/to/.docker/config.json
+  ```
+
+### 使用secret进行pod拉取镜像时鉴权
+由上述方法创建完secret后，在workload资源中添加`imagePullSecrets`添加即可。
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+spec:
+  ......
+  template:
+    ......
+    spec:
+      containers:
+      .....
+      imagePullSecrets:
+      - name: my-secret
+```
 
 # Pod 安全策略配置
