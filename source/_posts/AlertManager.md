@@ -3,6 +3,7 @@ title: AlertManager
 tags: [AlertManager, Prometheus]
 categories: [监控]
 date: 2022-07-09 23:25:58
+comments: false
 ---
 
 <!--more-->
