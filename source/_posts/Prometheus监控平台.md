@@ -10,23 +10,7 @@ Prometheus 是最初在 SoundCloud 上构建的开源系统监视和报警工具
 
 <!--more-->
 
-- [Prometheus 基本概念](#prometheus-基本概念)
-  - [特点](#特点)
-  - [组成](#组成)
-  - [工作流程](#工作流程)
-  - [数据模型](#数据模型)
-  - [四种 Metric 类型](#四种-metric-类型)
-  - [数据采集](#数据采集)
-  - [instance 和 jobs](#instance-和-jobs)
-  - [Prometheus Server](#prometheus-server)
-  - [使用 PromQL 查询监控数据](#使用-promql-查询监控数据)
-  - [常用函数](#常用函数)
-- [Prometheus Server 配置文件详细说明](#prometheus-server-配置文件详细说明)
-  - [抓取配置](#抓取配置)
-  - [将 prometheus 数据自动写入 influxdb](#将-prometheus-数据自动写入-influxdb)
-
 # Prometheus 基本概念
-
 ## 特点
 
 强大的多维度数据模型：
@@ -554,3 +538,432 @@ scrape_configs:
 
 > [prometheus如何存储influxdb官方文档](https://docs.influxdata.com/influxdb/v1.8/supported_protocols/prometheus/)
 
+# K8S集群中Prometheus的规划与部署
+规划概括：
+1. 尽可能简单，实现自动发现，拒绝手工配置
+2. 尽可能详尽，能采集的都要采集
+3. 尽可能打标签，并规范标签，通过annotation打标签
+
+规划具体思路：
+1. 新建一个namespace，叫monitor，prometheus监控相关的都在这个空间
+2. 必部署组件：blackbox_exporter，metrics-server，kube-state-metrics
+3. node_exporter可以放集群内也可以放宿主机上，看具体规划
+4. 将Prometheus打上标签，调度到单独的机器，这台机器上只跑promtheus
+5. 若这个Prometheus为总的Prometheus，则需要进行持久化存储，若这个Prometheus还会汇聚到一个联邦Prometheus，则无需持久化存储，并且只要保留24小时数据即可（以下是按照后者进行规划部署）。
+
+## Role与SA
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  - networking.k8s.io # 兼容不同version的权限 fix 修复权限问题
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitor
+```
+
+## Deployment与Service
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus    
+      nodeSelector:
+        app: prometheus   # 调度到app=prometheus的机器
+      containers:
+      - image: prom/prometheus:v2.32.1
+        name: prometheus
+        command:
+        - "/bin/prometheus"
+        args:
+        - "--config.file=/etc/prometheus/prometheus.yml"
+        - "--storage.tsdb.path=/prometheus"
+        - "--storage.tsdb.retention=24h"
+        - "--web.enable-lifecycle"
+        ports:
+        - containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - mountPath: "/prometheus"
+          name: data
+        - mountPath: "/etc/prometheus"
+          name: config-volume
+        resources:
+          requests:
+            cpu: "2"
+            memory: "2Gi"
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+      volumes:
+      - name: data
+        emptyDir: {}
+      - name: config-volume
+        configMap:
+          name: prometheus-config
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: prometheus
+  name: prometheus
+  namespace: monitor
+spec:
+  type: NodePort
+  ports:
+  - port: 9090
+    targetPort: 9090
+    nodePort: 30090
+  selector:
+    app: prometheus
+```
+
+## configMap
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitor
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval:     30s
+      evaluation_interval: 30s
+
+    scrape_configs:
+    ....job列表....
+```
+
+以下会对每个job进行详细描述
+
+### apiservers
+```yaml
+- job_name: 'apiservers'
+  kubernetes_sd_configs:
+  - role: endpoints
+  scheme: https
+  tls_config:
+    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+  bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+    action: keep
+    regex: default;kubernetes;https
+```
+获取apiserver的信息，获取到的指标以`apiserver_`开头
+
+### cadvisor
+```yaml
+- job_name: 'cadvisor'
+  kubernetes_sd_configs:
+  - role: node
+  scheme: https
+  tls_config:
+    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    insecure_skip_verify: false
+  bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+  relabel_configs:
+  - action: labelmap
+    regex: __meta_kubernetes_node_label_(.+)
+  - target_label: __address__
+    replacement: kubernetes.default.svc:443
+  - source_labels: [__meta_kubernetes_node_name]
+    regex: (.+)
+    target_label: __metrics_path__
+    replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+```
+收集container相关信息，获取到的指标以`container_`开头
+
+### kubelet
+```yaml
+- job_name: "kubelet"
+  honor_timestamps: true
+  scrape_interval: 1m
+  scrape_timeout: 1m
+  metrics_path: /metrics
+  scheme: https
+  kubernetes_sd_configs:
+  - role: node
+  bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+  tls_config:
+    ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    insecure_skip_verify: false
+  relabel_configs:
+  - separator: ;
+    regex: __meta_kubernetes_node_label_(.+)
+    replacement: $1
+    action: labelmap
+  - separator: ;
+    regex: (.*)
+    target_label: __address__
+    replacement: kubernetes.default.svc:443
+    action: replace
+  - source_labels: [__meta_kubernetes_node_name]
+    separator: ;
+    regex: (.+)
+    target_label: __metrics_path__
+    replacement: /api/v1/nodes/${1}/proxy/metrics
+    action: replace
+```
+收集kubelet相关信息，获取到的指标以`kubelet_`开头
+
+### service_endpoints_metrics
+```yaml
+- job_name: 'service_endpoints_metrics'
+
+  kubernetes_sd_configs:
+  - role: endpoints
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+    action: keep
+    regex: true
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scheme]
+    action: replace
+    target_label: __scheme__
+    regex: (https?)
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+    action: replace
+    target_label: __metrics_path__
+    regex: (.+)
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_env]    # prometheus.io/env
+    action: replace
+    target_label: env
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_dept]   # prometheus.io/dept
+    action: replace
+    target_label: dept
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_project] # prometheus.io/project
+    action: replace
+    target_label: project
+  - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
+    action: replace
+    target_label: __address__
+    regex: ([^:]+)(?::\d+)?;(\d+)
+    replacement: $1:$2
+
+  - action: labelmap
+    regex: __meta_kubernetes_service_label_(.+)
+  - source_labels: [__meta_kubernetes_namespace]
+    action: replace
+    target_label: kubernetes_namespace
+  - source_labels: [__meta_kubernetes_service_name]
+    action: replace
+    target_label: kubernetes_name
+  - source_labels: [__meta_kubernetes_pod_host_ip]
+    action: replace
+    target_label: node_ip
+  - source_labels: [__meta_kubernetes_pod_ip]
+    action: replace
+    target_label: pod_ip
+```
+自动获取暴露prometheus数据指标的服务的metrics，只要在该服务的annotations中添加相关信息即可。
+
+例如kube-state-metrics服务，可访问`/metrics`获取prometheus指标，则可以按以下方法配置
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/scrape: "true"
+  name: kube-state-metrics
+  namespace: monitor
+```
+
+一些定义的参数：
+- `prometheus.io/path`：指定获取指标的path，一般都是`/metrics`，根据实际情况填写
+- `prometheus.io/port`：服务的端口
+- `prometheus.io/scrape`：是否开启，`true`为开启，`false`不开启，没设置就不开启
+- `prometheus.io/env`：设置环境标签，与上面的`__meta_kubernetes_service_annotation_prometheus_io_env`对应
+- `prometheus.io/dept`：设置部门标签，与上面的`__meta_kubernetes_service_annotation_prometheus_io_dept`对应
+- `prometheus.io/project`：设置项目标签，与上面的`__meta_kubernetes_service_annotation_prometheus_io_project`对应
+
+
+### http_get
+```yaml
+- job_name: 'http_get'
+
+  metrics_path: /probe
+  params:
+    module: [http_2xx]
+  kubernetes_sd_configs:
+  - role: service
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_http_get]
+    action: keep
+    regex: true
+
+  # __address__  匹配完整服务地址加端口 <service>.<namespace>.svc:<port>
+  # __meta_kubernetes_service_annotation_prometheus_io_path 匹配 /actuator/info     
+  # 最后匹配出 <service>.<namespace>.svc:<port>/actuator/info
+
+  - source_labels: [__address__,__meta_kubernetes_service_annotation_prometheus_io_path]
+    action: replace
+    regex: (.+);(.*)
+    replacement: http://$1$2  # 拼接需要监控的url
+    target_label: __param_target
+
+  - target_label: __address__
+    replacement: blackbox-exporter.monitor.svc:9115
+
+  - source_labels: [__meta_kubernetes_service_annotation_kubernetes_io_env]
+    action: replace
+    target_label: env
+  - source_labels: [__meta_kubernetes_service_annotation_kubernetes_io_project]
+    action: replace
+    target_label: project
+  - source_labels: [__meta_kubernetes_service_annotation_kubernetes_io_dept]
+    action: replace
+    target_label: dept
+
+  - source_labels: [__param_target]
+    target_label: instance
+
+  # 额外添加标签
+  - action: labelmap
+    regex: __meta_kubernetes_service_label_(.+)
+
+  - source_labels: [__meta_kubernetes_namespace]
+    target_label: namespace
+
+  - source_labels: [__meta_kubernetes_service_name]
+    target_label: service_name
+
+  - source_labels: [__meta_kubernetes_service_name]
+    target_label: app
+```
+HTTP探针状态监控，使用的是blackbox-exporter。
+
+以下为几个参数：
+- `prometheus.io/path`：服务健康检查路径
+- `prometheus.io/http_get`：是否开启收集，`true`为开启，`false`为不开启，没设置就不开启
+- `prometheus.io/env`：环境标签
+- `prometheus.io/project`：项目标签
+- `prometheus.io/dept`：部门标签
+
+例：
+```yaml
+  annotations:
+    kubernetes.io/http_get: "true"
+    kubernetes.io/path: "/actuator/info"
+    kubernetes.io/env: "prod"
+    kubernetes.io/project: "xxx"
+    kubernetes.io/dept: "xxx"
+```
+
+### ingress_http_get
+```yaml
+- job_name: 'ingress_http_get'
+
+  metrics_path: /probe
+  params:
+    module: [http_2xx]
+  kubernetes_sd_configs:
+  - role: ingress
+  relabel_configs:
+
+  - source_labels: [__meta_kubernetes_ingress_annotation_kubernetes_io_probed]
+    action: keep
+    regex: true
+
+  - source_labels: [__meta_kubernetes_ingress_scheme,__address__,__meta_kubernetes_ingress_annotation_kubernetes_io_path]
+    target_label: __param_target
+    regex: (.+);(.+);(.*)
+    replacement: ${1}://${2}${3}
+
+  - target_label: __address__
+    replacement: 外部blackbox-exporter IP:9115 # 监控 ingress域名 使用外部blackbox-exporter
+
+  - source_labels: [__param_target]
+    target_label: instance
+
+  - source_labels: [__meta_kubernetes_ingress_annotation_kubernetes_io_auth]
+    action: replace
+    target_label: auth
+  - source_labels: [__meta_kubernetes_ingress_annotation_kubernetes_io_env]
+    action: replace
+    target_label: env
+  - source_labels: [__meta_kubernetes_ingress_annotation_kubernetes_io_project]
+    action: replace
+    target_label: project
+  - source_labels: [__meta_kubernetes_ingress_annotation_kubernetes_io_dept]
+    action: replace
+    target_label: dept
+
+  # 额外添加标签
+  - action: labelmap
+    regex: __meta_kubernetes_ingress_label_(.+)
+
+  - source_labels: [__meta_kubernetes_namespace]
+    target_label: kubernetes_namespace
+
+  - source_labels: [__meta_kubernetes_ingress_name]
+    target_label: kubernetes_name
+
+  - source_labels: [__meta_kubernetes_ingress_name]
+    target_label: app
+```
+Ingress探针设置，使用的是集群外部部署的blackbox-exporter。
+
+以下为几个参数：
+- `prometheus.io/path`：服务健康检查路径
+- `prometheus.io/probed`：是否开启收集，`true`为开启，`false`为不开启，没设置就不开启
+- `prometheus.io/env`：环境标签
+- `prometheus.io/project`：项目标签
+- `prometheus.io/dept`：部门标签
+
+例：
+```yaml
+  annotations:
+    kubernetes.io/probed: "true"
+    kubernetes.io/path: "/"
+    kubernetes.io/env: "prod"
+    kubernetes.io/project: "xxx"
+    kubernetes.io/dept: "xxx"
+```
