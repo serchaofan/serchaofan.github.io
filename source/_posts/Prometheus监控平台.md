@@ -548,7 +548,7 @@ scrape_configs:
 1. 新建一个namespace，叫monitor，prometheus监控相关的都在这个空间
 2. 必部署组件：blackbox_exporter，metrics-server，kube-state-metrics
 3. node_exporter可以放集群内也可以放宿主机上，看具体规划
-4. 将Prometheus打上标签，调度到单独的机器，这台机器上只跑promtheus
+4. 指定一个单独节点跑prometheus的pod，给这个节点打上污点，并在prometheus的yaml中设置容忍
 5. 若这个Prometheus为总的Prometheus，则需要进行持久化存储，若这个Prometheus还会汇聚到一个联邦Prometheus，则无需持久化存储，并且只要保留24小时数据即可（以下是按照后者进行规划部署）。
 
 ## Role与SA
@@ -613,8 +613,13 @@ spec:
         app: prometheus
     spec:
       serviceAccountName: prometheus    
+      tolerations:     # 设置容忍，可以调度到有apptype污点的节点，与下面的nodeSelector配合，即可确保这个node上只有prometheus能运行
+      - key: "apptype"
+        operator: "Exists"
+        effect: "NoSchedule"
       nodeSelector:
-        app: prometheus   # 调度到app=prometheus的机器
+        app: prometheus    # 调度到app=prometheus的机器
+        kubernetes.io/os: linux
       containers:
       - image: prom/prometheus:v2.32.1
         name: prometheus
@@ -918,7 +923,7 @@ HTTP探针状态监控，使用的是blackbox-exporter。
     replacement: ${1}://${2}${3}
 
   - target_label: __address__
-    replacement: 外部blackbox-exporter IP:9115 # 监控 ingress域名 使用外部blackbox-exporter
+    replacement: 外部blackbox-exporter IP:9115 # 监控 ingress域名 使用外部blackbox-exporter，因为集群内部可能访问不到域名
 
   - source_labels: [__param_target]
     target_label: instance
