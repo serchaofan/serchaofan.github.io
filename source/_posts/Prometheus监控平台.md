@@ -451,7 +451,7 @@ quantile(0.5, http_requests_total)
 |   sort    | 对向量按元素的值进行升序排序                   | sort_desc | 对向量按元素的值进行降序排序               |
 
 
-# Prometheus Server 配置文件详细说明
+# Prometheus配置文件详细说明
 
 ```
 global:
@@ -540,9 +540,9 @@ scrape_configs:
 
 # K8S集群中Prometheus的规划与部署
 规划概括：
-1. 尽可能简单，实现自动发现，拒绝手工配置
-2. 尽可能详尽，能采集的都要采集
-3. 尽可能打标签，并规范标签，通过annotation打标签
+1. 简单，实现自动发现，拒绝手工配置
+2. 详尽，能采集的都要采集
+3. 打标签，并规范标签，通过annotation打标签
 
 规划具体思路：
 1. 新建一个namespace，叫monitor，prometheus监控相关的都在这个空间
