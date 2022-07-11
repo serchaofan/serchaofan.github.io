@@ -361,33 +361,26 @@ volume 是 Pod 中能被多个容器访问的共享目录，被定义在 pod 上
 ```
 
 k8s 提供的 volume 类型：
-
-- emptyDir：在 Pod 分配到 Node 时创建的，初始内容为空，无须指定宿主机上的目录文件。可用作临时空间、中间过程 CheckPoint 的临时保存目录、一个容器需从另一容器中获取数据的目录
-- hostPath：在 Pod 上挂载宿主机上的文件或目录。可用于容器的应用日志文件永久保存、定义 hostPath 为宿主机的`/var/lib/docker`使容器内应用能访问 docker 文件系统。
-  - 需要注意：不同 node 上相同配置的 Pod 可能因为宿主机目录和文件不同而对 volume 的目录文件访问结果不一致。若使用资源配额管理，则 k8s 无法将 hostPath 在宿主机上的资源纳入管理
-  ```yaml
-  volumes:
-    - name: Volume Name
-    hostPath:
-      path: Path to mount
-  ```
-- gcePersistentDisk：使用谷歌公有云的永久磁盘(PersistentDisk，PD)，PD 上的内容会被永久保存。Pod 被删除也只是 PD 卸载，而不是删除。
-- awsElasticBlockStore：使用亚马逊公有云的 EBS Volume
-- NFS
-  ```yaml
-  例：
-  volumes:
-    - name: nfs
-      nfs:
-        server: nfs-server.localhost
-        path: "/"
-  ```
-- iSCSI：iSCSI 的目录挂载到 Pod 中
-- flocker：用 Flocker 管理存储卷
-- GlusterFS：用 GlusterFS 的目录挂载到 Pod 中
-- RBD：用 Ceph 块设备共享存储（Rados Block Device）挂载到 Pod 中
-- gitRepo：挂载一个空目录，从 git 库中 clone 一个仓库供 pod 使用
-- secret：一个 Secret Volume 为 Pod 提供加密信息
+1. 临时目录：随pod销毁而销毁
+  - emptyDir：在 Pod 分配到 Node 时创建的，初始内容为空，无须指定宿主机上的目录文件。可用作临时空间、中间过程 CheckPoint 的临时保存目录、一个容器需从另一容器中获取数据的目录
+2. 配置类：将配置以volume形式挂载到pod内
+  - configMap
+  - secret：一个 Secret Volume 为 Pod 提供加密信息
+  - downwardAPI：将downward API数据以环境变量或文件形式注入容器
+  - gitRepo：挂载一个空目录，从 git 库中 clone 一个仓库供 pod 使用
+3. 本地存储类
+  - hostPath：在 Pod 上挂载宿主机上的文件或目录。可用于容器的应用日志文件永久保存、定义 hostPath 为宿主机的`/var/lib/docker`使容器内应用能访问 docker 文件系统。
+  > 需要注意：不同 node 上相同配置的 Pod 可能因为宿主机目录和文件不同而对 volume 的目录文件访问结果不一致。若使用资源配额管理，则 k8s 无法将 hostPath 在宿主机上的资源纳入管理
+  > ```yaml
+  > volumes:
+  > - name: Volume Name
+  >   hostPath:
+  >     path: Path to mount
+  > ```
+  - local：将本地存储以PV形式提供给容器，并能实现存储空间的管理
+4. 共享存储类
+  - PV
+  - PVC
 
 ### Persistent Volume
 
@@ -1283,10 +1276,12 @@ ConfigMap 的限制条件：
 Pod 状态如下：
 
 - Pending：apiserver 已创建该 pod，但 pod 中还有容器镜像没有创建（可能在下载）
-- Running：pod 内容器都已创建，且至少有一个容器在运行、正在启动或重启状态
-- Succeeded：pod 内容器都成功执行后退出，且不会再重启
-- Failed：pod 内容器都已退出，但至少有一个容器退出为失败状态
+- Running：pod内容器都已创建，且至少有一个容器在运行、正在启动或重启状态
+- Succeeded：pod内容器都成功执行后退出，且不会再重启
+- Failed：pod内容器都已退出，但至少有一个容器退出为失败状态
 - Unknown：无法获取该 pod 状态
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207102346742.png)
 
 当某个容器异常退出或健康检查失败时，kubelet 会根据 RestartPolicy 的设置进行相应操作
 pod 重启策略如下：
@@ -1307,8 +1302,8 @@ kubelet 重启失效容器的时间间隔以`sync-frequency X 偶数倍`计算�
 
 k8s 通过两类探针检查 pod 健康状态：LivenessProbe、ReadinessProbe。kubelet 定期执行这两类探针诊断容器健康。
 
-- LivenessProbe：用于判断容器是否存活（Running），若判定为不健康，则 kubelet 杀死该容器并根据重启策略处理。若容器不包含该探针，则 kubelet 认为该容器的探针返回值永远为 Success
-- ReadinessProbe：用于判断容器服务是否可用（Ready），只有达到 Ready 状态，Pod 才能接受请求。
+- LivenessProbe 存活探针：用于判断容器应用是否正常运行（Running），若判定为不健康，则 kubelet 杀死该容器并根据重启策略处理。若容器不包含该探针，则 kubelet 认为该容器的探针返回值永远为 Success
+- ReadinessProbe 就绪探针：用于判断容器应用是否可用（Ready），只有达到 Ready 状态，Pod 才能接受请求。
   - 对于被 Service 管理的 Pod，Service 与 Pod Endpoint 的关联关系也基于 Pod 是否 Ready 进行设置。
     - 若运行过程中 Ready 变为 False，则系统自动将其从 Service 的后端 Endpoint 列表中隔离出去。
     - 若恢复到 Ready，则再将 Pod 加回 Endpoint 列表。

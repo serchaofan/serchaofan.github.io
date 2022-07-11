@@ -414,7 +414,6 @@ type: Opaque
   ```
 
 ## 创建dockerconfigjson类型
-
 ### 通过yaml创建
 先对~/.docker/config.json文件进行base64编码
 ```

@@ -538,6 +538,123 @@ scrape_configs:
 
 > [prometheus如何存储influxdb官方文档](https://docs.influxdata.com/influxdb/v1.8/supported_protocols/prometheus/)
 
+## kubernetes_sd_configs
+k8s服务发现配置。允许从Kubernetes的REST API中检索抓取目标，并始终与集群状态保持同步。
+
+role分别有以下几种：
+- `node`：每个集群节点都被看做一个node target，地址默认为Kubelet的HTTP端口。target地址默认为`NodeInternalIP`、`NodeExternalIP`、`NodeLegacyHostIP`和`NodeHostName`这些节点对象地址类型顺序中的第一个现存在的地址。
+  可用meta label：
+  - `__meta_kubernetes_node_name`: 节点对象的名称
+  - `__meta_kubernetes_node_provider_id`: 节点对象的云提供商名
+  - `__meta_kubernetes_node_label_<labelname>`: 节点对象的每个label
+  - `__meta_kubernetes_node_labelpresent_<labelname>`: 节点对象的每个label都为`true`
+  - `__meta_kubernetes_node_annotation_<annotationname>`: 节点对象的每个annotation
+  - `__meta_kubernetes_node_annotationpresent_<annotationname>`: 节点对象的每个annotation都为`true`
+  - `__meta_kubernetes_node_address_<address_type>`: 节点地址对象的第一个地址（若存在）
+- `service`：每个服务的每个端口都作为一个service target，将设置为服务的Kubernetes DNS名称和相应的服务端口。
+  可用meta label：
+  - `__meta_kubernetes_namespace`: 服务对象的namespace
+  - `__meta_kubernetes_service_annotation_<annotationname>`: 服务对象的每个annotation
+  - `__meta_kubernetes_service_annotationpresent_<annotationname>`: 服务对象的每个annotation都为`true`
+  - `__meta_kubernetes_service_cluster_ip`: 服务对象的clusterIP
+  - `__meta_kubernetes_service_external_name`: 服务对象的DNS名
+  - `__meta_kubernetes_service_label_<labelname>`: 服务对象的每个label
+  - `__meta_kubernetes_service_labelpresent_<labelname>`: 服务对象的每个label都为`true`
+  - `__meta_kubernetes_service_name`: 服务对象的名字
+  - `__meta_kubernetes_service_port_name`: 服务对象的端口
+  - `__meta_kubernetes_service_port_protocol`: 服务对象的端口协议
+  - `__meta_kubernetes_service_type`: 服务对象的类型
+- `pod`：每个pod的每个容器的端口都作为一个target，如果容器没有指定端口，则会为每个容器创建一个无端口target，以便通过重标记手动添加端口。
+  可用meta label：
+  - `__meta_kubernetes_namespace`: pod对象的namespace
+  - `__meta_kubernetes_pod_name`: pod对象的名字
+  - `__meta_kubernetes_pod_ip`: pod对象的pod ip
+  - `__meta_kubernetes_pod_label_<labelname>`: pod对象的每个label
+  - `__meta_kubernetes_pod_labelpresent_<labelname>`: pod对象的每个label都为`true`
+  - `__meta_kubernetes_pod_annotation_<annotationname>`: pod对象的每个annotation
+  - `__meta_kubernetes_pod_annotationpresent_<annotationname>`: pod对象的每个annotation都为`true`
+  - `__meta_kubernetes_pod_container_init`: 若容器为一个InitContainer，则为`true`
+  - `__meta_kubernetes_pod_container_name`: pod对象的容器名
+  - `__meta_kubernetes_pod_container_port_name`: pod对象的容器端口名
+  - `__meta_kubernetes_pod_container_port_number`: pod对象的容器端口
+  - `__meta_kubernetes_pod_container_port_protocol`: pod对象的容器端口协议
+  - `__meta_kubernetes_pod_ready`: pod对象的启动状态，`true`或`false`
+  - `__meta_kubernetes_pod_phase`: pod对象的运行状态`Pending`, `Running`, `Succeeded`, `Failed` 或 `Unknown`
+  - `__meta_kubernetes_pod_node_name`: pod对象的运行node名
+  - `__meta_kubernetes_pod_host_ip`: pod对象的运行node ip
+  - `__meta_kubernetes_pod_uid`: pod对象的uid
+  - `__meta_kubernetes_pod_controller_kind`: pod对象controller的类型
+  - `__meta_kubernetes_pod_controller_name`: pod对象controller的名称
+- `endpoints`：每个endpoint对象作为一个target。如果endpoint是由pod支持的，则pod的所有未绑定到endpoint端口的附加容器端口也被发现为target。
+  可用meta label：
+  - `__meta_kubernetes_namespace`: endpoint对象的namespace
+  - `__meta_kubernetes_endpoints_name`: endpoint对象的名称
+  - 对于直接从endpoint列表发现的所有target，都会带上以下的label：
+    - `__meta_kubernetes_endpoint_hostname`: endpoint对象的hostname
+    - `__meta_kubernetes_endpoint_node_name`: endpoint对象的node名
+    - `__meta_kubernetes_endpoint_ready`: endpoint对象的状态，`true`或`false`
+    - `__meta_kubernetes_endpoint_port_name`: endpoint对象的端口
+    - `__meta_kubernetes_endpoint_port_protocol`: endpoint对象的端口协议
+    - `__meta_kubernetes_endpoint_address_target_kind`: endpoint对象的地址类型
+    - `__meta_kubernetes_endpoint_address_target_name`: endpoint对象的地址名
+  - 如果endpoint属于一个服务，则会附加这个service的所有label
+  - 如果endpoint映射一个pod，则会附加这个pod的所有label
+- `endpointslice`
+- `ingress`：每个ingress的路径作为一个target
+  可用meta label：
+  - `__meta_kubernetes_namespace`: ingress对象的namespace
+  - `__meta_kubernetes_ingress_name`: ingress对象的名称
+  - `__meta_kubernetes_ingress_label_<labelname>`: ingress对象的每个label
+  - `__meta_kubernetes_ingress_labelpresent_<labelname>`: ingress对象的每个label都为`true`
+  - `__meta_kubernetes_ingress_annotation_<annotationname>`: ingress对象的每个annotation
+  - `__meta_kubernetes_ingress_annotationpresent_<annotationname>`: ingress对象的每个annotation都为`true`
+  - `__meta_kubernetes_ingress_class_name`: ingress对象的class名（若存在）
+  - `__meta_kubernetes_ingress_scheme`: ingress对象的scheme，若配置了TLS，则为`https`，默认为`http`
+  - `__meta_kubernetes_ingress_path`: ingress对象的path，默认为 `/`
+
+## relabel_config
+可以在目标的标签集被抓取之前动态地重写它。
+```yaml
+# The source labels select values from existing labels. Their content is concatenated
+# using the configured separator and matched against the configured regular expression
+# for the replace, keep, and drop actions.
+[ source_labels: '[' <labelname> [, ...] ']' ]
+
+# Separator placed between concatenated source label values.
+[ separator: <string> | default = ; ]
+
+# Label to which the resulting value is written in a replace action.
+# It is mandatory for replace actions. Regex capture groups are available.
+[ target_label: <labelname> ]
+
+# Regular expression against which the extracted value is matched.
+[ regex: <regex> | default = (.*) ]
+
+# Modulus to take of the hash of the source label values.
+[ modulus: <int> ]
+
+# Replacement value against which a regex replace is performed if the
+# regular expression matches. Regex capture groups are available.
+[ replacement: <string> | default = $1 ]
+
+# Action to perform based on regex matching.
+[ action: <relabel_action> | default = replace ]
+```
+<regex> is any valid RE2 regular expression. It is required for the replace, keep, drop, labelmap,labeldrop and labelkeep actions. The regex is anchored on both ends. To un-anchor the regex, use .*<regex>.*.
+
+<relabel_action> determines the relabeling action to take:
+
+replace: Match regex against the concatenated source_labels. Then, set target_label to replacement, with match group references (${1}, ${2}, ...) in replacement substituted by their value. If regex does not match, no replacement takes place.
+lowercase: Maps the concatenated source_labels to their lower case.
+uppercase: Maps the concatenated source_labels to their upper case.
+keep: Drop targets for which regex does not match the concatenated source_labels.
+drop: Drop targets for which regex matches the concatenated source_labels.
+hashmod: Set target_label to the modulus of a hash of the concatenated source_labels.
+labelmap: Match regex against all source label names, not just those specified in source_labels. Then copy the values of the matching labels to label names given by replacement with match group references (${1}, ${2}, ...) in replacement substituted by their value.
+labeldrop: Match regex against all label names. Any label that matches will be removed from the set of labels.
+labelkeep: Match regex against all label names. Any label that does not match will be removed from the set of labels.
+
+
 # K8S集群中Prometheus的规划与部署
 规划概括：
 1. 简单，实现自动发现，拒绝手工配置
@@ -822,7 +939,7 @@ metadata:
 ```
 
 一些定义的参数：
-- `prometheus.io/path`：指定获取指标的path，一般都是`/metrics`，根据实际情况填写
+- `prometheus.io/path`：指定获取指标的path，若不填就是默认`/metrics`，根据实际情况填写
 - `prometheus.io/port`：服务的端口
 - `prometheus.io/scrape`：是否开启，`true`为开启，`false`不开启，没设置就不开启
 - `prometheus.io/env`：设置环境标签，与上面的`__meta_kubernetes_service_annotation_prometheus_io_env`对应
@@ -912,7 +1029,6 @@ HTTP探针状态监控，使用的是blackbox-exporter。
   kubernetes_sd_configs:
   - role: ingress
   relabel_configs:
-
   - source_labels: [__meta_kubernetes_ingress_annotation_kubernetes_io_probed]
     action: keep
     regex: true

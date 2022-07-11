@@ -10,7 +10,7 @@ comments: false
 
 <!--more-->
 
-## Elasticsearch
+# Elasticsearch
 
 Elasticsearch 是基于 Lucene 的搜索框架，使用 Java 编写，它提供了一个分布式多用户能力的全文搜索引擎，基于 RESTful web 接口，上手容易，拓展节点方便，可用于存储和检索海量数据，接近实时搜索，海量数据量增加，搜索响应性能几乎不受影响。
 
@@ -26,79 +26,80 @@ Elasticsearch 主要特点：
 - 处理 PB 级别的结构化或者非结构化数据
 - 保障可用性
 - 搜索纠错，自动完成
-- 与各种语言基础，与 Hadoop、Spark 等大数据分析平台集成
+- 与各种语言集成，与 Hadoop、Spark 等大数据分析平台集成
 
 使用场景：日志搜索，数据聚合，数据监控，报表统计分析
 
 > 使用 Elasticsearch 的大企业：维基百科、卫报、StackOverflow、Github、ebay
 
-### Elasticsearch 安装
-
-1. 因为 Lucene 和 Elasticsearch 都是 Java 写的，所以首先搭建 JDK 环境，下载 JDK1.8，设置环境变量，并`source /etc/profile`应用
-
-   ```
-   echo "export JAVA_HOME=/usr/local/jdk1.8" >> /etc/profile
-   echo "export CLASSPATH=\$JAVA_HOME/lib" >> /etc/profile
-   echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/profile
-   source /etc/profile
-   ```
-
-2. 下载 Elasticsearch，目前版本为 6.4.1，解压到`/usr/local/elasticsearch-6.4`
-
-3. 不能使用 root 运行`elasticsearch`，需要创建一个用户
-
-   ```
-   useradd elastic
-   chown -R elastic:elastic /usr/local/elasticsearch-6.4
-   ```
-
-4. 切换到该用户，并执行`elasticsearch`。等待一段时间启动，然后执行`curl localhost:9200`查看。若看到 json 对象信息则说明成功。
-
-   ```
-   curl localhost:9200
-   {
-     "name" : "3dcAoxl",
-     "cluster_name" : "elasticsearch",
-     "cluster_uuid" : "GNdmHFuXTsK-6B-swVNQag",
-     "version" : {
-       "number" : "6.4.1",
-       "build_flavor" : "default",
-       "build_type" : "tar",
-   ......
-     },
-     "tagline" : "You Know, for Search"
-   }
-   ```
-
-**运行报错**
-
-![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206290241549.jpg)
-
-```
-bootstrap checks failed  #bootstrap检查失败
-max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]  #最大虚拟内存太低
-```
-
-解决：
-
-1. 临时解决： `sysctl -w vm.max_map_count=262144`
-2. 永久解决：修改`/etc/sysctl.conf`文件，添加 `vm.max_map_count`设置，并执行`sysctl -p`
-
-```
-max file descriptors [4096] for elasticsearch process is too low, increase to at least [65536]
-```
-
-解决：修改 unix 最大同时打开文件数，`ulimit -n 65536`
-
-```
-elasticsearch
-  -E <键值对>            设置参数
-  -d, --daemonize       后台启动
-  -p, --pidfile <Path>  设置PID文件
-  -q, --quiet           静默启动
-  -s, --silent          显示最少的输出
-  -v, --verbose         显示详细输出
-```
+## Elasticsearch集群安装
+1. 准备三台以上的单数台节点
+2. 因为 Lucene 和 Elasticsearch 都是 Java 写的，所以首先搭建 JDK 环境，每台上都安装jdk
+3. 下载 Elasticsearch，使用的版本7.5，使用rpm方式安装
+> 下载地址：https://www.elastic.co/cn/downloads/past-releases#elasticsearch
+4. 先不启动，修改内核参数配置，在`/etc/sysctl.d/`创建`es.conf`
+  ```
+  vm.max_map_count = 262144    # 最大虚拟内存
+  fs.file-max=1000000
+  net.ipv4.tcp_max_tw_buckets = 6000
+  net.ipv4.tcp_sack = 1
+  net.ipv4.tcp_window_scaling = 1
+  net.ipv4.tcp_rmem = 4096 87380 4194304
+  net.ipv4.tcp_wmem = 4096 16384 4194304
+  net.ipv4.tcp_max_syn_backlog = 16384
+  net.core.netdev_max_backlog = 32768
+  net.core.somaxconn = 32768
+  net.core.wmem_default = 8388608
+  net.core.wmem_max = 16777216
+  net.ipv4.tcp_timestamps = 1
+  net.ipv4.tcp_fin_timeout = 20
+  net.ipv4.tcp_synack_retries = 2
+  net.ipv4.tcp_syn_retries = 2
+  net.ipv4.tcp_syncookies = 1
+  net.ipv4.tcp_tw_reuse = 1
+  net.ipv4.tcp_mem = 94500000 915000000 927000000
+  net.ipv4.tcp_max_orphans = 3276800
+  net.ipv4.ip_local_port_range = 1024 65000
+  net.nf_conntrack_max = 6553500
+  net.netfilter.nf_conntrack_max = 6553500
+  net.netfilter.nf_conntrack_tcp_timeout_close_wait = 60
+  net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 120
+  net.netfilter.nf_conntrack_tcp_timeout_time_wait = 120
+  net.netfilter.nf_conntrack_tcp_timeout_established = 3600
+  net.core.rmem_default = 33554432
+  net.core.rmem_max = 33554432
+  ```
+5. 设置ulimit限制，修改`/etc/security/limits.conf`
+  ```
+  * soft nproc 1000000
+  * hard nproc 1000000
+  * soft nofile 1000000
+  * hard nofile 1000000
+  ```
+6. 修改配置文件`/etc/elasticsearch/elasticsearch.yml`，需要先创建数据目录和日志目录，每台的`node.name`也要去修改
+  ```
+  node.name: node-1
+  node.master: true
+  node.data: true
+  path.data: /data/es/data
+  path.logs: /data/es/logs
+  bootstrap.memory_lock: true
+  network.host: 0.0.0.0
+  http.port: 9200
+  transport.tcp.port: 9300
+  http.cors.enabled: true
+  http.cors.allow-origin: "*"
+  ```
+7. 然后启动es，`systemctl start elasticsearch`，使es完成一些初始化数据操作。es都启动完成后，再停止掉es。
+8. 继续修改es配置
+  ```
+  cluster.name: cluster1
+  cluster.initial_master_nodes: node-1
+  discovery.zen.ping.unicast.hosts: ["xx.xx.xx.xx","xx.xx.xx.xx", "xx.xx.xx.xx"]
+  discovery.zen.minimum_master_nodes: 2
+  xpack.security.enabled: false
+  ```
+9. 依次启动
 
 ## Elasticsearch 配置文件
 

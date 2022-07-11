@@ -245,8 +245,8 @@ spec:
           memory: "1Gi"
 ```
 查看pod的status
-```
-#kubectl get po -oyaml xxxx
+```yaml
+# kubectl get po -oyaml xxxx
 ......
 status:
   qosClass: Guaranteed
@@ -274,8 +274,8 @@ spec:
           memory: "1Gi"
 ```
 查看pod的status
-```
-#kubectl get po -oyaml xxxx
+```yaml
+# kubectl get po -oyaml xxxx
 ......
 status:
   qosClass: Burstable
@@ -290,8 +290,8 @@ spec:
       image: <Image>
 ```
 查看pod的status
-```
-#kubectl get po -oyaml xxxx
+```yaml
+# kubectl get po -oyaml xxxx
 ......
 status:
   qosClass: BestEffort
@@ -395,15 +395,28 @@ Containers:
   app1:
   ......
     Limits:
-      memory:  512Mi
+      memory: 512Mi
     Requests:
-      memory:     256Mi
+      memory: 256Mi
 ```
 
-
-
-
 # Pod 驱逐机制
+kubelet 持续监控主机的资源使用情况，并尽可能防止计算资源被耗尽，一旦出现资源紧缺，kubelet会主动终止一个或多个pod运行。当一个pod被终止时，其中的容器会全部停止，pod状态会被置为Failed。
+
+kubelet会根据驱逐信号作为依据来触发驱逐行为。以下为一些驱逐信号
+- memory.available：值取自cgroupfs。若用户使用了node allocatable功能，则除了节点自身的内存需要判断，还需要利用cgroup根据用户pod部分情况判断。
+- nodefs.available
+- nodefs.inodesFree：
+- imagefs.available：
+- imagefs.inodesFree：
+
+kubelet支持以下两种文件系统：
+- nodefs：保存kubelet的卷和守护进程日志等
+- imagefs：在容器运行时保存镜像及可写入层
+
+kubelet使用cAdvisor自动监控这些文件系统，kubelet不关注其他文件系统，不支持所有其他类型的配置。
+
+
 
 # Pod Disruption Budget
 
