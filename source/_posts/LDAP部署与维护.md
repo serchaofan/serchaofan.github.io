@@ -1,7 +1,7 @@
 ---
 title: LDAP部署与维护
 date: 2018-11-24 09:22:47
-tags: [LDAP, 验证]
+tags: [LDAP]
 categories: [系统运维]
 comments: false
 ---

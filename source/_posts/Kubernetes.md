@@ -1308,6 +1308,9 @@ k8s 通过两类探针检查 pod 健康状态：LivenessProbe、ReadinessProbe�
     - 若运行过程中 Ready 变为 False，则系统自动将其从 Service 的后端 Endpoint 列表中隔离出去。
     - 若恢复到 Ready，则再将 Pod 加回 Endpoint 列表。
     - 这样就保证客户端在访问 Service 时不会被转发到服务不可用的 Pod 实例上。
+- startupProbe 启动探针：类似initialDelaySeconds参数，一旦启动探测成功一次，LivenessProbe就会接管对容器的探测。
+
+> LivenessProbe 不等待 ReadinessProbe成功。如果要在执行LivenessProbe之前等待，应该使用 `initialDelaySeconds` 或 `startupProbe`。
 
 LivenessProbe 告诉 K8s 容器是否需要通过重启实现自愈。ReadinessProbe 告诉 K8s 容器是否已准备好加入到 Service 负载均衡池中对外提供服务。
 LivenessProbe 探测是重启容器，ReadinessProbe 探测是将容器设为不可用，从而不接收 Service 转发的请求。
@@ -1399,10 +1402,12 @@ LivenessProbe 探测是重启容器，ReadinessProbe 探测是将容器设为不
           timeoutSeconds: 1
   ```
 
-每种探测方式都需要设置：initialDelaySeconds 和 timeoutSeconds 参数。
-
+探针参数字段：
 - initialDelaySeconds：启动容器后进行首次健康检查的等待时间
 - timeoutSeconds：健康检查发送请求后等待响应的超时时间。若超时则 kubelet 认为该容器无法提供服务，并重启该容器
+- periodSeconds：执行探测的时间间隔（单位是秒）。默认是 10 秒。最小值是 1。
+- successThreshold：探测器在失败后，被视为成功的最小连续成功数。默认值是 1。 存活和启动探测的这个值必须是 1。最小值是 1。
+- failureThreshold：当探测失败时，Kubernetes 的重试次数。 对存活探测而言，放弃就意味着重新启动容器。 对就绪探测而言，放弃意味着 Pod 会被打上未就绪的标签。默认值是 3。最小值是 1。
 
 ## Pod 调度
 
