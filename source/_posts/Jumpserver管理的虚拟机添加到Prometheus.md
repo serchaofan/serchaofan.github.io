@@ -1,7 +1,7 @@
 ---
 title: Jumpserver管理的虚拟机添加到Prometheus
-tags: []
-categories: []
+tags: [Jumpserver, 监控, Prometheus]
+categories: [[Python], [监控]]
 date: 2022-07-09 23:50:37
 comments: false
 ---
