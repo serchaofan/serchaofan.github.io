@@ -95,6 +95,7 @@ k8s 提供如 Pod、Service、Namespace、Volume 的基础对象
 
 ### Pod
 
+#### Pause容器
 每个 Pod 都有一个特殊的被称为“根容器”的 **Pause 容器** 。 Pause 容器对应的镜像属于 Kubenetes 平台的一部分，除了 Pause 容器，每个 Pod 还包含一个或多个紧密相关的用户业务容器。
 
 设置该 Pause 容器的目的：
@@ -102,11 +103,11 @@ k8s 提供如 Pod、Service、Namespace、Volume 的基础对象
 - 引入与业务无关且不宜死亡的 Pause 容器作为 pod 的根容器，以它的状态代表整个容器组的状态。
 - pod 的多个业务容器共享 Pause 容器的 IP，共享 Pause 容器挂接的 Volume，既简化了密切关联的业务容器之间的通信问题，也解决了它们之间的文件共享问题。
 
-![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202206071602081.png)
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207161821472.png)
 
 k8s 为每个 pod 分配一个 **pod IP**，pod 的**容器组共享 pod IP**，k8s 要求底层网络支持集群内任意两个 pod 之间的 TCP/IP 直接通信，通常通过虚拟二层网络实现（如 Flannel、Open vSwitch）。**在 k8s 中，一个 pod 里的容器能直接与另一主机上的 pod 的容器通信。**
 
-pod 类型：
+#### pod类型
 
 - 普通 pod：一旦被创建，就会放入 etcd 存储，随后被 k8s master 调度到某个具体 node 上并进行绑定，该 pod 被对应 Node 上的 kubelet 进程实例化成一组相关 docker 容器并启动。若 pod 中某个容器停止，则 k8s 会直接重启这个 pod，若 node 宕机，则 k8s 会将 node 上所有 pod 重新调度到其他 node。
 - 静态 pod：没有被存放在 etcd 中，而是存放在某个具体的 node 上一个文件中，只能在此 node 上运行启动。
@@ -885,6 +886,9 @@ Pod 特征：
 - 每个容器集成 Pod 的名称
 - 每个 Pod 有一个平滑共享网络名称空间的 IP 地址
 - Pod 内部共享存储卷
+
+## Pod创建流程
+
 
 ## 静态 Pod
 
@@ -1931,6 +1935,44 @@ spec:
 ```
 
 ## 初始化容器 Init Container
+Init容器是一种特殊容器，在 Pod 内的应用容器启动之前运行。Init容器可以包括一些应用镜像中不存在的实用工具和安装脚本。Pod可以有一个或多个先于应用容器启动的Init容器。
+
+Init 容器与普通的容器非常像，除了如下两点：
+- 它们总是运行到完成。
+- 每个都必须在下一个启动之前成功完成。
+
+如果 Pod 的 Init 容器失败，kubelet 会不断地重启该 Init 容器直到该容器成功为止。 然而，如果 Pod 对应的 `restartPolicy` 值为 `Never`，并且 Pod 的 Init 容器失败， 则 Kubernetes 会将整个 Pod 状态设置为失败。
+
+## 容器运行时类 Runtime Class
+RuntimeClass 是一个用于选择容器运行时配置的特性，容器运行时配置用于运行 Pod 中的容器，可以在不同的 Pod 设置不同的 RuntimeClass，以提供性能与安全性之间的平衡。还可以使用 RuntimeClass 运行具有相同容器运行时但具有不同设置的 Pod。
+
+## 容器生命周期钩子 Container Lifecycle Hooks
+有两个暴露给容器的hook：
+- PostStart：hook会在容器被创建之后立即被执行。 但是，不能保证hook会在容器的ENTRYPOINT之前执行。
+- PreStop：在容器因 API 请求或者管理事件（诸如存活态探针、启动探针失败、资源抢占、资源竞争等） 而被终止之前，此hook会被调用。如果容器已经处于已终止或者已完成状态，则对 preStop hook的调用会失败。在用来停止容器的 TERM 信号被发出之前，hook必须执行结束。Pod 的termination grace period在 PreStop hook被执行之前开始计数，所以无论 hook函数的执行结果如何，容器最终都会在 Pod 的termination grace period内被终止。
+
+容器可以通过实现和注册该hook的处理程序来访问该hook。针对容器，有两种类型的hook处理程序可供实现：
+- Exec：在容器的 cgroups 和名称空间中执行特定的命令。命令所消耗的资源计入容器的资源消耗。
+- HTTP：对容器上的endpoint执行 HTTP 请求。
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-demo
+spec:
+  containers:
+  - name: lifecycle-demo-container
+    image: nginx
+    lifecycle:
+      postStart:
+        exec:
+          command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+      preStop:
+        exec:
+          command: ["/bin/sh","-c","nginx -s quit; while killall -0 nginx; do sleep 1; done"]
+```
+
 
 ## Pod 升级与回滚
 
