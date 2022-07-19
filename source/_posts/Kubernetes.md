@@ -888,7 +888,11 @@ Pod 特征：
 - Pod 内部共享存储卷
 
 ## Pod创建流程
-
+1. 用户使用kubectl命令向APIServer发起pod创建请求
+2. APIServer收到请求后把pod信息以PodSpec格式存储到etcd
+3. Kube-Scheduler监听到新的pod变化，执行一系列调度算法之后给pod标记上最合适的节点
+4. 节点上的kubelet监听到本节点上需要去创建的pod信息
+5. kubelet与CRI交互创建pod中包含的资源与环境，如容器、网络、数据目录等
 
 ## 静态 Pod
 
@@ -2654,3 +2658,7 @@ Service Controller 监听 Service 变化，若该 Service 是 LoadBalancer 类�
 > [Kubernetes：如何解决从 k8s.gcr.io 拉取镜像失败问题](https://blog.csdn.net/jinguangliu/article/details/82792617)
 >
 > [Kubernetes: 21 天完美通关](https://blog.51cto.com/cloumn/detail/87)
+> 
+> [k8s之pod的创建流程](https://www.modb.pro/db/396450)
+> 
+> [图解kubernetes Pod创建流程大揭秘](https://www.kubernetes.org.cn/6766.html)
