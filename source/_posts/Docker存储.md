@@ -1,7 +1,7 @@
 ---
 title: Docker存储
 date: 2018-07-06 13:33:01
-tags: [docker, 存储]
+tags: [Docker, 存储]
 categories: [Docker]
 comments: false
 ---
@@ -129,7 +129,6 @@ docker run --mount type=bind,src=<源目录或文件>,dst=<容器目录或文件
 当 bind mount 和 service 一起使用时，会自动忽略 selinux 标签（`z`和`Z`）还有`ro`。
 
 ## Volume 数据卷
-
 卷是保存 Docker 容器生成和使用的数据的首选机制，并且卷完全由 Docker 管理。
 写入容器的可写层需要存储驱动程序来管理文件系统，存储驱动程序使用 Linux 内核提供联合文件系统 UFS。而数据卷是经过特殊设计的目录，可以绕过联合文件系统，为多个容器提供访问。数据卷的目的在于数据永久化，完全独立于容器的生存周期，容器删除时挂载的数据卷不会被删除。
 

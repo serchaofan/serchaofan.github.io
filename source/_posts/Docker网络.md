@@ -1,7 +1,7 @@
 ---
 title: Docker网络
 date: 2018-04-27 13:04:48
-tags: [docker, 网络]
+tags: [Docker, 网络]
 categories: [Docker]
 comments: false
 ---
@@ -120,7 +120,7 @@ ens33     Link encap:Ethernet  HWaddr 00:0C:29:58:0C:12
 
 在该模式，新创建的容器和已经存在的一个容器共享一个网络命名空间。两个容器除了网络的命名空间，其他的如文件系统、进程列表等仍然是隔离的。两个容器可以通过环回口进行设备通信。该模式也是 Kubernetes 使用的网络模式。
 
-![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057940.jpg)
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207232051825.png)
 
 该模式通过`--network=container:另一个已存在的容器`实现。
 
@@ -138,11 +138,39 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:05
 		  ......
 ```
 
+如果创建一个容器的网络类型为none
+```
+# docker run -it --name alpine1 --network=none alpine sh
+/ # ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+```
+则再建一个容器共享网络模式，也会是none类型的
+```
+# docker run -it --name alpine2 --network=container:alpine1 alpine sh
+/ # ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+```
+
 ## 无网络模式 none
 
 该模式关闭了容器的网络功能，容器处于自己独立的网络命名空间中，且不进行任何配置。
 
 使用场景：1.容器并不需要网络（例如只需要写磁盘卷的批处理任务，或生成随机密钥）2.自定义网络
+
+```
+# docker run -it --network=none alpine sh
+/ # ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+```
 
 ## 用户自定义模式 user-defined
 
@@ -197,13 +225,12 @@ eth0      Link encap:Ethernet  HWaddr 02:42:0A:01:01:02
 
 **IP 通信：** 容器处于两个不同网络中，通过`docker network connect [对端容器所处网络名][本端容器]`连接容器。
 
-```
---alias 设置对端网络别名
---ip 指定对端网络上该IP地址的容器
---ip6 同上，为IPv6地址
---link 指定连接的容器名
---link-local-ip 为容器添加一个连接本地的地址
-```
+- `--alias` 设置对端网络别名
+- `--ip` 指定对端网络上该IP地址的容器
+- `--ip6` 同上，为IPv6地址
+- `--link` 指定连接的容器名，后面可以加上 `:连接的容器别名`，这样可以直接在容器中通过别名访问（即使容器ip改变也能自动解析）
+- `--link-local-ip` 为容器添加一个连接本地的地址
+
 
 ```
 # docker run -it --name container_A alpine

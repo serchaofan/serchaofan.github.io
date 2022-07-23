@@ -1,7 +1,7 @@
 ---
-title: 重学Docker笔记
+title: Docker
 date: 2018-10-12 12:21:24
-tags: [docker]
+tags: [Docker]
 categories: [Docker]
 comments: false
 ---
@@ -14,11 +14,80 @@ comments: false
 
 [官方安装说明页面](https://docs.docker.com/install/linux/docker-ce/centos/)
 
+安装脚本：
+```bash
+yum install -y yum-utils device-mapper-persistent-data lvm2
+yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum makecache fast
+yum install -y docker-ce
+systemctl start docker && systemctl enable docker
+echo "{\"registry-mirrors\": [\"https://docker.mirrors.ustc.edu.cn\"]}" > /etc/docker/daemon.json
+systemctl daemon-reload && systemctl restart docker
+sleep 1
+echo -e "\033[32m---------------Docker Installation Completed------------- \033[0m
+\033[32mDocker version:  \033[0m
+\033[32m$(docker version | head -n3 | egrep "Version|API version")\033[0m"
+```
+
 若要使普通用户也能有直接操作 Docker 命令的权限（不需要 sudo），可将该用户添加到 docker 组内。先要确保`/var/run/docker.sock`所属组为 docker。
 
-[DaoCloud 加速](https://www.daocloud.io/mirror#accelerator-doc)
+## 开启包转发以及透明防火墙
+iptables netfilter通过与linux bridge联动，netfilter会在bridge层执行钩子函数，实现透明防火墙功能。
 
-之后`systemctl daemon-reload`以及重启 docker
+开启br_netfilter的方法：
+在`/proc/sys/net/bridge/`中有三个开关，对于IP table只要关注ip6tables和iptables即可。
+```
+bridge-nf-call-arptables
+bridge-nf-call-ip6tables
+bridge-nf-call-iptables
+```
+先确保br_netfilter模块已经加载
+```
+# lsmod |grep br_netfilter
+br_netfilter           24576  0
+bridge                278528  1 br_netfilter
+```
+如果执行以上命令查看没有对应模块的话，则需开启模块
+```
+modprobe br_netfilter
+```
+然后在`/etc/sysctl.conf`中添加，或者在`/etc/sysctl.d/`中创建文件添加
+```
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1 
+```
+并执行
+```
+sysctl -p
+```
+
+系统重启后模块会失效，因此需要添加开机自动加载模块的脚本
+创建文件`/etc/rc.sysinit`，写入以下内容
+```bash
+#!/bin/bash
+for file in /etc/sysconfig/modules/*.modules ; do
+[ -x $file ] && $file
+done
+```
+创建文件`/etc/sysconfig/modules/br_netfilter.modules`，并写入
+```
+modprobe br_netfilter
+```
+添加权限
+```
+chmod 755 /etc/sysconfig/modules/br_netfilter.modules
+```
+
+添加包转发，开关为`/proc/sys/net/ipv4/ip_forward`。**将linux系统作为路由或vpn服务就必须开启IP转发功能，当linux主机有多个网卡时一个网卡收到的信息能否传递给其他网卡，若设为1，则可进行数据包转发，实现vxlan等功能，若不开启则会导致docker应用无法访问。**
+
+同理，在`/etc/sysctl.conf`中添加，或者在`/etc/sysctl.d/`中创建文件添加
+```
+net.ipv4.ip_forward = 1
+```
+并执行
+```
+sysctl -p
+```
 
 # Docker 基础命令集
 
@@ -257,11 +326,88 @@ Docker 镜像的特点：
 - 内容寻址存储（content-addressable storage）：该机制根据文件内容索引镜像和镜像层。会对镜像层生成内容哈希值，作为镜像层唯一标识。提高了镜像安全性，并能检测数据完整性。
 - 联合挂载：可以在一个挂载点同时挂载多个文件系统，将挂载点的原目录与被挂载内容进行整合。实现联合挂载的文件系统称为联合文件系统（union filesystem）。
 
-### 存储管理
+### Docker镜像构建
 
-### 数据卷
+两种方式：
+1. `docker commit`: 通过容器构建
+2. `docker build [option]  [build context]`: 通过dockerfile构建
+  默认会从所在目录找Dockerfile
+  `-t`: 指定镜像名
+  `-f`: 指定Dockerfile路径
+  `--force-rm=true`: 强制删除所有中间镜像
+  `--no-cache=true`: 不使用缓存构建
+  `--pull=true`: 检查是否有该镜像的最新版本，并拉取最新版本
+> 注：`.` 的作用并不是指定Dockerfile的路径。
+> docker在运行时分为docker引擎和docker客户端cli，使用时就是通过cli命令行与docker引擎交互。docker build就是在docker引擎中构建，而非本机环境。
+> 当构建时，由用户指定构建的上下文路径，而docker build会将该路径下所有文件都打包传给docker引擎，引擎内将包打开获得文件。若拷贝的文件超出了上下文的范围，docker引擎是找不到那些文件的。
+> . 就是在指定镜像构建过程中上下文环境的目录
 
-### 网络管理
+dockerfile镜像构建过程
+1. docker将build context中的所有文件发给docker daemon。（所以千万不要将build context定为根目录等文件量庞大的目录，一定要新建目录以便管理）
+2. daemon 通过Dockerfile中的add、copy将目录中指定文件添加到镜像中。
+
+Dockerfile文件参数
+- `FROM <image>:<tag>`:	基础镜像，必须是第一条（scratch 为从头开始构建，不依赖任何基础镜像）
+- `MAINTAINER <name>`: 指定镜像作者信息
+- `RUN`                      指定当前镜像中运行的命令
+  > 两种模式:
+  > `RUN <command>` shell模式
+  > `RUN [""]`      exec模式
+- `EXPOSE <port>`: 指定运行该镜像的容器使用的端口。虽然此处指定了端口号，但处于安全考虑，docker不会就直接使用，所以在创建容器时仍需要-p 指定端口
+- `CMD`: 指定容器运行的默认命令，`docker run`指定shell的话，cmd就不生效
+  `["执行命令","参数1","参数2"]` 若定义了ENTRYPOINT，此时CMD作为ENTRYPOINT的参数`["参数1","参数2"]`
+  一个Dockerfile只能有一个CMD，多个就只有最后一个生效
+- `ENTRYPOINT`: 类似`cmd`，但不会被`docker run`中指定的shell覆盖
+  > 类似RUN，两种模式：
+  > `["执行命令","参数1","参数2"]`（exec模式）
+  > `command`    （shell模式）
+  > 一个Dockerfile只能有一个ENTRYPOINT，多个就只有最后一个生效
+  > 可使用`docker run  --entrypoint`覆盖
+  > 可与cmd进行组合，cmd指定命令，entrypoint指定命令默认参数
+  > 当定义ENTRYPOINT后，CMD只能作为参数传递
+- `ADD <src> <dest>`: 将文件目录复制到dockerfile所在镜像中，且包含类似tar解压功能。如果复制tar文件（包括gzip,bzip,xz压缩文件），是必定会被解压的，也就是无法复制原本的tar文件。
+  若单纯复制文件，推荐使用copy
+- `COPY <src> <dest>`: 同上
+  `["src"....."dest"]`使用于路径中有空格的情况
+- `VOLUME`: 向容器添加卷
+- `WORKDIR`: 设置容器工作目录（进入容器后的当前目录，若不存在docker会自动创建）
+  若设置多个WORKDIR ，路径需要注意，若不填绝对路径，工作路径会沿着设置顺序进入
+- `ENV <key> <value>`: 环境变量
+- `USER`: 设置指定用户启动服务（不指定就默认root）
+  > 1. user      2. uid      3. user:group    4. uid:gid    5.user:gid    6. uid:group
+- `ONBUILD`: 镜像触发器，当一个镜像被其他镜像作为基础镜像时执行，会在构建时插入指令。本次构建镜像是不会被触发的，只有以此构建的镜像作为基础镜像时才会被触发。
+- `LABEL <key>=<value>`: 设置标签，键值都可自定义
+
+### 资源限制
+实际就是配置cgroup
+
+- 容器内存： 包含两部分：物理内存与swap
+  `-m` 指定内存大小
+  `--memory-swap` 指定内存和swap一共大小（默认为指定内存两倍）容器最多使用 200M 物理内存和 200M swap。
+- 容器CPU。默认设置下，所有容器可以平等地使用 host CPU 资源并且没有限制
+  `-c （--cpu-shares）` 设置cpu容器使用cpu权重，默认1024
+  例：一个`docker run -c 1024`，一个`docker run -c 512`  那么第一个占有cpu就是第二个的2倍，即第一个占有cpu总量的2/3，第二个占1/3
+  `--cpuset-cpus 0-3|0,1,2` 指定cpu编号（根据虚拟机情况,从0开始编号，若连续可用-，若不连续可用, 分隔）
+- 容器磁盘。Block IO  指 磁盘读写。可以通过设置权重、限制bps和iops控制读写磁盘的带宽。目前 Block IO 限额只对 direct IO（不使用文件缓存）有效。
+  `--blkio-weight`改变block io优先级。默认500（修改类似cpu）
+  bps：每秒读写数据量    iops：每秒IO次数
+  加`--device-read-bps|write-bps|read-iops|write-iops`  分别限制读|写某设备的bps|iops，后面加上设备名:速率   
+  例：`docker run -it --device-write-bps /dev/sdb:30MB centos`
+
+对于多核cpu的服务器，可使用`--cpuset-cpus`和`--cpuset-mems`控制容器运行限定在哪些cpu内核以及内存节点上。对具有NUMA拓扑的服务器尤其有用，可对需要高性能的容器进行性能最优的配置。
+
+> 服务器架构一般分为：SMP、NUMA、MPP体系
+> 1. SMP（Symmetric Multi-Processor）对称多处理器结构。例：x86服务器，双路服务器，主板上有两个物理cpu
+> 2. NUMA（Non-Uniform Memory Access）非一致存储访问结构。例：IBM小型机
+> 3. MPP（Massive ParallelProcessing）海量并行处理结构。例：大型机Z14
+
+#### CPU配额控制参数的混合使用
+cpu-shares控制只发生在容器竞争同一个cpu的时间片时有效。如果通过cpuset-cpus指定容器A使用CPU 0，容器B使用CPU 1，在主机上只有这两个容器使用对应内核的情况，它们各自占用全部内核资源，cpu-shares没有明显效果。
+只有当容器A和容器B上cpuset-cpus值都设置为同一个cpu上，并同时抢占cpu资源，才能看出cpu-shares的效果。
+
+
+
+
 
 ### 容器安全
 
