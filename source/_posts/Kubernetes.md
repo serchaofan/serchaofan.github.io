@@ -1419,9 +1419,9 @@ LivenessProbe 探测是重启容器，ReadinessProbe 探测是将容器设为不
 
 ## Pod 调度
 
-### Deployment 与 RC
+### Deployment 与 RepliaSet
 
-Deployment 和 RC 的主要功能就是自动部署一个容器应用的多个副本并持续监控副本数量，在集群中始终维持指定的副本数量
+Deployment 和 RepliaSet 的主要功能就是自动部署一个容器应用的多个副本并持续监控副本数量，在集群中始终维持指定的副本数量
 
 ```yaml
 apiVersion: apps/v1
@@ -2424,15 +2424,6 @@ NAME             TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
 headless-nginx   ClusterIP   None         <none>        80/TCP    49m
 ```
 
-### Apache Cassandra 简介
-
-Apache Cassandra 是一套开源分布式 NoSQL 数据库，并不是单个数据库，而是由一组数据库节点共同构成的一个分布式的集群数据库。由于 Cassandra 使用的是去中心化模式，所以在集群中的一个节点启动后，需要获知集群中新节点的加入，对此 Cassandra 使用 Seed 完成节点之间发现和通信。
-
-Cassandra 使用了 Google 设计的 BigTable 的数据模型，与关系型数据库或 key-value 数据库不同，Cassandra 使用的是*宽列存储模型(Wide Column Stores)*，每行数据由*row key*唯一标识之后，可以有最多 20 亿个列，每个列有一个*column key*标识，每个*column key*下对应若干*value*。这种模型可以理解为是一个二维的 key-value 存储，即整个数据模型被定义成一个类似`map<key1, map<key2,value>>`的类型。
-Cassandra 的数据并不存储在分布式文件系统如 GFS 或 HDFS 中，而是直接存于本地。与 BigTable 一样，Cassandra 也是日志型数据库，即把新写入的数据存储在内存的 Memtable 中并通过磁盘中的 CommitLog 来做持久化，这种系统的特点是写入比读取更快，因为写入一条数据是顺序计入 commit log 中，不需要随机读取磁盘以及搜索。
-
-Cassandra 结合 Headless Service 可实现 Cassandra 节点之间互相查找和集群的自动搭建。
-
 ### 通过 Service 动态查找 Pod
 
 由于 pod 的创建和销毁都会实时更新 Service 的 Endpoint 数据，所以可动态对 Service 的后端 Pod 进行查询，因此一个 Cassandra 节点只需要查询到其他节点就能自动组成一个集群。
@@ -2498,7 +2489,6 @@ spec:
 ## 从集群外部访问 Pod 和 Service
 
 # 核心组件运行机制
-
 ## API-Server
 
 APIserver 的功能：
@@ -2630,10 +2620,131 @@ Endpoints Controller 监听 Service 和对应 Pod 副本的变化
 Service Controller 监听 Service 变化，若该 Service 是 LoadBalancer 类型，则 Service Controller 确保在外部云平台上该 Service 对应的 LoadBalancer 实例被相应地创建、删除或更新。
 
 ## Scheduler
+Scheduler 在整个系统中担任承上启下的作用，将待调度的Pod（API新创建的Pod，Controller Manager为补足副本而创建的Pod等）按特定调度算法和调度策略绑定到集群中某个合适的节点，并将绑定信息写入etcd。
+- 承上：接收controller manager创建的新Pod，将Pod调度到最合适的Node。
+- 启下：目标节点的kubelet进程接管后续工作，负责Pod生命周期的后续。
+
+调度中涉及三个对象：待调度Pod列表，可用Node列表，调度算法及策略。简单说，就是通过调度算法为待调度pod列表中每个pod从Node列表中选择一个最合适的Node。
+
+随后，目标节点上的kubelet通过APIserver监听到kubernetes Scheduler产生的pod绑定事件，然后获取对应Pod清单，下载镜像并启动容器。
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207251111901.png)
+
+Scheduler默认调度流程分以下两步：
+1. 预选调度过程：遍历所有目标节点，筛选出符合要求的候选节点，K8S内置了多种预选策略。
+2. 确定最优节点，在第一步基础上采用优选策略计算出每个候选节点的积分，积分高者胜出。
+
+Scheduler调度流程是通过插件方式加载的调度算法提供者（AlgorithmProvider）具体实现的，一个AlgorithmProvider就是包括一组预选策略与一组优先选择策略的结构体。
+
+以下为**预选策略**：
+1. **NoDiskConflict**：读取pod volume信息（`pod.Spec.Volumes`），**对每个volume进行冲突检测**：
+   - 若volume是gcePersistentDisk，将volume和备选节点上所有pod的每个volume进行比较，若发现相同gcePersistentDisk，则返回false，表明存在磁盘冲突，反馈给调度器该备选节点不适合备选pod
+   - 若volume是AWSElasticBlockStore，则将volume和备选节点上所有pod的每个volume进行比较，同上。
+   - 若上述检查均未发现冲突，则返回true，表明不存在磁盘冲突，反馈给调度器该备选节点适合备选pod。
+2. **PodFitsResources**：判断备选**节点资源是否满足备选pod需求**。检测过程如下：
+   - 计算备选pod和节点中已存在pod的所有容器的需求资源总和。
+   - 获得备选节点的状态信息，包含节点资源信息
+   - 若备选pod和节点中已存在pod的所有容器的需求资源总和超出了备选节点的资源，则返回false，表明备选节点不适合备选pod，否则返回true。
+3. **PodSelectorMatches**：判断备选节点**是否包含备选pod的标签选择器指定的标签**。
+   - 若pod没有指定`spec.nodeSelector`标签选择器，则返回true。
+   - 否则获得备选节点的标签信息，判断节点是否包含备选pod的标签选择器所指定的标签，若包含返回true，否则返回false。
+4. **PodFitsHost**：判断备选pod的`spec.nodeName`**指定的节点名和备选节点是否一致**，若一致则返回true，否则返回false。
+5. CheckNodeLabelPresence：若用户在配置文件中指定了该策略，则Scheduler会通过RegisterCustomFitPredicate方法注册该策略，该策略用于判断策略列出的标签在备选节点中存在时，是否选择该备选节点。检测过程如下：
+   - 读取备选节点的标签列表信息
+   - 若策略配置的标签列表存在于备选节点的标签列表中，且策略配置的presence值为false，则返回false，否则返回true。
+   - 若策略配置的标签列表不存在于备选节点的标签列表中，且策略配置的presence值为true，则返回false，否则返回true。
+6. CheckServicesAffinity：若用户在配置文件中指定了该策略，则Scheduler会通过RegisterCustomFitPredicate方法注册该策略，该策略用于判断备选节点是否包含策略指定的标签，或包含和备选pod在相同service和namespace下的pod所在节点的标签列表。若存在返回true，否则返回false。
+7. **PodFitsPorts**：判断备选pod所用的端口列表中的**端口是否在备选节点中已被占用**，若被占用则返回false，否则返回true。
+
+以下为**优选策略**：
+1. LeastRequestedPriority：用于从备选节点列表中选出**资源消耗最小的节点**
+   - 计算出在所有备选节点上运行的pod和备选pod的cpu占用量totalMilliCPU。
+   - 计算出在所有备选节点上运行的pod和备选pod的呢哦次年占用量totalMemory。
+   - 计算每个节点的得分，规则大致如下
+      ```
+      score = int(((nodeCpuCapacity - totalMilliCPU) * 10) / nodeCpuCapacity + ((nodeMemoryCapacity - totalMemory) * 10) / nodeMemoryCapacity) / 2)
+
+      # nodeCpuCapacity 为节点CPU
+      # nodeMemoryCapacity 为节点内存
+      ```
+2. CalculateNodeLabelPriority：若用户在配置文件中指定了该策略，则Scheduler会通过RegisterCustomPriorityFunction方法注册该策略。该策略用于判断策略列出的标签在备选节点中存在时，是否选择该备选节点。
+   - 若备选节点的标签在优选策略的标签列表中且优选策略的presence值为true，或备选节点的标签不在优选策略的标签列表中且优选策略的presence值为false，则备选节点score=10，否则备选节点score=0。
+3. BalancedResourceAllocation：用于从备选节点列表中选出各项资源使用率最均衡的节点。
+   - 计算出在所有备选节点上运行的pod和备选pod的cpu占用量totalMilliCPU。
+   - 计算出在所有备选节点上运行的pod和备选pod的呢哦次年占用量totalMemory。
+   - 计算每个节点的得分，规则大致如下
+      ```
+      score = int(10 - math.Abs(totalMilliCPU / nodeCpuCapacity - totalMemory / nodeMemoryCapacity) * 10)
+
+      # nodeCpuCapacity 为节点CPU
+      # nodeMemoryCapacity 为节点内存
+      ```
 
 ## kubelet
+每个Node上都启动kubelet服务进程，用于处理master下发到本节点的任务，并管理pod以及pod中的容器。每个kubelet进程都会在apiserver上注册节点自身的信息，定时（默认10s）向master汇报节点资源的使用情况，并通过cadvisor监控容器和节点资源，apiserver收到信息后，将这些信息写入到etcd。
 
-## kubeproxy
+### pod管理
+kubelet通过以下几种方法获取node上要运行的pod清单：
+1. 文件：kubelet启动参数`--config`指定配置文件目录下的文件（默认`/etc/kubernetes/manifests/`），这里指定的pod就不由kube-controller-manager进行管理，称为静态pod。
+2. http端点（url）：通过`--manifest-url`设置，获取远程目录下的pod列表。
+3. apiserver：kubelet通过apiserver监听etcd目录，同步pod列表。
+
+所有以非apiserver方式创建的pod都称为静态pod（static pod），kubelet将静态pod的状态汇报给apiserver，然后apiserver为该静态pod创建一个mirror pod与之匹配，mirror pod的状态也将真实反映静态pod的状态。当静态pod删除时，对应的mirror pod也会被删除。
+
+kubelet监听etcd，所有针对pod的操作都会被kubelet监听，若发现有新的绑定到本节点的pod，则按pod清单的要求创建pod。
+若发现本地pod被修改，则kubelet会做出相应修改，例如通过docker client删除容器。
+
+kubelet若监听到创建或修改pod的任务，则按以下流程处理：
+1. 为该pod创建一个数据目录
+2. 从apiserver读取该pod清单
+3. 为该pod挂载外部卷
+4. 下载pod用到的secret
+5. 检查已运行在节点的pod，若该pod没有容器或pause容器未启动，则先停止pod内所有容器的进程，若pod中有需要删除的容器，则删除这些容器
+6. 用pause容器为每个pod创建一个容器，pause容器接管pod中所有其他容器的网络
+7. 为每个容器计算一个hash值，然后用容器名称去查询对应docker容器的hash值，若找到，且hash值不同，则停止docker中容器的进程，并停止与之关联的pause容器；若找到且hash值相同，则不做处理
+8. 调用docker client下载容器镜像并启动容器
+
+### cAdvisor资源监控
+cAdvisor是一个开源容器资源分析工具，也被集成到Kubernetes的代码中，kubelet通过cAdvisor获取其所在节点及容器的数据，cAdvisor会自动查找所有节点上的容器，采集cpu、内存、文件系统、网络的使用情况。
+
+cAdvisor只能提供2-3分钟的监控数据，没有对数据进行持久化。从k8s 1.8版本开始。性能指标数据的查询接口升级为标准的metrics api，后端服务升级为Metrics Server，Metrics Server用于提供core metrics（核心指标），包括node、pod的cpu和内存数据。
+
+## kube-proxy
+Kube-proxy是真正将service作用落实的组件。在每个node上都运行了一个kube-proxy服务进程，可以把这个进程看做service的透明代理兼负载均衡器，核心功能是将到某个service的访问请求转发到后端的多个pod实例上。并且service的ClusterIP和NodePort等概念是kube-proxy服务通过iptables的NAT转换实现的，kube-proxy在运行过程中动态创建与service相关的iptables规则，实现了将访问服务的请求负载分发到后端pod的功能。由于iptables机制针对的是本地的kube-proxy端口，所以在每个node上都要运行kube-proxy组件，于是便可以在集群内任意node上对service进行请求。综上，由于kube-proxy，在service调用过程中客户端无须关心后端有几个pod，中间过程的通信、负载均衡和故障恢复都是透明的。
+
+### iptables模式
+iptables作为kube-proxy的默认模式，iptables模式下的kube-proxy不再起到proxy作用，核心功能为：通过API server的watch接口实时跟踪service和endpoint的变更信息，并更新对应的iptables规则，client的请求流量则通过iptables的NAT机制直接路由到目标pod。
+
+iptables模式完全在内核态工作，不用再经过用户态的kube-proxy中转，因此性能更强。
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202208011352390.png)
+
+iptables模式虽然简单，但是存在无法避免的缺陷：集群中的service和pod大量增加后，iptables的规则会急速膨胀，导致性能下降，在某些极端情况下会出现规则丢失的情况。
+
+### ipvs模式
+为了解决iptables缺陷，k8s在1.8版本引入ipvs模式，并在1.11版本升级为稳定版。
+虽然iptables和ipvs都是基于netfilter实现的，但是定位不同，iptables是为防火墙设计的，ipvs是专门用于高性能负载均衡，使用更高效的数据结构（hash表），允许几乎无限的规模扩张。
+
+相比iptables，ipvs有以下优势：
+1. 为大型集群提供更好的可扩展性和性能
+2. 支持比iptables更复杂的负载均衡算法
+3. 支持服务器健康检查和连接重试等功能
+4. 可动态修改ipset集合，即使iptables规则也正在使用这个集合
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202208011439628.png)
+
+由于ipvs无法提供包过滤、地址伪装、SNAT等功能，因此在某些场景（如NodePort实现）还需要与iptables搭配使用。在ipvs模式下，kube-proxy使用了iptables的扩展ipset，而不是直接调用iptables生成规则链。
+
+> iptables规则链是一个线性的数据结构，ipset则引入了带索引的数据结构，因此当规则很多时，也可以高效地查找与匹配。
+> 可以将ipset理解为一个ip（段）的集合，这个集合可以是ip地址、ip网段、端口等，iptables可直接添加规则对这个可变集合进行操作，大大减少了iptables规则的数量，从而减少了性能损耗。
+> 假设要禁止上万的ip访问服务器，若使用iptables，就需要一条一条地添加规则，会在iptables中生成大量的规则。若使用ipset，只需要将相关的ip地址加入ipset集合中集合，这样只需要设置少量的iptables规则即可实现。
+
+kube-proxy针对service和pod创建的一些主要的iptables规则如下：
+- KUBE-CLUSTER-IP：在`masquerad-all=true`或clusterCIDR指定的情况下对Service ClusterIP地址进行伪装，解决数据包欺骗问题。
+- KUBE-EXTERNAL-IP：将数据包伪装为Service的外部IP地址。
+- KUBE-LOAD-BALANCER、KUBE-LOAD-BALANCER-LOCAL：伪装LoadBalancer类型的Service流量。
+- KUBE-NODE-PORT-TCP、KUBE-NODE-PORT-LOCAL-TCP、KUBE-NODE-PORT-UDP、KUBE-NODE-PORT-LOCAL-UDP：伪装NodePort类型的Service流量。
+
 
 > 参考文章
 >
