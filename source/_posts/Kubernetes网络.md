@@ -27,6 +27,10 @@ comments: false
 1. 各台服务器上的容器ip段不能重叠，所以需要某种ip段分配机制，为各台服务器分配独立的ip段
 2. 从某个pod发出的流量到达其所在服务器时，服务器网络层应当具备根据目标ip地址将流量转发到该ip所属ip段对应服务器的能力。
 
+单pod单ip模型：每个pod都有一个独立ip地址，pod内所有容器共享network namespace。容器之间直接通信，不需要额外NAT，因此不存在源地址被伪装的情况，node与容器网络直连，同样不需要额外NAT。扁平化的网络优点在于：没有NAT带来的性能损耗，且可追溯源地址，为后面网络策略铺垫，降低网络拍错难度。
+
+![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202208041802718.png)
+
 ## ip地址分配
 k8s会为节点、pod、服务分配ip地址。
 1. 系统从集群VPC网络为每个节点分配一个ip，该节点ip用于提供从控制组件（kubelet和kube-proxy）到k8s master的连接。
