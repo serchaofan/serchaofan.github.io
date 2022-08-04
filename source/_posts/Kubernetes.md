@@ -100,7 +100,7 @@ k8s 提供如 Pod、Service、Namespace、Volume 的基础对象
 
 设置该 Pause 容器的目的：
 
-- 引入与业务无关且不宜死亡的 Pause 容器作为 pod 的根容器，以它的状态代表整个容器组的状态。
+- 引入与业务无关且不宜死亡的 Pause 容器作为 pod 的根容器，以它的状态代表整个容器组的状态，为每个pod提供1号进程，并收集pod内的僵尸进程。
 - pod 的多个业务容器共享 Pause 容器的 IP，共享 Pause 容器挂接的 Volume，既简化了密切关联的业务容器之间的通信问题，也解决了它们之间的文件共享问题。
 
 ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207161821472.png)
