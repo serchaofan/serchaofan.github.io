@@ -592,6 +592,78 @@ net.ipv6.conf.all.disable_ipv6=1   # 不使用的 IPV6 协议栈，防止触发 
 net.netfilter.nf_conntrack_max=2310720
 ```
 
+## 配置使用ipvs模式
+确保安装了ipvs相应软件
+```
+yum install -y conntrack-tools ipset ipvsadm
+```
+加载内核模块
+```
+modprobe br_netfilter
+modprobe ip_vs
+modprobe ip_vs_rr
+modprobe ip_vs_wrr
+modprobe ip_vs_sh
+
+modprobe nf_conntrack        # linux内核>=4.19
+modprobe nf_conntrack_ipv4   # linux内核<4.19
+```
+使用systemd-modules-load.service系统服务配置自动加载ipvs模块。
+首先创建文件`/etc/modules-load.d/10-k8s-modules.conf`，写入以下内容
+```
+br_netfilter
+ip_vs
+ip_vs_rr
+ip_vs_wrr
+ip_vs_sh
+nf_conntrack
+```
+然后设置开启自启，自动加载modules
+```
+systemctl enable systemd-modules-load.service
+```
+查看模块是否加载完成
+```
+# lsmod | grep ip_vs
+ip_vs_sh               16384  0
+ip_vs_wrr              16384  0
+ip_vs_rr               16384  744
+ip_vs                 155648  750 ip_vs_rr,ip_vs_sh,ip_vs_wrr
+nf_conntrack          147456  6 xt_conntrack,nf_nat,nf_conntrack_netlink,xt_CT,xt_MASQUERADE,ip_vs
+```
+
+## 设置docker的cgroup driver
+```
+# docker info
+Client:
+......
+Server:
+......
+ Cgroup Driver: cgroupfs
+```
+Docker默认的Cgroup Driver是cgroupfs，cgroupfs是cgroup为用户开发的虚拟文件系统类型，对cgroup的查询和修改只能通过cgroupfs文件系统进行。
+
+而K8S推荐使用systemd作为cgroup的驱动器，因为systemd是k8s自带的cgroup管理器，负责为每个进程分配cgroups。
+
+若要修改docker的cgroup driver，则直接在`/etc/docker/daemon.json`中添加以下内容
+```
+{
+  ...
+  "exec-opts": ["native.cgroupdriver=systemd"]
+}
+```
+
+注：如果docker改了，则kubelet也要改，否则容器无法启动。
+```
+# cat /var/lib/kubelet/config.yaml
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+......
+cgroupDriver: cgroupfs
+cgroupsPerQOS: true
+```
+这边的`cgroupDriver`也要改，改完后，docker和kubelet都要重启。
+
 ## Kubectl 常用操作
 
 - 创建资源对象
