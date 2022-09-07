@@ -259,6 +259,24 @@ backends 根据ldap请求完成实际的存储与拉取数据的操作，是被�
 ### LDIF
 LDIF后台是一个基础的存储后台，以LDIF格式将实体存储到文本文件，并利用文件系统创建树状数据库结构。
 
+对于一个entry，对应的ldif基本格式如下：
+```
+# comment
+dn: <distinguished name>
+<attrdesc>: <attrvalue>
+<attrdesc>: <attrvalue>
+```
+如果要将一行内容分成多行写，则只要换行，并在最开头加上一个空格
+```
+dn: cn=Barbara J Jensen,dc=example,dc=
+ com
+cn: Barbara J
+ Jensen
+ 
+以上写法等同于
+dn: cn=Barbara J Jensen,dc=example,dc=com
+cn: Barbara J Jensen
+```
 
 ## Schema Specification
 ### 分散的Schema配置
@@ -444,6 +462,138 @@ member: uid=ghenry,ou=People,dc=example,dc=com
 member: uid=hyc,ou=People,dc=example,dc=com
 ```
 
+## LDAP命令详解
+ldap常见命令
+- ldapadd：ldapadd实际就是ldapmodify的软链接
+- ldapdelete：删除操作
+- ldapmodify：修改操作
+- ldappasswd：密码操作
+- ldapurl：url格式化操作
+- ldapcompare：比较操作
+- ldapexop：扩展操作
+- ldapmodrdn：重命名操作
+- ldapsearch：搜索操作
+
+### 通用连接参数
+```
+-D  {bindDN}   用于绑定到服务器的 DN
+
+-h  {host}     目录服务器主机名或 IP 地址   Default value: localhost
+-H  {uri}      目录服务器的ldap格式地址。如果用了-h 就不用 -H了
+-p  {port}     目录服务器端口号  Default value: 389
+
+-w  {bindPassword} 用于绑定到服务器的密码
+-W  提示输入密码
+```
+
+常用的就是
+- `-D <binddn> -w <password> -h <hostip>`
+- `-D <binddn> -w <password> -H ldap://{hostip}`
+
+### ldapmodify
+```
+-a  添加条目
+```
+
+例：
+```
+编写ldif文件，将新增用户的ldif信息写入
+dn: cn=zhangsan,ou=people,dc=ebay,dc=com
+changetype: add
+cn: zhangsan
+gidnumber: 500
+givenname: san
+homedirectory: /home/users/zhangsan
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: zhang
+uid: zhangsan
+uidnumber: 1002
+userpassword: {MD5}lueSGJZetyySpUndWjMBEg==
+```
+注：必须将`changetype: add`写在dn下面，也就是第二行，不能写在别的行内。否则添加时会有以下报错：
+```
+ldapmodify: modify operation type is missing at line 2, entry "cn=zhangsan,ou=people,dc=ebay,dc=com"
+```
+成功添加会有以下信息：
+```
+adding new entry "cn=zhangsan,ou=people,dc=ebay,dc=com"
+```
+
+若要修改对象，则将`changetype`设为`modify`，并且在第三行必须加上操作
+- `add: <attribute>`：添加属性值
+- `replace: <attribute>`：替换属性值
+- `delete: <attribute>`：删除属性值
+
+```
+dn: cn=zhangsan,ou=people,dc=ebay,dc=com
+changetype: modify
+replace: homeDirectory
+homeDirectory: /home/users/zhangsan1111111
+```
+```
+dn: cn=zhangsan,ou=people,dc=ebay,dc=com
+changetype: modify
+add: mobile
+mobile: 222222222
+```
+```
+dn: cn=zhangsan,ou=people,dc=ebay,dc=com
+changetype: modify
+delete: mobile
+```
+
+### ldapsearch
+ldap的搜索操作。以下仅列出一些常用参数。
+```
+Usage:  ldapsearch  {options} filter [attributes ...]
+Command options:
+
+-A, --typesOnly
+    仅检索属性名称，而不检索属性值
+-b, --baseDN {baseDN}
+    搜索基 DN
+-c, --continueOnError
+    即使出现错误也继续进行处理
+--countEntries
+    计算服务器返回的条目数
+
+-n, --dry-run
+    显示将要执行的操作，但不执行任何操作
+
+-S, --sortOrder {sortOrder}
+    使用提供的排序顺序对结果进行排序
+--simplePageSize {numEntries}
+    将简单分页结果控制用于给定页面大小
+    Default value: 1000
+```
+
+例：
+```
+ldapsearch -D "cn=admin,dc=example,dc=com" -w xxxxx -H ldap://localhost -b "ou=people,dc=example,dc=com"
+
+# people, example.com
+dn: ou=people,dc=example,dc=com
+ou: people
+objectClass: organizationalUnit
+objectClass: top
+
+......
+# search result
+search: 2
+result: 0 Success
+```
+
+```
+ldapsearch -D "cn=admin,dc=example,dc=com" -w xxxxx -H ldap://localhost  -b 'dc=example,dc=com' "(cn=zhangsan)" homeDirectory
+
+dn: cn=zhangsan,ou=people,dc=example,dc=com
+homeDirectory: /home/users/zhangsan
+```
+
+`-b`参数指定搜索的baseDN，不可缺少，否则找不到
+
 # LDAP Docker部署
 使用的镜像为：`osixia/openldap`
 > 官方Github仓库：https://github.com/osixia/docker-openldap
@@ -527,6 +677,57 @@ $use_tokens = false;
 > keyphrase可以是随机字符串，用于加密，不过不要随意变动
 
 # LDAP Kubernetes部署
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ldap
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ldap
+  template:
+    metadata:
+      labels:
+        app: ldap
+    spec:
+      containers:
+        - name: ldap
+          image: osixia/openldap:stable
+          args: ["--copy-service"]
+          volumeMounts:
+            - name: container-run
+              mountPath: /container/run
+          env:
+          - name: LDAP_ORGANISATION
+            value: XXX
+          - name: LDAP_DOMAIN
+            value: XXX.XXX
+          - name: LDAP_ADMIN_PASSWORD
+            value: XXXXX
+          ports:
+            - containerPort: 389
+              name: openldap
+            - name: ssl-ldap-port
+              containerPort: 636
+          livenessProbe:
+            tcpSocket:
+              port: openldap
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 10
+          readinessProbe:
+            tcpSocket:
+              port: openldap
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 10
+      volumes:
+        - name: container-run
+          emptyDir: {}
+```
 
 # LDAP 对接其他系统
 ## Gitlab
