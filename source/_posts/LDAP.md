@@ -21,16 +21,21 @@ comments: false
 - 将目录划分为多个数据源（存储区），以存储大量对象
 
 ## X.500
-X.500 是构成全球分布式的名录服务系统的协议，描述了用户信息的存储和访问方式，X.500 不是一个协议，而是一个协议族，包括从 X.501 到 X.525 等一系列完整的目录服务协议。X.500 采用层次结构（类似 DNS）。
+X.500 是构成全球分布式的名录服务系统的规范，描述了用户信息的存储和访问方式，X.500 不是一个协议，而是一个协议族，包括从 X.501 到 X.525 等一系列完整的目录服务协议或规范。X.500 采用层次结构（类似 DNS）。
 
-X.500 相关协议或机制：
+X.500 从属协议：
+| 协议                                                       | 描述                                                                 | 定义规范  |
+|----------------------------------------------------------|--------------------------------------------------------------------|-------|
+| Directory Access Protocol (DAP)                          | 目录访问协议。定义DUA与DSA之间的请求交互与输出，也就是客户端与目录服务交互的方式。定义 X.500 提供的服务原语       | X.511 |
+| Directory System Protocol (DSP)                          | 目录系统代理。定义两个或多个DSA间、DUA与DSA间的请求交互与输出，也就是两个目录服务之间交互的方式。定义如何跨平台处理目录服务 | X.518 |
+| Directory Information Shadowing Protocol (DISP)          | 目录信息映像协议。定义了如何将选定的信息在DSA间进行复制。                                     | X.525 |
+| Directory Operational Bindings Management Protocol (DOP) | 目录操作绑定协议。定义了DSA间交互管理配置来管理它们间的操作绑定的机制，也就是定义了目录如何管理协议，例如与复制相关的。      | X.501 |
 
-- **DAP 目录访问协议**：控制服务器和客户端之间的通信
-- DSA 目录系统代理：用于存储目录信息的数据库，采用分层格式，提供快速高效的搜索功能，与目录信息树 DIT 连接。**DSA 之间通过链操作实现分布式访问。**
-- DUA 目录用户代理：用于访问一个或多个 DSA 的用户接口程序
-- DSP 目录系统协议：控制两个或多个 DSA 间、DUA 与 DSA 间的交互
-- DISP 目录信息映像协议：定义了如何将选定的信息在服务器间进行复制
-- DOP 目录操作绑定协议：定义了服务器间自动协商连接配置的机制
+
+> DSA 目录系统代理：用于存储目录信息的数据库，采用分层格式，提供快速高效的搜索功能，与目录信息树 DIT 连接。**DSA 之间通过链操作实现分布式访问。**
+> DUA 目录用户代理：用于访问一个或多个 DSA 的用户接口程序
+
+X.500系列规范
 - X.501：模型定义，定义目录服务的基本模型和概念
 - X.509：认证框架，定义如何处理目录服务中客户和服务器的认证
 - X.511：抽象服务定义，定义 X.500 提供的服务原语
@@ -329,7 +334,7 @@ AttributeUsage =
   "distributedOperation" / ; DSA-shared
   "dSAOperation"          ; DSA-specific, value depends on server
 ```
-当whsp为一个空格` `时，numericoid以点分隔形式作为全局唯一OID。qdescrs是一个或多个名称。woid可以是名称或者OID。
+whsp为一个空格` `。numericoid以点分隔形式作为全局唯一OID。qdescrs是一个或多个名称。woid可以是名称或者OID。
 
 例：`inetorgperson.schema`文件中的 `displayName`和 `core.schema`文件中的`cn`
 ```
@@ -394,7 +399,7 @@ ObjectClassDescription = "(" whsp
         \[ "MAY" oids \]       ; AttributeTypes
         whsp ")"
 ```
-当whsp为一个空格` `时，numericoid以点分隔形式作为全局唯一OID。qdescrs是一个或多个名称。oids可以是一个或多个名称或者OID。
+whsp为一个空格` `。numericoid以点分隔形式作为全局唯一OID。qdescrs是一个或多个名称。oids可以是一个或多个名称或者OID。
 
 例：`inetorgperson.schema`文件中的`inetOrgPerson` Object Class
 ```
