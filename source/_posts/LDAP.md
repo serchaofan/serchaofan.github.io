@@ -182,13 +182,13 @@ LDIF配置规则：
 dn: cn=config
 objectClass: olcGlobal
 cn: config
-&lt;global config settings&gt;
+<global config settings>
 
 # schema definitions
 dn: cn=schema,cn=config
 objectClass: olcSchemaConfig
 cn: schema
-&lt;system schema&gt;
+<system schema>
 ```
 
 #### cn=config
@@ -229,6 +229,46 @@ olcModuleLoad: pcache.la
 ```
 - olcModuleLoad：指定module的文件名，如果没有olcModulePath，则需要填写绝对路径，若有olcModulePath，则只要填写文件名即可
 - olcModulePath：指定module的目录路径
+
+这里指定的la文件就是模块的配置文件，以`backend_mdb.la`为例，文件里指定的是该mdb的配置，如库文件名称、库目录等。
+```
+# The name that we can dlopen(3).
+dlname='back_mdb-2.4.so.2'
+
+# Names of this library.
+library_names='back_mdb-2.4.so.2.11.5 back_mdb-2.4.so.2 back_mdb.so'
+
+# The name of the static archive.
+old_library=''
+
+# Linker flags that cannot go in dependency_libs.
+inherited_linker_flags=' -pthread'
+
+# Libraries that this one depends upon.
+dependency_libs=''
+
+# Names of additional weak libraries provided by this library
+weak_library_names=''
+
+# Version information for back_mdb.
+current=13
+age=11
+revision=5
+
+# Is this an already installed library?
+installed=yes
+
+# Should we warn about portability when linking against -modules?
+shouldnotlink=yes
+
+# Files to dlopen/dlpreopen
+dlopen=''
+dlpreopen=''
+
+# Directory that this library needs to be installed in:
+libdir='/usr/lib/ldap'
+```
+
 
 #### cn=schema
 该实体保存了所有的schema定义，并且这些都是硬编码在slapd代码中的。所有配置的值都是slapd生成的，所以不需要在配置文件中提供schema的值。不过，这个entry必须被定义，来作为用户定义的schema去添加的基础服务。实体必须有`olcSchemaConfig`objectClass。
@@ -419,6 +459,49 @@ objectclass	( 2.16.840.1.113730.3.2.2
 	)
 ```
 
+##### AUXILIARY Object Class
+ObjectClass定义了一种对象的基础结构，无论是账号、群组还是组织单位，但是一些资源也有额外的ObjectClass来扩展对象，提供额外的attribute，这些额外的ObjectClass被称为Auxiliary ObjectClass。Auxiliary ObjectClass允许添加其他ObjectClass到该ObjectClass中。
+每种资源对象必须有确定的一种结构化（structural，也称primary）ObjectClass。这个ObjectClass是确定的，不可变的，然后可以有多个Auxiliary ObjectClass可以被任意添加到某个对象或从某个对象删除。
+
+例：`posixAccount`就是ldap中创建的用户对象objectclass，可以看出是一个AUXILIARY objectclass。
+```
+objectclass ( 1.3.6.1.1.1.2.0 NAME 'posixAccount'
+	DESC 'Abstraction of an account with POSIX attributes'
+	SUP top AUXILIARY
+	MUST ( cn $ uid $ uidNumber $ gidNumber $ homeDirectory )
+	MAY ( userPassword $ loginShell $ gecos $ description ) )
+```
+查找zhangsan账号
+```
+dn: cn=zhangsan,ou=people,dc=example,dc=com
+cn: zhangsan
+gidNumber: 500
+givenName: san
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+......
+```
+可以看到用户账号是使用到了posixAccount这个附加类。
+看下`inetOrgPerson`的定义
+```
+objectclass	( 2.16.840.1.113730.3.2.2
+    NAME 'inetOrgPerson'
+	DESC 'RFC2798: Internet Organizational Person'
+    SUP organizationalPerson
+    STRUCTURAL
+	MAY (
+		audio $ businessCategory $ carLicense $ departmentNumber $
+		displayName $ employeeNumber $ employeeType $ givenName $
+		homePhone $ homePostalAddress $ initials $ jpegPhoto $
+		labeledURI $ mail $ manager $ mobile $ o $ pager $
+		photo $ roomNumber $ secretary $ uid $ userCertificate $
+		x500uniqueIdentifier $ preferredLanguage $
+		userSMIMECertificate $ userPKCS12 )
+	)
+```
+可以看出`posixAccount`是对`inetOrgPerson`的补充。
+
 #### OID宏
 后定义的OID宏可以获取到先定义的OID宏的值。
 
@@ -466,6 +549,58 @@ objectClass: dynamicObject
 member: uid=ghenry,ou=People,dc=example,dc=com
 member: uid=hyc,ou=People,dc=example,dc=com
 ```
+
+## Dynamic Lists
+Dynamic Groups已被废弃，现在都由Dynamic Lists实现。除了有group members或硬编码的list attributes，这个overlay允许去定义一个LDAP搜索，这种搜索能组成一个group或list。
+
+这个module可以既作为dynamic list也可以作为dynamic group，取决于配置。
+```
+overlay dynlist
+dynlist-attrset <group-oc> <URL-ad> [member-ad]
+```
+dynlist-attrset参数如下：
+- `group-oc`：指明哪个object class触发随后的ldap search。无论何时一个带有此object class的entry被获取到，search就会开始。
+- `URL-ad`：包含搜索uri的属性，这个属性必须是`labeledURI`的子类型，在这个search result中的属性和值会被添加到这个entry，除非`member-ad`已被使用。
+- `member-ad`：如果存在，改变overlay行为到一个dynamic group。结果的唯一名称会被添加为属性的值，而不是将搜索结果插入到这个entry。
+
+以下案例会显示如何根据ldap filter将email的alias自动扩展到用户的email
+
+
+
+加载dynlist和autogroup模块
+```
+grep -r "olcModuleLoad" /etc/ldap/
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {0}back_mdb
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {1}memberof
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {2}refint
+```
+当前是没有加载这两个模块的，先编写ldif文件`/tmp/add_modules.ldif`
+```
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: dynlist
+olcModuleLoad: autogroup
+```
+执行命令ldapmodify，不要加-D参数，只要加`-Y EXTERNAL -H ldapi:///`和`-f`
+```
+# ldapmodify -Y EXTERNAL -H ldapi:///  -f /tmp/add_modules.ldif
+SASL/EXTERNAL authentication started
+SASL username: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
+SASL SSF: 0
+modifying entry "cn=module{0},cn=config"
+```
+然后再看模块已经添加上了
+```
+grep -r "olcModuleLoad" /etc/ldap/
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {0}back_mdb
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {1}memberof
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {2}refint
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {3}dynlist
+/etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {4}autogroup
+```
+
+
 
 ## LDAP命令详解
 ldap常见命令
