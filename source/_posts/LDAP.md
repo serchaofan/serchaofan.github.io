@@ -566,8 +566,29 @@ member: uid=ghenry,ou=People,dc=example,dc=com
 member: uid=hyc,ou=People,dc=example,dc=com
 ```
 
-## Dynamic Lists
-Dynamic Groups已被废弃，现在都由Dynamic Lists实现。除了有group members或硬编码的list attributes，这个overlay允许去定义一个LDAP搜索，这种搜索能组成一个group或list。
+## Dynamic Lists 或 Dynamic Groups
+在OpenLDAP中，Dynamic Groups已被废弃（OpenDJ或者ForgeRock DS并未废弃），现在都由Dynamic Lists实现。除了有group members或硬编码的list attributes，这个overlay允许去定义一个LDAP搜索，这种搜索能组成一个group或list。
+
+dynamic group，后面称动态组，会通过ldap url关联成员，动态组的entry使用`groupOfURLs`这个object class，以及多个`memberURL`值来指定LDAP URLs去识别组成员。动态组是目录服务的原生支持，因此最好选择动态组而不是静态组（static group），有以下原因：
+1. 动态组成员是成员实体的一个属性，因此不需要单独维护一个实体去列出一堆用户。
+2. 决定动态组的成员和应用member URL标准一样简单，就是说，只要定义好`memberURL`，那组成员也就直接确认了。
+3. 动态组可以扩容到任何size，且不会有性能问题。动态组实体会保持非常小的size，即使组中有很多成员。
+
+例：
+```
+dn: cn=My Dynamic Group,ou=Groups,dc=example,dc=com
+cn: My Dynamic Group
+objectClass: top
+objectClass: groupOfURLs
+ou: Groups
+memberURL: ldap:///ou=People,dc=example,dc=com??sub?l=San Francisco
+```
+当使用表达式`"(&(uid=*jensen)(isMemberOf=cn=My Dynamic Group,ou=Groups,dc=example,dc=com))"`进行ldapsearch时，就能找到以下几条
+```
+dn: uid=bjensen,ou=People,dc=example,dc=com
+dn: uid=rjensen,ou=People,dc=example,dc=com
+....
+```
 
 这个module可以既作为dynamic list也可以作为dynamic group，取决于配置。
 ```
@@ -580,8 +601,6 @@ dynlist-attrset参数如下：
 - `member-ad`：如果存在，改变overlay行为到一个dynamic group。结果的唯一名称会被添加为属性的值，而不是将搜索结果插入到这个entry。
 
 以下案例会显示如何根据ldap filter将email的alias自动扩展到用户的email
-
-
 
 加载dynlist和autogroup模块
 ```
@@ -615,7 +634,6 @@ grep -r "olcModuleLoad" /etc/ldap/
 /etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {3}dynlist
 /etc/ldap/slapd.d/cn=config/cn=module{0}.ldif:olcModuleLoad: {4}autogroup
 ```
-
 
 
 ## LDAP命令详解
