@@ -1,7 +1,7 @@
 ---
 title: LDAP
 date: 2018-11-24 09:22:47
-tags: [LDAP]
+tags: [LDAP, OpenDJ]
 categories: [系统运维]
 comments: false
 ---
