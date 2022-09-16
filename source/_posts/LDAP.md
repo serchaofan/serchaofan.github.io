@@ -567,7 +567,7 @@ member: uid=hyc,ou=People,dc=example,dc=com
 ```
 
 ## Dynamic Groups
-在OpenLDAP中，Dynamic Groups已被废弃（OpenDJ或者ForgeRock DS并未废弃，因此以下以OpenDJ为例）。dynamic group，后面称动态组，会通过ldap url关联成员，动态组的entry使用`groupOfURLs`这个object class（可以自定义），以及多个`memberURL`值来指定LDAP URLs去识别组成员。动态组是目录服务的原生支持，因此最好选择动态组而不是静态组（static group），有以下原因：
+Dynamic Group，后面称动态组，会通过ldap url关联成员，动态组的entry使用`groupOfURLs`这个object class（可以自定义），以及多个`memberURL`值来指定LDAP URLs去识别组成员。动态组是目录服务的原生支持，因此最好选择动态组而不是静态组（static group），有以下原因：
 1. 动态组成员是成员实体的一个属性，因此不需要单独维护一个实体去列出一堆用户。
 2. 决定动态组的成员和应用member URL标准一样简单，就是说，只要定义好`memberURL`，那组成员也就直接确认了。
 3. 动态组可以扩容到任何size，且不会有性能问题。动态组实体会保持非常小的size，即使组中有很多成员。
