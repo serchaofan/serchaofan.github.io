@@ -345,7 +345,23 @@ schema可被扩展来支持额外的语法、匹配规则、属性类型、objec
 4. 自定义attribute
 5. 自定义object class
 
-每种schema类型都是由一个全局的Objetct Identifier（OID）标识，OID通常用来标识其他对象，OID的分配也是树状结构，OID通常被SNMP使用。企业OID是需要申请的，通过组织IANA申请，也可以通过国家的机构例如ANSI、BSI等。
+每种schema类型都是由一个全局的Objetct Identifier（OID）标识，OID通常用来标识其他对象，OID的分配也是树状结构，OID通常被SNMP使用。企业OID是需要申请的，通过组织IANA申请，也可以通过国家的机构例如ANSI、BSI等。因为OID是具有层级的，因此组织可以获取一个OID并根据需要进行分支的创建。例如，组织的OID为1.1，则可以生成以下结构树。
+
+|OID|	Assignment |
+|--|--|
+|1.1	|Organization's OID|
+|1.1.1	|SNMP Elements|
+|1.1.2	|LDAP Elements|
+|1.1.2.1	|AttributeTypes|
+|1.1.2.1.1	|x-my-Attribute|
+|1.1.2.2	|ObjectClasses|
+|1.1.2.2.1	|x-my-ObjectClass|
+
+为了给每个schema element分配一个唯一的OID，需要给每个element提供至少一个文本名称，名称需要在IANA注册，或者以`x-`为前缀来放置在private use的namespace。名称需要具有描述性，并且不要和别的名称有冲突，尤其是任何选用的名称都不能和当前的或未来的Standard Track names冲突，如果使用了注册的名称或者以x-开头的名称，那肯定就不会冲突。
+
+需要注意，可以去获取自己注册的名称前缀，这样就不用单独注册每个名称了。
+
+通常推荐使用如`x-com-<company>`为前缀。
 
 #### Attribute Type规范
 
