@@ -664,8 +664,10 @@ select * from stu join user using(id,name,score);
 从主表中读取每一条记录与另一张表中所有记录匹配，会保留所有记录
 以一张表为主，称为主表，根据主表的位置，外连接又分为左连接和右连接。
 
-- 左连接 left join：以左表为主表
-- 右连接 right join：以右表为主表
+- 左连接 left join：以左表为主表，显示所有左表内容以及匹配的右表内容
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202209301549731.png)
+- 右连接 right join：以右表为主表，显示所有右表内容以及匹配的左表内容
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202209301555888.png)
 - 全外连接 full outer join：除了匹配的记录，还包括不匹配的记录
   结果记录数至少为主表的总记录数，副表的为匹配的记录会显示为 null
   显示仍为左连接在表的靠左部分，右连接在表的靠右部分
@@ -677,6 +679,26 @@ select 字段 from 左表
     left|right join 右表
     on 左表.字段 = 右表.字段;
 ```
+
+#### SQL Joins总结
+- left join
+  - `select <> from tableA A left join tableB B on A.key = B.key`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101437808.png)
+  - `select <> from tableA A left join tableB B on A.key = B.key where B.key is NULL`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101443089.png)
+- right join
+  - `select <> from tableA A right join tableB B on A.key = B.key`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101445930.png)
+  - `select <> from tableA A right join tableB B on A.key = B.key where A.key is NULL`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101445648.png)
+- inner join
+  - `select <> from tableA A inner join tableB B on A.key = B.key`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101444256.png)`
+- outer join
+  - `select <> from tableA A full outer join tableB B on A.key = B.key`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101446291.png)
+  - `select <> from tableA A full outer join tableB B on A.key = B.key where A.key is NULL or B.key is NULL`
+  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101446054.png)
 
 ### 子查询
 
