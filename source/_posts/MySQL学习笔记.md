@@ -700,6 +700,7 @@ select 字段 from 左表
   - `select <> from tableA A full outer join tableB B on A.key = B.key where A.key is NULL or B.key is NULL`
   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101446054.png)
 
+
 ### 子查询
 
 虽然可通过连接查询实现多表查询，但性能很慢，因此推荐使用子查询进行多表查询。
