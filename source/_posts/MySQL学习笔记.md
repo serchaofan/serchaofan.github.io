@@ -680,7 +680,7 @@ select 字段 from 左表
     on 左表.字段 = 右表.字段;
 ```
 
-#### SQL Joins总结
+#### MySQL Joins总结
 - left join
   - `select <> from tableA A left join tableB B on A.key = B.key`
   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101437808.png)
@@ -694,11 +694,6 @@ select 字段 from 左表
 - inner join
   - `select <> from tableA A inner join tableB B on A.key = B.key`
   ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101444256.png)`
-- outer join
-  - `select <> from tableA A full outer join tableB B on A.key = B.key`
-  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101446291.png)
-  - `select <> from tableA A full outer join tableB B on A.key = B.key where A.key is NULL or B.key is NULL`
-  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202210101446054.png)
 
 
 ### 子查询
