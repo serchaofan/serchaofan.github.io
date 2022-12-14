@@ -16,7 +16,7 @@ comments: false
 - [K8s DNS](#k8s-dns)
 - [K8S网络插件](#k8s网络插件)
   - [Flannel](#flannel)
-  - [Calico](#calico)
+  - [Calico](#纯co)
   - [Weave](#weave)
   - [Cilium](#cilium)
 
@@ -63,6 +63,12 @@ Flannel 可为容器提供跨节点网络服务，其模型为集群内所有容
    解决：
 
 ## Calico
+Calico 是一个用于容器、虚拟机和本地基于主机的工作负载的开源网络和网络安全解决方案。Calico 支持广泛的平台，包括 Kubernetes、 OpenShift、 Mirantis Kubernetes Engine (MKE)、 OpenStack 和裸金属服务。Calico 提供了多种数据平面的支持，包括Linux eBPF数据平面，标准linux网络数据平面，以及Windows HNS数据平面。
+
+Calico提供了纯3层的网络模型，每个容器都通过IP直接通信，没有采用overlay进行转发，而是基于路由转发，容器所在节点便扮演了类似路由器的功能，或者叫做虚拟路由器（vRouter），而且这些虚拟路由器需要知道整个集群的网络路由信息。Calico是一个基于BGP的数据中心网络方案，也支持overlay网络，与kubernetes、openstack、AWS、GCE都有良好的集成。因此，通过三层BGP协议，这些节点上的虚拟路由器便将整个网络的路由信息进行传播与维护，实现了三层网络上的跨节点网络。
+
+Calico不仅提供容器网络方案，也可以用在虚拟机网络上。同时网络策略功能也是Calico的特点，通过Calico的网络策略语言，可以对容器、虚拟机负载和裸机之间网络通信进行细粒度和动态的安全规则控制。Calico基于iptables实现了k8s网络策略，通过在各节点上应用ACL策略进行工作负载的多租户隔离、安全组以及其他可达性限制等。Calico还可以与Istio集成，以便在服务网格层和网络基础架构层中实施网络策略。
+
 
 
 
