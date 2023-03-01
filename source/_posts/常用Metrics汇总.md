@@ -184,3 +184,4 @@ comments: false
 
 # 参考文章
 * [prometheus node-exporter 全部指标](http://codefun007.xyz/a/article_detail/985.htm)
+* [Prometheus kube-state-metrics 监控指标介绍](https://www.fdevops.com/2022/02/14/prometheus-kube-state-metrics)
