@@ -400,6 +400,9 @@ Containers:
       memory: 256Mi
 ```
 
+## ResourceQuota
+
+
 # Pod 驱逐机制
 kubelet 持续监控主机的资源使用情况，并尽可能防止计算资源被耗尽，一旦出现资源紧缺，kubelet会主动终止一个或多个pod运行。当一个pod被终止时，其中的容器会全部停止，pod状态会被置为Failed。
 

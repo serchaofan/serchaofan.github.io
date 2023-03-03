@@ -2664,12 +2664,12 @@ ResourceQuota Controller（资源配额管理）确保了指定资源对象在�
 
 - 容器级别：对 CPU 和内存
 - Pod 级别：对 Pod 内所有容器的资源
-- Namespace 级别：多租户级别的资源限制，包括：Pod 数量、ReplicationController 数量、Service 数量、ResourceQuota 数量、Secret 数量、PV 数量
+- Namespace 级别：多租户级别的资源限制，包括：Pod 数量、ReplicationController 数量、Service 数量、ResourceQuota 数量、Secret 数量、PV 数量。
 
 配额管理通过 Admission Control（准入控制）来控制，提供两种方式：
 
-- LimitRanger：作用于 Pod 和 Container
-- ResourceQuota：作用于 Namespace
+- LimitRange：作用于 Pod 和 Container。详见[Kubernetes集群管理 LimitRange](https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/#LimitRange)
+- ResourceQuota：作用于 Namespace。详见[Kubernetes集群管理 LimitRange](https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/#ResourceQuota)
 
 若在 Pod 中声明了 LimitRanger，则通过 APIserver 请求创建或修改资源时，Admission Control 会计算当前配额的使用情况，若不符合配额约束，则创建失败。
 若在 Namespace 中声明了 ResourceQuota，则 ResourceQuota Controller 负责定期统计和生成该 Namespace 下各个资源对象的资源使用总量并写入 etcd 的 resourceQuotaStatusStorage 目录（resourceQuotas/status），然后这些统计被 Admission Control 使用，确保相关 Namespace 下资源配额总量不超过 ResourceQuota 的限定值。
