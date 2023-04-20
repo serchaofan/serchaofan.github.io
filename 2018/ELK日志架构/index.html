@@ -1,0 +1,3606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/#5.7.7'>
+  <meta name="generator" content="Hexo 6.3.0">
+  <meta name="Volantis" content="5.7.7">
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+  <link rel="canonical" href="https://tianyigu.top/2018/elk日志架构/"/>
+  <!-- 渲染优化 -->
+    <meta http-equiv='x-dns-prefetch-control' content='on' />
+      <link rel='dns-prefetch' href='https://unpkg.com'>
+      <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self' https:; block-all-mixed-content; base-uri 'self' https:; form-action 'self' https:; worker-src 'self' https:; connect-src 'self' https: *; img-src 'self' data: https: *; media-src 'self' https: *; font-src 'self' data: https: *; frame-src 'self' https: *; manifest-src 'self' https: *; child-src https:; script-src 'self' https: 'unsafe-inline' *; style-src 'self' https: 'unsafe-inline' *; ">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+  <meta content="telephone=no" name="format-detection">
+  <!-- import head_begin begin -->
+  <!-- import head_begin end -->
+  <!-- Custom Files headBegin begin-->
+  
+  <!-- Custom Files headBegin end-->
+    <link rel="shortcut icon" type='image/x-icon' href="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preload" href="https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<link rel="preload" href="https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <!-- feed -->
+  <!-- 页面元数据 -->
+  <title>ELK日志架构 - Tianyi的技术随笔</title>
+  <meta name="keywords" content="运维,Elasticsearch,ELK,Kafka,Kibana,Logstash,日志,Filebeat,undefined">
+  <meta desc name="description" content="本篇文章将完整描述基于ELK的日志系统的设计与部署，以及所有涉及的知识点。 - Tianyi Gu - Tianyi的技术随笔">
+  
+<meta property="og:type" content="article">
+<meta property="og:title" content="ELK日志架构">
+<meta property="og:url" content="https://tianyigu.top/2018/ELK%E6%97%A5%E5%BF%97%E6%9E%B6%E6%9E%84/index.html">
+<meta property="og:site_name" content="Tianyi的技术随笔">
+<meta property="og:description" content="本篇文章将完整描述基于ELK的日志系统的设计与部署，以及所有涉及的知识点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+<meta property="article:published_time" content="2018-09-24T08:28:34.000Z">
+<meta property="article:modified_time" content="2022-07-11T15:20:00.462Z">
+<meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="运维">
+<meta property="article:tag" content="Elasticsearch">
+<meta property="article:tag" content="ELK">
+<meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="Kibana">
+<meta property="article:tag" content="Logstash">
+<meta property="article:tag" content="日志">
+<meta property="article:tag" content="Filebeat">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+  <style>
+    /* 首屏样式 */
+    #safearea {
+  display: none;
+}
+:root {
+  --color-site-body: #f4f4f4;
+  --color-site-bg: #f4f4f4;
+  --color-site-inner: #fff;
+  --color-site-footer: #666;
+  --color-card: #fff;
+  --color-text: #444;
+  --color-block: #f6f6f6;
+  --color-inlinecode: #c74f00;
+  --color-codeblock: #fff7ea;
+  --color-h1: #3a3a3a;
+  --color-h2: #3a3a3a;
+  --color-h3: #333;
+  --color-h4: #444;
+  --color-h5: #555;
+  --color-h6: #666;
+  --color-p: #444;
+  --color-list: #666;
+  --color-list-hl: #30ad91;
+  --color-meta: #888;
+  --color-read-bkg: #e0d8c8;
+  --color-read-post: #f8f1e2;
+  --color-copyright-bkg: #f5f5f5;
+}
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+*::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+html {
+  color: var(--color-text);
+  width: 100%;
+  height: 100%;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  font-size: 16px;
+}
+html >::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+html >::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+html >::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+html >::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+body {
+  background-color: var(--color-site-body);
+  text-rendering: optimizelegibility;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+body.modal-active {
+  overflow: hidden;
+}
+@media screen and (max-width: 680px) {
+  body.modal-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+a {
+  color: #2092ec;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+a:hover {
+  color: #ff5722;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+ol {
+  padding-left: 0;
+}
+ul li,
+ol li {
+  list-style: none;
+}
+header {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+img {
+  border: 0;
+  background: none;
+  max-width: 100%;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  height: 0;
+  border: 0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  border-bottom: 1px solid rgba(68,68,68,0.1);
+}
+button,
+input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+button {
+  overflow: visible;
+  text-transform: none;
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+@supports (backdrop-filter: blur(20px)) {
+  .blur {
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+.shadow {
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.shadow.floatable {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.shadow.floatable:hover {
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+}
+#l_cover {
+  min-height: 64px;
+}
+.cover-wrapper {
+  top: 0;
+  left: 0;
+  max-width: 100%;
+  height: 100vh;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+  color: var(--color-site-inner);
+  padding: 0 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -100px;
+}
+.cover-wrapper .cover-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+}
+.cover-wrapper .cover-bg.lazyload:not(.loaded) {
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+}
+.cover-wrapper .cover-bg.lazyload.loaded {
+  animation-delay: 0s;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+  animation-name: fadeIn;
+}
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cover-wrapper#full {
+  height: calc(100vh + 100px);
+  padding-bottom: 100px;
+}
+.cover-wrapper#half {
+  max-height: 640px;
+  min-height: 400px;
+  height: calc(36vh - 64px + 200px);
+}
+.cover-wrapper #scroll-down {
+  width: 100%;
+  height: 64px;
+  position: absolute;
+  bottom: 100px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover-wrapper #scroll-down .scroll-down-effects {
+  color: #fff;
+  font-size: 24px;
+  line-height: 64px;
+  position: absolute;
+  width: 24px;
+  left: calc(50% - 12px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  animation: scroll-down-effect 1.5s infinite;
+  -webkit-animation: scroll-down-effect 1.5s infinite;
+  -khtml-animation: scroll-down-effect 1.5s infinite;
+  -moz-animation: scroll-down-effect 1.5s infinite;
+  -o-animation: scroll-down-effect 1.5s infinite;
+  -ms-animation: scroll-down-effect 1.5s infinite;
+}
+@-moz-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  margin-top: 64px;
+  margin-bottom: 100px;
+}
+.cover-wrapper .cover-body,
+.cover-wrapper .cover-body .top,
+.cover-wrapper .cover-body .bottom {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  max-width: 100%;
+}
+.cover-wrapper .cover-body .bottom {
+  margin-top: 32px;
+}
+.cover-wrapper .cover-body .title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+  font-size: 3.125rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.cover-wrapper .cover-body .subtitle {
+  font-size: 20px;
+}
+.cover-wrapper .cover-body .logo {
+  max-height: 120px;
+  max-width: calc(100% - 4 * 16px);
+}
+@media screen and (min-height: 1024px) {
+  .cover-wrapper .cover-body .title {
+    font-size: 3rem;
+  }
+  .cover-wrapper .cover-body .subtitle {
+    font-size: 1.05rem;
+  }
+  .cover-wrapper .cover-body .logo {
+    max-height: 150px;
+  }
+}
+.cover-wrapper .cover-body .m_search {
+  position: relative;
+  max-width: calc(100% - 16px);
+  width: 320px;
+  vertical-align: middle;
+}
+.cover-wrapper .cover-body .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  width: 100%;
+}
+.cover-wrapper .cover-body .m_search .icon,
+.cover-wrapper .cover-body .m_search .input {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.cover-wrapper .cover-body .m_search .icon {
+  position: absolute;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  line-height: 2.5rem;
+  width: 32px;
+  top: 0;
+  left: 5px;
+  color: rgba(68,68,68,0.75);
+}
+.cover-wrapper .cover-body .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  padding-left: 36px;
+  border-radius: 1.4rem;
+  -webkit-border-radius: 1.4rem;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: var(--color-text);
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .cover-body .m_search .input {
+    padding-left: 36px;
+  }
+}
+.cover-wrapper .cover-body .m_search .input:hover {
+  background: rgba(255,255,255,0.8);
+}
+.cover-wrapper .cover-body .m_search .input:focus {
+  background: #fff;
+}
+.cover-wrapper .list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -khtml-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -o-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  align-items: stretch;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.cover-wrapper .list-h a {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  font-weight: 600;
+}
+.cover-wrapper .list-h a img {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  margin: 4px;
+  min-width: 40px;
+  max-width: 44px;
+}
+@media screen and (max-width: 768px) {
+  .cover-wrapper .list-h a img {
+    min-width: 36px;
+    max-width: 40px;
+  }
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .list-h a img {
+    margin: 2px 4px;
+    min-width: 32px;
+    max-width: 36px;
+  }
+}
+@media screen and (max-width: 375px) {
+  .cover-wrapper .list-h a img {
+    min-width: 28px;
+    max-width: 32px;
+  }
+}
+.cover-wrapper {
+  max-width: 100%;
+}
+.cover-wrapper.search .bottom .menu {
+  margin-top: 16px;
+}
+.cover-wrapper.search .bottom .menu .list-h a {
+  white-space: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2px;
+  margin: 4px;
+  color: var(--color-site-inner);
+  opacity: 0.75;
+  -webkit-opacity: 0.75;
+  -moz-opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 2px solid transparent;
+}
+.cover-wrapper.search .bottom .menu .list-h a i {
+  margin-right: 4px;
+}
+.cover-wrapper.search .bottom .menu .list-h a p {
+  font-size: 0.9375rem;
+}
+.cover-wrapper.search .bottom .menu .list-h a:hover,
+.cover-wrapper.search .bottom .menu .list-h a.active,
+.cover-wrapper.search .bottom .menu .list-h a:active {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  border-bottom: 2px solid var(--color-site-inner);
+}
+.cover-wrapper.dock .menu,
+.cover-wrapper.featured .menu,
+.cover-wrapper.focus .menu {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+.cover-wrapper.dock .menu .list-h a,
+.cover-wrapper.featured .menu .list-h a,
+.cover-wrapper.focus .menu .list-h a {
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  line-height: 24px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-bottom: none;
+  text-align: center;
+  align-content: flex-end;
+  color: rgba(68,68,68,0.7);
+  font-size: 1.5rem;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h a,
+  .cover-wrapper.featured .menu .list-h a,
+  .cover-wrapper.focus .menu .list-h a {
+    padding: 12px 8px;
+  }
+}
+.cover-wrapper.dock .menu .list-h a i,
+.cover-wrapper.featured .menu .list-h a i,
+.cover-wrapper.focus .menu .list-h a i {
+  margin: 8px;
+}
+.cover-wrapper.dock .menu .list-h a p,
+.cover-wrapper.featured .menu .list-h a p,
+.cover-wrapper.focus .menu .list-h a p {
+  font-size: 0.875rem;
+}
+.cover-wrapper.dock .menu .list-h a.active,
+.cover-wrapper.featured .menu .list-h a.active,
+.cover-wrapper.focus .menu .list-h a.active {
+  background: var(--color-card);
+  backdrop-filter: none;
+}
+.cover-wrapper.dock .menu .list-h a.active i,
+.cover-wrapper.featured .menu .list-h a.active i,
+.cover-wrapper.focus .menu .list-h a.active i,
+.cover-wrapper.dock .menu .list-h a.active i+p,
+.cover-wrapper.featured .menu .list-h a.active i+p,
+.cover-wrapper.focus .menu .list-h a.active i+p {
+  color: #3dd9b6;
+}
+.cover-wrapper.dock .menu .list-h a.active img+p,
+.cover-wrapper.featured .menu .list-h a.active img+p,
+.cover-wrapper.focus .menu .list-h a.active img+p {
+  color: var(--color-text);
+}
+.cover-wrapper.dock .menu .list-h a:hover,
+.cover-wrapper.featured .menu .list-h a:hover,
+.cover-wrapper.focus .menu .list-h a:hover {
+  background: var(--color-card);
+}
+.cover-wrapper.dock .top {
+  margin-bottom: 48px;
+}
+.cover-wrapper.dock .menu {
+  background: rgba(255,255,255,0.5);
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+}
+.cover-wrapper.dock .menu .list-h {
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  margin: 4px;
+}
+.cover-wrapper.dock .menu .list-h a+a {
+  margin-left: 4px;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h {
+    overflow-x: scroll;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb {
+    background: #3dd9b6;
+    cursor: pointer;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb:hover {
+    background: #ff5722;
+  }
+}
+@supports (backdrop-filter: blur(20px)) {
+  .cover-wrapper.dock .menu {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url("https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Varela Round';
+  src: url("https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/VarelaRound/VarelaRound-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+.l_header {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--color-card);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.l_header.auto {
+  transition: opacity 0.4s ease;
+  -webkit-transition: opacity 0.4s ease;
+  -khtml-transition: opacity 0.4s ease;
+  -moz-transition: opacity 0.4s ease;
+  -o-transition: opacity 0.4s ease;
+  -ms-transition: opacity 0.4s ease;
+  visibility: hidden;
+}
+.l_header.auto.show {
+  opacity: 1 !important;
+  -webkit-opacity: 1 !important;
+  -moz-opacity: 1 !important;
+  visibility: visible;
+}
+.l_header .container {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.l_header #wrapper {
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.l_header #wrapper .nav-main,
+.l_header #wrapper .nav-sub {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -khtml-justify-content: space-between;
+  -moz-justify-content: space-between;
+  -o-justify-content: space-between;
+  -ms-justify-content: space-between;
+  align-items: center;
+}
+.l_header #wrapper .nav-main {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.l_header #wrapper.sub .nav-main {
+  transform: translateY(-64px);
+  -webkit-transform: translateY(-64px);
+  -khtml-transform: translateY(-64px);
+  -moz-transform: translateY(-64px);
+  -o-transform: translateY(-64px);
+  -ms-transform: translateY(-64px);
+}
+.l_header #wrapper .nav-sub {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+  height: 64px;
+  width: calc(100% - 2 * 16px);
+  position: absolute;
+}
+.l_header #wrapper .nav-sub ::-webkit-scrollbar {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (min-width: 2048px) {
+  .l_header #wrapper .nav-sub {
+    max-width: 55vw;
+    margin: auto;
+  }
+}
+.l_header #wrapper.sub .nav-sub {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+}
+.l_header #wrapper .title {
+  position: relative;
+  color: var(--color-text);
+  padding-left: 24px;
+  max-height: 64px;
+}
+.l_header #wrapper .nav-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  line-height: 64px;
+  padding: 0 24px;
+  font-size: 1.25rem;
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+}
+.l_header #wrapper .nav-main .title img {
+  height: 64px;
+}
+.l_header .nav-sub {
+  max-width: 1580px;
+  margin: auto;
+}
+.l_header .nav-sub .title {
+  font-weight: bold;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  line-height: 1.2;
+  max-height: 64px;
+  white-space: normal;
+  flex-shrink: 1;
+}
+.l_header .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  line-height: 64px;
+  align-items: center;
+}
+.l_header .switcher .s-toc {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  .l_header .switcher .s-toc {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+  }
+}
+.l_header .switcher >li {
+  height: 48px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  margin: 2px;
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li {
+    margin: 0 1px;
+    height: 48px;
+  }
+}
+.l_header .switcher >li >a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0.85em 1.1em;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  color: #3dd9b6;
+}
+.l_header .switcher >li >a:hover {
+  border: none;
+}
+.l_header .switcher >li >a.active,
+.l_header .switcher >li >a:active {
+  border: none;
+  background: var(--color-site-bg);
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li >a {
+    width: 36px;
+    height: 48px;
+  }
+}
+.l_header .nav-sub .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+}
+.l_header .m_search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  height: 64px;
+  width: 240px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (max-width: 1024px) {
+  .l_header .m_search {
+    width: 44px;
+    min-width: 44px;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+  }
+  .l_header .m_search:hover {
+    width: 240px;
+  }
+  .l_header .m_search:hover input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search:hover .input {
+    width: 100%;
+  }
+  .l_header .m_search:hover .input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search {
+    min-width: 0;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.l_header .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.l_header .m_search .icon {
+  position: absolute;
+  width: 36px;
+  left: 5px;
+  color: var(--color-meta);
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .icon {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+.l_header .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
+  width: 100%;
+  color: var(--color-text);
+  background: #fafafa;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 40px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search .input:focus {
+    box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .input {
+    background: var(--color-block);
+    padding-left: 8px;
+    border: none;
+  }
+  .l_header .m_search .input:hover,
+  .l_header .m_search .input:focus {
+    border: none;
+  }
+}
+@media (max-width: 500px) {
+  .l_header .m_search {
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    transition: all 0.28s ease;
+    -webkit-transition: all 0.28s ease;
+    -khtml-transition: all 0.28s ease;
+    -moz-transition: all 0.28s ease;
+    -o-transition: all 0.28s ease;
+    -ms-transition: all 0.28s ease;
+  }
+  .l_header .m_search .input {
+    border-radius: 32px;
+    -webkit-border-radius: 32px;
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  .l_header.z_search-open .m_search {
+    width: 100%;
+  }
+  .l_header.z_search-open .m_search .input {
+    width: calc(100% - 120px);
+  }
+}
+ul.m-pc >li>a {
+  color: inherit;
+  border-bottom: 2px solid transparent;
+}
+ul.m-pc >li>a:active,
+ul.m-pc >li>a.active {
+  border-bottom: 2px solid #3dd9b6;
+}
+ul.m-pc li:hover >ul.list-v,
+ul.list-v li:hover >ul.list-v {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.nav-list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  align-items: stretch;
+}
+ul.nav-list-h>li {
+  position: relative;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  height: 100%;
+  line-height: 2.4;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+ul.nav-list-h>li >a {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+ul.list-v {
+  z-index: 1;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: absolute;
+  background: var(--color-card);
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  margin-top: -6px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  padding: 8px 0;
+}
+ul.list-v.show {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.list-v hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+ul.list-v >li {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+ul.list-v >li.header {
+  font-size: 0.78125rem;
+  font-weight: bold;
+  line-height: 2em;
+  color: var(--color-meta);
+  margin: 8px 16px 4px;
+}
+ul.list-v >li.header i {
+  margin-right: 8px;
+}
+ul.list-v >li ul {
+  margin-left: 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: -40px;
+}
+ul.list-v .aplayer-container {
+  min-height: 64px;
+  padding: 6px 16px;
+}
+ul.list-v >li>a {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  color: var(--color-list);
+  font-size: 0.875rem;
+  font-weight: bold;
+  line-height: 36px;
+  padding: 0 20px 0 16px;
+  text-overflow: ellipsis;
+  margin: 0 4px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+@media screen and (max-width: 1024px) {
+  ul.list-v >li>a {
+    line-height: 40px;
+  }
+}
+ul.list-v >li>a >i {
+  margin-right: 8px;
+}
+ul.list-v >li>a:active,
+ul.list-v >li>a.active {
+  color: var(--color-list-hl);
+}
+ul.list-v >li>a:hover {
+  color: var(--color-list-hl);
+  background: var(--color-site-bg);
+}
+.l_header .menu >ul>li>a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding: 0 8px;
+}
+.l_header .menu >ul>li>a >i {
+  margin-right: 4px;
+}
+.l_header ul.nav-list-h>li {
+  color: var(--color-list);
+  line-height: 64px;
+}
+.l_header ul.nav-list-h>li >a {
+  max-height: 64px;
+  overflow: hidden;
+  color: inherit;
+}
+.l_header ul.nav-list-h>li >a:active,
+.l_header ul.nav-list-h>li >a.active {
+  color: #3dd9b6;
+}
+.l_header ul.nav-list-h>li:hover>a {
+  color: var(--color-list-hl);
+}
+.l_header ul.nav-list-h>li i.music {
+  animation: rotate-effect 1.5s linear infinite;
+  -webkit-animation: rotate-effect 1.5s linear infinite;
+  -khtml-animation: rotate-effect 1.5s linear infinite;
+  -moz-animation: rotate-effect 1.5s linear infinite;
+  -o-animation: rotate-effect 1.5s linear infinite;
+  -ms-animation: rotate-effect 1.5s linear infinite;
+}
+@-moz-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-o-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+.menu-phone li ul.list-v {
+  right: calc(100% - 0.5 * 16px);
+}
+.menu-phone li ul.list-v ul {
+  right: calc(100% - 0.5 * 16px);
+}
+#wrapper {
+  max-width: 1580px;
+  margin: auto;
+}
+@media screen and (min-width: 2048px) {
+  #wrapper {
+    max-width: 55vw;
+  }
+}
+#wrapper .menu {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 1;
+  -ms-flex: 1 1;
+  flex: 1 1;
+  margin: 0 16px 0 0;
+}
+#wrapper .menu .list-v ul {
+  left: calc(100% - 0.5 * 16px);
+}
+.menu-phone {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: 16px;
+  right: 8px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.menu-phone ul {
+  right: calc(100% - 0.5 * 16px);
+}
+@media screen and (max-width: 500px) {
+  .menu-phone {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: block;
+  }
+}
+.l_header {
+  max-width: 65vw;
+  left: calc((100% - 65vw) * 0.5);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media screen and (max-width: 2048px) {
+  .l_header {
+    max-width: 1612px;
+    left: calc((100% - 1612px) * 0.5);
+  }
+}
+@media screen and (max-width: 1612px) {
+  .l_header {
+    left: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    max-width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .l_header #wrapper .nav-main .title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .l_header #wrapper .nav-sub {
+    width: 100%;
+  }
+  .l_header #wrapper .nav-sub .title {
+    overflow-y: scroll;
+    margin-top: 2px;
+    padding: 8px 16px;
+  }
+  .l_header #wrapper .switcher {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+    margin-right: 8px;
+  }
+  .l_header .menu {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+@media screen and (max-width: 500px) {
+  .list-v li {
+    max-width: 270px;
+  }
+}
+#u-search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 60px 20px;
+  z-index: 1001;
+}
+@media screen and (max-width: 680px) {
+  #u-search {
+    padding: 0px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+    '.kill-t{'+
+      'font-size: 2rem;'+
+    '}'+
+    '.kill-c{'+
+      'font-size: 1.2rem;'+
+    '}'+
+		'#l_header,#l_body{'+
+			'display: none;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        `<span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>`+
+        `<span class="kill-c">微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</span><br/>`+
+        `<a target="_blank" rel="noopener" href="https://blogs.windows.com/windowsexperience/2021/05/19/the-future-of-internet-explorer-on-windows-10-is-in-microsoft-edge/"><strong>了解详情 ></strong></a>`+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+    .kill-t{
+      font-size: 2rem;
+    }
+    .kill-c{
+      font-size: 1.2rem;
+    }
+		#l_header,#l_body{
+			display: none;
+		}
+	</style>
+    <div class="kill-noscript">
+        <span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>
+        <span class="kill-c">本页面需要浏览器支持（启用）JavaScript</span><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+
+  <script>
+  /************这个文件存放不需要重载的全局变量和全局函数*********/
+  window.volantis = {}; // volantis 全局变量
+  volantis.debug = "env"; // 调试模式
+  volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
+
+  volantis.GLOBAL_CONFIG ={
+    debug: "env",
+    cdn: {"js":{"app":"/js/app.js","parallax":"/js/plugins/parallax.js","rightMenu":"/js/plugins/rightMenu.js","rightMenus":"/js/plugins/rightMenus.js","sites":"/js/plugins/tags/sites.js","friends":"/js/plugins/tags/friends.js","contributors":"/js/plugins/tags/contributors.js","search":"/js/search/hexo.js"},"css":{"style":"/css/style.css"}},
+    default: {"avatar":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/image/2659360.svg"},
+    lastupdate: new Date(1682016589825),
+    sidebar: {
+      for_page: ["blogger","category","tagcloud"],
+      for_post: ["toc"],
+      webinfo: {
+        lastupd: {
+          enable: true,
+          friendlyShow: true
+        },
+        runtime: {
+          data: "2020/01/01",
+          unit: "天"
+        }
+      }
+    },
+    plugins: {
+      message: {"enable":true,"css":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/izitoast/dist/css/iziToast.min.css","js":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/izitoast/dist/js/iziToast.min.js","icon":{"default":"fa-solid fa-info-circle light-blue","quection":"fa-solid fa-question-circle light-blue"},"time":{"default":5000,"quection":20000},"position":"topRight","transitionIn":"bounceInLeft","transitionOut":"fadeOutRight","titleColor":"var(--color-text)","messageColor":"var(--color-text)","backgroundColor":"var(--color-card)","zindex":2147483647,"copyright":{"enable":true,"title":"知识共享许可协议","message":"请遵守 CC BY-NC-SA 4.0 协议。","icon":"far fa-copyright light-blue"},"aplayer":{"enable":true,"play":"fa-solid fa-play","pause":"fa-solid fa-pause"},"rightmenu":{"enable":true,"notice":true}},
+      fancybox: {"css":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fancyapps/ui/dist/fancybox.css","js":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fancyapps/ui/dist/fancybox.umd.js"},
+      
+      
+      
+    }
+  }
+
+  /******************** volantis.EventListener ********************************/
+  // 事件监听器 see: /source/js/app.js
+  volantis.EventListener = {}
+  // 这里存放pjax切换页面时将被移除的事件监听器
+  volantis.EventListener.list = []
+  //构造方法
+  function volantisEventListener(type, f, ele) {
+    this.type = type
+    this.f = f
+    this.ele = ele
+  }
+  // 移除事件监听器
+  volantis.EventListener.remove = () => {
+    volantis.EventListener.list.forEach(function (i) {
+      i.ele.removeEventListener(i.type, i.f, false)
+    })
+    volantis.EventListener.list = []
+  }
+  /******************** volantis.dom.$ ********************************/
+  // 注：这里没有选择器，也没有forEach一次只处理一个dom，这里重新封装主题常用的dom方法，返回的是dom对象，对象包含了以下方法，同时保留dom的原生API
+  function volantisDom(ele) {
+    if (!ele) ele = document.createElement("div")
+    this.ele = ele;
+    // ==============================================================
+    this.ele.find = (c) => {
+      let q = this.ele.querySelector(c)
+      if (q)
+        return new volantisDom(q)
+    }
+    // ==============================================================
+    this.ele.hasClass = (c) => {
+      return this.ele.className.match(new RegExp('(\\s|^)' + c + '(\\s|$)'));
+    }
+    this.ele.addClass = (c) => {
+      this.ele.classList.add(c);
+      return this.ele
+    }
+    this.ele.removeClass = (c) => {
+      this.ele.classList.remove(c);
+      return this.ele
+    }
+    this.ele.toggleClass = (c) => {
+      if (this.ele.hasClass(c)) {
+        this.ele.removeClass(c)
+      } else {
+        this.ele.addClass(c)
+      }
+      return this.ele
+    }
+    // ==============================================================
+    // 参数 r 为 true 表示pjax切换页面时事件监听器将被移除，false不移除
+    this.ele.on = (c, f, r = 1) => {
+      this.ele.addEventListener(c, f, false)
+      if (r) {
+        volantis.EventListener.list.push(new volantisEventListener(c, f, this.ele))
+      }
+      return this.ele
+    }
+    this.ele.click = (f, r) => {
+      this.ele.on("click", f, r)
+      return this.ele
+    }
+    this.ele.scroll = (f, r) => {
+      this.ele.on("scroll", f, r)
+      return this.ele
+    }
+    // ==============================================================
+    this.ele.html = (c) => {
+      // if(c=== undefined){
+      //   return this.ele.innerHTML
+      // }else{
+      this.ele.innerHTML = c
+      return this.ele
+      // }
+    }
+    // ==============================================================
+    this.ele.hide = (c) => {
+      this.ele.style.display = "none"
+      return this.ele
+    }
+    this.ele.show = (c) => {
+      this.ele.style.display = "block"
+      return this.ele
+    }
+    // ==============================================================
+    return this.ele
+  }
+  volantis.dom.$ = (ele) => {
+    return !!ele ? new volantisDom(ele) : null;
+  }
+  /******************** RunItem ********************************/
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = ()=>{
+          volantis.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) =>{
+      for (let index = 0; index < this.list.length; index++) {
+        const e = this.list[index];
+        if (e.name == name) {
+          this.list.splice(index,1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }
+  }
+  /******************** Pjax ********************************/
+  // /layout/_plugins/pjax/index.ejs
+  // volantis.pjax.send(callBack[,"callBackName"]) 传入pjax:send回调函数
+  // volantis.pjax.push(callBack[,"callBackName"]) 传入pjax:complete回调函数
+  // volantis.pjax.error(callBack[,"callBackName"]) 传入pjax:error回调函数
+  volantis.pjax = {};
+  volantis.pjax.method = {
+    complete: new RunItem(),
+    error: new RunItem(),
+    send: new RunItem(),
+  };
+  volantis.pjax = Object.assign(volantis.pjax, {
+    push: volantis.pjax.method.complete.push,
+    error: volantis.pjax.method.error.push,
+    send: volantis.pjax.method.send.push,
+  });
+  /******************** RightMenu ********************************/
+  // volantis.rightmenu.handle(callBack[,"callBackName"]) 外部菜单项控制
+  // 可在 volantis.mouseEvent 处获取右键事件
+  volantis.rightmenu = {};
+  volantis.rightmenu.method = {
+    handle: new RunItem(),
+  }
+  volantis.rightmenu = Object.assign(volantis.rightmenu, {
+    handle: volantis.rightmenu.method.handle.push,
+  });
+  /********************  Dark Mode  ********************************/
+  // /layout/_partial/scripts/darkmode.ejs
+  // volantis.dark.mode 当前模式 dark or light
+  // volantis.dark.toggle() 暗黑模式触发器
+  // volantis.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  volantis.dark = {};
+  volantis.dark.method = {
+    toggle: new RunItem(),
+  };
+  volantis.dark = Object.assign(volantis.dark, {
+    push: volantis.dark.method.toggle.push,
+  });
+  /********************  Message  ********************************/
+  // VolantisApp.message
+  /********************  isMobile  ********************************/
+  // /source/js/app.js
+  // volantis.isMobile
+  // volantis.isMobileOld
+  /********************脚本动态加载函数********************************/
+  // volantis.js(src, cb)  cb 可以传入onload回调函数 或者 JSON对象 例如: volantis.js("src", ()=>{}) 或 volantis.js("src", {defer:true,onload:()=>{}})
+  // volantis.css(src)
+
+  // 返回Promise对象，如下方法同步加载资源，这利于处理文件资源之间的依赖关系，例如：APlayer 需要在 MetingJS 之前加载
+  // (async () => {
+  //     await volantis.js("...theme.plugins.aplayer.js.aplayer...")
+  //     await volantis.js("...theme.plugins.aplayer.js.meting...")
+  // })();
+
+  // 已经加入了setTimeout
+  volantis.js = (src, cb) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var HEAD = document.getElementsByTagName("head")[0] || document.documentElement;
+        var script = document.createElement("script");
+        script.setAttribute("type", "text/javascript");
+        if (cb) {
+          if (JSON.stringify(cb)) {
+            for (let p in cb) {
+              if (p == "onload") {
+                script[p] = () => {
+                  cb[p]()
+                  resolve()
+                }
+              } else {
+                script[p] = cb[p]
+                script.onload = resolve
+              }
+            }
+          } else {
+            script.onload = () => {
+              cb()
+              resolve()
+            };
+          }
+        } else {
+          script.onload = resolve
+        }
+        script.setAttribute("src", src);
+        HEAD.appendChild(script);
+      });
+    });
+  }
+  volantis.css = (src) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var link = document.createElement('link');
+        link.rel = "stylesheet";
+        link.href = src;
+        link.onload = resolve;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      });
+    });
+  }
+  /********************按需加载的插件********************************/
+  // volantis.import.jQuery().then(()=>{})
+  volantis.import = {
+    jQuery: () => {
+      if (typeof jQuery == "undefined") {
+        return volantis.js("https://unpkg.com/volantis-static@0.0.1654736714924/libs/jquery/dist/jquery.min.js")
+      } else {
+        return new Promise(resolve => {
+          resolve()
+        });
+      }
+    }
+  }
+  /********************** requestAnimationFrame ********************************/
+  // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+  // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+  volantis.requestAnimationFrame = (fn)=>{
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+    }
+    window.requestAnimationFrame(fn)
+  }
+  /************************ layoutHelper *****************************************/
+  volantis.layoutHelper = (helper, html, opt)=>{
+    opt = Object.assign({clean:false, pjax:true}, opt)
+    function myhelper(helper, html, clean) {
+      volantis.tempDiv = document.createElement("div");
+      volantis.tempDiv.innerHTML = html;
+      let layoutHelper = document.querySelector("#layoutHelper-"+helper)
+      if (layoutHelper) {
+        if (clean) {
+          layoutHelper.innerHTML = ""
+        }
+        layoutHelper.append(volantis.tempDiv);
+      }
+    }
+    myhelper(helper, html, opt.clean)
+    if (opt.pjax) {
+      volantis.pjax.push(()=>{
+        myhelper(helper, html, opt.clean)
+      },"layoutHelper-"+helper)
+    }
+  }
+  /****************************** 滚动事件处理 ****************************************/
+  volantis.scroll = {
+    engine: new RunItem(),
+    unengine: new RunItem(),
+  };
+  volantis.scroll = Object.assign(volantis.scroll, {
+    push: volantis.scroll.engine.push,
+  });
+  // 滚动条距离顶部的距离
+  volantis.scroll.getScrollTop = () =>{
+    let scrollPos;
+    if (window.pageYOffset) {
+      scrollPos = window.pageYOffset;
+    } else if (document.compatMode && document.compatMode != 'BackCompat') {
+      scrollPos = document.documentElement.scrollTop;
+    } else if (document.body) {
+      scrollPos = document.body.scrollTop;
+    }
+    return scrollPos;
+  }
+  // 使用 requestAnimationFrame 处理滚动事件
+  // `volantis.scroll.del` 中存储了一个数值, 该数值检测一定时间间隔内滚动条滚动的位移, 数值的检测频率是浏览器的刷新频率. 数值为正数时, 表示向下滚动. 数值为负数时, 表示向上滚动.
+  volantis.scroll.handleScrollEvents = () => {
+    volantis.scroll.lastScrollTop = volantis.scroll.getScrollTop()
+    function loop() {
+      const scrollTop = volantis.scroll.getScrollTop();
+      if (volantis.scroll.lastScrollTop !== scrollTop) {
+        volantis.scroll.del = scrollTop - volantis.scroll.lastScrollTop;
+        volantis.scroll.lastScrollTop = scrollTop;
+        // if (volantis.scroll.del > 0) {
+        //   console.log("向下滚动");
+        // } else {
+        //   console.log("向上滚动");
+        // }
+        // 注销过期的unengine未滚动事件
+        volantis.scroll.unengine.list=[]
+        volantis.scroll.engine.start();
+      }else{
+        volantis.scroll.unengine.start();
+      }
+      volantis.requestAnimationFrame(loop)
+    }
+    volantis.requestAnimationFrame(loop)
+  }
+  volantis.scroll.handleScrollEvents()
+  volantis.scroll.ele = null;
+  // 触发页面滚动至目标元素位置
+  volantis.scroll.to = (ele, option = {}) => {
+    if (!ele) return;
+    volantis.scroll.ele = ele;
+    // 默认配置
+    opt = {
+      top: ele.getBoundingClientRect().top + document.documentElement.scrollTop,
+      behavior: "smooth"
+    }
+    // 定义配置
+    if ("top" in option) {
+      opt.top = option.top
+    }
+    if ("behavior" in option) {
+      opt.behavior = option.behavior
+    }
+    if ("addTop" in option) {
+      opt.top += option.addTop
+    }
+    if (!("observerDic" in option)) {
+      option.observerDic = 100
+    }
+    // 滚动
+    window.scrollTo(opt);
+    // 监视器
+    // 监视并矫正元素滚动到指定位置
+    // 用于处理 lazyload 引起的 cls 导致的定位失败问题
+    // option.observer = false
+    if (option.observer) {
+      setTimeout(() => {
+        if (volantis.scroll.ele != ele) {
+          return
+        }
+        volantis.scroll.unengine.push(() => {
+          let me = ele.getBoundingClientRect().top
+          if(!(me >= -option.observerDic && me <= option.observerDic)){
+            volantis.scroll.to(ele, option)
+          }
+          volantis.scroll.unengine.remove("unengineObserver")
+        },"unengineObserver")
+      },1000)
+    }
+  }
+  /********************** Content Visibility ********************************/
+  // 见 source/css/first.styl 如果遇到任何问题 删除 .post-story 即可
+  // 一个元素被声明 content-visibility 属性后 如果元素不在 viewport 中 浏览器不会计算其后代元素样式和属性 从而节省 Style & Layout 耗时
+  // content-visibility 的副作用: 锚点失效 等等(实验初期 暂不明确), 使用此方法清除样式
+  volantis.cleanContentVisibility = ()=>{
+    if (document.querySelector(".post-story")) {
+      console.log("cleanContentVisibility");
+      document.querySelectorAll(".post-story").forEach(e=>{
+        e.classList.remove("post-story")
+      })
+    }
+  }
+  /******************************************************************************/
+  /******************************************************************************/
+  /******************************************************************************/
+  //图像加载出错时的处理
+  function errorImgAvatar(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/avatar/round/3442075.svg";
+    img.onerror = null;
+  }
+  function errorImgCover(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/cover/76b86c0226ffd.svg";
+    img.onerror = null;
+  }
+  /******************************************************************************/
+</script>
+
+  <!-- import head_end begin -->
+  <!-- import head_end end -->
+  <!-- Custom Files headEnd begin-->
+  
+  <!-- Custom Files headEnd end-->
+</head>
+  <body itemscope itemtype="http://schema.org/WebPage">
+    <!-- import body_begin begin-->
+    <!-- import body_begin end-->
+    <!-- Custom Files bodyBegin begin-->
+    
+    <!-- Custom Files bodyBegin end-->
+    <header itemscope itemtype="http://schema.org/WPHeader" id="l_header" class="l_header auto shadow floatable blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fa-solid fa-comments fa-fw" target="_self"  href="/" onclick="return false;" title="comment"></a></li>
+        
+          <li><a id="s-toc" class="s-toc fa-solid fa-list fa-fw" target="_self"  href="/" onclick="return false;" title="toc"></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+      
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fa-solid fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+      
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fa-solid fa-search fa-fw" target="_self" href="/" onclick="return false;" title="search"></a></li>
+				
+				<li>
+          <a class="s-menu fa-solid fa-bars fa-fw" target="_self" href="/" onclick="return false;" title="menu"></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+
+      <!-- Custom Files header begin -->
+      
+      <!-- Custom Files header end -->
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+      <!-- see: /layout/_partial/scripts/_ctrl/coverCtrl.ejs -->
+      <div id="none" class='cover-wrapper post dock' style="display: none;">
+        
+  <div class='cover-bg lazyload placeholder' data-bg="https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg"></div>
+
+<div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              active-action="action-v4getting-started">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              active-action="action-faqs">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              active-action="action-examples">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              active-action="action-contributors">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              active-action="action-archives">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              active-action="action-https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+      </div>
+    
+  
+</div>
+
+      <div id="safearea">
+        <div class="body-wrapper">
+          
+<div id="l_main" class=''>
+  <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow floatable blur article-type-post" id="post" itemscope itemprop="blogPost">
+  <link itemprop="mainEntityOfPage" href="https://tianyigu.top/2018/ELK日志架构/">
+  <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+  </span>
+  <span hidden itemprop="post" itemscope itemtype="http://schema.org/Post">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+    <meta itemprop="description" content="Tianyi的技术随笔">
+  </span>
+  
+
+
+  
+    <span hidden>
+      <meta itemprop="image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+    </span>
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title" itemprop="name headline">
+        ELK日志架构
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/%E6%97%A5%E5%BF%97/">日志</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/%E6%97%A5%E5%BF%97/" itemprop="url"><span itemprop="name">日志</span></a>
+      </span>
+    
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2018-09-24T16:28:34+08:00">
+  <a class='notlink'>
+    <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年9月24日</p>
+  </a>
+</div>
+
+          
+        
+        <!-- Custom Files topMeta begin-->
+        
+        <!-- Custom Files topMeta end-->
+      </div>
+    
+  </div>
+
+
+  <div id="layoutHelper-page-plugins"></div>
+  <div id="post-body" itemprop="articleBody">
+    <p>本篇文章将完整描述基于ELK的日志系统的设计与部署，以及所有涉及的知识点。</p>
+<span id="more"></span>
+
+<h1 id="Elasticsearch"><a href="#Elasticsearch" class="headerlink" title="Elasticsearch"></a>Elasticsearch</h1><p>Elasticsearch 是基于 Lucene 的搜索框架，使用 Java 编写，它提供了一个分布式多用户能力的全文搜索引擎，基于 RESTful web 接口，上手容易，拓展节点方便，可用于存储和检索海量数据，接近实时搜索，海量数据量增加，搜索响应性能几乎不受影响。</p>
+<blockquote>
+<p>Apache Lucene：目前存在的拥有最先进，高性能和全功能搜索引擎功能的库。但仅仅是一个库，Elasticsearch 则是提供了 Lucene 库的 RESTful API 接口，将所有的功能打包成一个单独的服务，做到”开箱即用“。</p>
+</blockquote>
+<p>Elasticsearch 主要特点：</p>
+<ul>
+<li>全文检索，结构化检索</li>
+<li>数据统计、分析，接近实时处理</li>
+<li>分布式搜索（可部署数百台服务器）</li>
+<li>自动发现节点</li>
+<li>副本机制</li>
+<li>处理 PB 级别的结构化或者非结构化数据</li>
+<li>保障可用性</li>
+<li>搜索纠错，自动完成</li>
+<li>与各种语言集成，与 Hadoop、Spark 等大数据分析平台集成</li>
+</ul>
+<p>使用场景：日志搜索，数据聚合，数据监控，报表统计分析</p>
+<blockquote>
+<p>使用 Elasticsearch 的大企业：维基百科、卫报、StackOverflow、Github、ebay</p>
+</blockquote>
+<h2 id="Elasticsearch集群安装"><a href="#Elasticsearch集群安装" class="headerlink" title="Elasticsearch集群安装"></a>Elasticsearch集群安装</h2><ol>
+<li>准备三台以上的单数台节点</li>
+<li>因为 Lucene 和 Elasticsearch 都是 Java 写的，所以首先搭建 JDK 环境，每台上都安装jdk</li>
+<li>下载 Elasticsearch，使用的版本7.5，使用rpm方式安装<blockquote>
+<p>下载地址：<a target="_blank" rel="noopener" href="https://www.elastic.co/cn/downloads/past-releases#elasticsearch">https://www.elastic.co/cn/downloads/past-releases#elasticsearch</a></p>
+</blockquote>
+</li>
+<li>先不启动，修改内核参数配置，在<code>/etc/sysctl.d/</code>创建<code>es.conf</code>  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">vm.max_map_count = 262144    # 最大虚拟内存</span><br><span class="line">fs.file-max=1000000</span><br><span class="line">net.ipv4.tcp_max_tw_buckets = 6000</span><br><span class="line">net.ipv4.tcp_sack = 1</span><br><span class="line">net.ipv4.tcp_window_scaling = 1</span><br><span class="line">net.ipv4.tcp_rmem = 4096 87380 4194304</span><br><span class="line">net.ipv4.tcp_wmem = 4096 16384 4194304</span><br><span class="line">net.ipv4.tcp_max_syn_backlog = 16384</span><br><span class="line">net.core.netdev_max_backlog = 32768</span><br><span class="line">net.core.somaxconn = 32768</span><br><span class="line">net.core.wmem_default = 8388608</span><br><span class="line">net.core.wmem_max = 16777216</span><br><span class="line">net.ipv4.tcp_timestamps = 1</span><br><span class="line">net.ipv4.tcp_fin_timeout = 20</span><br><span class="line">net.ipv4.tcp_synack_retries = 2</span><br><span class="line">net.ipv4.tcp_syn_retries = 2</span><br><span class="line">net.ipv4.tcp_syncookies = 1</span><br><span class="line">net.ipv4.tcp_tw_reuse = 1</span><br><span class="line">net.ipv4.tcp_mem = 94500000 915000000 927000000</span><br><span class="line">net.ipv4.tcp_max_orphans = 3276800</span><br><span class="line">net.ipv4.ip_local_port_range = 1024 65000</span><br><span class="line">net.nf_conntrack_max = 6553500</span><br><span class="line">net.netfilter.nf_conntrack_max = 6553500</span><br><span class="line">net.netfilter.nf_conntrack_tcp_timeout_close_wait = 60</span><br><span class="line">net.netfilter.nf_conntrack_tcp_timeout_fin_wait = 120</span><br><span class="line">net.netfilter.nf_conntrack_tcp_timeout_time_wait = 120</span><br><span class="line">net.netfilter.nf_conntrack_tcp_timeout_established = 3600</span><br><span class="line">net.core.rmem_default = 33554432</span><br><span class="line">net.core.rmem_max = 33554432</span><br></pre></td></tr></table></figure></li>
+<li>设置ulimit限制，修改<code>/etc/security/limits.conf</code>  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">* soft nproc 1000000</span><br><span class="line">* hard nproc 1000000</span><br><span class="line">* soft nofile 1000000</span><br><span class="line">* hard nofile 1000000</span><br></pre></td></tr></table></figure></li>
+<li>修改配置文件<code>/etc/elasticsearch/elasticsearch.yml</code>，需要先创建数据目录和日志目录，每台的<code>node.name</code>也要去修改  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">node.name: node-1</span><br><span class="line">node.master: true</span><br><span class="line">node.data: true</span><br><span class="line">path.data: /data/es/data</span><br><span class="line">path.logs: /data/es/logs</span><br><span class="line">bootstrap.memory_lock: true</span><br><span class="line">network.host: 0.0.0.0</span><br><span class="line">http.port: 9200</span><br><span class="line">transport.tcp.port: 9300</span><br><span class="line">http.cors.enabled: true</span><br><span class="line">http.cors.allow-origin: &quot;*&quot;</span><br></pre></td></tr></table></figure></li>
+<li>然后启动es，<code>systemctl start elasticsearch</code>，使es完成一些初始化数据操作。es都启动完成后，再停止掉es。</li>
+<li>继续修改es配置  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cluster.name: cluster1</span><br><span class="line">cluster.initial_master_nodes: node-1</span><br><span class="line">discovery.zen.ping.unicast.hosts: [&quot;xx.xx.xx.xx&quot;,&quot;xx.xx.xx.xx&quot;, &quot;xx.xx.xx.xx&quot;]</span><br><span class="line">discovery.zen.minimum_master_nodes: 2</span><br><span class="line">xpack.security.enabled: false</span><br></pre></td></tr></table></figure></li>
+<li>依次启动</li>
+</ol>
+<h2 id="Elasticsearch-配置文件"><a href="#Elasticsearch-配置文件" class="headerlink" title="Elasticsearch 配置文件"></a>Elasticsearch 配置文件</h2><p>ES 核心配置文件<code>config/elasticsearch.yml</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">cluster.name: my-application     #集群名称，若相同，且是同一网段会自动加入</span><br><span class="line">node.name: node-1                #当前节点名称</span><br><span class="line">node.attr.rack: r1               #</span><br><span class="line">network.host: 127.0.0.1          #默认情况下，Elastic只允许本机访问</span><br><span class="line">                                 #若要远程访问，取消注释并修改值为0.0.0.0</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>JVM 配置文件<code>jvm.option</code>，最好不要调。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-Xms1g     #最小堆内存</span><br><span class="line">-Xmx1g     #最大堆内存</span><br><span class="line">#两个值最好一致，且为机器物理内存的一半到2/3，也不能太小</span><br><span class="line"></span><br><span class="line">-XX:+UseConcMarkSweepGC</span><br><span class="line">-XX:CMSInitiatingOccupancyFraction=75</span><br><span class="line">-XX:+UseCMSInitiatingOccupancyOnly</span><br><span class="line">#垃圾回收算法，官方已经优化过了，不用调整</span><br></pre></td></tr></table></figure>
+
+<h2 id="Elasticsearch-概念"><a href="#Elasticsearch-概念" class="headerlink" title="Elasticsearch 概念"></a>Elasticsearch 概念</h2><p>Elasticsearch 是 <strong>面向文档</strong> 的，意味着它存储整个对象或文档。且 Elasticsearch 不仅存储文档，而且索引每个文档的内容使之可以被检索。在 Elasticsearch 中，是对文档进行索引、检索、排序和过滤，而不是对行列数据。这就是 ES 能支持复杂的全文搜索的原因。</p>
+<p>Elasticsearch 使用 JSON 作为文档的序列化格式。存储数据到 Elasticsearch 的行为叫做<strong>索引</strong>（动词，索引一个文档就是存储一个文档到索引），一个 Elasticsearch 集群可以包含多个索引 ，相应的每个索引可以包含多个<strong>类型</strong> 。这些不同的类型存储着多个文档 ，每个文档又有多个<strong>字段</strong> 。Elasticsearch 和 Lucene 使用<strong>倒排索引（也称反向索引）</strong>结构达到较高的检索速度。倒排索引就是关系型数据库通过增加一个索引到<strong>指定列</strong>上以提高搜索速度。</p>
+<h3 id="REST"><a href="#REST" class="headerlink" title="REST"></a>REST</h3><p>Representational State Transfer 表述性状态传递，是一种软件架构风格，提供的是一组设计原则和约束条件，主要用于客户端与服务器交互的软件，使得软件更简洁、有层次，更利于实现缓存等机制。</p>
+<p>REST 提供的与资源交互的方法：类似于 HTTP，但 REST 的方法仅仅面向资源，无法对 web 应用操作。</p>
+<ul>
+<li>GET：列出 URI 以及资源中详细信息</li>
+<li>PUT：将给定的一组资源替换当前资源</li>
+<li>POST：在指定资源中创建、追加一个新资源</li>
+<li>DELETE：删除资源</li>
+<li>HEAD：获取头信息</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">PUT /megacorp/employee/1</span><br><span class="line">&#123;</span><br><span class="line">    &quot;first_name&quot; : &quot;John&quot;,</span><br><span class="line">    &quot;last_name&quot; :  &quot;Smith&quot;,</span><br><span class="line">    &quot;age&quot; :        25,</span><br><span class="line">    &quot;about&quot; :      &quot;I love to go rock climbing&quot;,</span><br><span class="line">    &quot;interests&quot;: [ &quot;sports&quot;, &quot;music&quot; ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>megacorp</code>为索引名，<code>employee</code>为类型名，<code>1</code>为雇员 ID。Elasticsearch 仅需要找到雇员 ID 文件，就能知道该雇员的所有信息。</p>
+<p>若要与关系型数据库对照，<strong>索引</strong>（indice 或 index）对应<strong>库</strong>，<strong>类型</strong>（type）对应<strong>表</strong>，<strong>文档</strong>（document）对应<strong>行</strong>，<strong>字段</strong>（field）对应<strong>列</strong></p>
+<p>Elasticsearch 通过将数据<strong>分片（shards）</strong>存储以解决数据量大时不能直接存储在一块硬盘中，且无法一次性搜索超大的数据量的情况。创建索引时，只需定义所需的分片数即可。每个分片本身都是一个功能齐全且独立的“索引”，可以托管在集群中的任何节点上。</p>
+<blockquote>
+<p>每个 Elasticsearch 分片都是 Lucene 索引。每个 Lucene 可包含的最大文件数量为 Integer.MAX_VALUE - 128 个文件可以使用<code>/_cat/shards</code>监视分片大小。</p>
+</blockquote>
+<p>并通过创建分片的<strong>副本（replicas）</strong>，当主分片不可用时，副本就充当主分片使用。Elasticsearch 为每个索引分配 5 个主分片和 1 个副本，若集群中有两个节点，该索引的分片数会翻倍，即 10 个分片。</p>
+<h3 id="集群原理"><a href="#集群原理" class="headerlink" title="集群原理"></a>集群原理</h3><p>一个运行的 Elasticsearch 实例为一个节点，集群是由一个或多个拥有相同<code>cluster.name</code>的节点构成的，当有节点加入集群中或者从集群中移除节点时，集群将会重新平均分布所有的数据。</p>
+<blockquote>
+<p><code>cluster.name</code>默认为<code>elasticsearch</code></p>
+</blockquote>
+<p>主节点：负责管理集群范围内的所有变更（增删索引和节点等），任何节点都可以成为主节点。主节点并不需要涉及到文档级别的变更和搜索等操作，因此流量的增加它也不会成为瓶颈。</p>
+<p>每个节点都知道任意文档所处的位置，并且能够将请求直接转发到存储客户所需文档的节点。</p>
+<h3 id="集群健康"><a href="#集群健康" class="headerlink" title="集群健康"></a>集群健康</h3><p>可通过<code>curl localhost:9200/_cluster/health</code>或使用<code>telnet 127.0.0.1 9200</code>并输入<code>GET /_cluster/health HTTP/1.1</code>获取集群的健康状况，或通过<code>curl 127.0.0.1 9200/_cat/health?v</code>查看。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;cluster_name&quot;:     &quot;elasticsearch&quot;,</span><br><span class="line">    &quot;status&quot;:           &quot;green&quot;,</span><br><span class="line">    &quot;timed_out&quot;:        false,</span><br><span class="line">......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中健康状况就是字段<code>status</code>，有三个可能值：</p>
+<ul>
+<li><code>green</code>：所有的主分片和副本分片都正常运行</li>
+<li><code>yellow</code>：所有的主分片都正常运行，但不是所有的副本分片都正常运行</li>
+<li><code>red</code>：有主分片没能正常运行，数据可能丢失，需要紧急修复</li>
+</ul>
+<h3 id="水平扩容"><a href="#水平扩容" class="headerlink" title="水平扩容"></a>水平扩容</h3><p>读操作、搜索和返回数据都可以同时被主分片或副本分片所处理，所以拥有越多的副本分片时，也将拥有越高的吞吐量。在运行中的集群上是可以动态调整副本分片数目的 ，可以按需伸缩集群。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -H &quot;Content-Type: application/json&quot; -X PUT localhost:9200/blogs/_settings -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">    &quot;number_of_replicas&quot;: 2</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>如果只是<strong>在相同节点数目的集群上增加更多的副本分片并不能提高性能</strong>，因为<strong>每个分片从节点上获得的资源会变少</strong>，需要增加更多的硬件资源来提升吞吐量，但是<strong>更多的副本分片数提高了数据冗余量</strong>。</p>
+<h3 id="添加索引"><a href="#添加索引" class="headerlink" title="添加索引"></a>添加索引</h3><p>可通过<code>curl</code>添加索引</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -H &quot;Content-Type: application/json&quot; -X PUT localhost:9200/blogs/article/1 -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">    &quot;title&quot;:   &quot;article1&quot;,</span><br><span class="line">    &quot;content&quot;: &quot;article1&quot;</span><br><span class="line">&#125;&#x27;</span><br><span class="line"># -H设置内容类型，要设为JSON格式</span><br><span class="line"># -X设置请求类型，设为PUT</span><br><span class="line"># -d设置请求数据</span><br></pre></td></tr></table></figure>
+
+<p>若添加成功就会返回以下信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;_index&quot;: &quot;blogs&quot;,</span><br><span class="line">    &quot;_type&quot;: &quot;article&quot;,</span><br><span class="line">    &quot;_id&quot;: &quot;1&quot;,</span><br><span class="line">    &quot;_version&quot;: 1,</span><br><span class="line">    &quot;result&quot;: &quot;created&quot;,</span><br><span class="line">    &quot;_shards&quot;:&#123;</span><br><span class="line">        &quot;total&quot;: 2,        #目前总共的分片数</span><br><span class="line">        &quot;successful&quot;: 1,</span><br><span class="line">        &quot;failed&quot;: 0</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;_seq_no&quot;: 0,</span><br><span class="line">    &quot;_primary_term&quot;: 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对已存在的记录再进行 PUT 操作就会更新该记录，同时，该字段的<code>_version</code>和<code>_result</code>都会改变，<code>_version</code>会<code>+1</code>，<code>_result</code>会变为<code>updated</code>。</p>
+<p>再通过<code>curl localhost:9200/blogs/article/1</code>，获取该文章的元数据，以及<code>_source</code>属性，存储的就是文章中定义的内容。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;_index&quot;: &quot;blogs&quot;,</span><br><span class="line">    &quot;_type&quot;: &quot;article&quot;,</span><br><span class="line">    &quot;_id&quot;: &quot;1&quot;,</span><br><span class="line">    &quot;_version&quot;: 1,</span><br><span class="line">    &quot;found&quot;: true,</span><br><span class="line">    &quot;_source&quot;: &#123;</span><br><span class="line">        &quot;title&quot;: &quot;article1&quot;,</span><br><span class="line">        &quot;content&quot;: &quot;article1&quot;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可通过<code>curl localhost:9200/_cat/indices?v</code>获取当前节点的索引信息</p>
+<p>若要删除某个索引或类型或文档，都可通过<code>curl -X DELETE localhost:9200/要删的资源</code>删除。</p>
+<h3 id="简单搜索"><a href="#简单搜索" class="headerlink" title="简单搜索"></a>简单搜索</h3><p><code>curl localhost:9200/_search?pretty</code>获取本节点的所有文档信息，并且返回结果不仅告知匹配了哪些文档，还包含了整个文档本身：显示搜索结果给最终用户所需的全部信息。<code>?pretty</code>会将 json 重新排版显示。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  ......</span><br><span class="line">  &quot;hits&quot; : &#123;</span><br><span class="line">    &quot;total&quot; : 2,</span><br><span class="line">    &quot;max_score&quot; : 1.0,</span><br><span class="line">    &quot;hits&quot; : [</span><br><span class="line">      &#123;</span><br><span class="line">        &quot;_index&quot; : &quot;blogs&quot;,</span><br><span class="line">        &quot;_type&quot; : &quot;article&quot;,</span><br><span class="line">        &quot;_id&quot; : &quot;2&quot;,</span><br><span class="line">        &quot;_score&quot; : 1.0,</span><br><span class="line">        &quot;_source&quot; : &#123;</span><br><span class="line">          &quot;title&quot; : &quot;article2&quot;,</span><br><span class="line">          &quot;content&quot; : &quot;article2&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      ......</span><br><span class="line">    ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可通过<code>_all</code>字段进行指定文档或类型中的搜索，例如<code>/_all/employee/_search?</code>进行指定类型中搜索（所有索引的中的<code>employee</code>（如果存在））</p>
+<p><code>?q=字段:值</code>进行<strong>查询字符串（Query-string）</strong>搜索</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl localhost:9200/_search?q=title:article2</span><br><span class="line">&#123;</span><br><span class="line">    ......</span><br><span class="line">    &quot;hits&quot;:&#123;&quot;total&quot;:1,&quot;max_score&quot;:0.2876821,&quot;hits&quot;:[&#123;&quot;_index&quot;:&quot;blogs&quot;,&quot;_type&quot;:&quot;article&quot;,&quot;_id&quot;:&quot;2&quot;,&quot;_score&quot;:0.2876821,&quot;_source&quot;:</span><br><span class="line">&#123;</span><br><span class="line">    &quot;title&quot;:   &quot;article2&quot;,</span><br><span class="line">    &quot;content&quot;: &quot;article2&quot; &#125;&#125;]&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="查询表达式搜索"><a href="#查询表达式搜索" class="headerlink" title="查询表达式搜索"></a>查询表达式搜索</h3><p>使用的是 Elasticsearch 开发的 DSL（领域特定语言），基于 JSON 定义查询，能够构造复杂的查询语句。</p>
+<p>不使用 Query-string 查询，而是通过请求体查询，请求会通过 Json 构造。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl localhost:9200/_search -X GET -H &quot;Content-Type: application/json&quot; -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">    &quot;query&quot;:&#123;</span><br><span class="line">        &quot;match&quot;:&#123;           #使用了match类型查询</span><br><span class="line">            &quot;title&quot;: &quot;article1&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>常用请求体搜索规则：</p>
+<p><code>&quot;query&quot;:&#123;&#125;</code>表示开始查询，其中定义许多查询规则，会计算评分数量（相关度）<code>_score</code></p>
+<ul>
+<li><code>&quot;bool&quot;</code>：进行布尔匹配<ul>
+<li><code>&quot;must&quot;</code>：包含</li>
+<li><code>&quot;must_not&quot;</code>：不包含</li>
+</ul>
+</li>
+<li><code>&quot;match&quot;</code>：普通匹配，若用空格隔开多个关键字，则 es 认为是或的关系，如果要同时满足多个关键词，即与关系，必须用<code>bool</code>查询</li>
+<li><code>&quot;match_phrase&quot;</code>：短语精确匹配</li>
+<li><code>&quot;filter&quot;</code>：过滤器，不会计算评分数量<ul>
+<li><code>&quot;range&quot;</code>：匹配范围，例如：<code>&quot;range&quot;:&#123;age&quot;:&#123;&quot;gt&quot;:30&#125;&#125;</code>匹配 age 大于 30</li>
+</ul>
+</li>
+<li><code>&quot;size&quot;</code>：设置一次返回的结果数量，默认为 10 条。</li>
+<li><code>&quot;from&quot;</code>：设置移位，默认从位置 0 开始</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 已经alias curl_lo_g=&#x27;curl -X GET -H &#x27;Content-Type:application/json&#x27;&#x27;</span><br><span class="line"># export LO_ES=&#x27;localhost:9200&#x27;</span><br><span class="line"></span><br><span class="line">curl_lo_g $&#123;LO_ES&#125;/_all/employee/_search -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;bool&quot;: &#123;</span><br><span class="line">      &quot;filter&quot;: &#123;</span><br><span class="line">        &quot;range&quot;: &#123;</span><br><span class="line">          &quot;age&quot;: &#123;</span><br><span class="line">            &quot;gt&quot;: &quot;30&quot;   #要加上双引号</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,                 #这里有逗号</span><br><span class="line">      &quot;must&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;hobby&quot;: &quot;swimming&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>对于 filter 和 query 的区别：</p>
+<ul>
+<li>大部分 filter 的速度<strong>快于</strong>query 的速度</li>
+<li>filter 不会计算相关度得分，且结果会<strong>有缓存，效率高</strong></li>
+<li>全文搜索、<strong>评分排序</strong>，使用 query</li>
+<li>是非过滤，<strong>精确匹配</strong>，使用 filter</li>
+</ul>
+<h3 id="高亮搜索"><a href="#高亮搜索" class="headerlink" title="高亮搜索"></a>高亮搜索</h3><p>能将搜索结果的要搜索的字符串高亮显示，</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl_lo_g $&#123;LO_ES&#125;/_all/employee/_search -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;match&quot;: &#123;</span><br><span class="line">      &quot;hobby&quot;: &quot;climbing&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;highlight&quot;: &#123;      #只需要添加highlight搜索即可</span><br><span class="line">    &quot;fields&quot;: &#123;       #fields指定高亮的字段</span><br><span class="line">      &quot;hobby&quot;: &#123;&#125;     #需要高亮搜索的字段</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;&#x27;</span><br><span class="line"></span><br><span class="line">......</span><br><span class="line">&#123;&quot;_index&quot;:&quot;tech&quot;,&quot;_type&quot;:&quot;employee&quot;,&quot;_id&quot;:&quot;3&quot;,&quot;_score&quot;:0.2876821,&quot;_source&quot;:</span><br><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;wangwu&quot;,</span><br><span class="line">  &quot;age&quot;: &quot;26&quot;,</span><br><span class="line">  &quot;address&quot;: &quot;yangzhou&quot;,</span><br><span class="line">  &quot;hobby&quot;: [&quot;swimming&quot;, &quot;climbing&quot;]</span><br><span class="line">&#125;,</span><br><span class="line">&quot;highlight&quot;:&#123;             #标出高亮部分</span><br><span class="line">  &quot;hobby&quot;:[</span><br><span class="line">    &quot;&lt;em&gt;climbing&lt;/em&gt;&quot;   #高亮部分由HTML标签&lt;em&gt;封装</span><br><span class="line">                          #告诉浏览器把其中的文本表示为强调的内容</span><br><span class="line">                          #通常为斜体</span><br><span class="line">  ]&#125;&#125;]&#125;&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="聚合"><a href="#聚合" class="headerlink" title="聚合"></a>聚合</h3><p>聚合 aggregations 用于生成基于数据的精细分析结果，类似 SQL 的<code>group by</code>。</p>
+<h2 id="Logstash"><a href="#Logstash" class="headerlink" title="Logstash"></a>Logstash</h2><p>Logstash 是一个开源的服务器端数据处理管道（Pipeline），它可以同时从多个源中提取数据，对其进行转换，然后将其发送到数据存储（如 Elasticsearch）。支持丰富的 Input 和 Output 类型，能够处理各种应用的日志。</p>
+<p>Logstash 对于每一行数据（称为 event）按流水线三个部分进行操作：</p>
+<ul>
+<li>input：负责产生事件（即数据），即数据源，如 syslog、数据库日志、web 日志、文件系统日志、java 的 log4j、网络日志、防火墙等各类日志，kafka、RabbitMQ 等消息队列，移动设备、智能家居、传感器、联网汽车等 IoT 数据，以及 Beats 能获取的数据。是必须配置</li>
+<li>filter：负责数据处理与转换，包括过滤，分类等操作。不是必须配置。</li>
+<li>output：负责数据的输出，可输出到数据分析或存储的软件，如 Elasticsearch，nagios，kibana 等数据处理软件。是必须配置</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244846.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244846.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="><br>Logstash 开箱即用，包含许多聚合（aggregation）和突变（mutation），以及模式匹配（pattern matching），地理映射（geo mapping）和动态查找（dynamic lookup）功能。</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290243196.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290243196.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h2 id="Logstash-安装"><a href="#Logstash-安装" class="headerlink" title="Logstash 安装"></a>Logstash 安装</h2><ol>
+<li><p>下载 Logstash 包，版本为 6.4.1，解压到<code>/usr/local/logstash6.4</code></p>
+</li>
+<li><p>进入 logstash 的<code>bin</code>目录执行<code>./logstash -e &#39;input&#123;stdin&#123;&#125;&#125; output&#123;stdout&#123;codec=&gt;rubydebug&#125;&#125;&#39;</code>，需要等待一段时间，期间会有信息，直到出现<code>Successfully started Logstash API endpoint &#123;:port=&gt;9600&#125;</code>，然后输入<code>hello world</code>即可看到以下信息。若要退出，按<code>Ctrl+D</code>。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">hello world</span><br><span class="line">&#123;</span><br><span class="line">       &quot;message&quot; =&gt; &quot;hello world&quot;,</span><br><span class="line">          &quot;host&quot; =&gt; &quot;VM_0_7_centos&quot;,</span><br><span class="line">      &quot;@version&quot; =&gt; &quot;1&quot;,</span><br><span class="line">    &quot;@timestamp&quot; =&gt; 2018-09-26T11:09:10.781Z</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<p>docker 下载 Logstash：直接<code>docker pull logstash</code>即可。</p>
+<p>docker 下启动 Logstash：首先要确保本地存放 pipeline 配置文件的目录存在。通过在该目录添加配置文件。或者直接<code>-v ~/config:/usr/share/logstash/config</code>可直接修改所有配置</p>
+<p><code>docker run -it -v ~/pipeline:/usr/share/logstash/pipeline logstash</code></p>
+<p>Logstash 配置文件：</p>
+<ul>
+<li><code>logstash.yml</code>：主配置文件</li>
+<li><code>pipelines.yml</code>：管道的配置，包括 input，filter，output</li>
+<li><code>jvm.options</code>：JVM 配置文件</li>
+<li><code>log4j2.properties</code>：log4j2 的配置</li>
+<li><code>startup.options</code>：启动脚本选项文件，包含 Logstash 的变量。若要让 Logstash 按修改后的配置运行，需要重新用 root 运行<code>bin/system-install</code>导入参数。</li>
+<li>自定义的 Logstash 配置文件，一般以<code>.conf</code>结尾，同样存放在配置文件目录中。</li>
+</ul>
+<p>logstash 命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">logstash</span><br><span class="line">    -n NAME          指定logstash的node.name，若不指定默认是当前的主机名</span><br><span class="line">    -f CONFIG_PATH   从特定文件或目录加载logstash配置</span><br><span class="line">    -e CONFIG_STRING 使用给定的字符串作为配置数据（与配置文件的语法相同）</span><br><span class="line">                     默认输入：“input &#123;stdin &#123;type =&gt; stdin&#125;&#125;”</span><br><span class="line">                     默认输出：“output &#123;stdout &#123;codec =&gt; rubydebug&#125;&#125;“</span><br><span class="line">                     若直接使用默认，则-e &quot;&quot; 即可（不能什么都不加）</span><br><span class="line">    --field-reference-parser MODE 在解析字段引用时使用的模式</span><br><span class="line">    字段引用解析器用于扩展管道配置中的字段引用，能更好地处理非法和模糊输入</span><br><span class="line">    可用的MODE值：1. LEGACY：LEGACY解析器，不发出警告</span><br><span class="line">                2. COMPAT：COMPAT解析器，对每个不同的模糊或非法语法输入警告一次（默认使用）</span><br><span class="line">                3.STRICT：STRICT解析器，模糊或非法语法输入会引发插件运行时异常</span><br><span class="line">    --modules MODULES   加载logstash模块，不能与&#x27;-e&#x27;或&#x27;-f&#x27;一起使用</span><br><span class="line">                        因为会覆盖在logstash.yml中加载的模块</span><br><span class="line">    两种写法：--modules module1 --modules module2 ...</span><br><span class="line">            --modules=module1,module2</span><br><span class="line">    -M MODULES_VARIABLE Load variables for module template.</span><br><span class="line">                                  Multiple instances of &#x27;-M&#x27; or</span><br><span class="line">                                  &#x27;--modules.variable&#x27; are supported.</span><br><span class="line">                                  Ignored if &#x27;--modules&#x27; flag is not used.</span><br><span class="line">                                  Should be in the format of</span><br><span class="line">                                  &#x27;-M &quot;MODULE_NAME.var.PLUGIN_TYPE.PLUGIN_NAME.VARIABLE_NAME=VALUE&quot;&#x27;</span><br><span class="line">                                  as in</span><br><span class="line">                                  &#x27;-M &quot;example.var.filter.mutate.fieldname=fieldvalue&quot;&#x27;</span><br><span class="line">    --setup                       Load index template into Elasticsearch, and saved searches,</span><br><span class="line">                                  index-pattern, visualizations, and dashboards into Kibana when</span><br><span class="line">                                  running modules.</span><br><span class="line">                                   (default: false)</span><br><span class="line">    --cloud.id CLOUD_ID           Sets the elasticsearch and kibana host settings for</span><br><span class="line">                                  module connections in Elastic Cloud.</span><br><span class="line">                                  Your Elastic Cloud User interface or the Cloud support</span><br><span class="line">                                  team should provide this.</span><br><span class="line">                                  Add an optional label prefix &#x27;&lt;label&gt;:&#x27; to help you</span><br><span class="line">                                  identify multiple cloud.ids.</span><br><span class="line">                                  e.g. &#x27;staging:dXMtZWFzdC0xLmF3cy5mb3VuZC5pbyRub3RhcmVhbCRpZGVudGlmaWVy&#x27;</span><br><span class="line">    --cloud.auth CLOUD_AUTH       Sets the elasticsearch and kibana username and password</span><br><span class="line">                                  for module connections in Elastic Cloud</span><br><span class="line">                                  e.g. &#x27;username:&lt;password&gt;&#x27;</span><br><span class="line">    --pipeline.id ID              Sets the ID of the pipeline.</span><br><span class="line">                                   (default: &quot;main&quot;)</span><br><span class="line">    -w COUNT  指定pipeline worker数量（即线程数），默认1</span><br><span class="line">    --experimental-java-execution (Experimental) Use new Java execution engine.</span><br><span class="line">                                   (default: false)</span><br><span class="line">    -b, --pipeline.batch.size SIZE Size of batches the pipeline is to work in.</span><br><span class="line">                                   (default: 125)</span><br><span class="line">    -u, --pipeline.batch.delay DELAY_IN_MS When creating pipeline batches, how long to wait while polling</span><br><span class="line">                                  for the next event.</span><br><span class="line">                                   (default: 50)</span><br><span class="line">    --pipeline.unsafe_shutdown    Force logstash to exit during shutdown even</span><br><span class="line">                                  if there are still inflight events in memory.</span><br><span class="line">                                  By default, logstash will refuse to quit until all</span><br><span class="line">                                  received events have been pushed to the outputs.</span><br><span class="line">                                   (default: false)</span><br><span class="line">    --path.data PATH   数据存储目录。插件需要能访问该目录，默认安装目录下的data/</span><br><span class="line">    -p, --path.plugins PATH   插件目录，可指定多个Plugins are expected to be in a specific directory hierarchy:</span><br><span class="line">                                  &#x27;PATH/logstash/TYPE/NAME.rb&#x27; where TYPE is &#x27;inputs&#x27; &#x27;filters&#x27;, &#x27;outputs&#x27; or &#x27;codecs&#x27; and NAME is the name of the plugin.</span><br><span class="line">                                   (default: [])</span><br><span class="line">    -l PATH      指定Logstash的日志目录，默认安装目录下的logs/</span><br><span class="line">    --log.level LEVEL             设置日志等级（fatal/error/warn/info/debug/trace），默认info</span><br><span class="line">    --config.debug                Print the compiled config ruby code out as a debug log (you must also have --log.level=debug enabled).</span><br><span class="line">                                  WARNING: This will include any &#x27;password&#x27; options passed to plugin configs as plaintext, and may result</span><br><span class="line">                                  in plaintext passwords appearing in your logs!</span><br><span class="line">                                   (default: false)</span><br><span class="line">    -i, --interactive SHELL       Drop to shell instead of running as normal.</span><br><span class="line">                                  Valid shells are &quot;irb&quot; and &quot;pry&quot;</span><br><span class="line"></span><br><span class="line">    -t           检查logstash配置文件语法是否正常</span><br><span class="line">    -r           自动检测配置文件是否变动，若变动自动重载</span><br><span class="line">    --config.reload.interval RELOAD_INTERVAL How frequently to poll the configuration location</span><br><span class="line">                                  for changes, in seconds.</span><br><span class="line">                                   (default: 3000000000)</span><br><span class="line">    --http.host HTTP_HOST         Web API binding host (default: &quot;127.0.0.1&quot;)</span><br><span class="line">    --http.port HTTP_PORT         Web API http port (default: 9600..9700)</span><br><span class="line">    --log.format FORMAT           Specify if Logstash should write its own logs in JSON form (one</span><br><span class="line">                                  event per line) or in plain text (using Ruby&#x27;s Object#inspect)</span><br><span class="line">                                   (default: &quot;plain&quot;)</span><br><span class="line">    --path.settings SETTINGS_DIR  包含logstash.yml的目录，可通过LS_SETTINGS_DIR环境变量配置</span><br><span class="line">    默认&quot;/usr/local/logstash6.4/config&quot;</span><br><span class="line">    --verbose 相当于设置日志等级为info</span><br><span class="line">    --debug   相当于设置日志等级为debug</span><br><span class="line">    --quiet   相当于设置日志等级为info</span><br></pre></td></tr></table></figure>
+
+<h2 id="Logstash-如何工作"><a href="#Logstash-如何工作" class="headerlink" title="Logstash 如何工作"></a>Logstash 如何工作</h2><h3 id="关闭-Logstash"><a href="#关闭-Logstash" class="headerlink" title="关闭 Logstash"></a>关闭 Logstash</h3><p>可通过<code>systemctl stop logstash</code>或直接<code>kill</code>关闭。Logstash 有自己关闭过程，以达到安全地关闭：</p>
+<ul>
+<li>首先停止所有的<code>input</code>、<code>filter</code>、<code>output</code>插件</li>
+<li>处理完所有管道中的事件</li>
+<li>最后关闭 Logstash 进程</li>
+</ul>
+<p>在处理过程中，以下的状况会影响关闭过程：</p>
+<ul>
+<li><code>input</code>插件以很慢的速度接收数据</li>
+<li>速度慢的<code>filter</code>，如执行<code>sleep(10000)</code>的<code>Ruby filter</code>或执行非常繁重的查询的 Elasticsearch 过滤器。</li>
+<li>一个断开连接的<code>output</code>插件，等待重新连接以刷新正在进行的事件。</li>
+</ul>
+<p>Logstash 有一个停顿检测机制（stall detection），可以在关闭过程中分析管道和插件的行为。此机制会对内部队列中的飞行事件（in-flight events）数量和繁忙的 worker 线程列表定期生成信息报告。</p>
+<p>若要在 Logstash 关闭阶段直接强行关闭，可在主配置文件中设置<code>pipeline.unsafe_shutdown</code>值为<code>true</code>，但这样可能造成数据丢失，不安全。</p>
+<h2 id="Logstash-配置文件"><a href="#Logstash-配置文件" class="headerlink" title="Logstash 配置文件"></a>Logstash 配置文件</h2><h3 id="logstash-yml"><a href="#logstash-yml" class="headerlink" title="logstash.yml"></a>logstash.yml</h3><p>因为配置文件的语法是 YAML，所以有两种写法：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">pipeline:</span></span><br><span class="line">  <span class="attr">batch:</span></span><br><span class="line">    <span class="attr">size:</span> <span class="number">125</span></span><br><span class="line">    <span class="attr">delay:</span> <span class="number">50</span></span><br><span class="line"><span class="comment">#等同于</span></span><br><span class="line"><span class="attr">pipeline.batch.size:</span> <span class="number">125</span></span><br><span class="line"><span class="attr">pipeline.batch.delay:</span> <span class="number">50</span></span><br></pre></td></tr></table></figure>
+
+<p>配置文件也支持<code>$&#123;&#125;</code>引用变量</p>
+<p>如果使用命令的<code>--modules</code>指定模块，则配置文件中所有配置的模块都会被忽略。</p>
+<p>模块的配置：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">modules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">模块名</span></span><br><span class="line">    <span class="string">var.插件类型.插件名.键:</span> <span class="string">值</span></span><br></pre></td></tr></table></figure>
+
+<p>所有配置参数：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">node.name             #节点名，默认为主机名</span><br><span class="line"></span><br><span class="line">#path参数</span><br><span class="line">path.data             #数据存放目录，默认为安装目录的data/</span><br><span class="line">path.config           #logstash.yml路径</span><br><span class="line">path.plugins          #插件的路径</span><br><span class="line">#插件应该位于特定的目录层次结构中：PATH/logstash/TYPE/NAME.rb</span><br><span class="line">#其中TYPE的值可以是inputs，filters，outputs或codecs，NAME是插件的名称</span><br><span class="line"></span><br><span class="line">#http参数</span><br><span class="line">http.port             #监听的http主机端口，默认为9600</span><br><span class="line">http.host             #监听的http主机IP，默认为127.0.0.1</span><br><span class="line"></span><br><span class="line">#日志log参数</span><br><span class="line">log.level             #日志等级（fatal/error/warn/info/debug/trace），默认info</span><br><span class="line">log.format            #日志格式，默认为plain格式</span><br><span class="line">path.logs             #日志的路径，默认安装目录的logs/</span><br><span class="line"></span><br><span class="line">#pipeline参数（关于pipeline的配置可专门存放在一个配置文件中，如pipeline.yml）</span><br><span class="line">pipeline.id           #pipeline的ID，默认为main</span><br><span class="line">pipeline.workers      #管道的worker数量，默认为CPU的核数</span><br><span class="line">pipeline.batch.size   #单个工作线程将从输入收集的最大事件数，默认125。增大此值会加大内存开销，还需调整JVM堆内存参数</span><br><span class="line">pipeline.batch.delay  #event被调度到worker前等待的时间，单位毫秒，默认50</span><br><span class="line">pipeline.unsafe_shutdown  #在关闭时立刻退出，会导致数据丢失。</span><br><span class="line">        #默认为false，完全退出前会将数据处理好并输出到屏幕再退出</span><br><span class="line"></span><br><span class="line">#config参数</span><br><span class="line">config.string         #pipeline配置</span><br><span class="line">config.test_and_exit  #检查配置是否有效，然后退出。默认为false不检查</span><br><span class="line">config.reload.automatic  #定期检查配置是否已更改，并在配置发生更改时重新加载配置。默认false不检查</span><br><span class="line">config.reload.interval  #检查配置是否变动的时间间隔，需要上一条开启。默认3s</span><br><span class="line">config.debug          #是否开启调试日志消息。若开启还需要将log.level的值设为debug。默认false</span><br><span class="line">                      #注：日志消息可能会包含明文密码</span><br><span class="line">config.support_escapes #是否开启转义字符，即启用\转义。默认false</span><br><span class="line"></span><br><span class="line">modules               #设置模块</span><br><span class="line"></span><br><span class="line">#queue参数</span><br><span class="line">queue.type            #用于事件缓冲的队列模型（model to use for event buffering），有以下两种，默认memory。</span><br><span class="line">       memory：传统基于内存的队列  persisted：基于磁盘的响应队列（disk-based ACKed queueing）</span><br><span class="line">path.queue            #启用持久队列（即上一项值为persisted）时存储数据文件的目录。默认data/queue</span><br><span class="line">queue.pagt_capacity   #启用持久队列时使用的页面数据文件的大小。默认64MB</span><br><span class="line">queue.max_events      #启用持久队列时队列中未读事件的最大数量。默认0，不限制</span><br><span class="line">queue.max_bytes       #队列的总容量，以字节数表示。确保磁盘容量大于此值。默认1G</span><br><span class="line">#若与上一项同时配置，则Logstash会加载先配置的一项</span><br><span class="line">queue.checkpoint.acks #启用持久队列时强制检查点之前的最大ACK响应事件数。默认1024，若设为0则不限制</span><br><span class="line">queue.checkpoint.writes #在启用持久队列时强制检查点之前写入事件的最大数量。默认1024，若设为0则不限制</span><br><span class="line">queue.drain           #启用后，Logstash将等待直到持久队列耗尽，然后才能关闭。默认false</span><br><span class="line"></span><br><span class="line">#dead_letter_queue参数</span><br><span class="line">dead_letter_queue.enable  #是否启用dead_letter_queue，简称DLQ功能。默认false不启用</span><br><span class="line">dead_letter_queue.max_bytes #每个DLQ的最大大小。超出就会删除条目，默认1G</span><br><span class="line">path.dead_letter_queue #DLQ目录的位置，默认为安装目录的data/dead_letter_queue</span><br></pre></td></tr></table></figure>
+
+<h3 id="自定义-Logstash-配置文件"><a href="#自定义-Logstash-配置文件" class="headerlink" title="自定义 Logstash 配置文件"></a>自定义 Logstash 配置文件</h3><p>自定义的配置文件主要用于指定<code>input</code>、<code>filter</code>、<code>output</code>插件等管道参数。</p>
+<p>配置文件支持的值类型：</p>
+<ul>
+<li><p>列表 Lists：<code>[ ]</code>中包含多个值。如<code>path =&gt; [&#39;XXX&#39;,&#39;XXX&#39;]</code></p>
+</li>
+<li><p>布尔值 Boolean：指定<code>true</code>或<code>false</code></p>
+</li>
+<li><p>字节 Bytes：是字符串字段，表示有效的字节单位。支持<code>SI</code>（k M G T P E Z Y）和二进制（<code>binary</code>）（Ki Mi Gi Ti Pi Ei Zi Yi）单位。二进制单位基数为 1024，SI 单位基数为 1000。此字段不区分大小写，并接受值和单位之间的空格。</p>
+</li>
+<li><p>编解码器 codec：表示数据的 Logstash 编解码器的名称。编解码器可用于输入和输出。例：<code>codec =&gt; json</code></p>
+<ul>
+<li><p>输入编解码器提供了一种在数据<strong>进入输入之前对其进行解码</strong>的便捷方式。</p>
+</li>
+<li><p>输出编解码器提供了一种在数据<strong>离开输出之前对数据进行编码</strong>的便捷方式。</p>
+</li>
+<li><p>使用输入或输出编解码器无需在 Logstash 管道中使用单独的过滤器。</p>
+</li>
+</ul>
+</li>
+<li><p>哈希 Hash：键值对集合，多条键值对间使用空格间隔，而不是逗号</p>
+</li>
+<li><p>数字 Number：数字必须为浮点型或整型</p>
+</li>
+<li><p>密码 Password：密码必须是一个字符串，且该字符串应未被记录或打印</p>
+</li>
+<li><p>URI：可以是完整的 URL，也可以是类似邮件地址，如<code>user:pass@XXX.net</code>，如果 URI 包含密码，则不会记录或打印 URI 的密码部分</p>
+</li>
+<li><p>路径 Path：表示有效操作系统路径的字符串</p>
+</li>
+<li><p>字符串 String：必须用引号括住，可以是单引号或双引号</p>
+</li>
+<li><p>转义序列 Escape Sequences：默认不启用转义序列。如果要在字符串中使用转义字符，需要在<code>logstash.yml</code>中设置<code>config.support_escapes：true</code>。</p>
+</li>
+</ul>
+<h2 id="Logstash-日志"><a href="#Logstash-日志" class="headerlink" title="Logstash 日志"></a>Logstash 日志</h2><p>Logstash 的日志存放在<code>LS_HOME/logs</code>中，默认日志等级为<code>INFO</code>， Logstash 的日志框架基于<code>Log4j 2</code>框架，其大部分功能直接暴露给用户。</p>
+<p>在调试问题时，尤其是插件问题时，一般将日志记录级别增加到<code>DEBUG</code>以获取更详细的消息。从 5.0 版本开始，可以在 Logstash 中配置特定日志子系统的日志记录。</p>
+<p>Logstash 提供一个带有开箱即用设置的<code>log4j2.properties</code>文件，可以更改轮换策略，类型和其他 log4j2 配置。需要重启 Logstash 以应用该配置。</p>
+<p>慢日志（Slowlog）用于报告在通过管道（pipeline）时花费不正常时间的事件的日志消息。慢日志同样存放在<code>LS_HOME/logs</code>中。可在主配置文件中添加 slowlog 的配置，如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">slowlog.threshold.warn:</span> <span class="string">2s</span></span><br><span class="line"><span class="attr">slowlog.threshold.info:</span> <span class="string">1s</span></span><br><span class="line"><span class="attr">slowlog.threshold.debug:</span> <span class="string">500ms</span></span><br><span class="line"><span class="attr">slowlog.threshold.trace:</span> <span class="string">100ms</span></span><br></pre></td></tr></table></figure>
+
+<p>以上配置指定了触发慢日志的条件。在过滤器中处理超过 100ms 的事件会在慢日志中记录为 trace 等级的事件，超过 2 秒的事件会记录为等级为 warn 的事件</p>
+<p>可通过<code>curl -X GET localhost:9600/_node/logging?pretty</code>获取关于日志的信息</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line">curl localhost<span class="punctuation">:</span><span class="number">9600</span>/_node/logging?pretty</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;host&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;VM_0_7_centos&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;version&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;6.4.1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;http_address&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;127.0.0.1:9600&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;id&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;07b4b966-d732-4263-bc16-1efc6e927e1c&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;name&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;VM_0_7_centos&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;loggers&quot;</span> <span class="punctuation">:</span> <span class="punctuation">&#123;</span>             #显示的是日志子系统以及日志等级</span><br><span class="line">    <span class="attr">&quot;logstash.agent&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;INFO&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;logstash.api.service&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;INFO&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;logstash.codecs.line&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;INFO&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;logstash.codecs.rubydebug&quot;</span> <span class="punctuation">:</span> <span class="string">&quot;INFO&quot;</span><span class="punctuation">,</span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>可通过<code>curl -X PUT localhost:9600/_node/logging?pretty -H &#39;Content-Type: application/json&#39; -d &#39;&#123;...&#125;&#39;</code>动态设置指定日志子系统的日志等级。例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -XPUT &#x27;localhost:9600/_node/logging?pretty&#x27; -H &#x27;Content-Type: application/json&#x27; -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">    &quot;logger.logstash.outputs.elasticsearch&quot; : &quot;DEBUG&quot;</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>则会在<code>log4j2.properties</code>配置中自动添加上该指定配置。若要重置已通过日志记录 API 动态更改的任何日志记录级别，需要通过将 PUT 请求发送到<code>_node/logging/reset</code>将所有日志记录级别都恢复为<code>log4j2.properties</code>文件中指定的值</p>
+<p><code>curl -X PUT localhost:9600/_node/logging/reset?pretty</code></p>
+<p>将其他任意日志导入 Logstash 的操作：编写一个 pipeline 配置文件<code>test.conf</code>，或直接在<code>pipeline.yml</code>添加</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">input &#123;        #设置input参数</span><br><span class="line">  file &#123;</span><br><span class="line">    #通过列表添加两个日志</span><br><span class="line">    path =&gt; [&#x27;/var/log/httpd/access_log&#x27;,&#x27;/var/log/squid/access.log&#x27;]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">output &#123;        #标准输出，一定要加，否则无法输出到屏幕</span><br><span class="line">  stdout &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>启动 Logstash，<code>bin/logstash -f config/test.conf</code>。会不断获取 httpd 和 squid 的日志消息</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">          &quot;path&quot; =&gt; &quot;/var/log/httpd/access_log&quot;,</span><br><span class="line">       &quot;message&quot; =&gt; &quot;127.0.0.1 - - [02/Oct/2018:16:11:16 +0800] \&quot;GET / HTTP/1.0\&quot; 200 10 \&quot;-\&quot; \&quot;ApacheBench/2.3\&quot;&quot;,</span><br><span class="line">    &quot;@timestamp&quot; =&gt; 2018-10-02T08:11:20.344Z,</span><br><span class="line">      &quot;@version&quot; =&gt; &quot;1&quot;,</span><br><span class="line">          &quot;host&quot; =&gt; &quot;VM_0_7_centos&quot;</span><br><span class="line">&#125;</span><br><span class="line">&#123;</span><br><span class="line">          &quot;path&quot; =&gt; &quot;/var/log/squid/access.log&quot;,</span><br><span class="line">       &quot;message&quot; =&gt; &quot;1538467887.306    656 180.126.242.119 TCP_TUNNEL/200 33103 CONNECT xui.ptlogin2.qq.com:443 - HIER_DIRECT/xui.ptlogin2.qq.com -&quot;,</span><br><span class="line">    &quot;@timestamp&quot; =&gt; 2018-10-02T08:11:27.355Z,</span><br><span class="line">      &quot;@version&quot; =&gt; &quot;1&quot;,</span><br><span class="line">          &quot;host&quot; =&gt; &quot;VM_0_7_centos&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>若要将 elasticsearch 的日志都再导入 elasticsearch，可进行以下配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">input &#123;</span><br><span class="line">  file &#123;</span><br><span class="line">    path =&gt; &#x27;/usr/local/es-6.4/logs/elasticsearch.log&#x27;</span><br><span class="line">    type =&gt; &#x27;elasticsearch&#x27;</span><br><span class="line">    start_position =&gt; &#x27;beginning&#x27;   #从日志的头开始读</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">output &#123;</span><br><span class="line">  elasticsearch &#123;          #使用elasticsearch插件</span><br><span class="line">    hosts =&gt; &#x27;127.0.0.1:9200&#x27;   #指定elasticsearch源</span><br><span class="line">    index =&gt; &#x27;es_message-%&#123;+YYYY.MM.dd&#125;&#x27;  #指定index</span><br><span class="line">  &#125;</span><br><span class="line">  stdout&#123;</span><br><span class="line">    codec =&gt; rubydebug</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>启动 Logstash 就会显示已导入 elasticsearch 的日志</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">          &quot;type&quot; =&gt; &quot;elasticsearch&quot;,</span><br><span class="line">       &quot;message&quot; =&gt; &quot;[2018-10-03T16:06:50,392][INFO ][o.e.c.m.MetaDataMappingService] [system135] [.kibana/PnIK501cQUydUEIVp0icjw] update_mapping [doc]&quot;,</span><br><span class="line">    &quot;@timestamp&quot; =&gt; 2018-10-03T08:06:50.560Z,</span><br><span class="line">      &quot;@version&quot; =&gt; &quot;1&quot;,</span><br><span class="line">          &quot;host&quot; =&gt; &quot;system5.example.com&quot;,</span><br><span class="line">          &quot;path&quot; =&gt; &quot;/usr/local/es-6.4/logs/elasticsearch.log&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Logstash-常用插件"><a href="#Logstash-常用插件" class="headerlink" title="Logstash 常用插件"></a>Logstash 常用插件</h2><p>默认的 Logstash 安装包括 Beats 输入插件。 Beats 输入插件使 Logstash 能够从 Elastic Beats 框架接收事件，任何与 Beats 框架一起使用的 Beat（如 Packetbeat 和 Metricbeat），也可以将事件数据发送到 Logstash。</p>
+<ul>
+<li><code>Grok</code>：是 Logstash 过滤器的基础，用于从非结构化数据中获取结构，具有丰富的集成模式，能快速处理 Web，系统，网络和其他类型的事件格式。</li>
+<li><code>Codecs</code>：通常用于简化对 JSON 和多行事件等常见事件结构的处理。</li>
+</ul>
+<h2 id="Kibana"><a href="#Kibana" class="headerlink" title="Kibana"></a>Kibana</h2><p>Kibana 是一个开源分析和可视化平台，旨在与 Elasticsearch 协同工作。可使用 Kibana 搜索，查看以及与存储在 Elasticsearch 索引中的数据进行交互，可以轻松地执行高级数据分析，并在各种图表（charts），表格（tables）和地图（maps）中可视化数据。</p>
+<p>Kibana 是基于 JS 的 WEB 界面，在 Node.js 上运行，而官方在 Kibana 包中包含了必要的 Node.js 二进制文件，并且不支持针对单独维护的 Node.js 版本运行 Kibana，因此不需要单独搭建 Nodejs 环境。</p>
+<p>应将 Kibana 配置为针对相同版本的 Elasticsearch 节点运行，即版本要一致。</p>
+<p>注：从 V6.0.0 开始，Kibana 仅支持 64 位操作系统。</p>
+<h2 id="Kibana-安装"><a href="#Kibana-安装" class="headerlink" title="Kibana 安装"></a>Kibana 安装</h2><p>下载 Kibana 包，版本为 6.4.1，解压到<code>/usr/local/kibana6.4</code></p>
+<p>kibana 需要 elasticsearch 的开启才能正常使用，否则启动 kibana 会不断报错，进入 Kibana 后也会提示 status 为 red，无法正常使用，因此需要先启动 elasticsearch。开启后，进入 kibana 目录下<code>bin</code>执行<code>kibana</code>命令。需要等待一段时间直到出现信息<code>[info][listening][server][http] Server running at http://localhost:5601</code>。通过浏览器<code>localhost:5601</code>访问 kibana。</p>
+<p>注：内存或 CPU 不足会将 Elasticsearch 杀死，Kibana 也就无法启动</p>
+<p>Kibana 的文件结构：除了<code>bin</code>、<code>config</code>、<code>data</code>、<code>plugins</code>，kibana 还有以下目录：</p>
+<ul>
+<li><code>node</code>：</li>
+<li><code>node_modules</code></li>
+<li><code>optimize</code>：存放透明的源代码。某些管理操作（例如，插件安装）导致源代码在运行中被重新传输。</li>
+<li><code>src</code></li>
+<li><code>webpackShims</code></li>
+</ul>
+<p>可在浏览器访问<code>localhost:5601/status</code>查看 kibana 是否启动正常，插件是否加载正常，以及 kibana 的当前信息。</p>
+<h2 id="Kibana-配置"><a href="#Kibana-配置" class="headerlink" title="Kibana 配置"></a>Kibana 配置</h2><p>Kibana 只有一个配置文件<code>KIBANA_HOME/config/kibana.yml</code>。默认运行在 localhost 的 5601 端口。</p>
+<p>常见配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">server.port: 5601          #Kibana服务端口</span><br><span class="line">server.host: &quot;localhost&quot;   #向哪些主机开放端口，若要所有主机都能访问，即客户端能远程访问，需要设为0.0.0.0</span><br><span class="line">server.name: &quot;your-hostname&quot; #Kibana实例名，一般为主机名</span><br><span class="line">server.basePath: &quot;&quot;        #</span><br><span class="line">server.maxPayloadBytes: 1048576</span><br><span class="line">server.rewriteBasePath: false</span><br><span class="line"></span><br><span class="line">elasticsearch.url: &quot;http://localhost:9200&quot;  #Elasticsearch的地址，需要设置正确</span><br><span class="line">elasticsearch.preserveHost: true</span><br><span class="line">kibana.index: &quot;.kibana&quot;</span><br><span class="line">kibana.defaultAppId: &quot;home&quot;</span><br><span class="line">#elasticsearch.username: &quot;user&quot;           #设置es授权用户名</span><br><span class="line">#elasticsearch.password: &quot;pass&quot;           #设置es授权用户密码</span><br><span class="line">#server.ssl.enabled: false                #是否开启ssl</span><br><span class="line">#server.ssl.certificate: /path/to/your/server.crt</span><br><span class="line">#server.ssl.key: /path/to/your/server.key</span><br><span class="line">#elasticsearch.ssl.certificate: /path/to/your/client.crt</span><br><span class="line">#elasticsearch.ssl.key: /path/to/your/client.key</span><br></pre></td></tr></table></figure>
+
+<h2 id="Kibana-基本功能"><a href="#Kibana-基本功能" class="headerlink" title="Kibana 基本功能"></a>Kibana 基本功能</h2><h3 id="添加-index-的管理"><a href="#添加-index-的管理" class="headerlink" title="添加 index 的管理"></a>添加 index 的管理</h3><p>首先要在 elasticsearch 添加 index 数据</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -X PUT -H &quot;Content-Type: application/json&quot; localhost:9200/tech/employee/1 -d &#x27;</span><br><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;zhangsan&quot;,</span><br><span class="line">  &quot;age&quot;: &quot;25&quot;,</span><br><span class="line">  &quot;address&quot;: &quot;nanjing&quot;,</span><br><span class="line">  &quot;hobby&quot;: [ &quot;football&quot;, &quot;tennis&quot;, &quot;game&quot; ]</span><br><span class="line">&#125;&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>然后刷新 kibana，进入 Management 中的 Kibana，选 Index pattern，并创建。</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244380.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244380.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244292.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244292.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244348.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290244348.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>创建完成后，进入 Discover 菜单，可查看插入的数据</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245798.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245798.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h3 id="使用-kibana-提供的数据进行分析"><a href="#使用-kibana-提供的数据进行分析" class="headerlink" title="使用 kibana 提供的数据进行分析"></a>使用 kibana 提供的数据进行分析</h3><p>从<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/kibana/current/tutorial-load-dataset.html">kibana 文档</a>中下载数据，可选择银行账户数据 account.json，<br>下载后通过以下操作导入 elasticsearch。开启 kibana，进入 Management 添加 index pattern，然后进入 Discover 菜单，选择 bank，添加要看的字段。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">curl -H &#x27;Content-Type: application/x-ndjson&#x27; -XPOST &#x27;localhost:9200/bank/account/_bulk?pretty&#x27; --data-binary @accounts.json</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245453.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245453.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>为数据创建报表，进入 Visualize 菜单，可根据需要选择报表形式，此处选 Pie 饼图，然后再选择 bank 即可进入定制界面。</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245590.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245590.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245324.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290245324.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>选择 split slices，然后在聚合（aggregation）中选择 range，然后进行自定义数据范围</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290246237.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290246237.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290246537.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206290246537.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h2 id="ELK-架构"><a href="#ELK-架构" class="headerlink" title="ELK 架构"></a>ELK 架构</h2><p>若环境的内存少，就在 es 配置文件添加以下配置</p>
+<p>bootstrap.memory_lock: false 为避免内存与磁盘间的 swap，会损耗大量性能</p>
+<p>bootstrap.system_call_filter: false</p>
+<blockquote>
+<p>参考文章</p>
+<p><a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2017/08/elasticsearch.html">全文搜索引擎 Elasticsearch 入门教程</a></p>
+<p>每天 5 分中玩转 docker 容器技术</p>
+<p><a target="_blank" rel="noopener" href="https://elasticsearch.cn/book/elasticsearch_definitive_guide_2.x/index.html">Elasticsearch: 权威指南</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html">Elasticsearch 官方文档</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/chenleiking/article/details/73563930">Logstash 简单介绍</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/iguyue/article/details/77006201">ELK 之 Logstash</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.elastic.co/guide/en/logstash/current/index.html">Logstash 官方文档</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/duanxz/p/6528161.html">ES 之五：ElasticSearch 聚合</a></p>
+</blockquote>
+
+  </div>
+  
+  
+    
+    <div class='footer'>
+       <!-- 参考资料、相关资料等 -->
+      
+       <!-- 相关文章 -->
+      
+      <!-- 版权声明组件 -->
+      
+      <!-- 打赏组件 -->
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E8%BF%90%E7%BB%B4/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>运维</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Elasticsearch/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Elasticsearch</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/ELK/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>ELK</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kafka/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kafka</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kibana/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kibana</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Logstash/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Logstash</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E6%97%A5%E5%BF%97/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>日志</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Filebeat/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Filebeat</p></a></div>
+  <span hidden itemprop="keywords">运维 Elasticsearch ELK Kafka Kibana Logstash 日志 Filebeat</span>
+
+
+        
+      
+    </div>
+    <!-- Custom Files bottomMeta begin -->
+    
+    <!-- Custom Files bottomMeta end -->
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/zabbix%E6%90%AD%E5%BB%BA%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Zabbix搭建笔记</p>
+          <p class='content'>
+zabbix 概述
+zabbix 搭建
+LNMP&#x2F;LAMP 环境搭建 Zabbix
+
+
+zabbix 操作
+监控一台主机
+配置用户
+配置主机
+添加监控项
+新建触发器
+设置通知
+使用服...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/%E9%87%8D%E5%AD%A6%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>重学数据结构与算法笔记<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>使用 C 与 python 实现。
+学习目录：
+
+数据结构与算法分析概念
+线性表
+顺序表
+链式表
+
+
+
+
+
+数据结构与算法分析概念数据：是对客观事物的符号表示，是可被计算机识别并加工处理的对象。...</p>
+        </a>
+      
+    </div>
+  
+  <!-- Custom Files postEnd begin-->
+  
+  <!-- Custom Files postEnd end-->
+</article>
+
+
+
+
+</div>
+<aside id='l_side' itemscope itemtype="http://schema.org/WPSideBar">
+  
+
+  
+    
+    
+      
+    
+  
+
+
+<div class="widget-sticky pjax">
+
+  
+  
+
+
+  <section class="widget toc-wrapper desktop mobile " id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Elasticsearch"><span class="toc-text">Elasticsearch</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Elasticsearch%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85"><span class="toc-text">Elasticsearch集群安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Elasticsearch-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">Elasticsearch 配置文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Elasticsearch-%E6%A6%82%E5%BF%B5"><span class="toc-text">Elasticsearch 概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#REST"><span class="toc-text">REST</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E5%8E%9F%E7%90%86"><span class="toc-text">集群原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E5%81%A5%E5%BA%B7"><span class="toc-text">集群健康</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B0%B4%E5%B9%B3%E6%89%A9%E5%AE%B9"><span class="toc-text">水平扩容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E7%B4%A2%E5%BC%95"><span class="toc-text">添加索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E6%90%9C%E7%B4%A2"><span class="toc-text">简单搜索</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E8%A1%A8%E8%BE%BE%E5%BC%8F%E6%90%9C%E7%B4%A2"><span class="toc-text">查询表达式搜索</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%AB%98%E4%BA%AE%E6%90%9C%E7%B4%A2"><span class="toc-text">高亮搜索</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%81%9A%E5%90%88"><span class="toc-text">聚合</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logstash"><span class="toc-text">Logstash</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logstash-%E5%AE%89%E8%A3%85"><span class="toc-text">Logstash 安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logstash-%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C"><span class="toc-text">Logstash 如何工作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E9%97%AD-Logstash"><span class="toc-text">关闭 Logstash</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logstash-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">Logstash 配置文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#logstash-yml"><span class="toc-text">logstash.yml</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-Logstash-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">自定义 Logstash 配置文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logstash-%E6%97%A5%E5%BF%97"><span class="toc-text">Logstash 日志</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Logstash-%E5%B8%B8%E7%94%A8%E6%8F%92%E4%BB%B6"><span class="toc-text">Logstash 常用插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kibana"><span class="toc-text">Kibana</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kibana-%E5%AE%89%E8%A3%85"><span class="toc-text">Kibana 安装</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kibana-%E9%85%8D%E7%BD%AE"><span class="toc-text">Kibana 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Kibana-%E5%9F%BA%E6%9C%AC%E5%8A%9F%E8%83%BD"><span class="toc-text">Kibana 基本功能</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0-index-%E7%9A%84%E7%AE%A1%E7%90%86"><span class="toc-text">添加 index 的管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-kibana-%E6%8F%90%E4%BE%9B%E7%9A%84%E6%95%B0%E6%8D%AE%E8%BF%9B%E8%A1%8C%E5%88%86%E6%9E%90"><span class="toc-text">使用 kibana 提供的数据进行分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ELK-%E6%9E%B6%E6%9E%84"><span class="toc-text">ELK 架构</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+  
+
+</div>
+
+
+<!-- 没有 pjax 占位会报错 万恶的 pjax -->
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <!-- Custom Files side begin -->
+  
+  <!-- Custom Files side end -->
+</aside>
+
+
+
+          <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<pjax>
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  pdata.commentConfig={};
+  //  see: /layout/_partial/scripts/_ctrl/coverCtrl.ejs
+  
+    // header
+    var l_header=document.getElementById("l_header");
+    
+    l_header.classList.add("show");
+    
+    
+      // cover
+      var cover_wrapper=document.querySelector('#l_cover .cover-wrapper');
+      var scroll_down=document.getElementById('scroll-down');
+      cover_wrapper.id="none";
+      cover_wrapper.style.display="none";
+      scroll_down.style.display="none";
+    
+  
+</script>
+</pjax>
+        </div>
+        
+  
+  <footer class="footer clearfix"  itemscope itemtype="http://schema.org/WPFooter">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper" itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer" itemprop="url">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+    <!-- Custom Files footer begin-->
+    
+    <!-- Custom Files footer end-->
+  </footer>
+
+
+        <a id="s-top" class="fa-solid fa-arrow-up fa-fw" href="/" onclick="return false;" title="top"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+  /******************** volantis.dom ********************************/
+  // 页面选择器 将dom对象缓存起来 see: /source/js/app.js etc.
+  volantis.dom.bodyAnchor = volantis.dom.$(document.getElementById("safearea")); // 页面主体
+  volantis.dom.topBtn = volantis.dom.$(document.getElementById('s-top')); // 向上
+  volantis.dom.wrapper = volantis.dom.$(document.getElementById('wrapper')); // 整个导航栏
+  volantis.dom.coverAnchor = volantis.dom.$(document.querySelector('#l_cover .cover-wrapper')); // 1个
+  volantis.dom.switcher = volantis.dom.$(document.querySelector('#l_header .switcher .s-search')); // 搜索按钮   移动端 1个
+  volantis.dom.header = volantis.dom.$(document.getElementById('l_header')); // 移动端导航栏
+  volantis.dom.search = volantis.dom.$(document.querySelector('#l_header .m_search')); // 搜索框 桌面端 移动端 1个
+  volantis.dom.mPhoneList = volantis.dom.$(document.querySelectorAll('#l_header .m-phone .list-v')); //  手机端 子菜单 多个
+</script>
+
+<script>
+  
+  volantis.css("https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fortawesome/fontawesome-free/css/all.min.css");
+  
+  
+  
+</script>
+
+<!-- required -->
+
+
+<!-- internal -->
+
+<script src="/js/app.js"></script>
+
+
+
+
+
+
+<!-- rightmenu要在darkmode之前（ToggleButton） darkmode要在comments之前（volantis.dark.push）-->
+
+
+
+<script>
+  function loadIssuesJS() {
+    
+      const sites_api = document.getElementById('sites-api');
+      if (sites_api != undefined && typeof SitesJS === 'undefined') {
+        volantis.js("/js/plugins/tags/sites.js")
+      }
+    
+    
+      const friends_api = document.getElementById('friends-api');
+      if (friends_api != undefined && typeof FriendsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/friends.js")
+      }
+    
+    
+      const contributors_api = document.getElementById('contributors-api');
+      if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/contributors.js")
+      }
+    
+  };
+  loadIssuesJS()
+  volantis.pjax.push(()=>{
+    loadIssuesJS();
+  })
+
+</script>
+
+
+
+
+  <script defer src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/vanilla-lazyload/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: ["#"],
+	maxRPS: 6,
+	hoverDelay: 0
+  };
+</script>
+<script defer src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/flying-pages/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+      <script>
+  volantis.layoutHelper("comments",`<div id="giscus_container"></div>`)
+
+  volantis.giscus = {};
+
+  function check_giscus() {
+    if (volantis.dark.mode === "dark") {
+      volantis.giscus.Theme = 'dark';
+    } else {
+      volantis.giscus.Theme = 'light';
+    }
+
+    return document.getElementById("giscus_container");
+  }
+
+  function pjax_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+    let cfg = Object.assign({"theme":{"light":"light","dark":"dark"}},pdata.commentConfig)
+    const script = document.createElement('script');
+    script.setAttribute('src', 'https://giscus.app/client.js');
+    Object.keys(cfg).forEach(k=>{
+      if (k != "theme") {
+        script.setAttribute('data-'+k, cfg[k]);
+      }
+    })
+    script.setAttribute('data-theme', volantis.giscus.Theme);
+    script.setAttribute('crossorigin', "anonymous");
+    HEAD.appendChild(script);
+  }
+
+  function dark_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+
+    const message = {
+      setConfig: {
+        theme: volantis.giscus.Theme
+      }
+    };
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    giscusIframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+  }
+  pjax_giscus();
+  volantis.pjax.push(pjax_giscus);
+  volantis.dark.push(dark_giscus);
+</script>
+
+    
+
+
+
+
+
+<!-- optional -->
+
+  <script>
+  const SearchServiceDataPathRoot = ("/" || "/").endsWith("/") ?
+    "/" || "/" :
+    "//" || "/";
+  const SearchServiceDataPath = SearchServiceDataPathRoot + "content.json";
+
+  function loadSearchScript() {
+    // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
+    return volantis.js("/js/search/hexo.js");
+  }
+
+  function loadSearchService() {
+    loadSearchScript();
+    document.querySelectorAll(".input.u-search-input").forEach((e) => {
+      e.removeEventListener("focus", loadSearchService, false);
+    });
+
+    document.querySelectorAll(".u-search-form").forEach((e) => {
+      e.addEventListener("submit", (event) => {
+        event.preventDefault();
+      }, false);
+    });
+  }
+
+  // 打开并搜索 字符串 s
+  function OpenSearch(s) {
+    if (typeof SearchService === 'undefined')
+      loadSearchScript().then(() => {
+        SearchService.setQueryText(s);
+        SearchService.search();
+      });
+    else {
+      SearchService.setQueryText(s);
+      SearchService.search();
+    }
+  }
+
+  // 访问含有 ?s=xxx  的链接时打开搜索 // 与搜索引擎 structured data 相关: /scripts/helpers/structured-data/lib/config.js
+  if (window.location.search && /^\?s=/g.test(window.location.search)) {
+    let queryText = decodeURI(window.location.search)
+      .replace(/\ /g, "-")
+      .replace(/^\?s=/g, "");
+    OpenSearch(queryText);
+  }
+
+  // 搜索输入框获取焦点时加载搜索
+  document.querySelectorAll(".input.u-search-input").forEach((e) => {
+    e.addEventListener("focus", loadSearchService, false);
+  });
+</script>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  function pjax_highlightjs_copyCode(){
+    if (!(document.querySelector(".highlight .code pre") ||
+      document.querySelector(".article pre code"))) {
+      return;
+    }
+    VolantisApp.utilCopyCode(".highlight .code pre, .article pre code")
+  }
+  volantis.requestAnimationFrame(pjax_highlightjs_copyCode)
+  volantis.pjax.push(pjax_highlightjs_copyCode)
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  <script>
+  function load_swiper() {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    volantis.css("https://unpkg.com/volantis-static@0.0.1654736714924/libs/swiper/swiper-bundle.min.css");
+    volantis.js("https://unpkg.com/volantis-static@0.0.1654736714924/libs/swiper/swiper-bundle.min.js").then(() => {
+      pjax_swiper();
+    });
+  }
+
+  load_swiper();
+
+  function pjax_swiper() {
+    volantis.swiper = new Swiper('.swiper-container', {
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      centeredSlides: true,
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+
+  volantis.pjax.push(() => {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    if (typeof volantis.swiper === "undefined") {
+      load_swiper();
+    } else {
+      pjax_swiper();
+    }
+  });
+</script>
+
+
+<!-- pjax 标签必须存在于所有页面 否则 pjax error -->
+<pjax>
+
+</pjax>
+
+<script>
+  function listennSidebarTOC() {
+    const navItems = document.querySelectorAll(".toc li");
+    if (!navItems.length) return;
+    let targets = []
+    const sections = [...navItems].map((element) => {
+      const link = element.querySelector(".toc-link");
+      const target = document.getElementById(
+        decodeURI(link.getAttribute("href")).replace("#", "")
+      );
+      targets.push(target)
+      // 解除 a 标签 href 的 锚点定位, a 标签 href 的 锚点定位 会随机启用?? 产生错位???
+      link.setAttribute("onclick","return false;")
+      link.setAttribute("toc-action","toc-"+decodeURI(link.getAttribute("href")).replace("#", ""))
+      link.setAttribute("href","/")
+      // 配置 点击 触发新的锚点定位
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        // 这里的 addTop 是通过错位使得 toc 自动展开.
+        volantis.scroll.to(target,{addTop: 5, observer:true})
+        // Anchor id
+        history.pushState(null, document.title, "#" + target.id);
+      });
+      return target;
+    });
+
+    function activateNavByIndex(target) {
+      if (target.classList.contains("active-current")) return;
+
+      document.querySelectorAll(".toc .active").forEach((element) => {
+        element.classList.remove("active", "active-current");
+      });
+      target.classList.add("active", "active-current");
+      let parent = target.parentNode;
+      while (!parent.matches(".toc")) {
+        if (parent.matches("li")) parent.classList.add("active");
+        parent = parent.parentNode;
+      }
+    }
+
+    // 方案一：
+    volantis.activateNavIndex=0
+    activateNavByIndex(navItems[volantis.activateNavIndex])
+    volantis.scroll.push(()=>{
+      if (targets[0].getBoundingClientRect().top >= 0) {
+        volantis.activateNavIndex = 0
+      }else if (targets[targets.length-1].getBoundingClientRect().top < 0) {
+        volantis.activateNavIndex = targets.length-1
+      } else {
+        for (let index = 0; index < targets.length; index++) {
+          const target0 = targets[index];
+          const target1 = targets[(index+1)%targets.length];
+          if (target0.getBoundingClientRect().top < 0&&target1.getBoundingClientRect().top >= 0) {
+            volantis.activateNavIndex=index
+            break;
+          }
+        }
+      }
+      activateNavByIndex(navItems[volantis.activateNavIndex])
+    })
+
+    // 方案二：
+    // IntersectionObserver 不是完美精确到像素级别 也不是低延时性的
+    // function findIndex(entries) {
+    //   let index = 0;
+    //   let entry = entries[index];
+    //   if (entry.boundingClientRect.top > 0) {
+    //     index = sections.indexOf(entry.target);
+    //     return index === 0 ? 0 : index - 1;
+    //   }
+    //   for (; index < entries.length; index++) {
+    //     if (entries[index].boundingClientRect.top <= 0) {
+    //       entry = entries[index];
+    //     } else {
+    //       return sections.indexOf(entry.target);
+    //     }
+    //   }
+    //   return sections.indexOf(entry.target);
+    // }
+    // function createIntersectionObserver(marginTop) {
+    //   marginTop = Math.floor(marginTop + 10000);
+    //   let intersectionObserver = new IntersectionObserver(
+    //     (entries, observe) => {
+    //       let scrollHeight = document.documentElement.scrollHeight;
+    //       if (scrollHeight > marginTop) {
+    //         observe.disconnect();
+    //         createIntersectionObserver(scrollHeight);
+    //         return;
+    //       }
+    //       let index = findIndex(entries);
+    //       activateNavByIndex(navItems[index]);
+    //     }, {
+    //       rootMargin: marginTop + "px 0px -100% 0px",
+    //       threshold: 0,
+    //     }
+    //   );
+    //   sections.forEach((element) => {
+    //     element && intersectionObserver.observe(element);
+    //   });
+    // }
+    // createIntersectionObserver(document.documentElement.scrollHeight);
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    volantis.requestAnimationFrame(listennSidebarTOC)
+  });
+  document.addEventListener("pjax:success", ()=>{
+    volantis.requestAnimationFrame(listennSidebarTOC)
+  });
+</script>
+
+
+
+<script>
+  document.onreadystatechange = function () {
+    if (document.readyState == 'complete') {
+      // 页面加载完毕 样式加载失败，或是当前网速慢，或是开启了省流模式
+      const { saveData, effectiveType } = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {}
+      if (getComputedStyle(document.querySelector("#safearea"), null)["display"] == "none" || saveData || /2g/.test(effectiveType)) {
+        document.querySelectorAll(".reveal").forEach(function (e) {
+          e.style["opacity"] = "1";
+        });
+        document.querySelector("#safearea").style["display"] = "block";
+      }
+    }
+  }
+</script>
+
+
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/日志/","name":"日志"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2018/ELK日志架构/","name":"ELK日志架构"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"ELK日志架构","description":"本篇文章将完整描述基于ELK的日志系统的设计与部署，以及所有涉及的知识点。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2018/ELK%E6%97%A5%E5%BF%97%E6%9E%B6%E6%9E%84/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2018/ELK%E6%97%A5%E5%BF%97%E6%9E%B6%E6%9E%84/","wordCount":37,"datePublished":"2018-09-24T08:28:34.000Z","dateModified":"2022-07-11T15:20:00.462Z","articleSection":"日志","keywords":"运维,Elasticsearch,ELK,Kafka,Kibana,Logstash,日志,Filebeat","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+
+
+
+      
+        <!--
+  pjax重载区域接口：
+  1.  <pjax></pjax> 标签 pjax 标签必须存在于所有页面 否则 pjax error
+  2.  script[data-pjax]
+  3.  .pjax-reload script
+  4.  .pjax
+-->
+
+
+
+<script src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/pjax/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox]):not([onclick="return false;"]):not([onclick="return!1"]):not([target="_blank"]):not([target="view_window"]):not([href$=".xml"])',
+        selectors: [
+          "head title",
+          "head meta[name=keywords]",
+          "head meta[name=description]",
+          
+          "#l_main",
+          "#pjax-header-nav-list",
+          ".pjax",
+          "pjax", // <pjax></pjax> 标签
+          "script[data-pjax], .pjax-reload script" // script标签添加data-pjax 或 script标签外层添加.pjax-reload 的script代码段重载
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000,
+        
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.complete.start();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      if(volantis.debug) {
+        console.error(e);
+        console.log('pjax error: \n' + JSON.stringify(e));
+      }else{
+        // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+        volantis.pjax.method.error.start();
+        window.location.href = e.triggerElement.href;
+      }
+    });
+</script>
+
+      
+    </div>
+    <!-- import body_end begin-->
+    <!-- import body_end end-->
+    <!-- Custom Files bodyEnd begin-->
+    
+    <!-- Custom Files bodyEnd end-->
+  </body>
+</html>

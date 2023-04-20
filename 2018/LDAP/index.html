@@ -1,0 +1,3859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/#5.7.7'>
+  <meta name="generator" content="Hexo 6.3.0">
+  <meta name="Volantis" content="5.7.7">
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+  <link rel="canonical" href="https://tianyigu.top/2018/ldap/"/>
+  <!-- 渲染优化 -->
+    <meta http-equiv='x-dns-prefetch-control' content='on' />
+      <link rel='dns-prefetch' href='https://unpkg.com'>
+      <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self' https:; block-all-mixed-content; base-uri 'self' https:; form-action 'self' https:; worker-src 'self' https:; connect-src 'self' https: *; img-src 'self' data: https: *; media-src 'self' https: *; font-src 'self' data: https: *; frame-src 'self' https: *; manifest-src 'self' https: *; child-src https:; script-src 'self' https: 'unsafe-inline' *; style-src 'self' https: 'unsafe-inline' *; ">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+  <meta content="telephone=no" name="format-detection">
+  <!-- import head_begin begin -->
+  <!-- import head_begin end -->
+  <!-- Custom Files headBegin begin-->
+  
+  <!-- Custom Files headBegin end-->
+    <link rel="shortcut icon" type='image/x-icon' href="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preload" href="https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<link rel="preload" href="https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <!-- feed -->
+  <!-- 页面元数据 -->
+  <title>LDAP - Tianyi的技术随笔</title>
+  <meta name="keywords" content="LDAP,OpenDJ,undefined">
+  <meta desc name="description" content="Tianyi的技术随笔 - Tianyi Gu - Tianyi的技术随笔">
+  
+<meta property="og:type" content="article">
+<meta property="og:title" content="LDAP">
+<meta property="og:url" content="https://tianyigu.top/2018/LDAP/index.html">
+<meta property="og:site_name" content="Tianyi的技术随笔">
+<meta property="og:description" content="目录服务目录是一类为了浏览和搜索数据而设计的特殊数据库，按照树状形式存储信息，目的包含基于属性的描述性信息，支持高级过滤功能。 目录不支持大多数事务型数据库支持的高吞吐量和复杂更新操作。目录服务适合的业务应用于大量查询与搜索操作，而不是大量写入操作。目录服务器还能提供主从服务器同步目录数据功能。  DNS 就是一个典型的大范围分布式目录服务  目录服务器功能：  按照网络管理员指令，强制实施安全策">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+<meta property="article:published_time" content="2018-11-24T01:22:47.000Z">
+<meta property="article:modified_time" content="2023-04-20T18:13:43.299Z">
+<meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="LDAP">
+<meta property="article:tag" content="OpenDJ">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+  <style>
+    /* 首屏样式 */
+    #safearea {
+  display: none;
+}
+:root {
+  --color-site-body: #f4f4f4;
+  --color-site-bg: #f4f4f4;
+  --color-site-inner: #fff;
+  --color-site-footer: #666;
+  --color-card: #fff;
+  --color-text: #444;
+  --color-block: #f6f6f6;
+  --color-inlinecode: #c74f00;
+  --color-codeblock: #fff7ea;
+  --color-h1: #3a3a3a;
+  --color-h2: #3a3a3a;
+  --color-h3: #333;
+  --color-h4: #444;
+  --color-h5: #555;
+  --color-h6: #666;
+  --color-p: #444;
+  --color-list: #666;
+  --color-list-hl: #30ad91;
+  --color-meta: #888;
+  --color-read-bkg: #e0d8c8;
+  --color-read-post: #f8f1e2;
+  --color-copyright-bkg: #f5f5f5;
+}
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+*::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+html {
+  color: var(--color-text);
+  width: 100%;
+  height: 100%;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  font-size: 16px;
+}
+html >::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+html >::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+html >::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+html >::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+body {
+  background-color: var(--color-site-body);
+  text-rendering: optimizelegibility;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+body.modal-active {
+  overflow: hidden;
+}
+@media screen and (max-width: 680px) {
+  body.modal-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+a {
+  color: #2092ec;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+a:hover {
+  color: #ff5722;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+ol {
+  padding-left: 0;
+}
+ul li,
+ol li {
+  list-style: none;
+}
+header {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+img {
+  border: 0;
+  background: none;
+  max-width: 100%;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  height: 0;
+  border: 0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  border-bottom: 1px solid rgba(68,68,68,0.1);
+}
+button,
+input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+button {
+  overflow: visible;
+  text-transform: none;
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+@supports (backdrop-filter: blur(20px)) {
+  .blur {
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+.shadow {
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.shadow.floatable {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.shadow.floatable:hover {
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+}
+#l_cover {
+  min-height: 64px;
+}
+.cover-wrapper {
+  top: 0;
+  left: 0;
+  max-width: 100%;
+  height: 100vh;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+  color: var(--color-site-inner);
+  padding: 0 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -100px;
+}
+.cover-wrapper .cover-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+}
+.cover-wrapper .cover-bg.lazyload:not(.loaded) {
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+}
+.cover-wrapper .cover-bg.lazyload.loaded {
+  animation-delay: 0s;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+  animation-name: fadeIn;
+}
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cover-wrapper#full {
+  height: calc(100vh + 100px);
+  padding-bottom: 100px;
+}
+.cover-wrapper#half {
+  max-height: 640px;
+  min-height: 400px;
+  height: calc(36vh - 64px + 200px);
+}
+.cover-wrapper #scroll-down {
+  width: 100%;
+  height: 64px;
+  position: absolute;
+  bottom: 100px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover-wrapper #scroll-down .scroll-down-effects {
+  color: #fff;
+  font-size: 24px;
+  line-height: 64px;
+  position: absolute;
+  width: 24px;
+  left: calc(50% - 12px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  animation: scroll-down-effect 1.5s infinite;
+  -webkit-animation: scroll-down-effect 1.5s infinite;
+  -khtml-animation: scroll-down-effect 1.5s infinite;
+  -moz-animation: scroll-down-effect 1.5s infinite;
+  -o-animation: scroll-down-effect 1.5s infinite;
+  -ms-animation: scroll-down-effect 1.5s infinite;
+}
+@-moz-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  margin-top: 64px;
+  margin-bottom: 100px;
+}
+.cover-wrapper .cover-body,
+.cover-wrapper .cover-body .top,
+.cover-wrapper .cover-body .bottom {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  max-width: 100%;
+}
+.cover-wrapper .cover-body .bottom {
+  margin-top: 32px;
+}
+.cover-wrapper .cover-body .title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+  font-size: 3.125rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.cover-wrapper .cover-body .subtitle {
+  font-size: 20px;
+}
+.cover-wrapper .cover-body .logo {
+  max-height: 120px;
+  max-width: calc(100% - 4 * 16px);
+}
+@media screen and (min-height: 1024px) {
+  .cover-wrapper .cover-body .title {
+    font-size: 3rem;
+  }
+  .cover-wrapper .cover-body .subtitle {
+    font-size: 1.05rem;
+  }
+  .cover-wrapper .cover-body .logo {
+    max-height: 150px;
+  }
+}
+.cover-wrapper .cover-body .m_search {
+  position: relative;
+  max-width: calc(100% - 16px);
+  width: 320px;
+  vertical-align: middle;
+}
+.cover-wrapper .cover-body .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  width: 100%;
+}
+.cover-wrapper .cover-body .m_search .icon,
+.cover-wrapper .cover-body .m_search .input {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.cover-wrapper .cover-body .m_search .icon {
+  position: absolute;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  line-height: 2.5rem;
+  width: 32px;
+  top: 0;
+  left: 5px;
+  color: rgba(68,68,68,0.75);
+}
+.cover-wrapper .cover-body .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  padding-left: 36px;
+  border-radius: 1.4rem;
+  -webkit-border-radius: 1.4rem;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: var(--color-text);
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .cover-body .m_search .input {
+    padding-left: 36px;
+  }
+}
+.cover-wrapper .cover-body .m_search .input:hover {
+  background: rgba(255,255,255,0.8);
+}
+.cover-wrapper .cover-body .m_search .input:focus {
+  background: #fff;
+}
+.cover-wrapper .list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -khtml-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -o-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  align-items: stretch;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.cover-wrapper .list-h a {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  font-weight: 600;
+}
+.cover-wrapper .list-h a img {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  margin: 4px;
+  min-width: 40px;
+  max-width: 44px;
+}
+@media screen and (max-width: 768px) {
+  .cover-wrapper .list-h a img {
+    min-width: 36px;
+    max-width: 40px;
+  }
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .list-h a img {
+    margin: 2px 4px;
+    min-width: 32px;
+    max-width: 36px;
+  }
+}
+@media screen and (max-width: 375px) {
+  .cover-wrapper .list-h a img {
+    min-width: 28px;
+    max-width: 32px;
+  }
+}
+.cover-wrapper {
+  max-width: 100%;
+}
+.cover-wrapper.search .bottom .menu {
+  margin-top: 16px;
+}
+.cover-wrapper.search .bottom .menu .list-h a {
+  white-space: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2px;
+  margin: 4px;
+  color: var(--color-site-inner);
+  opacity: 0.75;
+  -webkit-opacity: 0.75;
+  -moz-opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 2px solid transparent;
+}
+.cover-wrapper.search .bottom .menu .list-h a i {
+  margin-right: 4px;
+}
+.cover-wrapper.search .bottom .menu .list-h a p {
+  font-size: 0.9375rem;
+}
+.cover-wrapper.search .bottom .menu .list-h a:hover,
+.cover-wrapper.search .bottom .menu .list-h a.active,
+.cover-wrapper.search .bottom .menu .list-h a:active {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  border-bottom: 2px solid var(--color-site-inner);
+}
+.cover-wrapper.dock .menu,
+.cover-wrapper.featured .menu,
+.cover-wrapper.focus .menu {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+.cover-wrapper.dock .menu .list-h a,
+.cover-wrapper.featured .menu .list-h a,
+.cover-wrapper.focus .menu .list-h a {
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  line-height: 24px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-bottom: none;
+  text-align: center;
+  align-content: flex-end;
+  color: rgba(68,68,68,0.7);
+  font-size: 1.5rem;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h a,
+  .cover-wrapper.featured .menu .list-h a,
+  .cover-wrapper.focus .menu .list-h a {
+    padding: 12px 8px;
+  }
+}
+.cover-wrapper.dock .menu .list-h a i,
+.cover-wrapper.featured .menu .list-h a i,
+.cover-wrapper.focus .menu .list-h a i {
+  margin: 8px;
+}
+.cover-wrapper.dock .menu .list-h a p,
+.cover-wrapper.featured .menu .list-h a p,
+.cover-wrapper.focus .menu .list-h a p {
+  font-size: 0.875rem;
+}
+.cover-wrapper.dock .menu .list-h a.active,
+.cover-wrapper.featured .menu .list-h a.active,
+.cover-wrapper.focus .menu .list-h a.active {
+  background: var(--color-card);
+  backdrop-filter: none;
+}
+.cover-wrapper.dock .menu .list-h a.active i,
+.cover-wrapper.featured .menu .list-h a.active i,
+.cover-wrapper.focus .menu .list-h a.active i,
+.cover-wrapper.dock .menu .list-h a.active i+p,
+.cover-wrapper.featured .menu .list-h a.active i+p,
+.cover-wrapper.focus .menu .list-h a.active i+p {
+  color: #3dd9b6;
+}
+.cover-wrapper.dock .menu .list-h a.active img+p,
+.cover-wrapper.featured .menu .list-h a.active img+p,
+.cover-wrapper.focus .menu .list-h a.active img+p {
+  color: var(--color-text);
+}
+.cover-wrapper.dock .menu .list-h a:hover,
+.cover-wrapper.featured .menu .list-h a:hover,
+.cover-wrapper.focus .menu .list-h a:hover {
+  background: var(--color-card);
+}
+.cover-wrapper.dock .top {
+  margin-bottom: 48px;
+}
+.cover-wrapper.dock .menu {
+  background: rgba(255,255,255,0.5);
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+}
+.cover-wrapper.dock .menu .list-h {
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  margin: 4px;
+}
+.cover-wrapper.dock .menu .list-h a+a {
+  margin-left: 4px;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h {
+    overflow-x: scroll;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb {
+    background: #3dd9b6;
+    cursor: pointer;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb:hover {
+    background: #ff5722;
+  }
+}
+@supports (backdrop-filter: blur(20px)) {
+  .cover-wrapper.dock .menu {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url("https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Varela Round';
+  src: url("https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/VarelaRound/VarelaRound-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+.l_header {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--color-card);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.l_header.auto {
+  transition: opacity 0.4s ease;
+  -webkit-transition: opacity 0.4s ease;
+  -khtml-transition: opacity 0.4s ease;
+  -moz-transition: opacity 0.4s ease;
+  -o-transition: opacity 0.4s ease;
+  -ms-transition: opacity 0.4s ease;
+  visibility: hidden;
+}
+.l_header.auto.show {
+  opacity: 1 !important;
+  -webkit-opacity: 1 !important;
+  -moz-opacity: 1 !important;
+  visibility: visible;
+}
+.l_header .container {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.l_header #wrapper {
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.l_header #wrapper .nav-main,
+.l_header #wrapper .nav-sub {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -khtml-justify-content: space-between;
+  -moz-justify-content: space-between;
+  -o-justify-content: space-between;
+  -ms-justify-content: space-between;
+  align-items: center;
+}
+.l_header #wrapper .nav-main {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.l_header #wrapper.sub .nav-main {
+  transform: translateY(-64px);
+  -webkit-transform: translateY(-64px);
+  -khtml-transform: translateY(-64px);
+  -moz-transform: translateY(-64px);
+  -o-transform: translateY(-64px);
+  -ms-transform: translateY(-64px);
+}
+.l_header #wrapper .nav-sub {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+  height: 64px;
+  width: calc(100% - 2 * 16px);
+  position: absolute;
+}
+.l_header #wrapper .nav-sub ::-webkit-scrollbar {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (min-width: 2048px) {
+  .l_header #wrapper .nav-sub {
+    max-width: 55vw;
+    margin: auto;
+  }
+}
+.l_header #wrapper.sub .nav-sub {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+}
+.l_header #wrapper .title {
+  position: relative;
+  color: var(--color-text);
+  padding-left: 24px;
+  max-height: 64px;
+}
+.l_header #wrapper .nav-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  line-height: 64px;
+  padding: 0 24px;
+  font-size: 1.25rem;
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+}
+.l_header #wrapper .nav-main .title img {
+  height: 64px;
+}
+.l_header .nav-sub {
+  max-width: 1580px;
+  margin: auto;
+}
+.l_header .nav-sub .title {
+  font-weight: bold;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  line-height: 1.2;
+  max-height: 64px;
+  white-space: normal;
+  flex-shrink: 1;
+}
+.l_header .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  line-height: 64px;
+  align-items: center;
+}
+.l_header .switcher .s-toc {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  .l_header .switcher .s-toc {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+  }
+}
+.l_header .switcher >li {
+  height: 48px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  margin: 2px;
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li {
+    margin: 0 1px;
+    height: 48px;
+  }
+}
+.l_header .switcher >li >a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0.85em 1.1em;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  color: #3dd9b6;
+}
+.l_header .switcher >li >a:hover {
+  border: none;
+}
+.l_header .switcher >li >a.active,
+.l_header .switcher >li >a:active {
+  border: none;
+  background: var(--color-site-bg);
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li >a {
+    width: 36px;
+    height: 48px;
+  }
+}
+.l_header .nav-sub .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+}
+.l_header .m_search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  height: 64px;
+  width: 240px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (max-width: 1024px) {
+  .l_header .m_search {
+    width: 44px;
+    min-width: 44px;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+  }
+  .l_header .m_search:hover {
+    width: 240px;
+  }
+  .l_header .m_search:hover input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search:hover .input {
+    width: 100%;
+  }
+  .l_header .m_search:hover .input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search {
+    min-width: 0;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.l_header .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.l_header .m_search .icon {
+  position: absolute;
+  width: 36px;
+  left: 5px;
+  color: var(--color-meta);
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .icon {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+.l_header .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
+  width: 100%;
+  color: var(--color-text);
+  background: #fafafa;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 40px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search .input:focus {
+    box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .input {
+    background: var(--color-block);
+    padding-left: 8px;
+    border: none;
+  }
+  .l_header .m_search .input:hover,
+  .l_header .m_search .input:focus {
+    border: none;
+  }
+}
+@media (max-width: 500px) {
+  .l_header .m_search {
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    transition: all 0.28s ease;
+    -webkit-transition: all 0.28s ease;
+    -khtml-transition: all 0.28s ease;
+    -moz-transition: all 0.28s ease;
+    -o-transition: all 0.28s ease;
+    -ms-transition: all 0.28s ease;
+  }
+  .l_header .m_search .input {
+    border-radius: 32px;
+    -webkit-border-radius: 32px;
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  .l_header.z_search-open .m_search {
+    width: 100%;
+  }
+  .l_header.z_search-open .m_search .input {
+    width: calc(100% - 120px);
+  }
+}
+ul.m-pc >li>a {
+  color: inherit;
+  border-bottom: 2px solid transparent;
+}
+ul.m-pc >li>a:active,
+ul.m-pc >li>a.active {
+  border-bottom: 2px solid #3dd9b6;
+}
+ul.m-pc li:hover >ul.list-v,
+ul.list-v li:hover >ul.list-v {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.nav-list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  align-items: stretch;
+}
+ul.nav-list-h>li {
+  position: relative;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  height: 100%;
+  line-height: 2.4;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+ul.nav-list-h>li >a {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+ul.list-v {
+  z-index: 1;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: absolute;
+  background: var(--color-card);
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  margin-top: -6px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  padding: 8px 0;
+}
+ul.list-v.show {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.list-v hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+ul.list-v >li {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+ul.list-v >li.header {
+  font-size: 0.78125rem;
+  font-weight: bold;
+  line-height: 2em;
+  color: var(--color-meta);
+  margin: 8px 16px 4px;
+}
+ul.list-v >li.header i {
+  margin-right: 8px;
+}
+ul.list-v >li ul {
+  margin-left: 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: -40px;
+}
+ul.list-v .aplayer-container {
+  min-height: 64px;
+  padding: 6px 16px;
+}
+ul.list-v >li>a {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  color: var(--color-list);
+  font-size: 0.875rem;
+  font-weight: bold;
+  line-height: 36px;
+  padding: 0 20px 0 16px;
+  text-overflow: ellipsis;
+  margin: 0 4px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+@media screen and (max-width: 1024px) {
+  ul.list-v >li>a {
+    line-height: 40px;
+  }
+}
+ul.list-v >li>a >i {
+  margin-right: 8px;
+}
+ul.list-v >li>a:active,
+ul.list-v >li>a.active {
+  color: var(--color-list-hl);
+}
+ul.list-v >li>a:hover {
+  color: var(--color-list-hl);
+  background: var(--color-site-bg);
+}
+.l_header .menu >ul>li>a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding: 0 8px;
+}
+.l_header .menu >ul>li>a >i {
+  margin-right: 4px;
+}
+.l_header ul.nav-list-h>li {
+  color: var(--color-list);
+  line-height: 64px;
+}
+.l_header ul.nav-list-h>li >a {
+  max-height: 64px;
+  overflow: hidden;
+  color: inherit;
+}
+.l_header ul.nav-list-h>li >a:active,
+.l_header ul.nav-list-h>li >a.active {
+  color: #3dd9b6;
+}
+.l_header ul.nav-list-h>li:hover>a {
+  color: var(--color-list-hl);
+}
+.l_header ul.nav-list-h>li i.music {
+  animation: rotate-effect 1.5s linear infinite;
+  -webkit-animation: rotate-effect 1.5s linear infinite;
+  -khtml-animation: rotate-effect 1.5s linear infinite;
+  -moz-animation: rotate-effect 1.5s linear infinite;
+  -o-animation: rotate-effect 1.5s linear infinite;
+  -ms-animation: rotate-effect 1.5s linear infinite;
+}
+@-moz-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-o-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+.menu-phone li ul.list-v {
+  right: calc(100% - 0.5 * 16px);
+}
+.menu-phone li ul.list-v ul {
+  right: calc(100% - 0.5 * 16px);
+}
+#wrapper {
+  max-width: 1580px;
+  margin: auto;
+}
+@media screen and (min-width: 2048px) {
+  #wrapper {
+    max-width: 55vw;
+  }
+}
+#wrapper .menu {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 1;
+  -ms-flex: 1 1;
+  flex: 1 1;
+  margin: 0 16px 0 0;
+}
+#wrapper .menu .list-v ul {
+  left: calc(100% - 0.5 * 16px);
+}
+.menu-phone {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: 16px;
+  right: 8px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.menu-phone ul {
+  right: calc(100% - 0.5 * 16px);
+}
+@media screen and (max-width: 500px) {
+  .menu-phone {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: block;
+  }
+}
+.l_header {
+  max-width: 65vw;
+  left: calc((100% - 65vw) * 0.5);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media screen and (max-width: 2048px) {
+  .l_header {
+    max-width: 1612px;
+    left: calc((100% - 1612px) * 0.5);
+  }
+}
+@media screen and (max-width: 1612px) {
+  .l_header {
+    left: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    max-width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .l_header #wrapper .nav-main .title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .l_header #wrapper .nav-sub {
+    width: 100%;
+  }
+  .l_header #wrapper .nav-sub .title {
+    overflow-y: scroll;
+    margin-top: 2px;
+    padding: 8px 16px;
+  }
+  .l_header #wrapper .switcher {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+    margin-right: 8px;
+  }
+  .l_header .menu {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+@media screen and (max-width: 500px) {
+  .list-v li {
+    max-width: 270px;
+  }
+}
+#u-search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 60px 20px;
+  z-index: 1001;
+}
+@media screen and (max-width: 680px) {
+  #u-search {
+    padding: 0px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+    '.kill-t{'+
+      'font-size: 2rem;'+
+    '}'+
+    '.kill-c{'+
+      'font-size: 1.2rem;'+
+    '}'+
+		'#l_header,#l_body{'+
+			'display: none;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        `<span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>`+
+        `<span class="kill-c">微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</span><br/>`+
+        `<a target="_blank" rel="noopener" href="https://blogs.windows.com/windowsexperience/2021/05/19/the-future-of-internet-explorer-on-windows-10-is-in-microsoft-edge/"><strong>了解详情 ></strong></a>`+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+    .kill-t{
+      font-size: 2rem;
+    }
+    .kill-c{
+      font-size: 1.2rem;
+    }
+		#l_header,#l_body{
+			display: none;
+		}
+	</style>
+    <div class="kill-noscript">
+        <span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>
+        <span class="kill-c">本页面需要浏览器支持（启用）JavaScript</span><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+
+  <script>
+  /************这个文件存放不需要重载的全局变量和全局函数*********/
+  window.volantis = {}; // volantis 全局变量
+  volantis.debug = "env"; // 调试模式
+  volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
+
+  volantis.GLOBAL_CONFIG ={
+    debug: "env",
+    cdn: {"js":{"app":"/js/app.js","parallax":"/js/plugins/parallax.js","rightMenu":"/js/plugins/rightMenu.js","rightMenus":"/js/plugins/rightMenus.js","sites":"/js/plugins/tags/sites.js","friends":"/js/plugins/tags/friends.js","contributors":"/js/plugins/tags/contributors.js","search":"/js/search/hexo.js"},"css":{"style":"/css/style.css"}},
+    default: {"avatar":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/image/2659360.svg"},
+    lastupdate: new Date(1682016589825),
+    sidebar: {
+      for_page: ["blogger","category","tagcloud"],
+      for_post: ["toc"],
+      webinfo: {
+        lastupd: {
+          enable: true,
+          friendlyShow: true
+        },
+        runtime: {
+          data: "2020/01/01",
+          unit: "天"
+        }
+      }
+    },
+    plugins: {
+      message: {"enable":true,"css":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/izitoast/dist/css/iziToast.min.css","js":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/izitoast/dist/js/iziToast.min.js","icon":{"default":"fa-solid fa-info-circle light-blue","quection":"fa-solid fa-question-circle light-blue"},"time":{"default":5000,"quection":20000},"position":"topRight","transitionIn":"bounceInLeft","transitionOut":"fadeOutRight","titleColor":"var(--color-text)","messageColor":"var(--color-text)","backgroundColor":"var(--color-card)","zindex":2147483647,"copyright":{"enable":true,"title":"知识共享许可协议","message":"请遵守 CC BY-NC-SA 4.0 协议。","icon":"far fa-copyright light-blue"},"aplayer":{"enable":true,"play":"fa-solid fa-play","pause":"fa-solid fa-pause"},"rightmenu":{"enable":true,"notice":true}},
+      fancybox: {"css":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fancyapps/ui/dist/fancybox.css","js":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fancyapps/ui/dist/fancybox.umd.js"},
+      
+      
+      
+    }
+  }
+
+  /******************** volantis.EventListener ********************************/
+  // 事件监听器 see: /source/js/app.js
+  volantis.EventListener = {}
+  // 这里存放pjax切换页面时将被移除的事件监听器
+  volantis.EventListener.list = []
+  //构造方法
+  function volantisEventListener(type, f, ele) {
+    this.type = type
+    this.f = f
+    this.ele = ele
+  }
+  // 移除事件监听器
+  volantis.EventListener.remove = () => {
+    volantis.EventListener.list.forEach(function (i) {
+      i.ele.removeEventListener(i.type, i.f, false)
+    })
+    volantis.EventListener.list = []
+  }
+  /******************** volantis.dom.$ ********************************/
+  // 注：这里没有选择器，也没有forEach一次只处理一个dom，这里重新封装主题常用的dom方法，返回的是dom对象，对象包含了以下方法，同时保留dom的原生API
+  function volantisDom(ele) {
+    if (!ele) ele = document.createElement("div")
+    this.ele = ele;
+    // ==============================================================
+    this.ele.find = (c) => {
+      let q = this.ele.querySelector(c)
+      if (q)
+        return new volantisDom(q)
+    }
+    // ==============================================================
+    this.ele.hasClass = (c) => {
+      return this.ele.className.match(new RegExp('(\\s|^)' + c + '(\\s|$)'));
+    }
+    this.ele.addClass = (c) => {
+      this.ele.classList.add(c);
+      return this.ele
+    }
+    this.ele.removeClass = (c) => {
+      this.ele.classList.remove(c);
+      return this.ele
+    }
+    this.ele.toggleClass = (c) => {
+      if (this.ele.hasClass(c)) {
+        this.ele.removeClass(c)
+      } else {
+        this.ele.addClass(c)
+      }
+      return this.ele
+    }
+    // ==============================================================
+    // 参数 r 为 true 表示pjax切换页面时事件监听器将被移除，false不移除
+    this.ele.on = (c, f, r = 1) => {
+      this.ele.addEventListener(c, f, false)
+      if (r) {
+        volantis.EventListener.list.push(new volantisEventListener(c, f, this.ele))
+      }
+      return this.ele
+    }
+    this.ele.click = (f, r) => {
+      this.ele.on("click", f, r)
+      return this.ele
+    }
+    this.ele.scroll = (f, r) => {
+      this.ele.on("scroll", f, r)
+      return this.ele
+    }
+    // ==============================================================
+    this.ele.html = (c) => {
+      // if(c=== undefined){
+      //   return this.ele.innerHTML
+      // }else{
+      this.ele.innerHTML = c
+      return this.ele
+      // }
+    }
+    // ==============================================================
+    this.ele.hide = (c) => {
+      this.ele.style.display = "none"
+      return this.ele
+    }
+    this.ele.show = (c) => {
+      this.ele.style.display = "block"
+      return this.ele
+    }
+    // ==============================================================
+    return this.ele
+  }
+  volantis.dom.$ = (ele) => {
+    return !!ele ? new volantisDom(ele) : null;
+  }
+  /******************** RunItem ********************************/
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = ()=>{
+          volantis.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) =>{
+      for (let index = 0; index < this.list.length; index++) {
+        const e = this.list[index];
+        if (e.name == name) {
+          this.list.splice(index,1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }
+  }
+  /******************** Pjax ********************************/
+  // /layout/_plugins/pjax/index.ejs
+  // volantis.pjax.send(callBack[,"callBackName"]) 传入pjax:send回调函数
+  // volantis.pjax.push(callBack[,"callBackName"]) 传入pjax:complete回调函数
+  // volantis.pjax.error(callBack[,"callBackName"]) 传入pjax:error回调函数
+  volantis.pjax = {};
+  volantis.pjax.method = {
+    complete: new RunItem(),
+    error: new RunItem(),
+    send: new RunItem(),
+  };
+  volantis.pjax = Object.assign(volantis.pjax, {
+    push: volantis.pjax.method.complete.push,
+    error: volantis.pjax.method.error.push,
+    send: volantis.pjax.method.send.push,
+  });
+  /******************** RightMenu ********************************/
+  // volantis.rightmenu.handle(callBack[,"callBackName"]) 外部菜单项控制
+  // 可在 volantis.mouseEvent 处获取右键事件
+  volantis.rightmenu = {};
+  volantis.rightmenu.method = {
+    handle: new RunItem(),
+  }
+  volantis.rightmenu = Object.assign(volantis.rightmenu, {
+    handle: volantis.rightmenu.method.handle.push,
+  });
+  /********************  Dark Mode  ********************************/
+  // /layout/_partial/scripts/darkmode.ejs
+  // volantis.dark.mode 当前模式 dark or light
+  // volantis.dark.toggle() 暗黑模式触发器
+  // volantis.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  volantis.dark = {};
+  volantis.dark.method = {
+    toggle: new RunItem(),
+  };
+  volantis.dark = Object.assign(volantis.dark, {
+    push: volantis.dark.method.toggle.push,
+  });
+  /********************  Message  ********************************/
+  // VolantisApp.message
+  /********************  isMobile  ********************************/
+  // /source/js/app.js
+  // volantis.isMobile
+  // volantis.isMobileOld
+  /********************脚本动态加载函数********************************/
+  // volantis.js(src, cb)  cb 可以传入onload回调函数 或者 JSON对象 例如: volantis.js("src", ()=>{}) 或 volantis.js("src", {defer:true,onload:()=>{}})
+  // volantis.css(src)
+
+  // 返回Promise对象，如下方法同步加载资源，这利于处理文件资源之间的依赖关系，例如：APlayer 需要在 MetingJS 之前加载
+  // (async () => {
+  //     await volantis.js("...theme.plugins.aplayer.js.aplayer...")
+  //     await volantis.js("...theme.plugins.aplayer.js.meting...")
+  // })();
+
+  // 已经加入了setTimeout
+  volantis.js = (src, cb) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var HEAD = document.getElementsByTagName("head")[0] || document.documentElement;
+        var script = document.createElement("script");
+        script.setAttribute("type", "text/javascript");
+        if (cb) {
+          if (JSON.stringify(cb)) {
+            for (let p in cb) {
+              if (p == "onload") {
+                script[p] = () => {
+                  cb[p]()
+                  resolve()
+                }
+              } else {
+                script[p] = cb[p]
+                script.onload = resolve
+              }
+            }
+          } else {
+            script.onload = () => {
+              cb()
+              resolve()
+            };
+          }
+        } else {
+          script.onload = resolve
+        }
+        script.setAttribute("src", src);
+        HEAD.appendChild(script);
+      });
+    });
+  }
+  volantis.css = (src) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var link = document.createElement('link');
+        link.rel = "stylesheet";
+        link.href = src;
+        link.onload = resolve;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      });
+    });
+  }
+  /********************按需加载的插件********************************/
+  // volantis.import.jQuery().then(()=>{})
+  volantis.import = {
+    jQuery: () => {
+      if (typeof jQuery == "undefined") {
+        return volantis.js("https://unpkg.com/volantis-static@0.0.1654736714924/libs/jquery/dist/jquery.min.js")
+      } else {
+        return new Promise(resolve => {
+          resolve()
+        });
+      }
+    }
+  }
+  /********************** requestAnimationFrame ********************************/
+  // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+  // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+  volantis.requestAnimationFrame = (fn)=>{
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+    }
+    window.requestAnimationFrame(fn)
+  }
+  /************************ layoutHelper *****************************************/
+  volantis.layoutHelper = (helper, html, opt)=>{
+    opt = Object.assign({clean:false, pjax:true}, opt)
+    function myhelper(helper, html, clean) {
+      volantis.tempDiv = document.createElement("div");
+      volantis.tempDiv.innerHTML = html;
+      let layoutHelper = document.querySelector("#layoutHelper-"+helper)
+      if (layoutHelper) {
+        if (clean) {
+          layoutHelper.innerHTML = ""
+        }
+        layoutHelper.append(volantis.tempDiv);
+      }
+    }
+    myhelper(helper, html, opt.clean)
+    if (opt.pjax) {
+      volantis.pjax.push(()=>{
+        myhelper(helper, html, opt.clean)
+      },"layoutHelper-"+helper)
+    }
+  }
+  /****************************** 滚动事件处理 ****************************************/
+  volantis.scroll = {
+    engine: new RunItem(),
+    unengine: new RunItem(),
+  };
+  volantis.scroll = Object.assign(volantis.scroll, {
+    push: volantis.scroll.engine.push,
+  });
+  // 滚动条距离顶部的距离
+  volantis.scroll.getScrollTop = () =>{
+    let scrollPos;
+    if (window.pageYOffset) {
+      scrollPos = window.pageYOffset;
+    } else if (document.compatMode && document.compatMode != 'BackCompat') {
+      scrollPos = document.documentElement.scrollTop;
+    } else if (document.body) {
+      scrollPos = document.body.scrollTop;
+    }
+    return scrollPos;
+  }
+  // 使用 requestAnimationFrame 处理滚动事件
+  // `volantis.scroll.del` 中存储了一个数值, 该数值检测一定时间间隔内滚动条滚动的位移, 数值的检测频率是浏览器的刷新频率. 数值为正数时, 表示向下滚动. 数值为负数时, 表示向上滚动.
+  volantis.scroll.handleScrollEvents = () => {
+    volantis.scroll.lastScrollTop = volantis.scroll.getScrollTop()
+    function loop() {
+      const scrollTop = volantis.scroll.getScrollTop();
+      if (volantis.scroll.lastScrollTop !== scrollTop) {
+        volantis.scroll.del = scrollTop - volantis.scroll.lastScrollTop;
+        volantis.scroll.lastScrollTop = scrollTop;
+        // if (volantis.scroll.del > 0) {
+        //   console.log("向下滚动");
+        // } else {
+        //   console.log("向上滚动");
+        // }
+        // 注销过期的unengine未滚动事件
+        volantis.scroll.unengine.list=[]
+        volantis.scroll.engine.start();
+      }else{
+        volantis.scroll.unengine.start();
+      }
+      volantis.requestAnimationFrame(loop)
+    }
+    volantis.requestAnimationFrame(loop)
+  }
+  volantis.scroll.handleScrollEvents()
+  volantis.scroll.ele = null;
+  // 触发页面滚动至目标元素位置
+  volantis.scroll.to = (ele, option = {}) => {
+    if (!ele) return;
+    volantis.scroll.ele = ele;
+    // 默认配置
+    opt = {
+      top: ele.getBoundingClientRect().top + document.documentElement.scrollTop,
+      behavior: "smooth"
+    }
+    // 定义配置
+    if ("top" in option) {
+      opt.top = option.top
+    }
+    if ("behavior" in option) {
+      opt.behavior = option.behavior
+    }
+    if ("addTop" in option) {
+      opt.top += option.addTop
+    }
+    if (!("observerDic" in option)) {
+      option.observerDic = 100
+    }
+    // 滚动
+    window.scrollTo(opt);
+    // 监视器
+    // 监视并矫正元素滚动到指定位置
+    // 用于处理 lazyload 引起的 cls 导致的定位失败问题
+    // option.observer = false
+    if (option.observer) {
+      setTimeout(() => {
+        if (volantis.scroll.ele != ele) {
+          return
+        }
+        volantis.scroll.unengine.push(() => {
+          let me = ele.getBoundingClientRect().top
+          if(!(me >= -option.observerDic && me <= option.observerDic)){
+            volantis.scroll.to(ele, option)
+          }
+          volantis.scroll.unengine.remove("unengineObserver")
+        },"unengineObserver")
+      },1000)
+    }
+  }
+  /********************** Content Visibility ********************************/
+  // 见 source/css/first.styl 如果遇到任何问题 删除 .post-story 即可
+  // 一个元素被声明 content-visibility 属性后 如果元素不在 viewport 中 浏览器不会计算其后代元素样式和属性 从而节省 Style & Layout 耗时
+  // content-visibility 的副作用: 锚点失效 等等(实验初期 暂不明确), 使用此方法清除样式
+  volantis.cleanContentVisibility = ()=>{
+    if (document.querySelector(".post-story")) {
+      console.log("cleanContentVisibility");
+      document.querySelectorAll(".post-story").forEach(e=>{
+        e.classList.remove("post-story")
+      })
+    }
+  }
+  /******************************************************************************/
+  /******************************************************************************/
+  /******************************************************************************/
+  //图像加载出错时的处理
+  function errorImgAvatar(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/avatar/round/3442075.svg";
+    img.onerror = null;
+  }
+  function errorImgCover(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/cover/76b86c0226ffd.svg";
+    img.onerror = null;
+  }
+  /******************************************************************************/
+</script>
+
+  <!-- import head_end begin -->
+  <!-- import head_end end -->
+  <!-- Custom Files headEnd begin-->
+  
+  <!-- Custom Files headEnd end-->
+</head>
+  <body itemscope itemtype="http://schema.org/WebPage">
+    <!-- import body_begin begin-->
+    <!-- import body_begin end-->
+    <!-- Custom Files bodyBegin begin-->
+    
+    <!-- Custom Files bodyBegin end-->
+    <header itemscope itemtype="http://schema.org/WPHeader" id="l_header" class="l_header auto shadow floatable blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fa-solid fa-comments fa-fw" target="_self"  href="/" onclick="return false;" title="comment"></a></li>
+        
+          <li><a id="s-toc" class="s-toc fa-solid fa-list fa-fw" target="_self"  href="/" onclick="return false;" title="toc"></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+      
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fa-solid fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+      
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fa-solid fa-search fa-fw" target="_self" href="/" onclick="return false;" title="search"></a></li>
+				
+				<li>
+          <a class="s-menu fa-solid fa-bars fa-fw" target="_self" href="/" onclick="return false;" title="menu"></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+
+      <!-- Custom Files header begin -->
+      
+      <!-- Custom Files header end -->
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+      <!-- see: /layout/_partial/scripts/_ctrl/coverCtrl.ejs -->
+      <div id="none" class='cover-wrapper post dock' style="display: none;">
+        
+  <div class='cover-bg lazyload placeholder' data-bg="https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg"></div>
+
+<div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              active-action="action-v4getting-started">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              active-action="action-faqs">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              active-action="action-examples">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              active-action="action-contributors">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              active-action="action-archives">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              active-action="action-https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+      </div>
+    
+  
+</div>
+
+      <div id="safearea">
+        <div class="body-wrapper">
+          
+<div id="l_main" class=''>
+  <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow floatable blur article-type-post" id="post" itemscope itemprop="blogPost">
+  <link itemprop="mainEntityOfPage" href="https://tianyigu.top/2018/LDAP/">
+  <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+  </span>
+  <span hidden itemprop="post" itemscope itemtype="http://schema.org/Post">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+    <meta itemprop="description" content="Tianyi的技术随笔">
+  </span>
+  
+
+
+  
+    <span hidden>
+      <meta itemprop="image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+    </span>
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title" itemprop="name headline">
+        LDAP
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/%E7%B3%BB%E7%BB%9F%E8%BF%90%E7%BB%B4/">系统运维</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/%E7%B3%BB%E7%BB%9F%E8%BF%90%E7%BB%B4/" itemprop="url"><span itemprop="name">系统运维</span></a>
+      </span>
+    
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2018-11-24T09:22:47+08:00">
+  <a class='notlink'>
+    <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年11月24日</p>
+  </a>
+</div>
+
+          
+        
+        <!-- Custom Files topMeta begin-->
+        
+        <!-- Custom Files topMeta end-->
+      </div>
+    
+  </div>
+
+
+  <div id="layoutHelper-page-plugins"></div>
+  <div id="post-body" itemprop="articleBody">
+    <h1 id="目录服务"><a href="#目录服务" class="headerlink" title="目录服务"></a>目录服务</h1><p><strong>目录</strong>是一类为了浏览和搜索数据而设计的特殊数据库，按照<strong>树状</strong>形式存储信息，目的包含基于属性的描述性信息，支持高级过滤功能。</p>
+<p>目录不支持大多数事务型数据库支持的高吞吐量和复杂更新操作。<strong>目录服务适合的业务应用于大量查询与搜索操作，而不是大量写入操作。目录服务器还能提供主从服务器同步目录数据功能。</strong></p>
+<blockquote>
+<p>DNS 就是一个典型的大范围分布式目录服务</p>
+</blockquote>
+<p>目录服务器功能：</p>
+<ul>
+<li>按照网络管理员指令，强制实施安全策略，保证目录信息安全</li>
+<li>目录数据库可分布在一个网络的多台计算机上，提高响应速度</li>
+<li>复制目录，使更多用户可使用目录，提高可靠性和稳定性</li>
+<li>将目录划分为多个数据源（存储区），以存储大量对象</li>
+</ul>
+<h2 id="X-500"><a href="#X-500" class="headerlink" title="X.500"></a>X.500</h2><p>X.500 是构成全球分布式的名录服务系统的规范，描述了用户信息的存储和访问方式，X.500 不是一个协议，而是一个协议族，包括从 X.501 到 X.525 等一系列完整的目录服务协议或规范。X.500 采用层次结构（类似 DNS）。</p>
+<p>X.500 从属协议：</p>
+<table>
+<thead>
+<tr>
+<th>协议</th>
+<th>描述</th>
+<th>定义规范</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Directory Access Protocol (DAP)</td>
+<td>目录访问协议。定义DUA与DSA之间的请求交互与输出，也就是客户端与目录服务交互的方式。定义 X.500 提供的服务原语</td>
+<td>X.511</td>
+</tr>
+<tr>
+<td>Directory System Protocol (DSP)</td>
+<td>目录系统代理。定义两个或多个DSA间、DUA与DSA间的请求交互与输出，也就是两个目录服务之间交互的方式。定义如何跨平台处理目录服务</td>
+<td>X.518</td>
+</tr>
+<tr>
+<td>Directory Information Shadowing Protocol (DISP)</td>
+<td>目录信息映像协议。定义了如何将选定的信息在DSA间进行复制。</td>
+<td>X.525</td>
+</tr>
+<tr>
+<td>Directory Operational Bindings Management Protocol (DOP)</td>
+<td>目录操作绑定协议。定义了DSA间交互管理配置来管理它们间的操作绑定的机制，也就是定义了目录如何管理协议，例如与复制相关的。</td>
+<td>X.501</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>DSA 目录系统代理：用于存储目录信息的数据库，采用分层格式，提供快速高效的搜索功能，与目录信息树 DIT 连接。<strong>DSA 之间通过链操作实现分布式访问。</strong><br>DUA 目录用户代理：用于访问一个或多个 DSA 的用户接口程序</p>
+</blockquote>
+<p>X.500系列规范</p>
+<ul>
+<li>X.501：模型定义，定义目录服务的基本模型和概念</li>
+<li>X.509：认证框架，定义如何处理目录服务中客户和服务器的认证</li>
+<li>X.511：抽象服务定义，定义 X.500 提供的服务原语</li>
+<li>X.518：分布式操作过程定义，定义如何跨平台处理目录服务</li>
+<li>X.520：定义属性类型和数据元素</li>
+<li>X.521：定义了对象类</li>
+<li>X.525：定义在多个服务器间的复制操作</li>
+<li>X.530：定义目录管理系统的使用</li>
+</ul>
+<p>X.500 的 OSI 模型：</p>
+<p>独立的目录信息树 DIT，采用层级化节点结构，每个节点都有一个唯一名称标识 DN（也称唯一辨别名），唯一名称由相对唯一名称 RDN（也称相对辨别名）标识和父节点标识组成。</p>
+<p>X.500 特征：</p>
+<ul>
+<li>分散维护：运行 X.500 的每个站点只负责本地目录，可立刻进行更新和维护</li>
+<li>搜索性能：X.500 有强大的搜索功能，支持用户建立复杂查询</li>
+<li>单一全局命名空间：为用户提供单一同性命名空间（Single Homogeneous Namespace），类似 DNS，但比 DNS 灵活且可扩展。</li>
+<li>结构化信息结构：目录中定义了信息结构，允许本地扩展</li>
+<li>基于标准的目录服务：请求应用目录信息的应用（邮件、资源分配器等）能访问重要且有价值的信息</li>
+<li>基于 OSI 协议，需要在会话层和表示层进行许多连接的建立和包处理</li>
+</ul>
+<h1 id="LDAP"><a href="#LDAP" class="headerlink" title="LDAP"></a>LDAP</h1><p>LDAP 就是活动目录在 Linux 上的一个实现。</p>
+<p>LDAP（Lightweight Directory Access Protocol）轻量目录访问协议，基于 X.500 标准，支持 TCP&#x2F;IP。</p>
+<p>LDAP 支持一主多从、多主多从以及分布式。</p>
+<p>DAP 是一个重量级的协议，在整个 OSI 协议栈上操作，需要占用大量计算资源，而 LDAP 设计在 TCP&#x2F;IP 上，以小得多的资源消耗实现了大多数 DAP 功能。LDAP 服务器可当做网关访问 X.500 服务器，但基本都是在 X.500 服务器上直接实现 LDAP。</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120026324.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120026324.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>单独的 LDAP 守护程序 slapd，可看做是轻量级 X.500 服务器。LDAP 就是轻量级的 DAP。</p>
+<p>LDAP 与 X.500 的相同点：</p>
+<ul>
+<li>都实现了通用的平台结构</li>
+<li>信息模型上，都使用了项、对象类、属性等概念描述信息</li>
+<li>命名空间上，都使用了目录信息树结构和层次命名模型</li>
+<li>功能模型上，都使用了相似操作命令</li>
+<li>认证框架上，都实现了用户名密码、安全加密认证</li>
+<li>灵活性上，目录规模都可大可小</li>
+<li>分布性上，目录信息都可分布在多个目录服务器上，服务器由各组织管理，保证目录信息总体结构一致</li>
+</ul>
+<p>LDAP 常用名词：</p>
+<ul>
+<li>dc：Domain Component，域名部分，会将完整域名分成几部分。如 example.com 会分为 dc&#x3D;example,dc&#x3D;com</li>
+<li>uid：User id，用户 ID。最常见的 uid 是从<code>/etc/passwd</code>中转来的条目。</li>
+<li>ou：Organization Unit，组织单位，类似文件系统的子目录，是一个容器对象，可包含其他各种对象。</li>
+<li>cn：Common Name，公共名称。最常见的 cn 是从<code>/etc/group</code>中转来的条目</li>
+<li>sn：Surname，姓</li>
+<li>dn：Distinguished Name，唯一辨别名，类似文件系统的绝对路径，每个对象都有一个唯一名称。</li>
+<li>rdn：Relative dn：相对辨别名，类似文件系统的相对路径，是与目录树结构无关的部分。</li>
+<li>c：Country，国家。如 CN、US</li>
+<li>o：Organization，组织。如 Inc</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120024971.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120024971.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>LDAP 目录结构与信息：</p>
+<ul>
+<li>目录数据库以目录信息树 DIT 为存储方式的。</li>
+<li>DIT 由条目（Entry）构成，条目相当于关系数据库中的表的记录。</li>
+<li>条目又由 DN 的键值对（Attribute-Value）组成</li>
+<li>LDAP 允许通过 objectClass 来控制哪些属性是条目必须的，objectClass 的值是条目必须遵从的方案 schema 定义的。</li>
+<li>LDAP 目录的根称为 BaseDN</li>
+<li>ou 下是真正的用户条目</li>
+<li>LDAP 数据导入导出的格式是 LDIF，LDIF 是 LDAP 数据库信息的一种文本格式。</li>
+</ul>
+<p>LDAP 特点总结：</p>
+<ul>
+<li>跨平台</li>
+<li>树型结构，无需 SQL 语句维护</li>
+<li>静态数据快速查询</li>
+<li>使用基于推拉的复制信息技术</li>
+<li>支持多种安全协议（SASL、SSL、TLS）和多种访问控制</li>
+<li>支持异类数据存储（存储文件可以是文本或图片）</li>
+<li>C&#x2F;S 模型</li>
+</ul>
+<p>LDAP 常见应用：</p>
+<ul>
+<li>数字证书管理、授权管理、单点登录</li>
+<li>分布式计算环境 DCE、统一描述发现与集成协议 UDDI</li>
+<li>DNS、网络用户管理、电话号码簿</li>
+<li>内网组织信息服务、电子政务目录、人口基础库</li>
+<li>机器认证</li>
+<li>用户认证</li>
+<li>用户与系统组管理</li>
+<li>地址簿</li>
+<li>组织结构展示</li>
+<li>资产跟踪</li>
+<li>电话信息存储</li>
+<li>用户资源管理</li>
+<li>Email地址查询</li>
+<li>应用配置存储</li>
+<li>PBX 配置存储</li>
+</ul>
+<p>LDAP 目录数据文件：</p>
+<p>LDIF（LDAP Data Interchange Format，轻量级目录交换格式）是一种 ASCII 文件格式，能够向目录导入与修改信息。</p>
+<p>LDIF 文件注意点：</p>
+<ul>
+<li>空行分割一个条目或定义</li>
+<li>#注释</li>
+<li>属性: 属性值</li>
+<li>属性可被重复赋值</li>
+<li>每行结尾不能有空格</li>
+<li>每条记录必须有至少一个 objectClass 属性</li>
+</ul>
+<h2 id="Configuration-Choices"><a href="#Configuration-Choices" class="headerlink" title="Configuration Choices"></a>Configuration Choices</h2><ul>
+<li><p>本地目录服务（Local Directory Service）：只运行一个slapd服务，仅为本地域提供目录服务，不会以任何方式与别的目录服务器交互。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202208311755137.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202208311755137.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+</li>
+<li><p>带下线的本地目录服务（Local Directory Service with Referrals）：带有指针或者叫下线（Refferals），类似 DNS，若本地的 LDAP 无法处理，则会返回一个指针，指向更高级的服务器地址。当需要提供本地目录服务，且需要参与全局目录的时候，或者想将请求转发给别的从属服务器处理时，就能用这种方式配置。</p>
+</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202208311756629.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202208311756629.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<ul>
+<li>复制的目录服务（Replicated Directory Service）：slapd包含了对LDAP 基于同步的复制的支持，叫做syncrepl，可以用来维护多份目录信息的shadow copies，存放在多个目录服务器上。图中的provider是一个syncrepl provider，consumer也是syncrepl consumer。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202209051000579.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202209051000579.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></li>
+</ul>
+<h2 id="Configuration"><a href="#Configuration" class="headerlink" title="Configuration"></a>Configuration</h2><p>openldap 2.3以及之后的版本已经变为使用动态运行时配置引擎slapd-config。<br>slapd-config该服务有以下特性：</p>
+<ul>
+<li>完全支持LDAP</li>
+<li>被标准LDAP操作进行管理</li>
+<li>存储配置数据到LDIF数据库，通常在<code>/usr/local/etc/openldap/slapd.d</code>目录</li>
+<li>运行所有slapd配置选项热加载，通常不需要重启服务使配置生效</li>
+</ul>
+<blockquote>
+<p>注：虽然slapd-config使用LDIF格式存储配置，但是绝对不能直接修改LDIF文件，所有的配置操作必须通过LDAP操作，如ldapadd、ldapdelete、ldapmodify。离线操作（服务没在跑）则使用slapadd、slapmodify。</p>
+</blockquote>
+<h3 id="Configuration-Layout"><a href="#Configuration-Layout" class="headerlink" title="Configuration Layout"></a>Configuration Layout</h3><p>slapd配置被存储为特殊的LDAP目录结构，这种结构具有预定义的schema和DIT。会使用特定的objectClass来定义全局的配置选项、schema定义、后台、数据库定义以及相关的其他项。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202209010950017.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202209010950017.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>结构树的根节点为 <code>cn=config</code>，包含了全局的配置设置。<code>cn=schema,cn=config</code>包含了系统schema，该节点下子节点包含了用户schema，可以是从配置加载，也能在运行中添加。</p>
+<p>LDIF配置规则：</p>
+<ul>
+<li><code>#</code>开头的就是注释</li>
+<li>如果一行开头是一个空格，则改行被认为是上一行的子配置</li>
+<li>不同的实体之间需要空一行（或者多行）</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># global configuration settings</span><br><span class="line">dn: cn=config</span><br><span class="line">objectClass: olcGlobal</span><br><span class="line">cn: config</span><br><span class="line">&lt;global config settings&gt;</span><br><span class="line"></span><br><span class="line"># schema definitions</span><br><span class="line">dn: cn=schema,cn=config</span><br><span class="line">objectClass: olcSchemaConfig</span><br><span class="line">cn: schema</span><br><span class="line">&lt;system schema&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="cn-x3D-config"><a href="#cn-x3D-config" class="headerlink" title="cn&#x3D;config"></a>cn&#x3D;config</h4><p>该实体包含的指令会被应用到整个服务，大部分指令都是和系统、连接相关的。该实体必有一个<code>olcGlobal</code>的objectClass</p>
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=config</span><br><span class="line">objectClass: olcGlobal</span><br><span class="line">cn: config</span><br><span class="line">olcIdleTimeout: 30</span><br><span class="line">olcLogLevel: Stats</span><br><span class="line">olcReferral: ldap://root.openldap.org</span><br></pre></td></tr></table></figure>
+<ul>
+<li>olcIdleTimeout：空闲连接的超时时间，单位秒。默认为0，即关闭这个功能</li>
+<li>olcLogLevel：日志等级。如果开多个，则都写在一行<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">olcLogLevel conns filter</span><br></pre></td></tr></table></figure>
+<img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202209011038244.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202209011038244.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></li>
+<li>olcReferral：当slapd找不到一个本地数据库处理请求时，会将此配置的地址回传</li>
+</ul>
+<h4 id="cn-x3D-module"><a href="#cn-x3D-module" class="headerlink" title="cn&#x3D;module"></a>cn&#x3D;module</h4><p>如果slapd开启了热加载模块，<code>cn=module</code>可用来指定多个需要加载的模块集，模块实体必须有<code>olcModuleList</code>objectClass。<br>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=module&#123;0&#125;,cn=config</span><br><span class="line">objectClass: olcModuleList</span><br><span class="line">cn: module&#123;0&#125;</span><br><span class="line">olcModuleLoad: /usr/local/lib/smbk5pwd.la</span><br><span class="line"></span><br><span class="line">dn: cn=module&#123;1&#125;,cn=config</span><br><span class="line">objectClass: olcModuleList</span><br><span class="line">cn: module&#123;1&#125;</span><br><span class="line">olcModulePath: /usr/local/lib:/usr/local/lib/slapd</span><br><span class="line">olcModuleLoad: accesslog.la</span><br><span class="line">olcModuleLoad: pcache.la</span><br></pre></td></tr></table></figure>
+<ul>
+<li>olcModuleLoad：指定module的文件名，如果没有olcModulePath，则需要填写绝对路径，若有olcModulePath，则只要填写文件名即可</li>
+<li>olcModulePath：指定module的目录路径</li>
+</ul>
+<p>这里指定的la文件就是模块的配置文件，以<code>backend_mdb.la</code>为例，文件里指定的是该mdb的配置，如库文件名称、库目录等。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># The name that we can dlopen(3).</span><br><span class="line">dlname=&#x27;back_mdb-2.4.so.2&#x27;</span><br><span class="line"></span><br><span class="line"># Names of this library.</span><br><span class="line">library_names=&#x27;back_mdb-2.4.so.2.11.5 back_mdb-2.4.so.2 back_mdb.so&#x27;</span><br><span class="line"></span><br><span class="line"># The name of the static archive.</span><br><span class="line">old_library=&#x27;&#x27;</span><br><span class="line"></span><br><span class="line"># Linker flags that cannot go in dependency_libs.</span><br><span class="line">inherited_linker_flags=&#x27; -pthread&#x27;</span><br><span class="line"></span><br><span class="line"># Libraries that this one depends upon.</span><br><span class="line">dependency_libs=&#x27;&#x27;</span><br><span class="line"></span><br><span class="line"># Names of additional weak libraries provided by this library</span><br><span class="line">weak_library_names=&#x27;&#x27;</span><br><span class="line"></span><br><span class="line"># Version information for back_mdb.</span><br><span class="line">current=13</span><br><span class="line">age=11</span><br><span class="line">revision=5</span><br><span class="line"></span><br><span class="line"># Is this an already installed library?</span><br><span class="line">installed=yes</span><br><span class="line"></span><br><span class="line"># Should we warn about portability when linking against -modules?</span><br><span class="line">shouldnotlink=yes</span><br><span class="line"></span><br><span class="line"># Files to dlopen/dlpreopen</span><br><span class="line">dlopen=&#x27;&#x27;</span><br><span class="line">dlpreopen=&#x27;&#x27;</span><br><span class="line"></span><br><span class="line"># Directory that this library needs to be installed in:</span><br><span class="line">libdir=&#x27;/usr/lib/ldap&#x27;</span><br></pre></td></tr></table></figure>
+
+
+<h4 id="cn-x3D-schema"><a href="#cn-x3D-schema" class="headerlink" title="cn&#x3D;schema"></a>cn&#x3D;schema</h4><p>该实体保存了所有的schema定义，并且这些都是硬编码在slapd代码中的。所有配置的值都是slapd生成的，所以不需要在配置文件中提供schema的值。不过，这个entry必须被定义，来作为用户定义的schema去添加的基础服务。实体必须有<code>olcSchemaConfig</code>objectClass。</p>
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=schema,cn=config</span><br><span class="line">objectClass: olcSchemaConfig</span><br><span class="line">cn: schema</span><br><span class="line"></span><br><span class="line">dn: cn=test,cn=schema,cn=config</span><br><span class="line">objectClass: olcSchemaConfig</span><br><span class="line">cn: test</span><br><span class="line">olcAttributeTypes: ( 1.1.1</span><br><span class="line">  NAME &#x27;testAttr&#x27;</span><br><span class="line">  EQUALITY integerMatch</span><br><span class="line">  SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 )</span><br><span class="line">olcAttributeTypes: ( 1.1.2 NAME &#x27;testTwo&#x27; EQUALITY caseIgnoreMatch</span><br><span class="line">  SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.44 )</span><br><span class="line">olcObjectClasses: ( 1.1.3 NAME &#x27;testObject&#x27;</span><br><span class="line">  MAY ( testAttr $ testTwo ) AUXILIARY )</span><br></pre></td></tr></table></figure>
+<ul>
+<li>olcAttributeTypes：定义一种attribute type</li>
+<li>olcObjectClasses：定义一种object class</li>
+</ul>
+<h3 id="backend"><a href="#backend" class="headerlink" title="backend"></a>backend</h3><h2 id="Backends"><a href="#Backends" class="headerlink" title="Backends"></a>Backends</h2><p>backends 根据ldap请求完成实际的存储与拉取数据的操作，是被静态编译进slapd服务（当开启了module支持，也可以动态加载）。</p>
+<h3 id="LDIF"><a href="#LDIF" class="headerlink" title="LDIF"></a>LDIF</h3><p>LDIF后台是一个基础的存储后台，以LDIF格式将实体存储到文本文件，并利用文件系统创建树状数据库结构。</p>
+<p>对于一个entry，对应的ldif基本格式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># comment</span><br><span class="line">dn: &lt;distinguished name&gt;</span><br><span class="line">&lt;attrdesc&gt;: &lt;attrvalue&gt;</span><br><span class="line">&lt;attrdesc&gt;: &lt;attrvalue&gt;</span><br></pre></td></tr></table></figure>
+<p>如果要将一行内容分成多行写，则只要换行，并在最开头加上一个空格</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=Barbara J Jensen,dc=example,dc=</span><br><span class="line"> com</span><br><span class="line">cn: Barbara J</span><br><span class="line"> Jensen</span><br><span class="line"> </span><br><span class="line">以上写法等同于</span><br><span class="line">dn: cn=Barbara J Jensen,dc=example,dc=com</span><br><span class="line">cn: Barbara J Jensen</span><br></pre></td></tr></table></figure>
+
+<h2 id="Schema-Specification"><a href="#Schema-Specification" class="headerlink" title="Schema Specification"></a>Schema Specification</h2><h3 id="分散的Schema配置"><a href="#分散的Schema配置" class="headerlink" title="分散的Schema配置"></a>分散的Schema配置</h3><p>每种schema的规范都放在slapd.conf中定义的某个文件，这些文件通常放在<code>/usr/local/etc/openldap/schema</code>下。</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>core.schema</td>
+<td>OpenLDAP <em>core</em> (required)</td>
+</tr>
+<tr>
+<td>cosine.schema</td>
+<td>Cosine and Internet X.500 (useful)</td>
+</tr>
+<tr>
+<td>inetorgperson.schema</td>
+<td>InetOrgPerson (useful)</td>
+</tr>
+<tr>
+<td>misc.schema</td>
+<td>Assorted (experimental)</td>
+</tr>
+<tr>
+<td>nis.schema</td>
+<td>Network Information Services (FYI)</td>
+</tr>
+<tr>
+<td>openldap.schema</td>
+<td>OpenLDAP Project (experimental)</td>
+</tr>
+</tbody></table>
+<h3 id="扩展Schema"><a href="#扩展Schema" class="headerlink" title="扩展Schema"></a>扩展Schema</h3><p>schema可被扩展来支持额外的语法、匹配规则、属性类型、object class。<br>定义一个新的schema需要5步：</p>
+<ol>
+<li>获取一个Object Identifier</li>
+<li>选择一个名称前缀</li>
+<li>创建本地schema文件</li>
+<li>自定义attribute</li>
+<li>自定义object class</li>
+</ol>
+<p>每种schema类型都是由一个全局的Objetct Identifier（OID）标识，OID通常用来标识其他对象，OID的分配也是树状结构，OID通常被SNMP使用。企业OID是需要申请的，通过组织IANA申请，也可以通过国家的机构例如ANSI、BSI等。因为OID是具有层级的，因此组织可以获取一个OID并根据需要进行分支的创建。例如，组织的OID为1.1，则可以生成以下结构树。</p>
+<table>
+<thead>
+<tr>
+<th>OID</th>
+<th>Assignment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1.1</td>
+<td>Organization’s OID</td>
+</tr>
+<tr>
+<td>1.1.1</td>
+<td>SNMP Elements</td>
+</tr>
+<tr>
+<td>1.1.2</td>
+<td>LDAP Elements</td>
+</tr>
+<tr>
+<td>1.1.2.1</td>
+<td>AttributeTypes</td>
+</tr>
+<tr>
+<td>1.1.2.1.1</td>
+<td>x-my-Attribute</td>
+</tr>
+<tr>
+<td>1.1.2.2</td>
+<td>ObjectClasses</td>
+</tr>
+<tr>
+<td>1.1.2.2.1</td>
+<td>x-my-ObjectClass</td>
+</tr>
+</tbody></table>
+<p>为了给每个schema element分配一个唯一的OID，需要给每个element提供至少一个文本名称，名称需要在IANA注册，或者以<code>x-</code>为前缀来放置在private use的namespace。名称需要具有描述性，并且不要和别的名称有冲突，尤其是任何选用的名称都不能和当前的或未来的Standard Track names冲突，如果使用了注册的名称或者以x-开头的名称，那肯定就不会冲突。</p>
+<p>需要注意，可以去获取自己注册的名称前缀，这样就不用单独注册每个名称了。</p>
+<p>通常推荐使用如<code>x-com-&lt;company&gt;</code>为前缀。</p>
+<h4 id="Attribute-Type规范"><a href="#Attribute-Type规范" class="headerlink" title="Attribute Type规范"></a>Attribute Type规范</h4><p>规范：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AttributeTypeDescription = &quot;(&quot; whsp</span><br><span class="line">    numericoid whsp              ; AttributeType identifier</span><br><span class="line">  \[ &quot;NAME&quot; qdescrs \]             ; name used in AttributeType</span><br><span class="line">  \[ &quot;DESC&quot; qdstring \]            ; description</span><br><span class="line">  \[ &quot;OBSOLETE&quot; whsp \]</span><br><span class="line">  \[ &quot;SUP&quot; woid \]                 ; derived from this other</span><br><span class="line">                                 ; AttributeType</span><br><span class="line">  \[ &quot;EQUALITY&quot; woid              ; Matching Rule name</span><br><span class="line">  \[ &quot;ORDERING&quot; woid              ; Matching Rule name</span><br><span class="line">  \[ &quot;SUBSTR&quot; woid \]              ; Matching Rule name</span><br><span class="line">  \[ &quot;SYNTAX&quot; whsp noidlen whsp \] ; Syntax OID</span><br><span class="line">  \[ &quot;SINGLE-VALUE&quot; whsp \]        ; default multi-valued</span><br><span class="line">  \[ &quot;COLLECTIVE&quot; whsp \]          ; default not collective</span><br><span class="line">  \[ &quot;NO-USER-MODIFICATION&quot; whsp \]; default user modifiable</span><br><span class="line">  \[ &quot;USAGE&quot; whsp AttributeUsage \]; default userApplications</span><br><span class="line">  whsp &quot;)&quot;</span><br><span class="line"></span><br><span class="line">AttributeUsage =</span><br><span class="line">  &quot;userApplications&quot;     /</span><br><span class="line">  &quot;directoryOperation&quot;   /</span><br><span class="line">  &quot;distributedOperation&quot; / ; DSA-shared</span><br><span class="line">  &quot;dSAOperation&quot;          ; DSA-specific, value depends on server</span><br></pre></td></tr></table></figure>
+<p>whsp为一个空格<code> </code>。numericoid以点分隔形式作为全局唯一OID。qdescrs是一个或多个名称。woid可以是名称或者OID。</p>
+<p>例：<code>inetorgperson.schema</code>文件中的 <code>displayName</code>和 <code>core.schema</code>文件中的<code>cn</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">attributetype ( 2.16.840.1.113730.3.1.241</span><br><span class="line">	NAME &#x27;displayName&#x27;</span><br><span class="line">	DESC &#x27;RFC2798: preferred name to be used when displaying entries&#x27;</span><br><span class="line">	EQUALITY caseIgnoreMatch</span><br><span class="line">	SUBSTR caseIgnoreSubstringsMatch</span><br><span class="line">	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15</span><br><span class="line">	SINGLE-VALUE )</span><br><span class="line"></span><br><span class="line">attributeType ( 2.5.4.3 NAME ( &#x27;cn&#x27; &#x27;commonName&#x27; )</span><br><span class="line">        DESC &#x27;common name(s) associated with the object&#x27;</span><br><span class="line">        SUP name )</span><br></pre></td></tr></table></figure>
+
+<p>Syntax后指定的是语法的OID</p>
+<table>
+<thead>
+<tr>
+<th><strong>Name</strong></th>
+<th><strong>OID</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>boolean</td>
+<td>1.3.6.1.4.1.1466.115.121.1.7</td>
+<td>boolean value</td>
+</tr>
+<tr>
+<td>directoryString</td>
+<td>1.3.6.1.4.1.1466.115.121.1.15</td>
+<td>Unicode (UTF-8) string</td>
+</tr>
+<tr>
+<td>distinguishedName</td>
+<td>1.3.6.1.4.1.1466.115.121.1.12</td>
+<td>LDAP DN</td>
+</tr>
+<tr>
+<td>integer</td>
+<td>1.3.6.1.4.1.1466.115.121.1.27</td>
+<td>integer</td>
+</tr>
+<tr>
+<td>numericString</td>
+<td>1.3.6.1.4.1.1466.115.121.1.36</td>
+<td>numeric string</td>
+</tr>
+<tr>
+<td>OID</td>
+<td>1.3.6.1.4.1.1466.115.121.1.38</td>
+<td>object identifier</td>
+</tr>
+<tr>
+<td>octetString</td>
+<td>1.3.6.1.4.1.1466.115.121.1.40</td>
+<td>arbitrary octets</td>
+</tr>
+</tbody></table>
+<p>EQUALITY、SUBSTR等指定的rules</p>
+<table>
+<thead>
+<tr>
+<th><strong>Name</strong></th>
+<th><strong>Type</strong></th>
+<th><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>booleanMatch</td>
+<td>equality</td>
+<td>boolean</td>
+</tr>
+<tr>
+<td>caseIgnoreMatch</td>
+<td>equality</td>
+<td>case insensitive, space insensitive</td>
+</tr>
+<tr>
+<td>caseIgnoreOrderingMatch</td>
+<td>ordering</td>
+<td>case insensitive, space insensitive</td>
+</tr>
+<tr>
+<td>caseIgnoreSubstringsMatch</td>
+<td>substrings</td>
+<td>case insensitive, space insensitive</td>
+</tr>
+<tr>
+<td>caseExactMatch</td>
+<td>equality</td>
+<td>case sensitive, space insensitive</td>
+</tr>
+<tr>
+<td>caseExactOrderingMatch</td>
+<td>ordering</td>
+<td>case sensitive, space insensitive</td>
+</tr>
+<tr>
+<td>caseExactSubstringsMatch</td>
+<td>substrings</td>
+<td>case sensitive, space insensitive</td>
+</tr>
+<tr>
+<td>distinguishedNameMatch</td>
+<td>equality</td>
+<td>distinguished name</td>
+</tr>
+<tr>
+<td>integerMatch</td>
+<td>equality</td>
+<td>integer</td>
+</tr>
+<tr>
+<td>integerOrderingMatch</td>
+<td>ordering</td>
+<td>integer</td>
+</tr>
+<tr>
+<td>numericStringMatch</td>
+<td>equality</td>
+<td>numerical</td>
+</tr>
+<tr>
+<td>numericStringOrderingMatch</td>
+<td>ordering</td>
+<td>numerical</td>
+</tr>
+<tr>
+<td>numericStringSubstringsMatch</td>
+<td>substrings</td>
+<td>numerical</td>
+</tr>
+<tr>
+<td>octetStringMatch</td>
+<td>equality</td>
+<td>octet string</td>
+</tr>
+<tr>
+<td>octetStringOrderingMatch</td>
+<td>ordering</td>
+<td>octet string</td>
+</tr>
+<tr>
+<td>octetStringSubstringsMatch ordering</td>
+<td>octet st</td>
+<td>ring</td>
+</tr>
+<tr>
+<td>objectIdentiferMatch</td>
+<td>equality</td>
+<td>object identifier</td>
+</tr>
+</tbody></table>
+<h4 id="Object-Class规范"><a href="#Object-Class规范" class="headerlink" title="Object Class规范"></a>Object Class规范</h4><p>规范：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ObjectClassDescription = &quot;(&quot; whsp</span><br><span class="line">        numericoid whsp      ; ObjectClass identifier</span><br><span class="line">        \[ &quot;NAME&quot; qdescrs \]</span><br><span class="line">        \[ &quot;DESC&quot; qdstring \]</span><br><span class="line">        \[ &quot;OBSOLETE&quot; whsp \]</span><br><span class="line">        \[ &quot;SUP&quot; oids \]       ; Superior ObjectClasses</span><br><span class="line">        \[ ( &quot;ABSTRACT&quot; / &quot;STRUCTURAL&quot; / &quot;AUXILIARY&quot; ) whsp \]</span><br><span class="line">                ; default structural</span><br><span class="line">        \[ &quot;MUST&quot; oids \]      ; AttributeTypes</span><br><span class="line">        \[ &quot;MAY&quot; oids \]       ; AttributeTypes</span><br><span class="line">        whsp &quot;)&quot;</span><br></pre></td></tr></table></figure>
+<p>whsp为一个空格<code> </code>。numericoid以点分隔形式作为全局唯一OID。qdescrs是一个或多个名称。oids可以是一个或多个名称或者OID。</p>
+<p>例：<code>inetorgperson.schema</code>文件中的<code>inetOrgPerson</code> Object Class</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">objectclass	( 2.16.840.1.113730.3.2.2</span><br><span class="line">    NAME &#x27;inetOrgPerson&#x27;</span><br><span class="line">	DESC &#x27;RFC2798: Internet Organizational Person&#x27;</span><br><span class="line">    SUP organizationalPerson</span><br><span class="line">    STRUCTURAL</span><br><span class="line">	MAY (</span><br><span class="line">		audio $ businessCategory $ carLicense $ departmentNumber $</span><br><span class="line">		displayName $ employeeNumber $ employeeType $ givenName $</span><br><span class="line">		homePhone $ homePostalAddress $ initials $ jpegPhoto $</span><br><span class="line">		labeledURI $ mail $ manager $ mobile $ o $ pager $</span><br><span class="line">		photo $ roomNumber $ secretary $ uid $ userCertificate $</span><br><span class="line">		x500uniqueIdentifier $ preferredLanguage $</span><br><span class="line">		userSMIMECertificate $ userPKCS12 )</span><br><span class="line">	)</span><br></pre></td></tr></table></figure>
+
+<h5 id="AUXILIARY-Object-Class"><a href="#AUXILIARY-Object-Class" class="headerlink" title="AUXILIARY Object Class"></a>AUXILIARY Object Class</h5><p>ObjectClass定义了一种对象的基础结构，无论是账号、群组还是组织单位，但是一些资源也有额外的ObjectClass来扩展对象，提供额外的attribute，这些额外的ObjectClass被称为Auxiliary ObjectClass。Auxiliary ObjectClass允许添加其他ObjectClass到该ObjectClass中。<br>每种资源对象必须有确定的一种结构化（structural，也称primary）ObjectClass。这个ObjectClass是确定的，不可变的，然后可以有多个Auxiliary ObjectClass可以被任意添加到某个对象或从某个对象删除。</p>
+<p>例：<code>posixAccount</code>就是ldap中创建的用户对象objectclass，可以看出是一个AUXILIARY objectclass。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">objectclass ( 1.3.6.1.1.1.2.0 NAME &#x27;posixAccount&#x27;</span><br><span class="line">	DESC &#x27;Abstraction of an account with POSIX attributes&#x27;</span><br><span class="line">	SUP top AUXILIARY</span><br><span class="line">	MUST ( cn $ uid $ uidNumber $ gidNumber $ homeDirectory )</span><br><span class="line">	MAY ( userPassword $ loginShell $ gecos $ description ) )</span><br></pre></td></tr></table></figure>
+<p>查找zhangsan账号</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=zhangsan,ou=people,dc=example,dc=com</span><br><span class="line">cn: zhangsan</span><br><span class="line">gidNumber: 500</span><br><span class="line">givenName: san</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: posixAccount</span><br><span class="line">objectClass: top</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p>可以看到用户账号是使用到了posixAccount这个附加类。<br>看下<code>inetOrgPerson</code>的定义</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">objectclass	( 2.16.840.1.113730.3.2.2</span><br><span class="line">    NAME &#x27;inetOrgPerson&#x27;</span><br><span class="line">	DESC &#x27;RFC2798: Internet Organizational Person&#x27;</span><br><span class="line">    SUP organizationalPerson</span><br><span class="line">    STRUCTURAL</span><br><span class="line">	MAY (</span><br><span class="line">		audio $ businessCategory $ carLicense $ departmentNumber $</span><br><span class="line">		displayName $ employeeNumber $ employeeType $ givenName $</span><br><span class="line">		homePhone $ homePostalAddress $ initials $ jpegPhoto $</span><br><span class="line">		labeledURI $ mail $ manager $ mobile $ o $ pager $</span><br><span class="line">		photo $ roomNumber $ secretary $ uid $ userCertificate $</span><br><span class="line">		x500uniqueIdentifier $ preferredLanguage $</span><br><span class="line">		userSMIMECertificate $ userPKCS12 )</span><br><span class="line">	)</span><br></pre></td></tr></table></figure>
+<p>可以看出<code>posixAccount</code>是对<code>inetOrgPerson</code>的补充。</p>
+<h4 id="OID宏"><a href="#OID宏" class="headerlink" title="OID宏"></a>OID宏</h4><p>后定义的OID宏可以获取到先定义的OID宏的值。</p>
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">objectIdentifier myOID  1.1</span><br><span class="line">objectIdentifier mySNMP myOID:1</span><br><span class="line">objectIdentifier myLDAP myOID:2</span><br><span class="line">objectIdentifier myAttributeType        myLDAP:1</span><br><span class="line">objectIdentifier myObjectClass  myLDAP:2</span><br><span class="line">attributetype ( myAttributeType:3 NAME &#x27;x-my-PhotoURI&#x27;</span><br><span class="line">        DESC &#x27;URI and optional label referring to a photo&#x27;</span><br><span class="line">        SUP labeledURI )</span><br><span class="line">objectclass ( myObjectClass:1 NAME &#x27;x-my-PhotoObject&#x27;</span><br><span class="line">        DESC &#x27;mixin x-my-Photo&#x27;</span><br><span class="line">        AUXILIARY</span><br><span class="line">        MAY x-my-Photo )</span><br></pre></td></tr></table></figure>
+
+<h2 id="Dynamic-Directory-Services"><a href="#Dynamic-Directory-Services" class="headerlink" title="Dynamic Directory Services"></a>Dynamic Directory Services</h2><p>简称dds。dds允许定义动态对象，使用的是<code>dynamicObject</code> objectClass。<br>动态对象有有限的生命周期，由TTL决定刷新间隔，过期时间就是当前时间加上被要求的TTL时间，如果动态对象到了生命周期结束而没有被refresh过期时间，则会被自动删除。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">overlay dds</span><br><span class="line">dds-max-ttl     1d</span><br><span class="line">dds-min-ttl     10s</span><br><span class="line">dds-default-ttl 1h</span><br><span class="line">dds-interval    120s</span><br><span class="line">dds-tolerance   5s</span><br></pre></td></tr></table></figure>
+<ul>
+<li>dds-max-ttl：最大的TTL值</li>
+<li>dds-min-ttl：最小的TTL值</li>
+<li>dds-default-ttl：默认的TTL值</li>
+<li>dds-interval：过期检查间隔时间</li>
+<li>dds-tolerance：过期检查的容忍时间<br>由过期检查间隔时间和容忍时间可以知道，一个动态对象的lifetime就是<code>dds-interval + dds-tolerance</code></li>
+</ul>
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=OpenLDAP Documentation Meeting,ou=Meetings,dc=example,dc=com</span><br><span class="line">cn: OpenLDAP Documentation Meeting</span><br><span class="line">objectClass: groupOfNames</span><br><span class="line">objectClass: dynamicObject</span><br><span class="line">member: uid=ghenry,ou=People,dc=example,dc=com</span><br><span class="line">member: uid=hyc,ou=People,dc=example,dc=com</span><br></pre></td></tr></table></figure>
+
+<h2 id="Dynamic-Groups"><a href="#Dynamic-Groups" class="headerlink" title="Dynamic Groups"></a>Dynamic Groups</h2><p>Dynamic Group，后面称动态组，会通过ldap url关联成员，动态组的entry使用<code>groupOfURLs</code>这个object class（可以自定义），以及多个<code>memberURL</code>值来指定LDAP URLs去识别组成员。动态组是目录服务的原生支持，因此最好选择动态组而不是静态组（static group），有以下原因：</p>
+<ol>
+<li>动态组成员是成员实体的一个属性，因此不需要单独维护一个实体去列出一堆用户。</li>
+<li>决定动态组的成员和应用member URL标准一样简单，就是说，只要定义好<code>memberURL</code>，那组成员也就直接确认了。</li>
+<li>动态组可以扩容到任何size，且不会有性能问题。动态组实体会保持非常小的size，即使组中有很多成员。</li>
+</ol>
+<p>例：定义了一个动态组sn-gu，用于筛选sn为gu的人员</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ldapsearch --hostname xxxx --port 389 --baseDN &quot;dc=example,dc=com&quot; &quot;(objectClass=groupOfURLs)&quot;</span><br><span class="line">dn: cn=sn-gu,ou=group,dc=example,dc=com</span><br><span class="line">cn: sn-gu</span><br><span class="line">memberURL: ldap:///ou=people,dc=example,dc=com??sub?(sn=gu)</span><br><span class="line">objectClass: groupOfURLs</span><br><span class="line">objectClass: top</span><br></pre></td></tr></table></figure>
+<p>当使用表达式<code>&quot;(isMemberOf=cn=sn-gu,ou=group,dc=example,dc=com)&quot;</code>进行ldapsearch时，就能找到以下几条</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># ldapsearch --hostname xxxx --port 389 --baseDN &quot;dc=example,dc=com&quot; &quot;(isMemberOf=cn=sn-gu,ou=group,dc=example,dc=com)&quot;</span><br><span class="line">dn: cn=aaaagu,ou=people,dc=example,dc=com</span><br><span class="line">cn: aaaagu</span><br><span class="line">givenName: aaaa</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: organizationalPerson</span><br><span class="line">objectClass: person</span><br><span class="line">objectClass: top</span><br><span class="line">sn: gu</span><br><span class="line">uid: aaaagu</span><br><span class="line"></span><br><span class="line">dn: cn=ssssgu,ou=people,dc=example,dc=com</span><br><span class="line">cn: ssssgu</span><br><span class="line">givenName: ssss</span><br><span class="line">objectClass: inetOrgPerson</span><br><span class="line">objectClass: organizationalPerson</span><br><span class="line">objectClass: person</span><br><span class="line">objectClass: top</span><br><span class="line">sn: gu</span><br><span class="line">uid: ssssgu</span><br></pre></td></tr></table></figure>
+
+<h2 id="LDAP命令详解"><a href="#LDAP命令详解" class="headerlink" title="LDAP命令详解"></a>LDAP命令详解</h2><p>ldap常见命令</p>
+<ul>
+<li>ldapadd：ldapadd实际就是ldapmodify的软链接</li>
+<li>ldapdelete：删除操作</li>
+<li>ldapmodify：修改操作</li>
+<li>ldappasswd：密码操作</li>
+<li>ldapurl：url格式化操作</li>
+<li>ldapcompare：比较操作</li>
+<li>ldapexop：扩展操作</li>
+<li>ldapmodrdn：重命名操作</li>
+<li>ldapsearch：搜索操作</li>
+</ul>
+<h3 id="通用连接参数"><a href="#通用连接参数" class="headerlink" title="通用连接参数"></a>通用连接参数</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-D  &#123;bindDN&#125;   用于绑定到服务器的 DN</span><br><span class="line"></span><br><span class="line">-h  &#123;host&#125;     目录服务器主机名或 IP 地址   Default value: localhost</span><br><span class="line">-H  &#123;uri&#125;      目录服务器的ldap格式地址。如果用了-h 就不用 -H了</span><br><span class="line">-p  &#123;port&#125;     目录服务器端口号  Default value: 389</span><br><span class="line"></span><br><span class="line">-w  &#123;bindPassword&#125; 用于绑定到服务器的密码</span><br><span class="line">-W  提示输入密码</span><br></pre></td></tr></table></figure>
+
+<p>常用的就是</p>
+<ul>
+<li><code>-D &lt;binddn&gt; -w &lt;password&gt; -h &lt;hostip&gt;</code></li>
+<li><code>-D &lt;binddn&gt; -w &lt;password&gt; -H ldap://&#123;hostip&#125;</code></li>
+</ul>
+<h3 id="ldapmodify"><a href="#ldapmodify" class="headerlink" title="ldapmodify"></a>ldapmodify</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-a  添加条目</span><br></pre></td></tr></table></figure>
+
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">编写ldif文件，将新增用户的ldif信息写入</span><br><span class="line">dn: cn=zhangsan,ou=people,dc=ebay,dc=com</span><br><span class="line">changetype: add</span><br><span class="line">cn: zhangsan</span><br><span class="line">gidnumber: 500</span><br><span class="line">givenname: san</span><br><span class="line">homedirectory: /home/users/zhangsan</span><br><span class="line">objectclass: inetOrgPerson</span><br><span class="line">objectclass: posixAccount</span><br><span class="line">objectclass: top</span><br><span class="line">sn: zhang</span><br><span class="line">uid: zhangsan</span><br><span class="line">uidnumber: 1002</span><br><span class="line">userpassword: &#123;MD5&#125;lueSGJZetyySpUndWjMBEg==</span><br></pre></td></tr></table></figure>
+<p>注：必须将<code>changetype: add</code>写在dn下面，也就是第二行，不能写在别的行内。否则添加时会有以下报错：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ldapmodify: modify operation type is missing at line 2, entry &quot;cn=zhangsan,ou=people,dc=ebay,dc=com&quot;</span><br></pre></td></tr></table></figure>
+<p>成功添加会有以下信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">adding new entry &quot;cn=zhangsan,ou=people,dc=ebay,dc=com&quot;</span><br></pre></td></tr></table></figure>
+
+<p>若要修改对象，则将<code>changetype</code>设为<code>modify</code>，并且在第三行必须加上操作</p>
+<ul>
+<li><code>add: &lt;attribute&gt;</code>：添加属性值</li>
+<li><code>replace: &lt;attribute&gt;</code>：替换属性值</li>
+<li><code>delete: &lt;attribute&gt;</code>：删除属性值</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=zhangsan,ou=people,dc=ebay,dc=com</span><br><span class="line">changetype: modify</span><br><span class="line">replace: homeDirectory</span><br><span class="line">homeDirectory: /home/users/zhangsan1111111</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=zhangsan,ou=people,dc=ebay,dc=com</span><br><span class="line">changetype: modify</span><br><span class="line">add: mobile</span><br><span class="line">mobile: 222222222</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dn: cn=zhangsan,ou=people,dc=ebay,dc=com</span><br><span class="line">changetype: modify</span><br><span class="line">delete: mobile</span><br></pre></td></tr></table></figure>
+
+<h3 id="ldapsearch"><a href="#ldapsearch" class="headerlink" title="ldapsearch"></a>ldapsearch</h3><p>ldap的搜索操作。以下仅列出一些常用参数。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Usage:  ldapsearch  &#123;options&#125; filter [attributes ...]</span><br><span class="line">Command options:</span><br><span class="line"></span><br><span class="line">-A, --typesOnly</span><br><span class="line">    仅检索属性名称，而不检索属性值</span><br><span class="line">-b, --baseDN &#123;baseDN&#125;</span><br><span class="line">    搜索基 DN</span><br><span class="line">-c, --continueOnError</span><br><span class="line">    即使出现错误也继续进行处理</span><br><span class="line">--countEntries</span><br><span class="line">    计算服务器返回的条目数</span><br><span class="line"></span><br><span class="line">-n, --dry-run</span><br><span class="line">    显示将要执行的操作，但不执行任何操作</span><br><span class="line"></span><br><span class="line">-S, --sortOrder &#123;sortOrder&#125;</span><br><span class="line">    使用提供的排序顺序对结果进行排序</span><br><span class="line">--simplePageSize &#123;numEntries&#125;</span><br><span class="line">    将简单分页结果控制用于给定页面大小</span><br><span class="line">    Default value: 1000</span><br></pre></td></tr></table></figure>
+
+<p>例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ldapsearch -D &quot;cn=admin,dc=example,dc=com&quot; -w xxxxx -H ldap://localhost -b &quot;ou=people,dc=example,dc=com&quot;</span><br><span class="line"></span><br><span class="line"># people, example.com</span><br><span class="line">dn: ou=people,dc=example,dc=com</span><br><span class="line">ou: people</span><br><span class="line">objectClass: organizationalUnit</span><br><span class="line">objectClass: top</span><br><span class="line"></span><br><span class="line">......</span><br><span class="line"># search result</span><br><span class="line">search: 2</span><br><span class="line">result: 0 Success</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ldapsearch -D &quot;cn=admin,dc=example,dc=com&quot; -w xxxxx -H ldap://localhost  -b &#x27;dc=example,dc=com&#x27; &quot;(cn=zhangsan)&quot; homeDirectory</span><br><span class="line"></span><br><span class="line">dn: cn=zhangsan,ou=people,dc=example,dc=com</span><br><span class="line">homeDirectory: /home/users/zhangsan</span><br></pre></td></tr></table></figure>
+
+<p><code>-b</code>参数指定搜索的baseDN，不可缺少，否则找不到</p>
+<h1 id="LDAP-Docker部署"><a href="#LDAP-Docker部署" class="headerlink" title="LDAP Docker部署"></a>LDAP Docker部署</h1><p>使用的镜像为：<code>osixia/openldap</code></p>
+<blockquote>
+<p>官方Github仓库：<a target="_blank" rel="noopener" href="https://github.com/osixia/docker-openldap">https://github.com/osixia/docker-openldap</a></p>
+</blockquote>
+<p>启动命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run -d --name ldap-service \</span><br><span class="line">              --hostname ldap-service \</span><br><span class="line">              -p 389:389 -p 636:636 \</span><br><span class="line">              -v /data/openldap/database:/var/lib/ldap \</span><br><span class="line">              -v /data/openldap/config:/etc/ldap/slapd.d \</span><br><span class="line">              --env LDAP_ORGANISATION=&quot;公司名&quot; \</span><br><span class="line">              --env LDAP_DOMAIN=&quot;公司域名&quot; \</span><br><span class="line">              --env LDAP_ADMIN_PASSWORD=&quot;admin账号的密码&quot; \</span><br><span class="line">              --env LDAP_TLS=false \</span><br><span class="line">              --detach osixia/openldap:stable</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：<br>启动前需要先建目录&#x2F;data&#x2F;openldap，这个是ldap数据目录，需要定期备份。<br>LDAP_ORGANISATION 指定的是公司名，若不填就是默认值Example Inc.<br>LDAP_DOMAIN 指定的是公司域名，若不填则是默认值example.org。该值会转化为namingContexts的值<code>dc=xxx,dc=xxx</code>，例如example.org会转为<code>dc=example,dc=org</code>，也就是DN中的后缀。</p>
+</blockquote>
+<p>该容器启动后开放了389和636两个端口，即OpenLDAP监听的端口：</p>
+<ul>
+<li>389：默认监听端口，是传输明文数据的</li>
+<li>636：加密监听端口，默认启动时不开启，是传输密文数据的</li>
+</ul>
+<p>常用的ldap管理界面，是由php编写的，同样可通过容器启动。</p>
+<blockquote>
+<p>官方Github仓库：<a target="_blank" rel="noopener" href="https://github.com/osixia/docker-phpLDAPadmin">https://github.com/osixia/docker-phpLDAPadmin</a></p>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run --name phpldapadmin-service \</span><br><span class="line">            -p 6443:443 -p 6680:80 \</span><br><span class="line">            --hostname phpldapadmin-service \</span><br><span class="line">            --link ldap-service \</span><br><span class="line">            --env PHPLDAPADMIN_LDAP_HOSTS=ldap-service \</span><br><span class="line">            --env PHPLDAPADMIN_HTTPS=false \</span><br><span class="line">            --detach osixia/phpldapadmin:stable</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>注：<br>–link 指定的是上面启动的ldap的容器名，将两个容器连接<br>PHPLDAPADMIN_LDAP_HOSTS环境指定的也是ldap的容器名，这个环境变量指定的就是LDAP服务器的域名或IP，docker容器间网络便能使用容器名访问。</p>
+</blockquote>
+<p>启动完成后就能通过6680端口访问，admin用户登录名就是<code>cn=admin,dc=xxx,dc=xxx</code><br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211655037.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211655037.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>一般的目录层级为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ou=group</span><br><span class="line">|- ou=某某大部门</span><br><span class="line">    |- ou=某某子部门</span><br><span class="line">ou=people</span><br><span class="line">|- cn=用户</span><br></pre></td></tr></table></figure>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211657950.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211657950.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>或者只留一个<code>ou=people</code>下面直接建用户就行，连<code>group</code>都不用。</p>
+<p>配套的还有个小工具，自助密码修改服务，也是用Docker部署。</p>
+<blockquote>
+<p>官方Github仓库：<a target="_blank" rel="noopener" href="https://github.com/ltb-project/self-service-password">https://github.com/ltb-project/self-service-password</a></p>
+</blockquote>
+<p>启动前创建&#x2F;data&#x2F;self-service-password目录，并需要在该目录中创建一个php文件，填写ldap服务的连接配置。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run -p 6681:80 \</span><br><span class="line">            -v /data/self-service-password/config.inc.local.php:/var/www/conf/config.inc.local.php \</span><br><span class="line">            -itd ltbproject/self-service-password:latest</span><br></pre></td></tr></table></figure>
+<p>以下为</p>
+<figure class="highlight php"><table><tr><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"><span class="variable">$ldap_url</span> = <span class="string">&quot;ldap://LDAP服务器地址&quot;</span>;</span><br><span class="line"><span class="variable">$ldap_starttls</span> = <span class="literal">false</span>;</span><br><span class="line"><span class="variable">$ldap_binddn</span> = <span class="string">&quot;cn=admin,dc=xxx,dc=xxx&quot;</span>;</span><br><span class="line"><span class="variable">$ldap_bindpw</span> = <span class="string">&#x27;admin密码&#x27;</span>;</span><br><span class="line"><span class="variable">$ldap_base</span> = <span class="string">&quot;dc=xxx,dc=xxx&quot;</span>;</span><br><span class="line"><span class="variable">$ldap_login_attribute</span> = <span class="string">&quot;cn&quot;</span>;</span><br><span class="line"><span class="variable">$ldap_fullname_attribute</span> = <span class="string">&quot;cn&quot;</span>;</span><br><span class="line"><span class="variable">$keyphrase</span> = <span class="string">&quot;xxxxx&quot;</span>;</span><br><span class="line"><span class="variable">$use_tokens</span> = <span class="literal">false</span>;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>keyphrase可以是随机字符串，用于加密，不过不要随意变动</p>
+</blockquote>
+<h1 id="LDAP-Kubernetes部署"><a href="#LDAP-Kubernetes部署" class="headerlink" title="LDAP Kubernetes部署"></a>LDAP Kubernetes部署</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: ldap</span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: ldap</span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: ldap</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">        - name: ldap</span><br><span class="line">          image: osixia/openldap:stable</span><br><span class="line">          args: [&quot;--copy-service&quot;]</span><br><span class="line">          volumeMounts:</span><br><span class="line">            - name: container-run</span><br><span class="line">              mountPath: /container/run</span><br><span class="line">          env:</span><br><span class="line">          - name: LDAP_ORGANISATION</span><br><span class="line">            value: XXX</span><br><span class="line">          - name: LDAP_DOMAIN</span><br><span class="line">            value: XXX.XXX</span><br><span class="line">          - name: LDAP_ADMIN_PASSWORD</span><br><span class="line">            value: XXXXX</span><br><span class="line">          ports:</span><br><span class="line">            - containerPort: 389</span><br><span class="line">              name: openldap</span><br><span class="line">            - name: ssl-ldap-port</span><br><span class="line">              containerPort: 636</span><br><span class="line">          livenessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: openldap</span><br><span class="line">            initialDelaySeconds: 20</span><br><span class="line">            periodSeconds: 10</span><br><span class="line">            failureThreshold: 10</span><br><span class="line">          readinessProbe:</span><br><span class="line">            tcpSocket:</span><br><span class="line">              port: openldap</span><br><span class="line">            initialDelaySeconds: 20</span><br><span class="line">            periodSeconds: 10</span><br><span class="line">            failureThreshold: 10</span><br><span class="line">      volumes:</span><br><span class="line">        - name: container-run</span><br><span class="line">          emptyDir: &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="LDAP-对接其他系统"><a href="#LDAP-对接其他系统" class="headerlink" title="LDAP 对接其他系统"></a>LDAP 对接其他系统</h1><h2 id="Gitlab"><a href="#Gitlab" class="headerlink" title="Gitlab"></a>Gitlab</h2><p>公司的gitlab版本为14.9，支持以下写法</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gitlab_rails[&#x27;ldap_enabled&#x27;] = true</span><br><span class="line">gitlab_rails[&#x27;prevent_ldap_sign_in&#x27;] = false</span><br><span class="line"></span><br><span class="line">###! **remember to close this block with &#x27;EOS&#x27; below**</span><br><span class="line">gitlab_rails[&#x27;ldap_servers&#x27;] = YAML.load &lt;&lt;-&#x27;EOS&#x27;</span><br><span class="line">  main: # &#x27;main&#x27; is the GitLab &#x27;provider ID&#x27; of this LDAP server</span><br><span class="line">    label: &#x27;LDAP&#x27;</span><br><span class="line">    host: &#x27;填写LDAP服务器IP&#x27;</span><br><span class="line">    port: 389</span><br><span class="line">    uid: &#x27;uid&#x27;</span><br><span class="line">    bind_dn: &#x27;cn=admin,dc=xxx,dc=xxx&#x27;</span><br><span class="line">    password: &#x27;填写admin密码&#x27;</span><br><span class="line">    encryption: &#x27;plain&#x27; # &quot;start_tls&quot; or &quot;simple_tls&quot; or &quot;plain&quot;</span><br><span class="line">    verify_certificates: true</span><br><span class="line">#     smartcard_auth: false</span><br><span class="line">    active_directory: false</span><br><span class="line">    allow_username_or_email_login: false</span><br><span class="line">#     lowercase_usernames: false</span><br><span class="line">#     block_auto_created_users: false</span><br><span class="line">    base: &#x27;dc=xxx,dc=xxx&#x27;</span><br><span class="line">    attributes:</span><br><span class="line">      username: [&#x27;uid&#x27;, &#x27;mail&#x27;]</span><br><span class="line">      email:    [&#x27;mail&#x27;]</span><br><span class="line">EOS</span><br></pre></td></tr></table></figure>
+<p>gitlab重启后再访问就多了LDAP登录的方式<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211720987.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211720987.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h2 id="Jenkins"><a href="#Jenkins" class="headerlink" title="Jenkins"></a>Jenkins</h2><p>需要先确保LDAP插件安装完成<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211728646.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211728646.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="未找到图片：https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211728646.png" title="未找到图片：https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211728646.png"><br>在全局安全配置中的安全域指定LDAP，并填入LDAP连接信息<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211726837.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211726837.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="未找到图片：https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211726837.png" title="未找到图片：https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211726837.png"><br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211727679.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211727679.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h2 id="Yearning"><a href="#Yearning" class="headerlink" title="Yearning"></a>Yearning</h2><p>Yearning SQL审计平台也支持LDAP登录，在设置页面，填入LDAP信息，并重启yearning服务（一定要重启，不然不生效）<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211732851.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206211732851.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+
+  </div>
+  
+  
+    
+    <div class='footer'>
+       <!-- 参考资料、相关资料等 -->
+      
+       <!-- 相关文章 -->
+      
+      <!-- 版权声明组件 -->
+      
+      <!-- 打赏组件 -->
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/LDAP/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>LDAP</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/OpenDJ/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>OpenDJ</p></a></div>
+  <span hidden itemprop="keywords">LDAP OpenDJ</span>
+
+
+        
+      
+    </div>
+    <!-- Custom Files bottomMeta begin -->
+    
+    <!-- Custom Files bottomMeta end -->
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/NFS%E9%AB%98%E5%8F%AF%E7%94%A8%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>NFS高可用笔记</p>
+          <p class='content'>
+NFS 高可用概述
+NFS+Keepalived+DRBD 搭建
+
+
+
+NFS 高可用概述NFS 的物理磁盘往往做 RAID10 或 RAID0，再通过 DRBD 同步 NFS，以及设置 VI...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/SaltStack%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>SaltStack学习笔记<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+
+
+Salt 概述
+SaltStack 架构
+
+
+SaltStack 安装部署
+Master 迁移
+returner
+syslog
+mysql
+
+
+event
+分组
+常用模块
+archive
+...</p>
+        </a>
+      
+    </div>
+  
+  <!-- Custom Files postEnd begin-->
+  
+  <!-- Custom Files postEnd end-->
+</article>
+
+
+
+
+</div>
+<aside id='l_side' itemscope itemtype="http://schema.org/WPSideBar">
+  
+
+  
+    
+    
+      
+    
+  
+
+
+<div class="widget-sticky pjax">
+
+  
+  
+
+
+  <section class="widget toc-wrapper desktop mobile " id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%AE%E5%BD%95%E6%9C%8D%E5%8A%A1"><span class="toc-text">目录服务</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#X-500"><span class="toc-text">X.500</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LDAP"><span class="toc-text">LDAP</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Configuration-Choices"><span class="toc-text">Configuration Choices</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Configuration"><span class="toc-text">Configuration</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Configuration-Layout"><span class="toc-text">Configuration Layout</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#cn-x3D-config"><span class="toc-text">cn&#x3D;config</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#cn-x3D-module"><span class="toc-text">cn&#x3D;module</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#cn-x3D-schema"><span class="toc-text">cn&#x3D;schema</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#backend"><span class="toc-text">backend</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Backends"><span class="toc-text">Backends</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#LDIF"><span class="toc-text">LDIF</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Schema-Specification"><span class="toc-text">Schema Specification</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E6%95%A3%E7%9A%84Schema%E9%85%8D%E7%BD%AE"><span class="toc-text">分散的Schema配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A9%E5%B1%95Schema"><span class="toc-text">扩展Schema</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Attribute-Type%E8%A7%84%E8%8C%83"><span class="toc-text">Attribute Type规范</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Object-Class%E8%A7%84%E8%8C%83"><span class="toc-text">Object Class规范</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#AUXILIARY-Object-Class"><span class="toc-text">AUXILIARY Object Class</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#OID%E5%AE%8F"><span class="toc-text">OID宏</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Dynamic-Directory-Services"><span class="toc-text">Dynamic Directory Services</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Dynamic-Groups"><span class="toc-text">Dynamic Groups</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LDAP%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3"><span class="toc-text">LDAP命令详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E7%94%A8%E8%BF%9E%E6%8E%A5%E5%8F%82%E6%95%B0"><span class="toc-text">通用连接参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ldapmodify"><span class="toc-text">ldapmodify</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ldapsearch"><span class="toc-text">ldapsearch</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LDAP-Docker%E9%83%A8%E7%BD%B2"><span class="toc-text">LDAP Docker部署</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LDAP-Kubernetes%E9%83%A8%E7%BD%B2"><span class="toc-text">LDAP Kubernetes部署</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LDAP-%E5%AF%B9%E6%8E%A5%E5%85%B6%E4%BB%96%E7%B3%BB%E7%BB%9F"><span class="toc-text">LDAP 对接其他系统</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Gitlab"><span class="toc-text">Gitlab</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Jenkins"><span class="toc-text">Jenkins</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Yearning"><span class="toc-text">Yearning</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+  
+
+</div>
+
+
+<!-- 没有 pjax 占位会报错 万恶的 pjax -->
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <!-- Custom Files side begin -->
+  
+  <!-- Custom Files side end -->
+</aside>
+
+
+
+          <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<pjax>
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  pdata.commentConfig={};
+  //  see: /layout/_partial/scripts/_ctrl/coverCtrl.ejs
+  
+    // header
+    var l_header=document.getElementById("l_header");
+    
+    l_header.classList.add("show");
+    
+    
+      // cover
+      var cover_wrapper=document.querySelector('#l_cover .cover-wrapper');
+      var scroll_down=document.getElementById('scroll-down');
+      cover_wrapper.id="none";
+      cover_wrapper.style.display="none";
+      scroll_down.style.display="none";
+    
+  
+</script>
+</pjax>
+        </div>
+        
+  
+  <footer class="footer clearfix"  itemscope itemtype="http://schema.org/WPFooter">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper" itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer" itemprop="url">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+    <!-- Custom Files footer begin-->
+    
+    <!-- Custom Files footer end-->
+  </footer>
+
+
+        <a id="s-top" class="fa-solid fa-arrow-up fa-fw" href="/" onclick="return false;" title="top"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+  /******************** volantis.dom ********************************/
+  // 页面选择器 将dom对象缓存起来 see: /source/js/app.js etc.
+  volantis.dom.bodyAnchor = volantis.dom.$(document.getElementById("safearea")); // 页面主体
+  volantis.dom.topBtn = volantis.dom.$(document.getElementById('s-top')); // 向上
+  volantis.dom.wrapper = volantis.dom.$(document.getElementById('wrapper')); // 整个导航栏
+  volantis.dom.coverAnchor = volantis.dom.$(document.querySelector('#l_cover .cover-wrapper')); // 1个
+  volantis.dom.switcher = volantis.dom.$(document.querySelector('#l_header .switcher .s-search')); // 搜索按钮   移动端 1个
+  volantis.dom.header = volantis.dom.$(document.getElementById('l_header')); // 移动端导航栏
+  volantis.dom.search = volantis.dom.$(document.querySelector('#l_header .m_search')); // 搜索框 桌面端 移动端 1个
+  volantis.dom.mPhoneList = volantis.dom.$(document.querySelectorAll('#l_header .m-phone .list-v')); //  手机端 子菜单 多个
+</script>
+
+<script>
+  
+  volantis.css("https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fortawesome/fontawesome-free/css/all.min.css");
+  
+  
+  
+</script>
+
+<!-- required -->
+
+
+<!-- internal -->
+
+<script src="/js/app.js"></script>
+
+
+
+
+
+
+<!-- rightmenu要在darkmode之前（ToggleButton） darkmode要在comments之前（volantis.dark.push）-->
+
+
+
+<script>
+  function loadIssuesJS() {
+    
+      const sites_api = document.getElementById('sites-api');
+      if (sites_api != undefined && typeof SitesJS === 'undefined') {
+        volantis.js("/js/plugins/tags/sites.js")
+      }
+    
+    
+      const friends_api = document.getElementById('friends-api');
+      if (friends_api != undefined && typeof FriendsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/friends.js")
+      }
+    
+    
+      const contributors_api = document.getElementById('contributors-api');
+      if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/contributors.js")
+      }
+    
+  };
+  loadIssuesJS()
+  volantis.pjax.push(()=>{
+    loadIssuesJS();
+  })
+
+</script>
+
+
+
+
+  <script defer src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/vanilla-lazyload/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: ["#"],
+	maxRPS: 6,
+	hoverDelay: 0
+  };
+</script>
+<script defer src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/flying-pages/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+      <script>
+  volantis.layoutHelper("comments",`<div id="giscus_container"></div>`)
+
+  volantis.giscus = {};
+
+  function check_giscus() {
+    if (volantis.dark.mode === "dark") {
+      volantis.giscus.Theme = 'dark';
+    } else {
+      volantis.giscus.Theme = 'light';
+    }
+
+    return document.getElementById("giscus_container");
+  }
+
+  function pjax_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+    let cfg = Object.assign({"theme":{"light":"light","dark":"dark"}},pdata.commentConfig)
+    const script = document.createElement('script');
+    script.setAttribute('src', 'https://giscus.app/client.js');
+    Object.keys(cfg).forEach(k=>{
+      if (k != "theme") {
+        script.setAttribute('data-'+k, cfg[k]);
+      }
+    })
+    script.setAttribute('data-theme', volantis.giscus.Theme);
+    script.setAttribute('crossorigin', "anonymous");
+    HEAD.appendChild(script);
+  }
+
+  function dark_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+
+    const message = {
+      setConfig: {
+        theme: volantis.giscus.Theme
+      }
+    };
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    giscusIframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+  }
+  pjax_giscus();
+  volantis.pjax.push(pjax_giscus);
+  volantis.dark.push(dark_giscus);
+</script>
+
+    
+
+
+
+
+
+<!-- optional -->
+
+  <script>
+  const SearchServiceDataPathRoot = ("/" || "/").endsWith("/") ?
+    "/" || "/" :
+    "//" || "/";
+  const SearchServiceDataPath = SearchServiceDataPathRoot + "content.json";
+
+  function loadSearchScript() {
+    // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
+    return volantis.js("/js/search/hexo.js");
+  }
+
+  function loadSearchService() {
+    loadSearchScript();
+    document.querySelectorAll(".input.u-search-input").forEach((e) => {
+      e.removeEventListener("focus", loadSearchService, false);
+    });
+
+    document.querySelectorAll(".u-search-form").forEach((e) => {
+      e.addEventListener("submit", (event) => {
+        event.preventDefault();
+      }, false);
+    });
+  }
+
+  // 打开并搜索 字符串 s
+  function OpenSearch(s) {
+    if (typeof SearchService === 'undefined')
+      loadSearchScript().then(() => {
+        SearchService.setQueryText(s);
+        SearchService.search();
+      });
+    else {
+      SearchService.setQueryText(s);
+      SearchService.search();
+    }
+  }
+
+  // 访问含有 ?s=xxx  的链接时打开搜索 // 与搜索引擎 structured data 相关: /scripts/helpers/structured-data/lib/config.js
+  if (window.location.search && /^\?s=/g.test(window.location.search)) {
+    let queryText = decodeURI(window.location.search)
+      .replace(/\ /g, "-")
+      .replace(/^\?s=/g, "");
+    OpenSearch(queryText);
+  }
+
+  // 搜索输入框获取焦点时加载搜索
+  document.querySelectorAll(".input.u-search-input").forEach((e) => {
+    e.addEventListener("focus", loadSearchService, false);
+  });
+</script>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  function pjax_highlightjs_copyCode(){
+    if (!(document.querySelector(".highlight .code pre") ||
+      document.querySelector(".article pre code"))) {
+      return;
+    }
+    VolantisApp.utilCopyCode(".highlight .code pre, .article pre code")
+  }
+  volantis.requestAnimationFrame(pjax_highlightjs_copyCode)
+  volantis.pjax.push(pjax_highlightjs_copyCode)
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  <script>
+  function load_swiper() {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    volantis.css("https://unpkg.com/volantis-static@0.0.1654736714924/libs/swiper/swiper-bundle.min.css");
+    volantis.js("https://unpkg.com/volantis-static@0.0.1654736714924/libs/swiper/swiper-bundle.min.js").then(() => {
+      pjax_swiper();
+    });
+  }
+
+  load_swiper();
+
+  function pjax_swiper() {
+    volantis.swiper = new Swiper('.swiper-container', {
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      centeredSlides: true,
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+
+  volantis.pjax.push(() => {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    if (typeof volantis.swiper === "undefined") {
+      load_swiper();
+    } else {
+      pjax_swiper();
+    }
+  });
+</script>
+
+
+<!-- pjax 标签必须存在于所有页面 否则 pjax error -->
+<pjax>
+
+</pjax>
+
+<script>
+  function listennSidebarTOC() {
+    const navItems = document.querySelectorAll(".toc li");
+    if (!navItems.length) return;
+    let targets = []
+    const sections = [...navItems].map((element) => {
+      const link = element.querySelector(".toc-link");
+      const target = document.getElementById(
+        decodeURI(link.getAttribute("href")).replace("#", "")
+      );
+      targets.push(target)
+      // 解除 a 标签 href 的 锚点定位, a 标签 href 的 锚点定位 会随机启用?? 产生错位???
+      link.setAttribute("onclick","return false;")
+      link.setAttribute("toc-action","toc-"+decodeURI(link.getAttribute("href")).replace("#", ""))
+      link.setAttribute("href","/")
+      // 配置 点击 触发新的锚点定位
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        // 这里的 addTop 是通过错位使得 toc 自动展开.
+        volantis.scroll.to(target,{addTop: 5, observer:true})
+        // Anchor id
+        history.pushState(null, document.title, "#" + target.id);
+      });
+      return target;
+    });
+
+    function activateNavByIndex(target) {
+      if (target.classList.contains("active-current")) return;
+
+      document.querySelectorAll(".toc .active").forEach((element) => {
+        element.classList.remove("active", "active-current");
+      });
+      target.classList.add("active", "active-current");
+      let parent = target.parentNode;
+      while (!parent.matches(".toc")) {
+        if (parent.matches("li")) parent.classList.add("active");
+        parent = parent.parentNode;
+      }
+    }
+
+    // 方案一：
+    volantis.activateNavIndex=0
+    activateNavByIndex(navItems[volantis.activateNavIndex])
+    volantis.scroll.push(()=>{
+      if (targets[0].getBoundingClientRect().top >= 0) {
+        volantis.activateNavIndex = 0
+      }else if (targets[targets.length-1].getBoundingClientRect().top < 0) {
+        volantis.activateNavIndex = targets.length-1
+      } else {
+        for (let index = 0; index < targets.length; index++) {
+          const target0 = targets[index];
+          const target1 = targets[(index+1)%targets.length];
+          if (target0.getBoundingClientRect().top < 0&&target1.getBoundingClientRect().top >= 0) {
+            volantis.activateNavIndex=index
+            break;
+          }
+        }
+      }
+      activateNavByIndex(navItems[volantis.activateNavIndex])
+    })
+
+    // 方案二：
+    // IntersectionObserver 不是完美精确到像素级别 也不是低延时性的
+    // function findIndex(entries) {
+    //   let index = 0;
+    //   let entry = entries[index];
+    //   if (entry.boundingClientRect.top > 0) {
+    //     index = sections.indexOf(entry.target);
+    //     return index === 0 ? 0 : index - 1;
+    //   }
+    //   for (; index < entries.length; index++) {
+    //     if (entries[index].boundingClientRect.top <= 0) {
+    //       entry = entries[index];
+    //     } else {
+    //       return sections.indexOf(entry.target);
+    //     }
+    //   }
+    //   return sections.indexOf(entry.target);
+    // }
+    // function createIntersectionObserver(marginTop) {
+    //   marginTop = Math.floor(marginTop + 10000);
+    //   let intersectionObserver = new IntersectionObserver(
+    //     (entries, observe) => {
+    //       let scrollHeight = document.documentElement.scrollHeight;
+    //       if (scrollHeight > marginTop) {
+    //         observe.disconnect();
+    //         createIntersectionObserver(scrollHeight);
+    //         return;
+    //       }
+    //       let index = findIndex(entries);
+    //       activateNavByIndex(navItems[index]);
+    //     }, {
+    //       rootMargin: marginTop + "px 0px -100% 0px",
+    //       threshold: 0,
+    //     }
+    //   );
+    //   sections.forEach((element) => {
+    //     element && intersectionObserver.observe(element);
+    //   });
+    // }
+    // createIntersectionObserver(document.documentElement.scrollHeight);
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    volantis.requestAnimationFrame(listennSidebarTOC)
+  });
+  document.addEventListener("pjax:success", ()=>{
+    volantis.requestAnimationFrame(listennSidebarTOC)
+  });
+</script>
+
+
+
+<script>
+  document.onreadystatechange = function () {
+    if (document.readyState == 'complete') {
+      // 页面加载完毕 样式加载失败，或是当前网速慢，或是开启了省流模式
+      const { saveData, effectiveType } = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {}
+      if (getComputedStyle(document.querySelector("#safearea"), null)["display"] == "none" || saveData || /2g/.test(effectiveType)) {
+        document.querySelectorAll(".reveal").forEach(function (e) {
+          e.style["opacity"] = "1";
+        });
+        document.querySelector("#safearea").style["display"] = "block";
+      }
+    }
+  }
+</script>
+
+
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/系统运维/","name":"系统运维"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2018/LDAP/","name":"LDAP"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"LDAP","description":"Tianyi的技术随笔","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2018/LDAP/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2018/LDAP/","wordCount":0,"datePublished":"2018-11-24T01:22:47.000Z","dateModified":"2023-04-20T18:13:43.299Z","articleSection":"系统运维","keywords":"LDAP,OpenDJ","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+
+
+
+      
+        <!--
+  pjax重载区域接口：
+  1.  <pjax></pjax> 标签 pjax 标签必须存在于所有页面 否则 pjax error
+  2.  script[data-pjax]
+  3.  .pjax-reload script
+  4.  .pjax
+-->
+
+
+
+<script src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/pjax/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox]):not([onclick="return false;"]):not([onclick="return!1"]):not([target="_blank"]):not([target="view_window"]):not([href$=".xml"])',
+        selectors: [
+          "head title",
+          "head meta[name=keywords]",
+          "head meta[name=description]",
+          
+          "#l_main",
+          "#pjax-header-nav-list",
+          ".pjax",
+          "pjax", // <pjax></pjax> 标签
+          "script[data-pjax], .pjax-reload script" // script标签添加data-pjax 或 script标签外层添加.pjax-reload 的script代码段重载
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000,
+        
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.complete.start();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      if(volantis.debug) {
+        console.error(e);
+        console.log('pjax error: \n' + JSON.stringify(e));
+      }else{
+        // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+        volantis.pjax.method.error.start();
+        window.location.href = e.triggerElement.href;
+      }
+    });
+</script>
+
+      
+    </div>
+    <!-- import body_end begin-->
+    <!-- import body_end end-->
+    <!-- Custom Files bodyEnd begin-->
+    
+    <!-- Custom Files bodyEnd end-->
+  </body>
+</html>

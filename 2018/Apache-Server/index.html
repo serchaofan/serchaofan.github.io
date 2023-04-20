@@ -1,0 +1,3813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/#5.7.7'>
+  <meta name="generator" content="Hexo 6.3.0">
+  <meta name="Volantis" content="5.7.7">
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  
+  <link rel="canonical" href="https://tianyigu.top/2018/apache-server/"/>
+  <!-- 渲染优化 -->
+    <meta http-equiv='x-dns-prefetch-control' content='on' />
+      <link rel='dns-prefetch' href='https://unpkg.com'>
+      <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self' https:; block-all-mixed-content; base-uri 'self' https:; form-action 'self' https:; worker-src 'self' https:; connect-src 'self' https: *; img-src 'self' data: https: *; media-src 'self' https: *; font-src 'self' data: https: *; frame-src 'self' https: *; manifest-src 'self' https: *; child-src https:; script-src 'self' https: 'unsafe-inline' *; style-src 'self' https: 'unsafe-inline' *; ">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+  <meta content="telephone=no" name="format-detection">
+  <!-- import head_begin begin -->
+  <!-- import head_begin end -->
+  <!-- Custom Files headBegin begin-->
+  
+  <!-- Custom Files headBegin end-->
+    <link rel="shortcut icon" type='image/x-icon' href="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preload" href="https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<link rel="preload" href="https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <!-- feed -->
+  <!-- 页面元数据 -->
+  <title>Apache Server - Tianyi的技术随笔</title>
+  <meta name="keywords" content="server,Apache,http,LAMP,LAMT,undefined">
+  <meta desc name="description" content="Tianyi的技术随笔 - Tianyi Gu - Tianyi的技术随笔">
+  
+<meta property="og:type" content="article">
+<meta property="og:title" content="Apache Server">
+<meta property="og:url" content="https://tianyigu.top/2018/Apache-Server/index.html">
+<meta property="og:site_name" content="Tianyi的技术随笔">
+<meta property="og:description" content="Apache-httpd 服务器介绍Apache 服务器全称 Apache-HTTP-Server，而 httpd 就是 Apache 服务器端运行的软件，提供 WWW 服务器平台。 Apache 特性  简单强大的配置文件 支持虚拟主机 支持多种 HTTP 认证 集成 Perl 脚本，代理服务器模块 支持通用网关接口、FastCGI 支持实时监视服务器状态和定制服务器日志 支持 SSL、服务">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+<meta property="article:published_time" content="2018-05-02T09:19:50.000Z">
+<meta property="article:modified_time" content="2022-07-11T15:20:00.456Z">
+<meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="server">
+<meta property="article:tag" content="Apache">
+<meta property="article:tag" content="http">
+<meta property="article:tag" content="LAMP">
+<meta property="article:tag" content="LAMT">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+  <style>
+    /* 首屏样式 */
+    #safearea {
+  display: none;
+}
+:root {
+  --color-site-body: #f4f4f4;
+  --color-site-bg: #f4f4f4;
+  --color-site-inner: #fff;
+  --color-site-footer: #666;
+  --color-card: #fff;
+  --color-text: #444;
+  --color-block: #f6f6f6;
+  --color-inlinecode: #c74f00;
+  --color-codeblock: #fff7ea;
+  --color-h1: #3a3a3a;
+  --color-h2: #3a3a3a;
+  --color-h3: #333;
+  --color-h4: #444;
+  --color-h5: #555;
+  --color-h6: #666;
+  --color-p: #444;
+  --color-list: #666;
+  --color-list-hl: #30ad91;
+  --color-meta: #888;
+  --color-read-bkg: #e0d8c8;
+  --color-read-post: #f8f1e2;
+  --color-copyright-bkg: #f5f5f5;
+}
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+*::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+html {
+  color: var(--color-text);
+  width: 100%;
+  height: 100%;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  font-size: 16px;
+}
+html >::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+html >::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+html >::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+html >::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+body {
+  background-color: var(--color-site-body);
+  text-rendering: optimizelegibility;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+body.modal-active {
+  overflow: hidden;
+}
+@media screen and (max-width: 680px) {
+  body.modal-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+a {
+  color: #2092ec;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+a:hover {
+  color: #ff5722;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+ol {
+  padding-left: 0;
+}
+ul li,
+ol li {
+  list-style: none;
+}
+header {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+img {
+  border: 0;
+  background: none;
+  max-width: 100%;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  height: 0;
+  border: 0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  border-bottom: 1px solid rgba(68,68,68,0.1);
+}
+button,
+input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+button {
+  overflow: visible;
+  text-transform: none;
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+@supports (backdrop-filter: blur(20px)) {
+  .blur {
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+.shadow {
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.shadow.floatable {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.shadow.floatable:hover {
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+}
+#l_cover {
+  min-height: 64px;
+}
+.cover-wrapper {
+  top: 0;
+  left: 0;
+  max-width: 100%;
+  height: 100vh;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+  color: var(--color-site-inner);
+  padding: 0 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -100px;
+}
+.cover-wrapper .cover-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+}
+.cover-wrapper .cover-bg.lazyload:not(.loaded) {
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+}
+.cover-wrapper .cover-bg.lazyload.loaded {
+  animation-delay: 0s;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+  animation-name: fadeIn;
+}
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cover-wrapper#full {
+  height: calc(100vh + 100px);
+  padding-bottom: 100px;
+}
+.cover-wrapper#half {
+  max-height: 640px;
+  min-height: 400px;
+  height: calc(36vh - 64px + 200px);
+}
+.cover-wrapper #scroll-down {
+  width: 100%;
+  height: 64px;
+  position: absolute;
+  bottom: 100px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover-wrapper #scroll-down .scroll-down-effects {
+  color: #fff;
+  font-size: 24px;
+  line-height: 64px;
+  position: absolute;
+  width: 24px;
+  left: calc(50% - 12px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  animation: scroll-down-effect 1.5s infinite;
+  -webkit-animation: scroll-down-effect 1.5s infinite;
+  -khtml-animation: scroll-down-effect 1.5s infinite;
+  -moz-animation: scroll-down-effect 1.5s infinite;
+  -o-animation: scroll-down-effect 1.5s infinite;
+  -ms-animation: scroll-down-effect 1.5s infinite;
+}
+@-moz-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  margin-top: 64px;
+  margin-bottom: 100px;
+}
+.cover-wrapper .cover-body,
+.cover-wrapper .cover-body .top,
+.cover-wrapper .cover-body .bottom {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  max-width: 100%;
+}
+.cover-wrapper .cover-body .bottom {
+  margin-top: 32px;
+}
+.cover-wrapper .cover-body .title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+  font-size: 3.125rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.cover-wrapper .cover-body .subtitle {
+  font-size: 20px;
+}
+.cover-wrapper .cover-body .logo {
+  max-height: 120px;
+  max-width: calc(100% - 4 * 16px);
+}
+@media screen and (min-height: 1024px) {
+  .cover-wrapper .cover-body .title {
+    font-size: 3rem;
+  }
+  .cover-wrapper .cover-body .subtitle {
+    font-size: 1.05rem;
+  }
+  .cover-wrapper .cover-body .logo {
+    max-height: 150px;
+  }
+}
+.cover-wrapper .cover-body .m_search {
+  position: relative;
+  max-width: calc(100% - 16px);
+  width: 320px;
+  vertical-align: middle;
+}
+.cover-wrapper .cover-body .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  width: 100%;
+}
+.cover-wrapper .cover-body .m_search .icon,
+.cover-wrapper .cover-body .m_search .input {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.cover-wrapper .cover-body .m_search .icon {
+  position: absolute;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  line-height: 2.5rem;
+  width: 32px;
+  top: 0;
+  left: 5px;
+  color: rgba(68,68,68,0.75);
+}
+.cover-wrapper .cover-body .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  padding-left: 36px;
+  border-radius: 1.4rem;
+  -webkit-border-radius: 1.4rem;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: var(--color-text);
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .cover-body .m_search .input {
+    padding-left: 36px;
+  }
+}
+.cover-wrapper .cover-body .m_search .input:hover {
+  background: rgba(255,255,255,0.8);
+}
+.cover-wrapper .cover-body .m_search .input:focus {
+  background: #fff;
+}
+.cover-wrapper .list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -khtml-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -o-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  align-items: stretch;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.cover-wrapper .list-h a {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  font-weight: 600;
+}
+.cover-wrapper .list-h a img {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  margin: 4px;
+  min-width: 40px;
+  max-width: 44px;
+}
+@media screen and (max-width: 768px) {
+  .cover-wrapper .list-h a img {
+    min-width: 36px;
+    max-width: 40px;
+  }
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .list-h a img {
+    margin: 2px 4px;
+    min-width: 32px;
+    max-width: 36px;
+  }
+}
+@media screen and (max-width: 375px) {
+  .cover-wrapper .list-h a img {
+    min-width: 28px;
+    max-width: 32px;
+  }
+}
+.cover-wrapper {
+  max-width: 100%;
+}
+.cover-wrapper.search .bottom .menu {
+  margin-top: 16px;
+}
+.cover-wrapper.search .bottom .menu .list-h a {
+  white-space: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2px;
+  margin: 4px;
+  color: var(--color-site-inner);
+  opacity: 0.75;
+  -webkit-opacity: 0.75;
+  -moz-opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 2px solid transparent;
+}
+.cover-wrapper.search .bottom .menu .list-h a i {
+  margin-right: 4px;
+}
+.cover-wrapper.search .bottom .menu .list-h a p {
+  font-size: 0.9375rem;
+}
+.cover-wrapper.search .bottom .menu .list-h a:hover,
+.cover-wrapper.search .bottom .menu .list-h a.active,
+.cover-wrapper.search .bottom .menu .list-h a:active {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  border-bottom: 2px solid var(--color-site-inner);
+}
+.cover-wrapper.dock .menu,
+.cover-wrapper.featured .menu,
+.cover-wrapper.focus .menu {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+.cover-wrapper.dock .menu .list-h a,
+.cover-wrapper.featured .menu .list-h a,
+.cover-wrapper.focus .menu .list-h a {
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  line-height: 24px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-bottom: none;
+  text-align: center;
+  align-content: flex-end;
+  color: rgba(68,68,68,0.7);
+  font-size: 1.5rem;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h a,
+  .cover-wrapper.featured .menu .list-h a,
+  .cover-wrapper.focus .menu .list-h a {
+    padding: 12px 8px;
+  }
+}
+.cover-wrapper.dock .menu .list-h a i,
+.cover-wrapper.featured .menu .list-h a i,
+.cover-wrapper.focus .menu .list-h a i {
+  margin: 8px;
+}
+.cover-wrapper.dock .menu .list-h a p,
+.cover-wrapper.featured .menu .list-h a p,
+.cover-wrapper.focus .menu .list-h a p {
+  font-size: 0.875rem;
+}
+.cover-wrapper.dock .menu .list-h a.active,
+.cover-wrapper.featured .menu .list-h a.active,
+.cover-wrapper.focus .menu .list-h a.active {
+  background: var(--color-card);
+  backdrop-filter: none;
+}
+.cover-wrapper.dock .menu .list-h a.active i,
+.cover-wrapper.featured .menu .list-h a.active i,
+.cover-wrapper.focus .menu .list-h a.active i,
+.cover-wrapper.dock .menu .list-h a.active i+p,
+.cover-wrapper.featured .menu .list-h a.active i+p,
+.cover-wrapper.focus .menu .list-h a.active i+p {
+  color: #3dd9b6;
+}
+.cover-wrapper.dock .menu .list-h a.active img+p,
+.cover-wrapper.featured .menu .list-h a.active img+p,
+.cover-wrapper.focus .menu .list-h a.active img+p {
+  color: var(--color-text);
+}
+.cover-wrapper.dock .menu .list-h a:hover,
+.cover-wrapper.featured .menu .list-h a:hover,
+.cover-wrapper.focus .menu .list-h a:hover {
+  background: var(--color-card);
+}
+.cover-wrapper.dock .top {
+  margin-bottom: 48px;
+}
+.cover-wrapper.dock .menu {
+  background: rgba(255,255,255,0.5);
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+}
+.cover-wrapper.dock .menu .list-h {
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  margin: 4px;
+}
+.cover-wrapper.dock .menu .list-h a+a {
+  margin-left: 4px;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h {
+    overflow-x: scroll;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb {
+    background: #3dd9b6;
+    cursor: pointer;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb:hover {
+    background: #ff5722;
+  }
+}
+@supports (backdrop-filter: blur(20px)) {
+  .cover-wrapper.dock .menu {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url("https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Varela Round';
+  src: url("https://unpkg.com/volantis-static@0.0.1654736714924/media/fonts/VarelaRound/VarelaRound-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+.l_header {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--color-card);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.l_header.auto {
+  transition: opacity 0.4s ease;
+  -webkit-transition: opacity 0.4s ease;
+  -khtml-transition: opacity 0.4s ease;
+  -moz-transition: opacity 0.4s ease;
+  -o-transition: opacity 0.4s ease;
+  -ms-transition: opacity 0.4s ease;
+  visibility: hidden;
+}
+.l_header.auto.show {
+  opacity: 1 !important;
+  -webkit-opacity: 1 !important;
+  -moz-opacity: 1 !important;
+  visibility: visible;
+}
+.l_header .container {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.l_header #wrapper {
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.l_header #wrapper .nav-main,
+.l_header #wrapper .nav-sub {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -khtml-justify-content: space-between;
+  -moz-justify-content: space-between;
+  -o-justify-content: space-between;
+  -ms-justify-content: space-between;
+  align-items: center;
+}
+.l_header #wrapper .nav-main {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.l_header #wrapper.sub .nav-main {
+  transform: translateY(-64px);
+  -webkit-transform: translateY(-64px);
+  -khtml-transform: translateY(-64px);
+  -moz-transform: translateY(-64px);
+  -o-transform: translateY(-64px);
+  -ms-transform: translateY(-64px);
+}
+.l_header #wrapper .nav-sub {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+  height: 64px;
+  width: calc(100% - 2 * 16px);
+  position: absolute;
+}
+.l_header #wrapper .nav-sub ::-webkit-scrollbar {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (min-width: 2048px) {
+  .l_header #wrapper .nav-sub {
+    max-width: 55vw;
+    margin: auto;
+  }
+}
+.l_header #wrapper.sub .nav-sub {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+}
+.l_header #wrapper .title {
+  position: relative;
+  color: var(--color-text);
+  padding-left: 24px;
+  max-height: 64px;
+}
+.l_header #wrapper .nav-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  line-height: 64px;
+  padding: 0 24px;
+  font-size: 1.25rem;
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+}
+.l_header #wrapper .nav-main .title img {
+  height: 64px;
+}
+.l_header .nav-sub {
+  max-width: 1580px;
+  margin: auto;
+}
+.l_header .nav-sub .title {
+  font-weight: bold;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  line-height: 1.2;
+  max-height: 64px;
+  white-space: normal;
+  flex-shrink: 1;
+}
+.l_header .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  line-height: 64px;
+  align-items: center;
+}
+.l_header .switcher .s-toc {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  .l_header .switcher .s-toc {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+  }
+}
+.l_header .switcher >li {
+  height: 48px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  margin: 2px;
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li {
+    margin: 0 1px;
+    height: 48px;
+  }
+}
+.l_header .switcher >li >a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0.85em 1.1em;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  color: #3dd9b6;
+}
+.l_header .switcher >li >a:hover {
+  border: none;
+}
+.l_header .switcher >li >a.active,
+.l_header .switcher >li >a:active {
+  border: none;
+  background: var(--color-site-bg);
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li >a {
+    width: 36px;
+    height: 48px;
+  }
+}
+.l_header .nav-sub .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+}
+.l_header .m_search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  height: 64px;
+  width: 240px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (max-width: 1024px) {
+  .l_header .m_search {
+    width: 44px;
+    min-width: 44px;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+  }
+  .l_header .m_search:hover {
+    width: 240px;
+  }
+  .l_header .m_search:hover input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search:hover .input {
+    width: 100%;
+  }
+  .l_header .m_search:hover .input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search {
+    min-width: 0;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.l_header .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.l_header .m_search .icon {
+  position: absolute;
+  width: 36px;
+  left: 5px;
+  color: var(--color-meta);
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .icon {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+.l_header .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
+  width: 100%;
+  color: var(--color-text);
+  background: #fafafa;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 40px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search .input:focus {
+    box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .input {
+    background: var(--color-block);
+    padding-left: 8px;
+    border: none;
+  }
+  .l_header .m_search .input:hover,
+  .l_header .m_search .input:focus {
+    border: none;
+  }
+}
+@media (max-width: 500px) {
+  .l_header .m_search {
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    transition: all 0.28s ease;
+    -webkit-transition: all 0.28s ease;
+    -khtml-transition: all 0.28s ease;
+    -moz-transition: all 0.28s ease;
+    -o-transition: all 0.28s ease;
+    -ms-transition: all 0.28s ease;
+  }
+  .l_header .m_search .input {
+    border-radius: 32px;
+    -webkit-border-radius: 32px;
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  .l_header.z_search-open .m_search {
+    width: 100%;
+  }
+  .l_header.z_search-open .m_search .input {
+    width: calc(100% - 120px);
+  }
+}
+ul.m-pc >li>a {
+  color: inherit;
+  border-bottom: 2px solid transparent;
+}
+ul.m-pc >li>a:active,
+ul.m-pc >li>a.active {
+  border-bottom: 2px solid #3dd9b6;
+}
+ul.m-pc li:hover >ul.list-v,
+ul.list-v li:hover >ul.list-v {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.nav-list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  align-items: stretch;
+}
+ul.nav-list-h>li {
+  position: relative;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  height: 100%;
+  line-height: 2.4;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+ul.nav-list-h>li >a {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+ul.list-v {
+  z-index: 1;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: absolute;
+  background: var(--color-card);
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  margin-top: -6px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  padding: 8px 0;
+}
+ul.list-v.show {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.list-v hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+ul.list-v >li {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+ul.list-v >li.header {
+  font-size: 0.78125rem;
+  font-weight: bold;
+  line-height: 2em;
+  color: var(--color-meta);
+  margin: 8px 16px 4px;
+}
+ul.list-v >li.header i {
+  margin-right: 8px;
+}
+ul.list-v >li ul {
+  margin-left: 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: -40px;
+}
+ul.list-v .aplayer-container {
+  min-height: 64px;
+  padding: 6px 16px;
+}
+ul.list-v >li>a {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  color: var(--color-list);
+  font-size: 0.875rem;
+  font-weight: bold;
+  line-height: 36px;
+  padding: 0 20px 0 16px;
+  text-overflow: ellipsis;
+  margin: 0 4px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+@media screen and (max-width: 1024px) {
+  ul.list-v >li>a {
+    line-height: 40px;
+  }
+}
+ul.list-v >li>a >i {
+  margin-right: 8px;
+}
+ul.list-v >li>a:active,
+ul.list-v >li>a.active {
+  color: var(--color-list-hl);
+}
+ul.list-v >li>a:hover {
+  color: var(--color-list-hl);
+  background: var(--color-site-bg);
+}
+.l_header .menu >ul>li>a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding: 0 8px;
+}
+.l_header .menu >ul>li>a >i {
+  margin-right: 4px;
+}
+.l_header ul.nav-list-h>li {
+  color: var(--color-list);
+  line-height: 64px;
+}
+.l_header ul.nav-list-h>li >a {
+  max-height: 64px;
+  overflow: hidden;
+  color: inherit;
+}
+.l_header ul.nav-list-h>li >a:active,
+.l_header ul.nav-list-h>li >a.active {
+  color: #3dd9b6;
+}
+.l_header ul.nav-list-h>li:hover>a {
+  color: var(--color-list-hl);
+}
+.l_header ul.nav-list-h>li i.music {
+  animation: rotate-effect 1.5s linear infinite;
+  -webkit-animation: rotate-effect 1.5s linear infinite;
+  -khtml-animation: rotate-effect 1.5s linear infinite;
+  -moz-animation: rotate-effect 1.5s linear infinite;
+  -o-animation: rotate-effect 1.5s linear infinite;
+  -ms-animation: rotate-effect 1.5s linear infinite;
+}
+@-moz-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-o-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+.menu-phone li ul.list-v {
+  right: calc(100% - 0.5 * 16px);
+}
+.menu-phone li ul.list-v ul {
+  right: calc(100% - 0.5 * 16px);
+}
+#wrapper {
+  max-width: 1580px;
+  margin: auto;
+}
+@media screen and (min-width: 2048px) {
+  #wrapper {
+    max-width: 55vw;
+  }
+}
+#wrapper .menu {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 1;
+  -ms-flex: 1 1;
+  flex: 1 1;
+  margin: 0 16px 0 0;
+}
+#wrapper .menu .list-v ul {
+  left: calc(100% - 0.5 * 16px);
+}
+.menu-phone {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: 16px;
+  right: 8px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.menu-phone ul {
+  right: calc(100% - 0.5 * 16px);
+}
+@media screen and (max-width: 500px) {
+  .menu-phone {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: block;
+  }
+}
+.l_header {
+  max-width: 65vw;
+  left: calc((100% - 65vw) * 0.5);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media screen and (max-width: 2048px) {
+  .l_header {
+    max-width: 1612px;
+    left: calc((100% - 1612px) * 0.5);
+  }
+}
+@media screen and (max-width: 1612px) {
+  .l_header {
+    left: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    max-width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .l_header #wrapper .nav-main .title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .l_header #wrapper .nav-sub {
+    width: 100%;
+  }
+  .l_header #wrapper .nav-sub .title {
+    overflow-y: scroll;
+    margin-top: 2px;
+    padding: 8px 16px;
+  }
+  .l_header #wrapper .switcher {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+    margin-right: 8px;
+  }
+  .l_header .menu {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+@media screen and (max-width: 500px) {
+  .list-v li {
+    max-width: 270px;
+  }
+}
+#u-search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 60px 20px;
+  z-index: 1001;
+}
+@media screen and (max-width: 680px) {
+  #u-search {
+    padding: 0px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+    '.kill-t{'+
+      'font-size: 2rem;'+
+    '}'+
+    '.kill-c{'+
+      'font-size: 1.2rem;'+
+    '}'+
+		'#l_header,#l_body{'+
+			'display: none;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        `<span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>`+
+        `<span class="kill-c">微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</span><br/>`+
+        `<a target="_blank" rel="noopener" href="https://blogs.windows.com/windowsexperience/2021/05/19/the-future-of-internet-explorer-on-windows-10-is-in-microsoft-edge/"><strong>了解详情 ></strong></a>`+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+    .kill-t{
+      font-size: 2rem;
+    }
+    .kill-c{
+      font-size: 1.2rem;
+    }
+		#l_header,#l_body{
+			display: none;
+		}
+	</style>
+    <div class="kill-noscript">
+        <span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>
+        <span class="kill-c">本页面需要浏览器支持（启用）JavaScript</span><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+
+  <script>
+  /************这个文件存放不需要重载的全局变量和全局函数*********/
+  window.volantis = {}; // volantis 全局变量
+  volantis.debug = "env"; // 调试模式
+  volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
+
+  volantis.GLOBAL_CONFIG ={
+    debug: "env",
+    cdn: {"js":{"app":"/js/app.js","parallax":"/js/plugins/parallax.js","rightMenu":"/js/plugins/rightMenu.js","rightMenus":"/js/plugins/rightMenus.js","sites":"/js/plugins/tags/sites.js","friends":"/js/plugins/tags/friends.js","contributors":"/js/plugins/tags/contributors.js","search":"/js/search/hexo.js"},"css":{"style":"/css/style.css"}},
+    default: {"avatar":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/image/2659360.svg"},
+    lastupdate: new Date(1682016589825),
+    sidebar: {
+      for_page: ["blogger","category","tagcloud"],
+      for_post: ["toc"],
+      webinfo: {
+        lastupd: {
+          enable: true,
+          friendlyShow: true
+        },
+        runtime: {
+          data: "2020/01/01",
+          unit: "天"
+        }
+      }
+    },
+    plugins: {
+      message: {"enable":true,"css":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/izitoast/dist/css/iziToast.min.css","js":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/izitoast/dist/js/iziToast.min.js","icon":{"default":"fa-solid fa-info-circle light-blue","quection":"fa-solid fa-question-circle light-blue"},"time":{"default":5000,"quection":20000},"position":"topRight","transitionIn":"bounceInLeft","transitionOut":"fadeOutRight","titleColor":"var(--color-text)","messageColor":"var(--color-text)","backgroundColor":"var(--color-card)","zindex":2147483647,"copyright":{"enable":true,"title":"知识共享许可协议","message":"请遵守 CC BY-NC-SA 4.0 协议。","icon":"far fa-copyright light-blue"},"aplayer":{"enable":true,"play":"fa-solid fa-play","pause":"fa-solid fa-pause"},"rightmenu":{"enable":true,"notice":true}},
+      fancybox: {"css":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fancyapps/ui/dist/fancybox.css","js":"https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fancyapps/ui/dist/fancybox.umd.js"},
+      
+      
+      
+    }
+  }
+
+  /******************** volantis.EventListener ********************************/
+  // 事件监听器 see: /source/js/app.js
+  volantis.EventListener = {}
+  // 这里存放pjax切换页面时将被移除的事件监听器
+  volantis.EventListener.list = []
+  //构造方法
+  function volantisEventListener(type, f, ele) {
+    this.type = type
+    this.f = f
+    this.ele = ele
+  }
+  // 移除事件监听器
+  volantis.EventListener.remove = () => {
+    volantis.EventListener.list.forEach(function (i) {
+      i.ele.removeEventListener(i.type, i.f, false)
+    })
+    volantis.EventListener.list = []
+  }
+  /******************** volantis.dom.$ ********************************/
+  // 注：这里没有选择器，也没有forEach一次只处理一个dom，这里重新封装主题常用的dom方法，返回的是dom对象，对象包含了以下方法，同时保留dom的原生API
+  function volantisDom(ele) {
+    if (!ele) ele = document.createElement("div")
+    this.ele = ele;
+    // ==============================================================
+    this.ele.find = (c) => {
+      let q = this.ele.querySelector(c)
+      if (q)
+        return new volantisDom(q)
+    }
+    // ==============================================================
+    this.ele.hasClass = (c) => {
+      return this.ele.className.match(new RegExp('(\\s|^)' + c + '(\\s|$)'));
+    }
+    this.ele.addClass = (c) => {
+      this.ele.classList.add(c);
+      return this.ele
+    }
+    this.ele.removeClass = (c) => {
+      this.ele.classList.remove(c);
+      return this.ele
+    }
+    this.ele.toggleClass = (c) => {
+      if (this.ele.hasClass(c)) {
+        this.ele.removeClass(c)
+      } else {
+        this.ele.addClass(c)
+      }
+      return this.ele
+    }
+    // ==============================================================
+    // 参数 r 为 true 表示pjax切换页面时事件监听器将被移除，false不移除
+    this.ele.on = (c, f, r = 1) => {
+      this.ele.addEventListener(c, f, false)
+      if (r) {
+        volantis.EventListener.list.push(new volantisEventListener(c, f, this.ele))
+      }
+      return this.ele
+    }
+    this.ele.click = (f, r) => {
+      this.ele.on("click", f, r)
+      return this.ele
+    }
+    this.ele.scroll = (f, r) => {
+      this.ele.on("scroll", f, r)
+      return this.ele
+    }
+    // ==============================================================
+    this.ele.html = (c) => {
+      // if(c=== undefined){
+      //   return this.ele.innerHTML
+      // }else{
+      this.ele.innerHTML = c
+      return this.ele
+      // }
+    }
+    // ==============================================================
+    this.ele.hide = (c) => {
+      this.ele.style.display = "none"
+      return this.ele
+    }
+    this.ele.show = (c) => {
+      this.ele.style.display = "block"
+      return this.ele
+    }
+    // ==============================================================
+    return this.ele
+  }
+  volantis.dom.$ = (ele) => {
+    return !!ele ? new volantisDom(ele) : null;
+  }
+  /******************** RunItem ********************************/
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = ()=>{
+          volantis.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) =>{
+      for (let index = 0; index < this.list.length; index++) {
+        const e = this.list[index];
+        if (e.name == name) {
+          this.list.splice(index,1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }
+  }
+  /******************** Pjax ********************************/
+  // /layout/_plugins/pjax/index.ejs
+  // volantis.pjax.send(callBack[,"callBackName"]) 传入pjax:send回调函数
+  // volantis.pjax.push(callBack[,"callBackName"]) 传入pjax:complete回调函数
+  // volantis.pjax.error(callBack[,"callBackName"]) 传入pjax:error回调函数
+  volantis.pjax = {};
+  volantis.pjax.method = {
+    complete: new RunItem(),
+    error: new RunItem(),
+    send: new RunItem(),
+  };
+  volantis.pjax = Object.assign(volantis.pjax, {
+    push: volantis.pjax.method.complete.push,
+    error: volantis.pjax.method.error.push,
+    send: volantis.pjax.method.send.push,
+  });
+  /******************** RightMenu ********************************/
+  // volantis.rightmenu.handle(callBack[,"callBackName"]) 外部菜单项控制
+  // 可在 volantis.mouseEvent 处获取右键事件
+  volantis.rightmenu = {};
+  volantis.rightmenu.method = {
+    handle: new RunItem(),
+  }
+  volantis.rightmenu = Object.assign(volantis.rightmenu, {
+    handle: volantis.rightmenu.method.handle.push,
+  });
+  /********************  Dark Mode  ********************************/
+  // /layout/_partial/scripts/darkmode.ejs
+  // volantis.dark.mode 当前模式 dark or light
+  // volantis.dark.toggle() 暗黑模式触发器
+  // volantis.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  volantis.dark = {};
+  volantis.dark.method = {
+    toggle: new RunItem(),
+  };
+  volantis.dark = Object.assign(volantis.dark, {
+    push: volantis.dark.method.toggle.push,
+  });
+  /********************  Message  ********************************/
+  // VolantisApp.message
+  /********************  isMobile  ********************************/
+  // /source/js/app.js
+  // volantis.isMobile
+  // volantis.isMobileOld
+  /********************脚本动态加载函数********************************/
+  // volantis.js(src, cb)  cb 可以传入onload回调函数 或者 JSON对象 例如: volantis.js("src", ()=>{}) 或 volantis.js("src", {defer:true,onload:()=>{}})
+  // volantis.css(src)
+
+  // 返回Promise对象，如下方法同步加载资源，这利于处理文件资源之间的依赖关系，例如：APlayer 需要在 MetingJS 之前加载
+  // (async () => {
+  //     await volantis.js("...theme.plugins.aplayer.js.aplayer...")
+  //     await volantis.js("...theme.plugins.aplayer.js.meting...")
+  // })();
+
+  // 已经加入了setTimeout
+  volantis.js = (src, cb) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var HEAD = document.getElementsByTagName("head")[0] || document.documentElement;
+        var script = document.createElement("script");
+        script.setAttribute("type", "text/javascript");
+        if (cb) {
+          if (JSON.stringify(cb)) {
+            for (let p in cb) {
+              if (p == "onload") {
+                script[p] = () => {
+                  cb[p]()
+                  resolve()
+                }
+              } else {
+                script[p] = cb[p]
+                script.onload = resolve
+              }
+            }
+          } else {
+            script.onload = () => {
+              cb()
+              resolve()
+            };
+          }
+        } else {
+          script.onload = resolve
+        }
+        script.setAttribute("src", src);
+        HEAD.appendChild(script);
+      });
+    });
+  }
+  volantis.css = (src) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var link = document.createElement('link');
+        link.rel = "stylesheet";
+        link.href = src;
+        link.onload = resolve;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      });
+    });
+  }
+  /********************按需加载的插件********************************/
+  // volantis.import.jQuery().then(()=>{})
+  volantis.import = {
+    jQuery: () => {
+      if (typeof jQuery == "undefined") {
+        return volantis.js("https://unpkg.com/volantis-static@0.0.1654736714924/libs/jquery/dist/jquery.min.js")
+      } else {
+        return new Promise(resolve => {
+          resolve()
+        });
+      }
+    }
+  }
+  /********************** requestAnimationFrame ********************************/
+  // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+  // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+  volantis.requestAnimationFrame = (fn)=>{
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+    }
+    window.requestAnimationFrame(fn)
+  }
+  /************************ layoutHelper *****************************************/
+  volantis.layoutHelper = (helper, html, opt)=>{
+    opt = Object.assign({clean:false, pjax:true}, opt)
+    function myhelper(helper, html, clean) {
+      volantis.tempDiv = document.createElement("div");
+      volantis.tempDiv.innerHTML = html;
+      let layoutHelper = document.querySelector("#layoutHelper-"+helper)
+      if (layoutHelper) {
+        if (clean) {
+          layoutHelper.innerHTML = ""
+        }
+        layoutHelper.append(volantis.tempDiv);
+      }
+    }
+    myhelper(helper, html, opt.clean)
+    if (opt.pjax) {
+      volantis.pjax.push(()=>{
+        myhelper(helper, html, opt.clean)
+      },"layoutHelper-"+helper)
+    }
+  }
+  /****************************** 滚动事件处理 ****************************************/
+  volantis.scroll = {
+    engine: new RunItem(),
+    unengine: new RunItem(),
+  };
+  volantis.scroll = Object.assign(volantis.scroll, {
+    push: volantis.scroll.engine.push,
+  });
+  // 滚动条距离顶部的距离
+  volantis.scroll.getScrollTop = () =>{
+    let scrollPos;
+    if (window.pageYOffset) {
+      scrollPos = window.pageYOffset;
+    } else if (document.compatMode && document.compatMode != 'BackCompat') {
+      scrollPos = document.documentElement.scrollTop;
+    } else if (document.body) {
+      scrollPos = document.body.scrollTop;
+    }
+    return scrollPos;
+  }
+  // 使用 requestAnimationFrame 处理滚动事件
+  // `volantis.scroll.del` 中存储了一个数值, 该数值检测一定时间间隔内滚动条滚动的位移, 数值的检测频率是浏览器的刷新频率. 数值为正数时, 表示向下滚动. 数值为负数时, 表示向上滚动.
+  volantis.scroll.handleScrollEvents = () => {
+    volantis.scroll.lastScrollTop = volantis.scroll.getScrollTop()
+    function loop() {
+      const scrollTop = volantis.scroll.getScrollTop();
+      if (volantis.scroll.lastScrollTop !== scrollTop) {
+        volantis.scroll.del = scrollTop - volantis.scroll.lastScrollTop;
+        volantis.scroll.lastScrollTop = scrollTop;
+        // if (volantis.scroll.del > 0) {
+        //   console.log("向下滚动");
+        // } else {
+        //   console.log("向上滚动");
+        // }
+        // 注销过期的unengine未滚动事件
+        volantis.scroll.unengine.list=[]
+        volantis.scroll.engine.start();
+      }else{
+        volantis.scroll.unengine.start();
+      }
+      volantis.requestAnimationFrame(loop)
+    }
+    volantis.requestAnimationFrame(loop)
+  }
+  volantis.scroll.handleScrollEvents()
+  volantis.scroll.ele = null;
+  // 触发页面滚动至目标元素位置
+  volantis.scroll.to = (ele, option = {}) => {
+    if (!ele) return;
+    volantis.scroll.ele = ele;
+    // 默认配置
+    opt = {
+      top: ele.getBoundingClientRect().top + document.documentElement.scrollTop,
+      behavior: "smooth"
+    }
+    // 定义配置
+    if ("top" in option) {
+      opt.top = option.top
+    }
+    if ("behavior" in option) {
+      opt.behavior = option.behavior
+    }
+    if ("addTop" in option) {
+      opt.top += option.addTop
+    }
+    if (!("observerDic" in option)) {
+      option.observerDic = 100
+    }
+    // 滚动
+    window.scrollTo(opt);
+    // 监视器
+    // 监视并矫正元素滚动到指定位置
+    // 用于处理 lazyload 引起的 cls 导致的定位失败问题
+    // option.observer = false
+    if (option.observer) {
+      setTimeout(() => {
+        if (volantis.scroll.ele != ele) {
+          return
+        }
+        volantis.scroll.unengine.push(() => {
+          let me = ele.getBoundingClientRect().top
+          if(!(me >= -option.observerDic && me <= option.observerDic)){
+            volantis.scroll.to(ele, option)
+          }
+          volantis.scroll.unengine.remove("unengineObserver")
+        },"unengineObserver")
+      },1000)
+    }
+  }
+  /********************** Content Visibility ********************************/
+  // 见 source/css/first.styl 如果遇到任何问题 删除 .post-story 即可
+  // 一个元素被声明 content-visibility 属性后 如果元素不在 viewport 中 浏览器不会计算其后代元素样式和属性 从而节省 Style & Layout 耗时
+  // content-visibility 的副作用: 锚点失效 等等(实验初期 暂不明确), 使用此方法清除样式
+  volantis.cleanContentVisibility = ()=>{
+    if (document.querySelector(".post-story")) {
+      console.log("cleanContentVisibility");
+      document.querySelectorAll(".post-story").forEach(e=>{
+        e.classList.remove("post-story")
+      })
+    }
+  }
+  /******************************************************************************/
+  /******************************************************************************/
+  /******************************************************************************/
+  //图像加载出错时的处理
+  function errorImgAvatar(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/avatar/round/3442075.svg";
+    img.onerror = null;
+  }
+  function errorImgCover(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1654736714924/media/placeholder/cover/76b86c0226ffd.svg";
+    img.onerror = null;
+  }
+  /******************************************************************************/
+</script>
+
+  <!-- import head_end begin -->
+  <!-- import head_end end -->
+  <!-- Custom Files headEnd begin-->
+  
+  <!-- Custom Files headEnd end-->
+</head>
+  <body itemscope itemtype="http://schema.org/WebPage">
+    <!-- import body_begin begin-->
+    <!-- import body_begin end-->
+    <!-- Custom Files bodyBegin begin-->
+    
+    <!-- Custom Files bodyBegin end-->
+    <header itemscope itemtype="http://schema.org/WPHeader" id="l_header" class="l_header auto shadow floatable blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fa-solid fa-comments fa-fw" target="_self"  href="/" onclick="return false;" title="comment"></a></li>
+        
+          <li><a id="s-toc" class="s-toc fa-solid fa-list fa-fw" target="_self"  href="/" onclick="return false;" title="toc"></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+      
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fa-solid fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+      
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fa-solid fa-search fa-fw" target="_self" href="/" onclick="return false;" title="search"></a></li>
+				
+				<li>
+          <a class="s-menu fa-solid fa-bars fa-fw" target="_self" href="/" onclick="return false;" title="menu"></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+
+      <!-- Custom Files header begin -->
+      
+      <!-- Custom Files header end -->
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+      <!-- see: /layout/_partial/scripts/_ctrl/coverCtrl.ejs -->
+      <div id="none" class='cover-wrapper post dock' style="display: none;">
+        
+  <div class='cover-bg lazyload placeholder' data-bg="https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg"></div>
+
+<div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              active-action="action-v4getting-started">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              active-action="action-faqs">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              active-action="action-examples">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              active-action="action-contributors">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              active-action="action-archives">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              active-action="action-https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://unpkg.com/volantis-static@0.0.1654736714924/media/twemoji/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+      </div>
+    
+  
+</div>
+
+      <div id="safearea">
+        <div class="body-wrapper">
+          
+<div id="l_main" class=''>
+  <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow floatable blur article-type-post" id="post" itemscope itemprop="blogPost">
+  <link itemprop="mainEntityOfPage" href="https://tianyigu.top/2018/Apache-Server/">
+  <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+  </span>
+  <span hidden itemprop="post" itemscope itemtype="http://schema.org/Post">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+    <meta itemprop="description" content="Tianyi的技术随笔">
+  </span>
+  
+
+
+  
+    <span hidden>
+      <meta itemprop="image" content="https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+    </span>
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title" itemprop="name headline">
+        Apache Server
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/Web%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8E%E8%B4%9F%E8%BD%BD/">Web服务器与负载</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/Web%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%B8%8E%E8%B4%9F%E8%BD%BD/" itemprop="url"><span itemprop="name">Web服务器与负载</span></a>
+      </span>
+    
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2018-05-02T17:19:50+08:00">
+  <a class='notlink'>
+    <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2018年5月2日</p>
+  </a>
+</div>
+
+          
+        
+        <!-- Custom Files topMeta begin-->
+        
+        <!-- Custom Files topMeta end-->
+      </div>
+    
+  </div>
+
+
+  <div id="layoutHelper-page-plugins"></div>
+  <div id="post-body" itemprop="articleBody">
+    <span id="more"></span>
+
+<h1 id="Apache-httpd-服务器介绍"><a href="#Apache-httpd-服务器介绍" class="headerlink" title="Apache-httpd 服务器介绍"></a>Apache-httpd 服务器介绍</h1><p>Apache 服务器全称 Apache-HTTP-Server，而 httpd 就是 Apache 服务器端运行的软件，提供 WWW 服务器平台。</p>
+<p><strong>Apache 特性</strong></p>
+<ul>
+<li>简单强大的配置文件</li>
+<li>支持虚拟主机</li>
+<li>支持多种 HTTP 认证</li>
+<li>集成 Perl 脚本，代理服务器模块</li>
+<li>支持通用网关接口、FastCGI</li>
+<li>支持实时监视服务器状态和定制服务器日志</li>
+<li>支持 SSL、服务器端包含指令 SSI</li>
+<li>可通过第三方模块支持 Java Servlets</li>
+<li>提供对用户会话的跟踪</li>
+<li>采用模块化设计模型</li>
+</ul>
+<p><strong>Apache 最重要的特性就是：采用模块化设计模型</strong>。模块分为：</p>
+<ul>
+<li>静态模块：是 Apache 最基本的模块，无法随时添加和卸载，在编译安装时设定</li>
+<li>动态模块：是可以随时添加和卸载的模块，使得部署有最大的灵活性</li>
+</ul>
+<p>Apache 的模块会被编译为动态共享对象 DSO，这些 DSO 独立于 httpd，可以在编译时就添加，也可以后期通过 Apache Extension Tool 工具编译添加模块，可使用<code>httpd -M</code>查看模块加载清单。</p>
+<h1 id="httpd-服务器安装"><a href="#httpd-服务器安装" class="headerlink" title="httpd 服务器安装"></a>httpd 服务器安装</h1><p>httpd 版本 2.4.34。可以使用源码安装，可进行更精细的设定。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">./configure</span><br><span class="line">  --enable-so               # 开启模块化功能，支持DSO</span><br><span class="line">  --enable-mods-shared      # 指明以DSO方式编译的模块，all表示所有模块，most表示大部分模块</span><br><span class="line">  --enable-ssl              # 支持ssl加密</span><br><span class="line">  --enable-rewrite          # 支持地址重写</span><br><span class="line">  --with-mpm                # 设置httpd工作模式</span><br><span class="line">  --with-suexec-bin         # suexec库的路径，用于支持SUID、SGID</span><br><span class="line">  --with-apr                # 指定apr程序的绝对路径</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>apr：Apache Portable Runtime（APR）项目的任务是创建和维护软件库，为底层平台特定的实现提供可预测且一致的接口。主要目标是提供一个 API，软件开发人员可以对其进行编码，并确保可预测的行为，如果不是相同的行为，无论他们的软件构建在哪个平台上，都可以减轻他们编写特殊情况条件以解决问题的需要。</p>
+<p>源码安装前需要安装 apr 和 apr-util，仍然需要源码安装</p>
+</blockquote>
+<p>下载 apr 和 apr-util 的源码包，先安装 apr，先要确保安装了<code>gcc</code></p>
+<p><code>./configure --prefix=/usr/local/apr-1.6</code>然后<code>make &amp;&amp; make install</code></p>
+<p>再安装 apr-util，需要<code>--with-apr</code>指定 apr 的安装路径</p>
+<p><code>./configure --prefix=/usr/local/apr-util-1.6 --with-apr=/usr/local/apr-1.6</code>然后<code>make &amp;&amp; make install</code></p>
+<p>可能会报一个错<code>xml/apr_xml.c:35:19: 致命错误：expat.h：No such file or directory</code>，需要安装<code>expat-devel</code>，<code>yum install expat expat-devel</code>即可。</p>
+<p>安装与 Apache 相关的依赖库或软件，直接<code>yum|dnf</code>安装即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pcre-devel          # perl正则表达式库</span><br><span class="line">libxml2-devel       # xml文件库，很重要</span><br><span class="line">libpng-devel        # png图像库</span><br><span class="line">libjpeg-devel       # jpeg图像库</span><br><span class="line">libmcrypt-devel     # mcrypt加密库</span><br><span class="line">zlib-devel          # zlib压缩库</span><br><span class="line">freetype-devel      # freetype字体库</span><br><span class="line">autoconf            # 生成配置脚本的软件，不一定要</span><br><span class="line">gd-devel            # gd图像库</span><br><span class="line">libcurl-devel       # curl库</span><br><span class="line">openssl-devel       # openssl库。注：php5不支持openssl1.1.0版本以上的</span><br></pre></td></tr></table></figure>
+
+<p>然后</p>
+<figure class="highlight plaintext"><figcaption><span>--prefix</span></figcaption><table><tr><td class="code"><pre><span class="line">./configure --prefix=/usr/local/httpd-2.4 \</span><br><span class="line">            --with-apr=/usr/local/apr-1.6 \</span><br><span class="line">            --with-apr-util=/usr/local/apr-util-1.6</span><br><span class="line">  # 若不指定--prefix，会默认安装在/usr/local/apache2中</span><br></pre></td></tr></table></figure>
+
+<p>并<code>make &amp;&amp; make install</code>即可。源码安装后可能不能直接使用 Apache 的管理命令，需要添加环境变量，<code>export PATH=/usr/local/httpd-2.4/bin:$PATH</code>，也可以永久添加。</p>
+<p>httpd 提供两种编译方式：静态编译和动态编译</p>
+<ul>
+<li>静态编译：把模块直接编译进 httpd 核心，httpd 启动时所有静态编译的模块都会启动</li>
+<li>动态编译：将模块编译好，但不编译进 httpd 核心，httpd 启动动态模块并不会启动，而是需要在配置文件中<code>LoadModule</code>加载才能启动，实现了模块热插拔。</li>
+</ul>
+<p>可在编译时指定<code>--enable-模块名=shared|static</code>指定模块是动态或静态编译。</p>
+<blockquote>
+<p>httpd 能够实现动态编译的原因在于 httpd 默认会安装<code>mod_so</code>，此模块提供了配置文件的<code>LoadModule</code>和<code>LoadFile</code>指令，在编译时指定<code>--enable-so</code>即可，而此模块只能使用静态编译，若指定为<code>shared</code>则编译时会出错。</p>
+</blockquote>
+<p>动静态编译的优先级：</p>
+<ol>
+<li>不指定模块编译选项，则默认值为<code>--enable-mods-shared=most</code>即动态编译大部分模块</li>
+<li>显式指定的优先级高，如果某个模块既指定了静态，又指定了动态，则静态优先。</li>
+<li>静态关键字规则优先于动态关键字规则，即若<code>--enable-mods-static=few</code>和<code>--enable-mod-shared=all</code>同时配置，静态优于动态，静态生效。</li>
+</ol>
+<p>也可通过各种源安装。<code>yum|dnf install httpd</code>。安装完成后，Apache 会提供<code>apachectl</code>脚本命令，可进行 httpd 的启动、关闭和测试，若没有修改配置文件下使用<code>start</code>启动 httpd，会报以下错误信息：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Could not reliably determine the server&#x27;s fully qualified domain name</span><br></pre></td></tr></table></figure>
+
+<p>报错说明 httpd 无法确定服务器域的名称，可通过修改主配置文件的<code>ServerName</code>解决。修改后再通过<code>apachectl starts</code>启动 httpd，再直接打命令<code>apachectl</code>能看到 httpd 已在运行的消息<code>httpd (pid 2012) already running</code>。也可以通过<code>systemctl start httpd</code>启动 httpd。</p>
+<p>若开启了<code>firewalld</code>服务，需要放行<code>80/tcp</code>端口，放行<code>http</code>服务。</p>
+<p>httpd 的主要目录（yum 源安装）：</p>
+<ul>
+<li><code>/etc/httpd</code>：httpd 服务根目录</li>
+<li><code>/etc/httpd/conf</code>和<code>/etc/httpd/conf.d</code>：httpd 服务配置文件目录</li>
+<li><code>/var/www/html</code>：网站数据目录</li>
+<li><code>/var/log/httpd</code>：httpd 日志目录，里面存放有<code>access_log</code>访问日志和<code>error_log</code>错误日志</li>
+</ul>
+<p>若是通过 yum 源安装的 httpd，则在<code>/etc/httpd</code>中的<code>logs</code>，<code>modules</code>和<code>run</code>目录都是软连接。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/etc/httpd/logs --&gt; /var/log/httpd</span><br><span class="line">/etc/httpd/modules --&gt; /usr/lib64/httpd/modules</span><br><span class="line">/etc/httpd/run --&gt; /run/httpd</span><br></pre></td></tr></table></figure>
+
+<p><code>apachectl</code>命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apachectl</span><br><span class="line">  -V           # 查看apache版本信息，以及模块、编译信息</span><br><span class="line">  -l           # 查看已被编译的模块</span><br><span class="line">  start        # 启动httpd，如果已在运行就会返回错误</span><br><span class="line">  stop         # 停止httpd</span><br><span class="line">  restart      # 重启httpd</span><br><span class="line">  fullstatus   # 显示mod_status的完整状态报告。需要在服务器上启用mod_status，并在系统上使用基于文本的浏览器</span><br><span class="line">  status       # 显示简要状态报告，信息与systemctl status httpd一致</span><br><span class="line">  graceful     # 优雅地重启Apache httpd守护进程。如果守护程序未运行，则启动它。这与正常重启不同，因为当前打开的连接不会中止。副作用是旧的日志文件不会立即关闭。这意味着，如果在日志轮换脚本中使用，则可能需要大量延迟才能确保在处理旧日志文件之前将其关闭。</span><br><span class="line">  graceful-stop # 让已运行的httpd进程不再接受新请求，并给他们足够的时间处理当前正在处理的事情，处理完成后才退出。所以在进程退出前，日志文件暂时不会关闭，正在进行的连接暂时不会断开。</span><br><span class="line">  configtest   # 配置文件语法测试，相当于apachectl -t</span><br></pre></td></tr></table></figure>
+
+<p><code>httpd</code>命令：与<code>apachectl</code>一致</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">httpd                # 可直接启动httpd</span><br><span class="line">  -D name            # 定义一个在&lt; IfDefine name &gt;中使用的name，以此容器中的指令</span><br><span class="line">  -d directory       # 指定ServerRoot</span><br><span class="line">  -f file            # 指定配置文件</span><br><span class="line">  -C &quot;directive&quot;     # 指定在加载配置文件前要处理的指令(directive)</span><br><span class="line">  -c &quot;directive&quot;     # 指定在加载配置文件后要处理的指令</span><br><span class="line">  -e level           # 显示httpd启动时的日志调试级别</span><br><span class="line">  -E file            # 将启动信息记录到指定文件中</span><br><span class="line">  -v                 # 显示版本号</span><br><span class="line">  -V                 # 显示编译配置选项</span><br><span class="line">  -h                 # 显示帮助信息</span><br><span class="line">  -l                 # 显示已编译但非动态编译的模块，即静态编译的模块</span><br><span class="line">  -L                 # 显示静态模块可用的指令列表</span><br><span class="line">  -t -D DUMP_VHOSTS  # 显示虚拟主机的设置信息</span><br><span class="line">  -t -D DUMP_RUN_CFG # 显示运行参数</span><br><span class="line">  -S                 # 等价于-t -D DUMP_VHOSTS -D DUMP_RUN_CFG。在调试如何解析配置文件时非常有用</span><br><span class="line">  -t -D DUMP_MODULES # 显示所有已被加载的模块，包括静态和动态编译的模块</span><br><span class="line">  -M                 # 等价于-t -D DUMP_MODULES</span><br><span class="line">  -t                 # 检查配置文件语法</span><br><span class="line">  -T                 # 不检查DocumentRoot，直接启动</span><br><span class="line">  -X                 # 调试模式，此模式下httpd进程依赖于终端</span><br><span class="line">  -k                 # 管理httpd进程，接受start|restart|graceful|graceful-stop|stop</span><br></pre></td></tr></table></figure>
+
+<h1 id="httpd-配置文件"><a href="#httpd-配置文件" class="headerlink" title="httpd 配置文件"></a>httpd 配置文件</h1><p>httpd 主配置文件主要由指令和容器构成，容器使用<code>&lt;容器名&gt;&lt;/容器名&gt;</code>作为开始和结束，容器的指令一般只在容器内生效，每个指令都是某个模块提供的，指令生效方式是从上往下读取，所以不要变更指令位置。</p>
+<p><strong>主配置文件重点指令</strong>：</p>
+<ul>
+<li><code>ServerRoot</code>：设置 Apache 的安装主目录，若采用源码安装，默认路径为<code>/usr/local/apache2</code></li>
+<li><code>Listen</code>：设置服务器监听端口 IP 及端口号，默认监听服务器本机所有 IP 地址的 80 端口。格式：<code>Listen [IP地址:]端口 [协议]</code>，默认监听所有 IP，使用 TCP 协议。可多次使用 Listen 以开启多个端口</li>
+<li><code>LoadModule</code>：加载模块。格式 <code>LoadModule 模块名 模块文件名</code>，模块文件一般存放在 ServerRoot 的 module 目录中</li>
+<li><code>ServerAdmin</code>：主服务器返回给客户端的错误消息中的管理员邮箱地址</li>
+<li><code>ServerName</code>：设置服务器本机的主机名和端口，用于 URL 重定向</li>
+<li><code>User</code>：apache 在本地系统上运行的用户名</li>
+<li><code>Group</code>：apache 在本地系统上运行的组名</li>
+<li><code>DocumentRoot</code>：网络路径相对路径的根，是文档的根目录，使用 rpm 包安装则默认值为<code>/var/www</code>，使用源码安装则默认为<code>$ServerRoot/htdocs</code></li>
+<li><code>ErrorLog</code>：服务器错误日志存放位置，默认使用相对路径<code>logs/error_log</code></li>
+<li><code>ErrorLogFormat</code>：错误日志格式</li>
+<li><code>CustomLog</code>：客户端访问日志文件路径及日志格式，格式：<code>CustomLog 文件名 格式</code>，默认相对路径为<code>logs/access_log</code></li>
+<li><code>LogFormat</code>：用户日志文件格式，一般用这里指定的格式创建别名，然后通过<code>CustomLog</code>调用该格式</li>
+<li><code>LogLevel</code>：日志消息等级，分为<code>debug/info/notice/warm/error/crit/alert/emerg</code></li>
+<li><code>AllowOverride</code>：支持从<code>.htaccess</code>文件中重写前面的指令，若值为<code>None</code>，表示不支持</li>
+<li><code>Require</code>：给所有用户或特定用户&#x2F;组授予或拒绝对目录的访问</li>
+<li><code>Include</code>：允许 Apache 在主配置目录加载其他配置文件，默认为<code>conf.d/*.conf</code></li>
+<li><code>Options</code>：为特殊目录设置选项，语法格式为<code>Options [+|-]选项</code>。<ul>
+<li><code>All</code>：开启除<code>MultiViews</code>之外的所有选项</li>
+<li><code>None</code>：不启用额外功能</li>
+<li><code>FollowSymlinks</code>：允许 Options 指定目录下的文件链接到目录外的文件或目录</li>
+<li><code>Indexes</code>：若与 URL 对应的 Options 目录下找不到<code>DirectoryIndex</code>指定的首页文件，则会将当前目录的所有文件索引出来</li>
+</ul>
+</li>
+<li><code>Order</code>：控制默认访问状态以及<code>Allow</code>和<code>Deny</code>的顺序<ul>
+<li>若为<code>Order deny,allow</code>则先检查拒绝，当拒绝与允许冲突时，<code>allow</code>优先，默认规则<code>allow</code>，即只要是<code>deny</code>排在前面，就只要写拒绝的 IP 地址即可，使用<code>Deny from [IP地址]|all</code></li>
+<li>若为<code>Order allow,deny</code>则先检查允许，当拒绝与允许冲突时，<code>deny</code>优先，默认规则<code>deny</code>，即只要是<code>allow</code>排在前面，就只要写拒绝的 IP 地址即可，使用<code>Allow from [IP地址]|all</code></li>
+</ul>
+</li>
+<li><code>Alias</code>：用于将 URL 路径映射到本地文件系统的路径，且本地路径不受 DocumentRoot 的限制，该目录中的脚本不允许执行。格式：<code>Alias URL路径 &quot;本地资源的文件系统路径&quot;</code>。<code>Alias</code>不支持正则，而<code>AliasMatch</code>支持，格式一致。</li>
+<li><code>ScriptAlias</code>：类似于 Alias，并且能将 Web 路径映射到 DocumentRoot 之外的文件系统位置，还告诉 Apache 指定的目录存在 CGI 脚本，可以执行脚本</li>
+<li><code>DirectoryIndex</code>：作为索引的文件名，默认找<code>index.html</code>。若 url 中未指定网页文件，则会返回该目录下<code>DirectoryIndex</code>定义的文件，可指定多个文件，若都不存在，会生成所有文件列表，此时<code>Option Indexes</code>必须打开。</li>
+<li><code>UserDir</code>：定义和本地用户的主目录相对的目录，可将公共的 html 文件放入该目录，即每个用户的个人站点。默认设置为<code>public_html</code>，每个用户都可在自己的主目录下创建名为<code>public_html</code>的目录，该目录下的 html 文件可通过<code>域名/~用户名</code>访问。若值为<code>disabled</code>表示禁止使用个人站点。</li>
+<li><code>Timeout</code>：客户端与服务器连接的超时间隔</li>
+<li><code>KeepAlive</code>：开启长连接。HTTP&#x2F;1.1 中支持一次连接多次传输，可在一次连接中传递多个 HTTP 请求</li>
+<li><code>KeepAliveTimeout</code>：一次连接中多次请求间的超时间隔</li>
+<li><code>MaxKeepAliveRequests</code>：一个 HTTP 连接中最多可请求的次数，若为 0，表示无限制</li>
+</ul>
+<blockquote>
+<p><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/mod/quickreference.html">指令文档</a></p>
+</blockquote>
+<p><strong>常用容器：</strong></p>
+<ul>
+<li><p><code>IfDefine</code>：使管理员能采用多种配置方式启动 Apache，当启动 httpd 时使用命令<code>httpd -D 自定义名</code>便会匹配，若测试条件为真，就会加载该容器中定义的参数。格式：<code>&lt;IfDefine [!]自定义名&gt;</code></p>
+</li>
+<li><p><code>IfModule</code>：可以封装仅在条件满足时才会处理的命令，根据模块是否加载决定条件是否满足。语法：<code>&lt;IfModule [!] 模块&gt;指令&lt;/IfModule&gt;</code></p>
+</li>
+<li><p><code>Directory</code>：仅用于特定的文件系统目录、子目录及目录下内容，通常<strong>用绝对路径</strong>，即使是相对路径，也是相对于文件系统的根目录。语法：<code>&lt;Directory 路径&gt;指令&lt;/Directory&gt;</code>，路径可使用<code>~</code>匹配正则表达式。</p>
+</li>
+<li><p><code>DirectoryMatch</code>：类似 Directory，可直接用正则表达式匹配</p>
+</li>
+<li><p><code>Files</code>：类似 Directory，但 Files 内指令仅能应用与特定文件，匹配的范围是<strong>它所在的上下文</strong>。语法：<code>&lt;Files 文件名&gt;指令&lt;/Files&gt;</code>，可使用<code>~</code>匹配正则表达式</p>
+</li>
+<li><p><code>FilesMatch</code>：与 Files 类似，可直接用正则表达式匹配</p>
+</li>
+<li><p><code>Location</code>：该容器内的指令仅对特定 URL 有效。格式<code>&lt;Location URL&gt;指令&lt;/Location&gt;</code>，可使用<code>~</code>匹配正则表达式。<code>Location</code>支持三种匹配模式：</p>
+<ul>
+<li>精确匹配：精确到资源的 URL 路径</li>
+<li>加尾随斜线：匹配目录内容，如<code>&lt;Location &quot;/myapp/&quot;&gt;</code></li>
+<li>无尾随斜线：匹配目录和目录内容，如<code>&lt;Location &quot;/myapp&quot;&gt;</code></li>
+</ul>
+</li>
+<li><p><code>LocationMatch</code>：类似 Location，可直接用正则表达式匹配</p>
+</li>
+<li><blockquote>
+<p>在 DirectoryMatch，Files，FilesMatch，Location，LocationMatch 中，若出现包含关系，如一个目录同时匹配到了两个相同类型容器，则会选择匹配先定义的容器</p>
+</blockquote>
+</li>
+<li><p><code>VirtualHost</code>：虚拟主机，可直接用正则表达式匹配。语法：<code>VirtualHost IP地址:[端口号]</code>，IP 地址为监听的本地网卡 IP，若为<code>*</code>则表示监听本地所有网卡</p>
+</li>
+<li><p><code>EnableSendfile</code>：使用 sendfile 系统调用，把静态文件发送给客户端，获得更好的性能</p>
+</li>
+</ul>
+<h1 id="httpd-虚拟主机"><a href="#httpd-虚拟主机" class="headerlink" title="httpd 虚拟主机"></a>httpd 虚拟主机</h1><p>基于 IP 的虚拟主机可根据不同 IP 地址及端口号定位不同的网站请求，但需要独立的公网 IP 地址。基于域名的虚拟主机能实现在一台公网服务器上部署多个网站，服务器根据客户端访问 HTTP 头部信息实现网站的分离解析。</p>
+<p>客户端请求到达后，服务器根据<code>&lt;VirtualHost IP地址:[端口号]&gt;</code>匹配主机，若 IP 地址 为<code>*</code>，表示匹配本地所有 IP 地址</p>
+<p>匹配顺序：</p>
+<ul>
+<li>匹配虚拟主机。匹配虚拟主机的规则为最佳匹配法，IP 地址越精确，匹配就越优先。</li>
+<li>如果基于名称的虚拟主机无法匹配上，则采用虚拟主机列表中的第一个虚拟主机作为响应主机。</li>
+<li>如果所有虚拟主机都无法匹配上，则采用从主配置段落中的主机。</li>
+</ul>
+<p>首先配置虚拟主机配置文件，将<code>/usr/share/doc/httpd/httpd-vhosts.conf</code>复制到<code>/etc/httpd/conf.d/</code>目录下，可改名，以此为模板，创建一台虚拟主机。配置完成后重启 httpd。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">    DocumentRoot &quot;/var/www/virhost1&quot;</span><br><span class="line">    ServerName virhost1.example.com</span><br><span class="line">    ErrorLog &quot;/var/log/httpd/virhost1-error_log&quot;</span><br><span class="line">    CustomLog &quot;/var/log/httpd/virhost1-access_log&quot; common</span><br><span class="line">&lt;/VirtualHost&gt;</span><br><span class="line">&lt;Directory &quot;/var/www/virhost1&quot;&gt;</span><br><span class="line">    Require all granted</span><br><span class="line">    Options Indexes</span><br><span class="line">    AllowOverride None</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>注：在实验机上，需要将该地址解析出来，所以要修改<code>/etc/hosts</code>，在环回口后添加<code>virhost1.example.com</code>，再访问即可。</p>
+<p><strong>注：物理站点与虚拟站点不能同时存在，如果启动虚拟站点，物理站点立刻失效。若要让之前的物理站点恢复访问，就将该站点按虚拟站点的格式重新搭建</strong></p>
+<h1 id="httpd-认证授权"><a href="#httpd-认证授权" class="headerlink" title="httpd 认证授权"></a>httpd 认证授权</h1><p>httpd 提供各种认证模块，名称以<code>mod_auth</code>开头。基础的 http 认证模块为<code>mod_auth_basic</code>。</p>
+<p>可以通过命令<code>htpasswd</code>生成用于网页认证的用户信息文件，该命令在<code>httpd-tools</code>包中，支持 3 种加密算法：MD5、SHA 和系统上的 crypt()函数，默认为 md5。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">htpasswd [-cimBdpsDv] [-C cost] passwordfile username</span><br><span class="line">htpasswd -b[cmBdpsDv] [-C cost] passwordfile username password</span><br><span class="line"></span><br><span class="line"> -c  创建一个新密码文件</span><br><span class="line"> -n  不会更新密码文件，仅仅在输出显示，因此不用指定密码文件。而若不指定此项就必须指定密码文件，不能与-c一起用</span><br><span class="line"> -b  在命令行中读取密码，若不指定，系统会提示输入</span><br><span class="line"> -i  从输入读取密码（类似echo XXX | htpasswd -i），常用于脚本</span><br><span class="line"> -m  使用md5加密（默认）</span><br><span class="line"> -B  使用bcrypt函数加密，很安全</span><br><span class="line"> -C  使用bcrypt函数加密的次数，默认为5，范围是4到31，次数越多越安全，但会更慢</span><br><span class="line"> -d  使用crypt函数加密，不安全</span><br><span class="line"> -s  使用SHA加密密码，不安全</span><br><span class="line"> -p  不加密密码，不安全</span><br><span class="line"> -D  删除指定认证用户</span><br></pre></td></tr></table></figure>
+
+<p>主配置文件的认证指令：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AuthType       指定web身份认证的类型，有四种类型：</span><br><span class="line">    none      不认证</span><br><span class="line">    basic     文件认证（默认），需要mod_auth_basic模块</span><br><span class="line">    digest    md5摘要认证，需要mod_auth_digest模块</span><br><span class="line">    form      表单认证，需要mod_auth_form模块</span><br><span class="line">AuthName       设置身份认证时的提示信息</span><br><span class="line">AuthUserFile   指定web用户认证列表，即htpasswd命令生成的密码文件</span><br><span class="line">AuthGroupFile  指定组认证文件，文件中分组格式为&quot;组名: 组成员....&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>Require</code>指令</strong>：只能放在<code>Directory</code>容器中，用于控制对目录的访问权限，功能由<code>mod_authz_core</code>模块提供。有以下配置：</p>
+<ul>
+<li><code>Require all granted | denied</code>：允许|拒绝所有人访问该目录</li>
+<li><code>Require method http方法 ...</code>：只有指定的 http 方法（如 get,post）才能访问该目录</li>
+<li><code>Require expr 正则表达式</code>：只要满足指定正则表达式才能访问</li>
+<li><code>Require user 用户...</code>：只有指定用户能访问</li>
+<li><code>Require valid-user 用户...</code>：认证列表中所有用户都可访问<blockquote>
+<p>关于用户的认证需要<code>mod_authz_user</code>模块</p>
+</blockquote>
+</li>
+<li><code>Require group 组...</code>：指定组内的用户才能访问</li>
+<li><code>Require file-owner</code>：web 用户名必须与请求文件的 UID 对应用户名一致才能访问</li>
+<li><code>Require file-group</code>：web 用户名必须为请求文件的 gid 组中的一员才能访问<blockquote>
+<p>组认证需要<code>mod_authz_groupfile</code>模块</p>
+</blockquote>
+</li>
+<li><code>Require ip IP地址[/Mask]...</code>：指定 IP 能访问该目录</li>
+<li><code>Require host 域名...</code>：指定域名能访问该目录<blockquote>
+<p>关于 ip 和 host 的认证需要<code>mod_authz_host</code>模块</p>
+</blockquote>
+</li>
+<li>若<code>Require</code>后加上<code>not</code>则是取反。</li>
+</ul>
+<p><strong>认证实验：</strong></p>
+<p>首先创建密码认证文件：<code>htpasswd -cb /etc/httpd/secret mike 123456</code>，认证用户并不需要在系统中存在。</p>
+<p>配置文件中的认证配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Directory &quot;/var/www/virhost1&quot;&gt;</span><br><span class="line">    Options Indexes</span><br><span class="line">    AllowOverride None</span><br><span class="line">    #若通过.htaccess文件配置了以下认证信息，则需要将AllowOverride的值设为AuthConig</span><br><span class="line">    AuthType Basic</span><br><span class="line">    AuthName &quot;Enter Auth Username and Password:&quot;</span><br><span class="line">    AuthUserFile /etc/httpd/secret</span><br><span class="line">    Require user mike</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>重启 httpd，通过浏览器访问，会提示输入用户名密码。</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337946.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337946.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>创建组认证文件<code>echo &quot;group1: mike&quot; &gt; /etc/httpd/auth_group</code>，修改配置文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;Directory &quot;/var/www/virhost1&quot;&gt;</span><br><span class="line">    Options Indexes</span><br><span class="line">    AllowOverride None</span><br><span class="line">    AuthType Basic</span><br><span class="line">    AuthName &quot;Enter Auth Username and Password:&quot;</span><br><span class="line">    AuthUserFile /etc/httpd/secret</span><br><span class="line">    AuthGroupFile /etc/httpd/auth_group</span><br><span class="line">    Require user mike</span><br><span class="line">    Require group group1</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="htaccess-文件"><a href="#htaccess-文件" class="headerlink" title=".htaccess 文件"></a>.htaccess 文件</h1><p><code>.htaccess</code>文件提供了一种基于每个目录进行配置更改的方法，该文件包含一个或多个配置，而该文件存放在某个<code>Directory</code>下，则该文件中的配置都应用于这个<code>Directory</code>。</p>
+<p>如果有权限访问 httpd 主服务器配置文件，则应该完全避免使用<code>.htaccess</code>文件，使用<code>.htaccess</code>文件会降低 Apache http 服务器的速度。</p>
+<p>如果想给<code>.htaccess</code>文件改名，则需要在配置文件中用指令<code>AccessFileName &quot;文件名&quot;</code>说明。</p>
+<p>是否启用<code>.htaccess</code>文件取决于<code>AllowOverride</code>指令，该指令决定是否启用文件中定义的指令。</p>
+<p>通常，只有在无法访问主服务器配置文件时才应使用<code>.htaccess</code> 文件。<code>.htaccess</code> 文件主要面向于没有 root 访问权限而无法改动主配置文件的用户，允许他们通过配置各自网站的<code>.htaccess</code> 文件自行进行配置修改。</p>
+<p>应该避免使用<code>.htaccess</code>文件的两点原因：</p>
+<ul>
+<li><p>当 AllowOverride 设置为允许使用<code>.htaccess</code> 文件时，httpd 将在每个目录中查找<code>.htaccess</code> 文件。因此，允许<code>.htaccess</code> 文件会导致性能下降，且每次请求文档时都会加载<code>.htaccess</code> 文件。</p>
+<p>httpd 必须在所有更高级别的目录中查找<code>.htaccess</code> 文件，以便拥有必须应用的完整指令。 例如，如果从目录<code>/www/htdocs/example</code>中请求文件，httpd 必须查找以下文件</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">/.htaccess</span><br><span class="line">/www/.htaccess</span><br><span class="line">/www/htdocs/.htaccess</span><br><span class="line">/www/htdocs/example/.htaccess</span><br></pre></td></tr></table></figure>
+
+<p>这样会查找四个文件，即使不存在。</p>
+<p>若指定重定向的指令，则在<code>.htaccess</code> 上下文中，必须重新编译每个对目录的请求的正则表达式</p>
+</li>
+<li><p>允许用户修改服务器配置可能导致无法控制的更改，必须对用户的权限进行精细的控制，准确地设置 AllowOverride 的内容。</p>
+</li>
+</ul>
+<p>由于会从最上级目录迭代向下查找<code>.htaccess</code> 文件，所以，若不同的<code>.htaccess</code> 文件中有相同指令，则最下层的<code>.htaccess</code> 文件中的该指令生效，下层的文件中的指令会覆盖上层文件中相同的指令。</p>
+<h2 id="htaccess-文件的常用示例"><a href="#htaccess-文件的常用示例" class="headerlink" title=".htaccess 文件的常用示例"></a>.htaccess 文件的常用示例</h2><p><strong>认证（Authentication）</strong>：需要在<code>&lt;Directory&gt;</code>中配置<code>AllowOverride AuthConfig</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AuthType Basic</span><br><span class="line">AuthName &quot;Password Required&quot;</span><br><span class="line">AuthUserFile &quot;/www/passwords/password.file&quot;</span><br><span class="line">AuthGroupFile &quot;/www/passwords/group.file&quot;</span><br><span class="line">Require group admins</span><br></pre></td></tr></table></figure>
+
+<p><strong>服务器端包括（Server Side Includes，SSI）</strong>：提供了向现有 HTML 文档添加动态内容的方法，而无需通过 CGI 程序或其他动态技术。 SSI 适用于在大部分内容都是静态的网页中添加小块动态信息，例如当前时间。若网页大部分内容都是动态生成的，则并不适用。</p>
+<p>**若要使能 SSI，则需要在配置文件中或.htaccess 文件中添加<code>Options +Includes</code>**，表示允许为 SSI 指令解析文件。</p>
+<p>还需要告诉 Apache 需要解析的文件，例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">AddType text/html .shtml</span><br><span class="line">AddOutputFilter INCLUDES .shtml</span><br></pre></td></tr></table></figure>
+
+<p>缺点：如果想将 SSI 指令添加到现有页面，则必须更改该页面的名称以及该页面的所有链接。</p>
+<p><strong>重写规则（Rewrite Rules）</strong>：在.htaccess 文件中使用 RewriteRule 时，每个目录的上下文会稍微改变一下，规则被认为是相对于当前目录，而不是原始请求的 URI。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">在根目录中的.htaccess文件</span><br><span class="line">RewriteRule &quot;^images/(.+)\.jpg&quot; &quot;images/$1.png&quot;</span><br><span class="line"></span><br><span class="line">在images中的.htaccess文件</span><br><span class="line">RewriteRule &quot;^(.+)\.jpg&quot; &quot;$1.png&quot;</span><br></pre></td></tr></table></figure>
+
+<p><strong>CGI 配置</strong>：允许指定目录中的 CGI 程序运行</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Options +ExecCGI</span><br><span class="line">AddHandler cgi-script cgi pl</span><br><span class="line">若要将目录中的所有文件都看做CGI程序，则将AddHandler替换为</span><br><span class="line">SetHandler cgi-script</span><br></pre></td></tr></table></figure>
+
+<h1 id="页面重定向"><a href="#页面重定向" class="headerlink" title="页面重定向"></a>页面重定向</h1><h1 id="CGI"><a href="#CGI" class="headerlink" title="CGI"></a>CGI</h1><p>CGI（common gateway interface，通用网关接口）是 Web 服务器运行时外部程序的规范，按 CGI 编写的程序<strong>可以扩展服务器功能</strong>，处理动态内容。CGI 应用程序<strong>能与浏览器进行交互</strong>，还可<strong>通过数据库 API 与数据库服务器等外部数据源进行通信</strong>,从数据库服务器中获取数据。对于 HTTP，只有 get 和 post 方法允许执行 cgi 脚本。</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212339137.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212339137.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>常见的 CGI 术语：</p>
+<ul>
+<li><strong>fastcgi</strong>：是 cgi 协议的优化版本</li>
+<li><strong>php-cgi</strong>：php-cgi 实现了 fastcgi，但性能不佳，单进程处理请求。</li>
+<li><strong>php-fpm</strong>：全称：php-fastcgi process manager，是 php-cgi 的改进版，管理多个 php-cgi 的进程及线程</li>
+<li><strong>cgi 进程或线程</strong>：用于接收 web 服务器的动态请求，调用并初始化 zend 虚拟机</li>
+<li><strong>zend 虚拟机</strong>：对 php 文件的语法分析、编译并执行，执行完成后关闭</li>
+</ul>
+
+
+<p>CGI 的三种交互模式：</p>
+<ul>
+<li>cgi 模式：httpd 每收到一个动态请求就 fork 一个 cgi 进程，该进程返回结果后就自动销毁</li>
+<li>动态模块模式：将 php-cgi 模块编译进 httpd</li>
+<li>php-fpm 模式：使用 php-fpm 管理 php-cgi，httpd 不再控制 php-cgi 进程的启动，可将 php-fpm 独立运行在其他非 web 服务器上，实现动静分离</li>
+</ul>
+<h1 id="动态-httpd"><a href="#动态-httpd" class="headerlink" title="动态 httpd"></a>动态 httpd</h1><p>安装 Apache 后，会在存放网页的目录中生成一个目录<code>cgi-bin</code>，关于 CGI 的配置在主配置文件中。</p>
+<p>指令<code>ScriptAlias</code>：使 Apache 允许执行一个特定目录中的 CGI 程序，当客户端请求此特定目录中的资源时，Apache 假定其中所有的文件都是 CGI 程序并试图运行它。格式：<code>ScriptAlias /cgi-bin/ &quot;CGI存放目录&quot;</code></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;IfModule alias_module&gt;</span><br><span class="line">    ScriptAlias /cgi-bin/ &quot;/var/www/cgi-bin/&quot;</span><br><span class="line">&lt;/IfModule&gt;</span><br><span class="line">&lt;Directory &quot;/var/www/cgi-bin&quot;&gt;</span><br><span class="line">    AllowOverride None</span><br><span class="line">    Options None</span><br><span class="line">    Require all granted</span><br><span class="line">&lt;/Directory&gt;</span><br></pre></td></tr></table></figure>
+
+<p>关于 CGI 模块加载的配置在<code>conf.modules.d/01-cgi.conf</code>中。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;IfModule mpm_worker_module&gt;</span><br><span class="line">   LoadModule cgid_module modules/mod_cgid.so</span><br><span class="line">&lt;/IfModule&gt;</span><br><span class="line">&lt;IfModule mpm_event_module&gt;</span><br><span class="line">   LoadModule cgid_module modules/mod_cgid.so</span><br><span class="line">&lt;/IfModule&gt;</span><br><span class="line"># worker和event使用mod_cgid，而prefork使用mod_cgi</span><br><span class="line">&lt;IfModule mpm_prefork_module&gt;</span><br><span class="line">   LoadModule cgi_module modules/mod_cgi.so</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>若开启了 Selinux，则还需要修改<code>cgi-bin</code>的上下文<code>chcon -R -t httpd_sys_script_exec_t /var/www/cgi-bin</code></p>
+<h1 id="httpd-与-SSL"><a href="#httpd-与-SSL" class="headerlink" title="httpd 与 SSL"></a>httpd 与 SSL</h1><p>SSL 对 Apache 能提供的功能：</p>
+<ul>
+<li>认证用户与服务器</li>
+<li>提供数据保密性和完整性</li>
+</ul>
+<p>SSL 协议的工作流程包括<strong>服务器认证阶段</strong>和<strong>用户认证阶段</strong></p>
+<ul>
+<li>客户端向服务器发送一个 hello 开始消息，发起一个会话连接</li>
+<li>服务器根据客户端信息确定是否生成新的主密钥，如果需要就会在响应 hello 信息中添加生成主密钥需要的信息</li>
+<li>客户端收到响应信息，根据信息生成一个主密钥，用服务器的公钥加密发给服务器</li>
+<li>服务器收到后返回客户一个用主密钥认证的信息，让客户端认证服务器</li>
+<li>服务器通过客户端认证后，进入用户认证阶段，由服务器开始对客户端的认证</li>
+<li>服务器向客户端发起提问（封装在数字签名中）</li>
+<li>客户端返回答案和公钥，提供认证信息</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338275.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338275.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>HTTPS 安全超文本传输协议，内置在浏览器中，对数据压缩和解密。HTTPS 就是用 SSL 作为 HTTP 应用层的子层，使用 TCP443 端口。</p>
+<p>Apache 通过<code>mod_ssl</code>模块实现对 TLS&#x2F;SSL 的支持，该模块存放在<code>/usr/lib64/httpd/modules/mod_ssl.so</code>，并有配置文件<code>/etc/httpd/conf.modules.d/00-ssl.conf</code>。还有相关模块<code>mod_socache_shmcb</code>，是一个共享对象缓存提供程序，提供对共享内存段内高性能循环缓冲区支持的缓存的创建和访问，已默认加载。</p>
+<p>httpd 服务器配置自签名证书：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">openssl genrsa -out /etc/pki/tls/private/server.key 2048    #生成私钥</span><br><span class="line">openssl req -new -x509 -key /etc/pki/tls/private/server.key -out /etc/pki/tls/certs/server.crt  #根据私钥生成根证书</span><br><span class="line">    Country Name (2 letter code) [XX]:CN            #国家名</span><br><span class="line">    State or Province Name (full name) []:jiangsu   #省名</span><br><span class="line">    Locality Name (eg, city) [Default City]:Yangzhou    #地名</span><br><span class="line">    Organization Name (eg, company) [Default Company Ltd]:NJUPT  #公司名</span><br><span class="line">    Organizational Unit Name (eg, section) []:Tech    #部门名</span><br><span class="line">    Common Name (eg, your name or your server&#x27;s hostname) []:system1  #主机名</span><br><span class="line">    Email Address []:system1@example.com  #邮箱</span><br></pre></td></tr></table></figure>
+
+<p>也可以通过进入<code>/etc/pki/tls/certs</code>并使用命令<code>make server.key</code>创建私钥。</p>
+<p>配置 SSL 虚拟主机，需要引用<code>/etc/httpd/conf.d/ssl.conf</code>中的配置，并做修改。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;VirtualHost *:443&gt;</span><br><span class="line">    SSLEngine on</span><br><span class="line">    SSLProtocol all -SSLv2 -SSLv3</span><br><span class="line">    SSLCipherSuite HIGH:3DES:!aNULL:!MD5:!SEED:!IDEA</span><br><span class="line">    SSLHonorCipherOrder on</span><br><span class="line">    SSLCertificateFile /etc/pki/tls/certs/server.crt</span><br><span class="line">    SSLCertificateKeyFile /etc/pki/tls/private/server.key</span><br><span class="line"></span><br><span class="line">    DocumentRoot &quot;/var/www/html&quot;</span><br><span class="line">    ServerName system1.example.com</span><br><span class="line">    ErrorLog &quot;/var/log/httpd/error_log&quot;</span><br><span class="line">    CustomLog &quot;/var/log/httpd/access_log&quot; common</span><br><span class="line">&lt;/VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+
+<p>由于是对已存在的虚拟主机进行 SSL 封装，所以，需要在原虚拟主机中添加两条指令进行重定向，使任何访问原 http 地址的客户端都跳转到 https 地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;VirtualHost *:80&gt;</span><br><span class="line">    DocumentRoot &quot;/var/www/html&quot;</span><br><span class="line">    ServerName system1.example.com</span><br><span class="line">    ErrorLog &quot;/var/log/httpd/error_log&quot;</span><br><span class="line">    CustomLog &quot;/var/log/httpd/access_log&quot; common</span><br><span class="line">    RewriteEngine  on</span><br><span class="line">    RewriteRule  ^(/.*)$  https://%&#123;HTTP_HOST&#125;$1  [redirect=301]</span><br><span class="line">&lt;/VirtualHost&gt;</span><br></pre></td></tr></table></figure>
+
+<p>通过浏览器访问<code>http://system1.example.com</code>，会出现不安全提示</p>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338145.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338145.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p>确认添加例外后，就能自动跳转到<code>https://system1.example.com</code>。</p>
+<h1 id="httpd-日志"><a href="#httpd-日志" class="headerlink" title="httpd 日志"></a>httpd 日志</h1><p>当 Apache 开始运行后，会生成 4 种标准日志文件：</p>
+<ul>
+<li>错误日志 error_log</li>
+<li>访问日志 access_log</li>
+<li>传输日志</li>
+<li>cookie 日志</li>
+</ul>
+<p>若使用 SSL 加密，还会生成<code>ssl_access_log</code>、<code>ssl_error_log</code>、<code>ssl_request_log</code>。当日志文件过大时，Apache 会自动生成新的日志文件，文件的名称以配置文件中指定。</p>
+<p><code>LogFormat</code>指定的日志记录格式变量：</p>
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>%b</td>
+<td>发送字节（不含 HTTP 标题）</td>
+</tr>
+<tr>
+<td>%f</td>
+<td>文件名</td>
+</tr>
+<tr>
+<td>%h</td>
+<td>远程主机</td>
+</tr>
+<tr>
+<td>%a</td>
+<td>远程 IP 地址</td>
+</tr>
+<tr>
+<td>%{HEADER}i</td>
+<td>HEADER 内容：发送给服务器的请求</td>
+</tr>
+<tr>
+<td>%p</td>
+<td>服务器的服务端口</td>
+</tr>
+<tr>
+<td>%r</td>
+<td>请求的第一行，类似 GET &#x2F; HTTP&#x2F;1.0</td>
+</tr>
+<tr>
+<td>%s</td>
+<td>状态（起始请求），最后请求状态为%&gt;s</td>
+</tr>
+<tr>
+<td>%t</td>
+<td>时间，格式是 common 日志格式中的时间格式</td>
+</tr>
+<tr>
+<td>%{format}t</td>
+<td>时间，格式由 format 给出</td>
+</tr>
+<tr>
+<td>%T</td>
+<td>服务器请求花费的时间（单位秒）</td>
+</tr>
+<tr>
+<td>%u</td>
+<td>来自 auth 的远程用户，若返回码为 401 则可能是假的</td>
+</tr>
+<tr>
+<td>%U</td>
+<td>请求的 URL 路径</td>
+</tr>
+<tr>
+<td>%v</td>
+<td>服务器的提供服务 ServerName</td>
+</tr>
+</tbody></table>
+<p>错误日志记录的等级：</p>
+<table>
+<thead>
+<tr>
+<th>等级</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Emerg</td>
+<td>紧急，系统不可用</td>
+</tr>
+<tr>
+<td>Alert</td>
+<td>需要立刻注意</td>
+</tr>
+<tr>
+<td>Crit</td>
+<td>危险警告</td>
+</tr>
+<tr>
+<td>Error</td>
+<td>除上述三种外的其他情况</td>
+</tr>
+<tr>
+<td>Warm</td>
+<td>警告</td>
+</tr>
+<tr>
+<td>Notice</td>
+<td>需要引起注意</td>
+</tr>
+<tr>
+<td>Info</td>
+<td>一般消息</td>
+</tr>
+<tr>
+<td>Debug</td>
+<td>Debug 模式产生的消息</td>
+</tr>
+</tbody></table>
+<p>访问日志的种类：</p>
+<ul>
+<li>普通日志：在 LogFormat 定义的名字为 common</li>
+<li>参考日志：记录客户访问站点的用户身份，名字为 referer</li>
+<li>代理日志：记录请求的用户代理，名字为 agent</li>
+<li>综合日志：结合了上面三种，名字为 combined</li>
+</ul>
+<h2 id="日志切割"><a href="#日志切割" class="headerlink" title="日志切割"></a>日志切割</h2><p>Apache 提供了命令<code>rotatelogs</code>，对日志进行切割，将庞大的日志文件切割为相对小的文件。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">以轮替时间做切割：rotatelogs [options] 日志文件 [轮替时间（单位秒）][偏移量]</span><br><span class="line">以日志大小做切割：rotatelogs [options] 日志文件 [日志文件大小]</span><br><span class="line">偏移量为相对于UTC的分钟数，若省略，默认为0，即使用UTC时间。东八区即为8x60=480</span><br><span class="line"></span><br><span class="line">可以把以下配置添加到主配置文件：</span><br><span class="line">TransferLog &quot;|rotatelogs 日志文件 86400&quot;</span><br><span class="line">TransferLog &quot;|rotatelogs 日志文件 5M&quot;</span><br><span class="line"></span><br><span class="line">默认生成的日志名为&quot;日志名.日志开始记录的时间&quot;，如果使用轮替时间，则该值就是轮替时间的倍数，可通过cron服务设置。如果日志文件包含了strftime转换格式，则使用该格式。当轮替时间结束或日志文件大小达到指定值，就会生成一个新日志文件</span><br><span class="line"></span><br><span class="line">  -v       详细的操作信息会被错误输出(strerr)</span><br><span class="line">  -l       使用本地时间。不要在改变了GMT偏移量的环境中使用该选项，若设置了此选项，也就不用设置偏移量了</span><br><span class="line">  -f       在程序启动时强制开启日志</span><br><span class="line">  -t       截断日志</span><br><span class="line">  -e       输出日志到标准输出</span><br><span class="line">  -c       创建日志，无论是否为空</span><br></pre></td></tr></table></figure>
+
+<p>若要按时间轮替日志文件：</p>
+<ul>
+<li><code>ErrorLog &quot;|rotatelogs 日志存放目录/%Y%m%d_error.log 86400 480&quot;</code></li>
+<li><code>CustomLog &quot;|rotatelogs 日志存放目录/%Y%m%d_access.log 86400 480&quot; common</code></li>
+</ul>
+<p>若要按日志大小轮替日志文件：</p>
+<ul>
+<li><p><code>ErrorLog &quot;|rotatelogs -l 目录/%Y%m%d_error.log 5M&quot;</code></p>
+</li>
+<li><p><code>CustomLog &quot;|rotatelogs -l 目录/%Y%m%d_access.log 5M&quot; common</code></p>
+</li>
+</ul>
+<h2 id="Webalizer-分析统计日志"><a href="#Webalizer-分析统计日志" class="headerlink" title="Webalizer 分析统计日志"></a>Webalizer 分析统计日志</h2><p>Webalizer 是一个高效的 web 服务器日志分析程序。webalizer 基本支持所有的日志文件格式，包括 common，combined。目前还支持 ftp 日志、squid 日志分析。</p>
+<p>直接<code>yum install webalizer</code>即可。webalizer 的配置主要通过配置文件<code>webalizer.conf</code>实现。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">LogFile      /var/log/httpd/access_log #日志文件的路径，也可通过命令行选项指定</span><br><span class="line">OutputDir    /var/www/usage #统计报表的输出位置</span><br><span class="line">HistoryName  /var/lib/webalizer/webalizer.hist #webalizer生成的历史文件名</span><br><span class="line">Incremental  yes #设置是否增量</span><br><span class="line">IncrementalName /var/lib/webalizer/webalizer.current #保存当前数据的文件名</span><br><span class="line">PageType     htm* #定义哪些类型的URL属于页面访问</span><br><span class="line">UseHTTPS     no #若在一台安全服务器上运行，需要开启</span><br><span class="line">DNSCache     /var/lib/webalizer/dns_cache.db #反向DNS解析的缓存文件</span><br><span class="line">DNSChildren  10 #设置用于DNS解析的子进程，值要在5到20间</span><br><span class="line">Quiet        yes #不显示输出信息</span><br><span class="line">FoldSeqErr   yes #强制忽略次序错误，因为Apache HTTP服务器可能会生成无序日志条目</span><br><span class="line">HideURL      *.gif #设置需要隐藏的内容</span><br><span class="line">SearchEngine  yahoo.com p= #设置搜索引擎和URL查询格式</span><br></pre></td></tr></table></figure>
+
+<p><strong>一般只要配置<code>LogFile</code>和<code>OutputDir</code>即可。</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">webalizer [options] [log file]</span><br><span class="line">  -v       显示日志详细信息</span><br><span class="line">  -d       显示额外的debug信息</span><br><span class="line">  -F type  设置日志类型（clf | ftp | squid | w3c）</span><br><span class="line">  -f       忽略次序错误</span><br><span class="line">  -i       忽略历史文件</span><br><span class="line">  -p       保留状态（递增）</span><br><span class="line">  -b       忽视状态（递增）</span><br><span class="line">  -q       忽略消息信息</span><br><span class="line">  -Q       忽略所有信息</span><br><span class="line">  -T       显示时间信息</span><br><span class="line">  -c file  指定配置文件</span><br><span class="line">  -n name  指定服务器主机名</span><br><span class="line">  -o dir   指定存放结果的文件</span><br><span class="line">  -t name  指定报告题目的主机名</span><br><span class="line">  --ip     查看指定IP地址的访问情况</span><br><span class="line">  --start  指定开始时间</span><br><span class="line">  --end    指定结束时间</span><br></pre></td></tr></table></figure>
+
+<p>在<code>/var/www/usage</code>下生成了几张图片和两个 html 文件，其中<code>index.html</code>是简要信息，<code>usage_日期.html</code>是详细的分析文件</p>
+<center>index.html</center>
+
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338510.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338510.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<center>usage_日期.html</center>
+
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338001.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212338001.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h1 id="httpd-代理"><a href="#httpd-代理" class="headerlink" title="httpd 代理"></a>httpd 代理</h1><p>httpd 通过<code>ProxyRequests</code>指令配置正向代理的功能</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ProxyRequests on</span><br><span class="line">ProxyVia on</span><br><span class="line">&lt;Proxy &quot;*&quot;&gt;      #访问任意外网URL</span><br><span class="line">    Require host 允许通过代理访问外网的内网服务器</span><br><span class="line">    #也可以是Require all granted</span><br><span class="line">&lt;/Proxy&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Apache-MPM-模式"><a href="#Apache-MPM-模式" class="headerlink" title="Apache-MPM 模式"></a>Apache-MPM 模式</h1><p>MPM(<code>Multi-Processing Modules</code>)，Apache 的多路处理模块，有三种模式：<code>prefork</code>、<code>worker</code>、<code>event</code>。</p>
+<p>编译时可通过<code>--with-mpm</code>指定模式，也可以通过<code>--enable-mpms-shared=all</code>支持全部三种。httpd2.4 以上默认采用<code>event</code>模式。并可通过<code>apachectl -l</code>看到编译了<br><code>event.c</code>模块。</p>
+<blockquote>
+<p>httpd2.4 通过 rpm 安装会发现仍采用 prefork 模式，而源码安装则已使用 event 模式</p>
+</blockquote>
+<p>可以修改<code>httpd.conf</code>中添加以下模块（源码安装）或<code>/etc/httpd/conf.modules.d/00-mpm.conf</code>（rpm 安装）改变模式</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">LoadModule mpm_prefork_module modules/mod_mpm_prefork.so 或</span><br><span class="line">LoadModule mpm_worker_module modules/mod_mpm_worker.so 或</span><br><span class="line">LoadModule mpm_event_module modules/mod_mpm_event.so</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>prefork</code>：实现了一个非线程、预派生的工作模式。在 Apache 启动之初，就会<strong>预派生一些子进程</strong>，然后等待连接。可以减少频繁创建和销毁进程的开销，<strong>每个子进程只有一个线程</strong>。成熟稳定，可以<strong>兼容新老模块</strong>，也<strong>不需要担心线程安全问题</strong>。<strong>效率比<code>worker</code>略高</strong><ul>
+<li>缺点：<strong>一个进程相对地占用更多的资源，消耗大量内存，不擅长处理高并发的场景</strong>。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212336497.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212336497.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<ul>
+<li><code>worker</code>：使用了<strong>多进程和多线程的混合模式</strong>，也同样会预派生一些子进程，然后每个子进程创建一些线程，同时包括<strong>一个监听线程</strong>，每个请求过来会被分配到一个线程来服务。<strong>占用内存少，适合高并发环境</strong><ul>
+<li><strong>使用线程的原因：</strong>线程比进程更加轻量级，因为<strong>线程通常会共享父进程的内存地址的，因此内存占用会减少一些</strong>。如果一个线程异常挂了，会<strong>导致父进程和它的其他正常子线程都挂了，只会影响 Apache 的一部分</strong>，而不是整个服务。</li>
+<li>缺点：<strong>必须考虑线程安全问题</strong>，因为多个子进程时共享父进程的内存地址的。若使用 keepalive 的长连接方式，某个线程一直占据，若过多的线程被占用，会导致高并发时无服务线程可用。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337868.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337868.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<ul>
+<li><code>event</code>：从 Apache2.2 才被加入 MPM，Apache2.4 开始成为默认 MPM。类似 worker 模式，但解决了 keepalive 问题。有一个<strong>专门的线程来管理这些 keep-alive 线程</strong>，当有真实请求过来的时候，将请求传递给服务线程，<strong>执行完毕后，又允许它释放</strong>，这样增强了在高并发场景下的请求处理能力。</li>
+</ul>
+<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337612.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202206212337612.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<p><strong>各 MPM 模式的简单优化：</strong> 若是 rpm 安装，就在<code>httpd.conf</code>中添加，若为源码安装，就在<code>/usr/local/httpd-2.4/conf/extra/httpd-mpm.conf</code>中找到对应模块修改。以下参数基本采用配置文件默认值。</p>
+<ul>
+<li><code>worker</code>模式</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;IfModule mpm_worker_module&gt;</span><br><span class="line">    ServerLimit           25  #服务器允许配置的上限进程数</span><br><span class="line">    # 与ThreadLimit结合使用，可设置MaxClients允许配置的最大数值</span><br><span class="line">    # 在重启期间对ServerLimit的修改都会被忽略，但对MaxClients的修改可生效</span><br><span class="line"></span><br><span class="line">    ThreadLimit          200  #每个子进程可配置的线程数的上限</span><br><span class="line">    # 也设置了ThreadPerChild的上限，默认为64</span><br><span class="line"></span><br><span class="line">    StartServers           3  #服务器启动时建立的子进程数，默认为3</span><br><span class="line">    MinSpareThreads       75  #最小空闲线程数，默认75。</span><br><span class="line">    #若服务器中空闲进程太少，子进程会自动产生空闲进程等待</span><br><span class="line"></span><br><span class="line">    MaxSpareThreads      250  #最大空闲线程数，默认250。</span><br><span class="line">    #若服务器中空闲进程太多，子进程会杀死多余的空闲进程。</span><br><span class="line">    #取值范围：&gt;= MinSpareThreads+ThreadsPerChild</span><br><span class="line"></span><br><span class="line">    MaxClients          2500  #允许同时运行的最大进程数，任何超过限制的请求进入等待队列</span><br><span class="line">    #默认值为ServerLimit*ThreadsPerChild。若要增加此项，则同时也要增加ServerLimit</span><br><span class="line"></span><br><span class="line">    ThreadsPerChild       25  #每个子进程建立的常驻执行线程数，默认25。</span><br><span class="line">    #子进程创建这些线程后就不创建新线程了</span><br><span class="line"></span><br><span class="line">    MaxConnectionsPerChild 0  #处理多少个请求后子进程自动销毁，默认值0意味着永不销毁。</span><br><span class="line">    # 在Apache2.4版本以前，叫做MaxRequestsPerChild</span><br><span class="line">    #当负载较高时，为了使每个进程处理更多的请求，避免销毁、创建进程的开销，一般建议设置为0或较大的数字。</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>prefork</code>模式</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;IfModule mpm_prefork_module&gt;</span><br><span class="line">    StartServers              5</span><br><span class="line">    MinSpareServers           5  #最小空闲进程数，与MinSpareThreads同理</span><br><span class="line">    MaxSpareServers          10  #最大空闲进程数，与MaxSpareThreads同理</span><br><span class="line">    ServerLimit            2000</span><br><span class="line">    MaxClients             1000  #默认MaxClients最多有256个线程</span><br><span class="line">    MaxConnectionsPerChild    0</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<p>修改模式重启 httpd，查看进程，能看到五个子进程</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ps -ef | grep httpd</span><br><span class="line">root       2241      1  1 22:05 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND</span><br><span class="line">apache     2242   2241  0 22:05 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND</span><br><span class="line">apache     2243   2241  0 22:05 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND</span><br><span class="line">apache     2244   2241  0 22:05 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND</span><br><span class="line">apache     2245   2241  0 22:05 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND</span><br><span class="line">apache     2248   2241  0 22:05 ?        00:00:00 /usr/sbin/httpd -DFOREGROUND</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>event</code>模式</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;IfModule mpm_event_module&gt;</span><br><span class="line">    StartServers             3</span><br><span class="line">    MinSpareThreads         75</span><br><span class="line">    MaxSpareThreads        250</span><br><span class="line">    ThreadsPerChild         25</span><br><span class="line">    MaxRequestWorkers      400</span><br><span class="line">    MaxConnectionsPerChild   0</span><br><span class="line">&lt;/IfModule&gt;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Apache-实用第三方模块"><a href="#Apache-实用第三方模块" class="headerlink" title="Apache 实用第三方模块"></a>Apache 实用第三方模块</h1><p>若要在 httpd 上添加新的模块，可以通过修改模块配置文件增加<code>LoalModule</code>指令添加，也可以使用<code>httpd-devel</code>提供的工具<code>apxs</code>直接添加，需要 httpd 开启了 DSO。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">apxs</span><br><span class="line">  -n 模块名    指定模块名，可与-i和-g组合</span><br><span class="line">  -i          安装模块，可指定多个</span><br><span class="line">  -a          自动在主配置文件加上LoadModule</span><br><span class="line">  -A          自动在主配置文件加上#LoadModule，即安装了但先不启用</span><br><span class="line">  -c C文件     将.c文件编译为.so文件</span><br></pre></td></tr></table></figure>
+
+<p>模块间可能存在依赖，可根据报错信息解决。</p>
+<h2 id="Gzip-压缩"><a href="#Gzip-压缩" class="headerlink" title="Gzip 压缩"></a>Gzip 压缩</h2><p>Gzip 将 Apache 网页内容压缩后传输给客户端，加快网页加载速度，建议开启。Gzip 有两个模块：<code>mod_gzip</code>和<code>mod_deflate</code>，</p>
+<h2 id="防-DDOS-攻击"><a href="#防-DDOS-攻击" class="headerlink" title="防 DDOS 攻击"></a>防 DDOS 攻击</h2><p>应对 DDOS 攻击的模块为<code>mod_evasive</code>，可通过<code>yum install mod_evasive</code>获取。安装完成后会生成<code>/usr/lib64/httpd/modules/mod_evasive24.so</code>，以及<code>/etc/httpd/conf.d/mod_evasive.conf</code></p>
+<h1 id="LAMP-环境搭建"><a href="#LAMP-环境搭建" class="headerlink" title="LAMP 环境搭建"></a>LAMP 环境搭建</h1><p>直接用<code>yum|dnf</code>安装 php，php 版本为 7.1。php 的核心包：</p>
+<ul>
+<li><code>php</code>：在<code>/etc/httpd/conf.d/</code>创建了<code>php.conf</code>，在<code>/usr/lib64/httpd/modules/</code>创建了<code>libphp7.so</code></li>
+<li><code>php-common</code>：创建了大量模块存放在<code>/usr/lib64/php/modules/</code>，帮助文档，配置文件<code>/etc/php.ini</code>以及<code>/etc/php.d/</code>中各个配置文件。</li>
+<li><code>php-fpm</code>：创建了配置文件<code>/etc/php-fpm.conf</code>及<code>/etc/php-fpm.d/</code></li>
+<li><code>php-cli</code>：创建了命令<code>php</code>、<code>php-cgi</code>、<code>phar</code>、<code>phpize</code>存放在<code>/usr/bin/</code>中</li>
+</ul>
+<p>使用<code>systemctl start php-fpm</code>启动。</p>
+<h3 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h3><ul>
+<li>高性能网站构建实战</li>
+<li>Linux 系统管理与网络管理</li>
+<li>Linux 就该这么学</li>
+<li>Linux 运维之道（第二版）</li>
+<li>Linux 服务器架设指南（第二版）</li>
+<li>防线-企业 Linux 安全运维理念和实战</li>
+<li>RHCSA&#x2F;RHCE 红帽 Linux 认证学习指南（第 7 版）</li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/ccscu/article/details/70182476">Apache 性能优化之 MPM 选择和配置</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.jobbole.com/91920/">Apache 的三种 MPM 模式比较：prefork，worker，event</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/njys1/article/details/60867092">apache 的三种 mpm 模式</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/jpdoutop/p/httpd-htaccess.html">浅谈.htaccess 文件–避免滥用.htaccess 文件</a></li>
+<li><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/howto/htaccess.html">Apache HTTP Server Tutorial: .htaccess files</a></li>
+<li><a target="_blank" rel="noopener" href="https://httpd.apache.org/docs/2.4/howto/ssi.html">Apache httpd Tutorial: Introduction to Server Side Includes</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/f-ck-need-u/p/7627035.html">简单说明 CGI 和动态请求是什么</a></li>
+</ul>
+
+  </div>
+  
+  
+    
+    <div class='footer'>
+       <!-- 参考资料、相关资料等 -->
+      
+       <!-- 相关文章 -->
+      
+      <!-- 版权声明组件 -->
+      
+      <!-- 打赏组件 -->
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/server/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>server</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Apache/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Apache</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/http/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>http</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/LAMP/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>LAMP</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/LAMT/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>LAMT</p></a></div>
+  <span hidden itemprop="keywords">server Apache http LAMP LAMT</span>
+
+
+        
+      
+    </div>
+    <!-- Custom Files bottomMeta begin -->
+    
+    <!-- Custom Files bottomMeta end -->
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2018/Nginx%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Nginx笔记</p>
+          <p class='content'>基于 Nginx1.14-1.16
+
+Nginx 介绍Nginx 有以下功能：
+
+负载均衡
+HTTP web 服务器
+http 协议的反向代理服务器
+pop3\smtp\imap4 等邮件协议的...</p>
+        </a>
+      
+      
+        <a class='next' href='/2018/NFS%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>NFS基础笔记<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>
+NFS 原理
+NFS 基础配置
+服务器端
+NFS 客户端
+nfs 挂载优化
+系统安全相关
+挂载性能相关
+
+
+
+
+
+NFS 原理NFS（Network Files Network）网络文件系统，...</p>
+        </a>
+      
+    </div>
+  
+  <!-- Custom Files postEnd begin-->
+  
+  <!-- Custom Files postEnd end-->
+</article>
+
+
+
+
+</div>
+<aside id='l_side' itemscope itemtype="http://schema.org/WPSideBar">
+  
+
+  
+    
+    
+      
+    
+  
+
+
+<div class="widget-sticky pjax">
+
+  
+  
+
+
+  <section class="widget toc-wrapper desktop mobile " id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Apache-httpd-%E6%9C%8D%E5%8A%A1%E5%99%A8%E4%BB%8B%E7%BB%8D"><span class="toc-text">Apache-httpd 服务器介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AE%89%E8%A3%85"><span class="toc-text">httpd 服务器安装</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-text">httpd 配置文件</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E8%99%9A%E6%8B%9F%E4%B8%BB%E6%9C%BA"><span class="toc-text">httpd 虚拟主机</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E8%AE%A4%E8%AF%81%E6%8E%88%E6%9D%83"><span class="toc-text">httpd 认证授权</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#htaccess-%E6%96%87%E4%BB%B6"><span class="toc-text">.htaccess 文件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#htaccess-%E6%96%87%E4%BB%B6%E7%9A%84%E5%B8%B8%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-text">.htaccess 文件的常用示例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%A1%B5%E9%9D%A2%E9%87%8D%E5%AE%9A%E5%90%91"><span class="toc-text">页面重定向</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#CGI"><span class="toc-text">CGI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A8%E6%80%81-httpd"><span class="toc-text">动态 httpd</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E4%B8%8E-SSL"><span class="toc-text">httpd 与 SSL</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E6%97%A5%E5%BF%97"><span class="toc-text">httpd 日志</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E5%88%87%E5%89%B2"><span class="toc-text">日志切割</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Webalizer-%E5%88%86%E6%9E%90%E7%BB%9F%E8%AE%A1%E6%97%A5%E5%BF%97"><span class="toc-text">Webalizer 分析统计日志</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#httpd-%E4%BB%A3%E7%90%86"><span class="toc-text">httpd 代理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Apache-MPM-%E6%A8%A1%E5%BC%8F"><span class="toc-text">Apache-MPM 模式</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Apache-%E5%AE%9E%E7%94%A8%E7%AC%AC%E4%B8%89%E6%96%B9%E6%A8%A1%E5%9D%97"><span class="toc-text">Apache 实用第三方模块</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Gzip-%E5%8E%8B%E7%BC%A9"><span class="toc-text">Gzip 压缩</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B2-DDOS-%E6%94%BB%E5%87%BB"><span class="toc-text">防 DDOS 攻击</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#LAMP-%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA"><span class="toc-text">LAMP 环境搭建</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0"><span class="toc-text">参考文章</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </section>
+
+  
+
+</div>
+
+
+<!-- 没有 pjax 占位会报错 万恶的 pjax -->
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <!-- Custom Files side begin -->
+  
+  <!-- Custom Files side end -->
+</aside>
+
+
+
+          <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<pjax>
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  pdata.commentConfig={};
+  //  see: /layout/_partial/scripts/_ctrl/coverCtrl.ejs
+  
+    // header
+    var l_header=document.getElementById("l_header");
+    
+    l_header.classList.add("show");
+    
+    
+      // cover
+      var cover_wrapper=document.querySelector('#l_cover .cover-wrapper');
+      var scroll_down=document.getElementById('scroll-down');
+      cover_wrapper.id="none";
+      cover_wrapper.style.display="none";
+      scroll_down.style.display="none";
+    
+  
+</script>
+</pjax>
+        </div>
+        
+  
+  <footer class="footer clearfix"  itemscope itemtype="http://schema.org/WPFooter">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper" itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer" itemprop="url">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+    <!-- Custom Files footer begin-->
+    
+    <!-- Custom Files footer end-->
+  </footer>
+
+
+        <a id="s-top" class="fa-solid fa-arrow-up fa-fw" href="/" onclick="return false;" title="top"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+  /******************** volantis.dom ********************************/
+  // 页面选择器 将dom对象缓存起来 see: /source/js/app.js etc.
+  volantis.dom.bodyAnchor = volantis.dom.$(document.getElementById("safearea")); // 页面主体
+  volantis.dom.topBtn = volantis.dom.$(document.getElementById('s-top')); // 向上
+  volantis.dom.wrapper = volantis.dom.$(document.getElementById('wrapper')); // 整个导航栏
+  volantis.dom.coverAnchor = volantis.dom.$(document.querySelector('#l_cover .cover-wrapper')); // 1个
+  volantis.dom.switcher = volantis.dom.$(document.querySelector('#l_header .switcher .s-search')); // 搜索按钮   移动端 1个
+  volantis.dom.header = volantis.dom.$(document.getElementById('l_header')); // 移动端导航栏
+  volantis.dom.search = volantis.dom.$(document.querySelector('#l_header .m_search')); // 搜索框 桌面端 移动端 1个
+  volantis.dom.mPhoneList = volantis.dom.$(document.querySelectorAll('#l_header .m-phone .list-v')); //  手机端 子菜单 多个
+</script>
+
+<script>
+  
+  volantis.css("https://unpkg.com/volantis-static@0.0.1654736714924/libs/@fortawesome/fontawesome-free/css/all.min.css");
+  
+  
+  
+</script>
+
+<!-- required -->
+
+
+<!-- internal -->
+
+<script src="/js/app.js"></script>
+
+
+
+
+
+
+<!-- rightmenu要在darkmode之前（ToggleButton） darkmode要在comments之前（volantis.dark.push）-->
+
+
+
+<script>
+  function loadIssuesJS() {
+    
+      const sites_api = document.getElementById('sites-api');
+      if (sites_api != undefined && typeof SitesJS === 'undefined') {
+        volantis.js("/js/plugins/tags/sites.js")
+      }
+    
+    
+      const friends_api = document.getElementById('friends-api');
+      if (friends_api != undefined && typeof FriendsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/friends.js")
+      }
+    
+    
+      const contributors_api = document.getElementById('contributors-api');
+      if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/contributors.js")
+      }
+    
+  };
+  loadIssuesJS()
+  volantis.pjax.push(()=>{
+    loadIssuesJS();
+  })
+
+</script>
+
+
+
+
+  <script defer src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/vanilla-lazyload/dist/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: ["#"],
+	maxRPS: 6,
+	hoverDelay: 0
+  };
+</script>
+<script defer src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/flying-pages/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+      <script>
+  volantis.layoutHelper("comments",`<div id="giscus_container"></div>`)
+
+  volantis.giscus = {};
+
+  function check_giscus() {
+    if (volantis.dark.mode === "dark") {
+      volantis.giscus.Theme = 'dark';
+    } else {
+      volantis.giscus.Theme = 'light';
+    }
+
+    return document.getElementById("giscus_container");
+  }
+
+  function pjax_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+    let cfg = Object.assign({"theme":{"light":"light","dark":"dark"}},pdata.commentConfig)
+    const script = document.createElement('script');
+    script.setAttribute('src', 'https://giscus.app/client.js');
+    Object.keys(cfg).forEach(k=>{
+      if (k != "theme") {
+        script.setAttribute('data-'+k, cfg[k]);
+      }
+    })
+    script.setAttribute('data-theme', volantis.giscus.Theme);
+    script.setAttribute('crossorigin', "anonymous");
+    HEAD.appendChild(script);
+  }
+
+  function dark_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+
+    const message = {
+      setConfig: {
+        theme: volantis.giscus.Theme
+      }
+    };
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    giscusIframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+  }
+  pjax_giscus();
+  volantis.pjax.push(pjax_giscus);
+  volantis.dark.push(dark_giscus);
+</script>
+
+    
+
+
+
+
+
+<!-- optional -->
+
+  <script>
+  const SearchServiceDataPathRoot = ("/" || "/").endsWith("/") ?
+    "/" || "/" :
+    "//" || "/";
+  const SearchServiceDataPath = SearchServiceDataPathRoot + "content.json";
+
+  function loadSearchScript() {
+    // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
+    return volantis.js("/js/search/hexo.js");
+  }
+
+  function loadSearchService() {
+    loadSearchScript();
+    document.querySelectorAll(".input.u-search-input").forEach((e) => {
+      e.removeEventListener("focus", loadSearchService, false);
+    });
+
+    document.querySelectorAll(".u-search-form").forEach((e) => {
+      e.addEventListener("submit", (event) => {
+        event.preventDefault();
+      }, false);
+    });
+  }
+
+  // 打开并搜索 字符串 s
+  function OpenSearch(s) {
+    if (typeof SearchService === 'undefined')
+      loadSearchScript().then(() => {
+        SearchService.setQueryText(s);
+        SearchService.search();
+      });
+    else {
+      SearchService.setQueryText(s);
+      SearchService.search();
+    }
+  }
+
+  // 访问含有 ?s=xxx  的链接时打开搜索 // 与搜索引擎 structured data 相关: /scripts/helpers/structured-data/lib/config.js
+  if (window.location.search && /^\?s=/g.test(window.location.search)) {
+    let queryText = decodeURI(window.location.search)
+      .replace(/\ /g, "-")
+      .replace(/^\?s=/g, "");
+    OpenSearch(queryText);
+  }
+
+  // 搜索输入框获取焦点时加载搜索
+  document.querySelectorAll(".input.u-search-input").forEach((e) => {
+    e.addEventListener("focus", loadSearchService, false);
+  });
+</script>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  function pjax_highlightjs_copyCode(){
+    if (!(document.querySelector(".highlight .code pre") ||
+      document.querySelector(".article pre code"))) {
+      return;
+    }
+    VolantisApp.utilCopyCode(".highlight .code pre, .article pre code")
+  }
+  volantis.requestAnimationFrame(pjax_highlightjs_copyCode)
+  volantis.pjax.push(pjax_highlightjs_copyCode)
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  <script>
+  function load_swiper() {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    volantis.css("https://unpkg.com/volantis-static@0.0.1654736714924/libs/swiper/swiper-bundle.min.css");
+    volantis.js("https://unpkg.com/volantis-static@0.0.1654736714924/libs/swiper/swiper-bundle.min.js").then(() => {
+      pjax_swiper();
+    });
+  }
+
+  load_swiper();
+
+  function pjax_swiper() {
+    volantis.swiper = new Swiper('.swiper-container', {
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      centeredSlides: true,
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+
+  volantis.pjax.push(() => {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    if (typeof volantis.swiper === "undefined") {
+      load_swiper();
+    } else {
+      pjax_swiper();
+    }
+  });
+</script>
+
+
+<!-- pjax 标签必须存在于所有页面 否则 pjax error -->
+<pjax>
+
+</pjax>
+
+<script>
+  function listennSidebarTOC() {
+    const navItems = document.querySelectorAll(".toc li");
+    if (!navItems.length) return;
+    let targets = []
+    const sections = [...navItems].map((element) => {
+      const link = element.querySelector(".toc-link");
+      const target = document.getElementById(
+        decodeURI(link.getAttribute("href")).replace("#", "")
+      );
+      targets.push(target)
+      // 解除 a 标签 href 的 锚点定位, a 标签 href 的 锚点定位 会随机启用?? 产生错位???
+      link.setAttribute("onclick","return false;")
+      link.setAttribute("toc-action","toc-"+decodeURI(link.getAttribute("href")).replace("#", ""))
+      link.setAttribute("href","/")
+      // 配置 点击 触发新的锚点定位
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        // 这里的 addTop 是通过错位使得 toc 自动展开.
+        volantis.scroll.to(target,{addTop: 5, observer:true})
+        // Anchor id
+        history.pushState(null, document.title, "#" + target.id);
+      });
+      return target;
+    });
+
+    function activateNavByIndex(target) {
+      if (target.classList.contains("active-current")) return;
+
+      document.querySelectorAll(".toc .active").forEach((element) => {
+        element.classList.remove("active", "active-current");
+      });
+      target.classList.add("active", "active-current");
+      let parent = target.parentNode;
+      while (!parent.matches(".toc")) {
+        if (parent.matches("li")) parent.classList.add("active");
+        parent = parent.parentNode;
+      }
+    }
+
+    // 方案一：
+    volantis.activateNavIndex=0
+    activateNavByIndex(navItems[volantis.activateNavIndex])
+    volantis.scroll.push(()=>{
+      if (targets[0].getBoundingClientRect().top >= 0) {
+        volantis.activateNavIndex = 0
+      }else if (targets[targets.length-1].getBoundingClientRect().top < 0) {
+        volantis.activateNavIndex = targets.length-1
+      } else {
+        for (let index = 0; index < targets.length; index++) {
+          const target0 = targets[index];
+          const target1 = targets[(index+1)%targets.length];
+          if (target0.getBoundingClientRect().top < 0&&target1.getBoundingClientRect().top >= 0) {
+            volantis.activateNavIndex=index
+            break;
+          }
+        }
+      }
+      activateNavByIndex(navItems[volantis.activateNavIndex])
+    })
+
+    // 方案二：
+    // IntersectionObserver 不是完美精确到像素级别 也不是低延时性的
+    // function findIndex(entries) {
+    //   let index = 0;
+    //   let entry = entries[index];
+    //   if (entry.boundingClientRect.top > 0) {
+    //     index = sections.indexOf(entry.target);
+    //     return index === 0 ? 0 : index - 1;
+    //   }
+    //   for (; index < entries.length; index++) {
+    //     if (entries[index].boundingClientRect.top <= 0) {
+    //       entry = entries[index];
+    //     } else {
+    //       return sections.indexOf(entry.target);
+    //     }
+    //   }
+    //   return sections.indexOf(entry.target);
+    // }
+    // function createIntersectionObserver(marginTop) {
+    //   marginTop = Math.floor(marginTop + 10000);
+    //   let intersectionObserver = new IntersectionObserver(
+    //     (entries, observe) => {
+    //       let scrollHeight = document.documentElement.scrollHeight;
+    //       if (scrollHeight > marginTop) {
+    //         observe.disconnect();
+    //         createIntersectionObserver(scrollHeight);
+    //         return;
+    //       }
+    //       let index = findIndex(entries);
+    //       activateNavByIndex(navItems[index]);
+    //     }, {
+    //       rootMargin: marginTop + "px 0px -100% 0px",
+    //       threshold: 0,
+    //     }
+    //   );
+    //   sections.forEach((element) => {
+    //     element && intersectionObserver.observe(element);
+    //   });
+    // }
+    // createIntersectionObserver(document.documentElement.scrollHeight);
+  }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    volantis.requestAnimationFrame(listennSidebarTOC)
+  });
+  document.addEventListener("pjax:success", ()=>{
+    volantis.requestAnimationFrame(listennSidebarTOC)
+  });
+</script>
+
+
+
+<script>
+  document.onreadystatechange = function () {
+    if (document.readyState == 'complete') {
+      // 页面加载完毕 样式加载失败，或是当前网速慢，或是开启了省流模式
+      const { saveData, effectiveType } = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {}
+      if (getComputedStyle(document.querySelector("#safearea"), null)["display"] == "none" || saveData || /2g/.test(effectiveType)) {
+        document.querySelectorAll(".reveal").forEach(function (e) {
+          e.style["opacity"] = "1";
+        });
+        document.querySelector("#safearea").style["display"] = "block";
+      }
+    }
+  }
+</script>
+
+
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Web服务器与负载/","name":"Web服务器与负载"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2018/Apache-Server/","name":"Apache Server"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Apache Server","description":"Tianyi的技术随笔","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2018/Apache-Server/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2018/Apache-Server/","wordCount":0,"datePublished":"2018-05-02T09:19:50.000Z","dateModified":"2022-07-11T15:20:00.456Z","articleSection":"Web服务器与负载","keywords":"server,Apache,http,LAMP,LAMT","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1654736714924/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+
+
+
+      
+        <!--
+  pjax重载区域接口：
+  1.  <pjax></pjax> 标签 pjax 标签必须存在于所有页面 否则 pjax error
+  2.  script[data-pjax]
+  3.  .pjax-reload script
+  4.  .pjax
+-->
+
+
+
+<script src="https://unpkg.com/volantis-static@0.0.1654736714924/libs/pjax/pjax.min.js"></script>
+
+
+<script>
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox]):not([onclick="return false;"]):not([onclick="return!1"]):not([target="_blank"]):not([target="view_window"]):not([href$=".xml"])',
+        selectors: [
+          "head title",
+          "head meta[name=keywords]",
+          "head meta[name=description]",
+          
+          "#l_main",
+          "#pjax-header-nav-list",
+          ".pjax",
+          "pjax", // <pjax></pjax> 标签
+          "script[data-pjax], .pjax-reload script" // script标签添加data-pjax 或 script标签外层添加.pjax-reload 的script代码段重载
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000,
+        
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      //window.stop(); // 相当于点击了浏览器的停止按钮
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var banUrl = [""];
+        if (banUrl[0] != "") {
+          banUrl.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+      } catch (error) {}
+
+      // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.complete.start();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      if(volantis.debug) {
+        console.error(e);
+        console.log('pjax error: \n' + JSON.stringify(e));
+      }else{
+        // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+        volantis.pjax.method.error.start();
+        window.location.href = e.triggerElement.href;
+      }
+    });
+</script>
+
+      
+    </div>
+    <!-- import body_end begin-->
+    <!-- import body_end end-->
+    <!-- Custom Files bodyEnd begin-->
+    
+    <!-- Custom Files bodyEnd end-->
+  </body>
+</html>
