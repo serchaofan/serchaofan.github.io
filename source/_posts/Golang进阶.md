@@ -69,6 +69,8 @@ comments: false
   - [4.9 消息队列](#49-消息队列)
     - [Kafka生产者](#kafka生产者)
 
+<!--more-->
+
 # 第1章：并发编程模型
 
 ## 1.1 Goroutine调度机制与GMP模型
