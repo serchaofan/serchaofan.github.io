@@ -26,10 +26,16 @@ const locationHash = () => {
   if (window.location.hash) {
     let locationID = decodeURI(window.location.hash.split('#')[1]).replace(/\ /g, '-');
     let target = document.getElementById(locationID);
+    if (locationID && !target) {
+      locationID = decodeURIComponent(window.location.hash.split('#')[1]).replace(/\ /g, '-');
+      target = document.getElementById(locationID);
+    }
     if (target) {
       setTimeout(() => {
         if (window.location.hash.startsWith('#fn')) { // hexo-reference https://github.com/volantis-x/hexo-theme-volantis/issues/647
           volantis.scroll.to(target, { addTop: - volantis.dom.header.offsetHeight - 5, behavior: 'instant', observer: true })
+        } else if (window.location.hash.startsWith('#mjx')) { // mathjax
+          volantis.scroll.to(target, { addTop: - volantis.dom.header.offsetHeight - 25, behavior: 'instant', observer: true })
         } else {
           // 锚点中上半部有大片空白 高度大概是 volantis.dom.header.offsetHeight
           volantis.scroll.to(target, { addTop: 5, behavior: 'instant', observer: true })
@@ -119,7 +125,7 @@ const VolantisApp = (() => {
   // 校正页面定位（被导航栏挡住的区域）
   fn.scrolltoElement = (elem, correction = scrollCorrection) => {
     volantis.scroll.to(elem, {
-      top: elem.offsetTop - correction
+      top: elem.getBoundingClientRect().top + document.documentElement.scrollTop - correction
     })
   }
 
@@ -210,6 +216,7 @@ const VolantisApp = (() => {
       volantis.dom.comment.click(e => { // 评论按钮点击后 跳转到评论区域
         e.preventDefault();
         e.stopPropagation();
+        volantis.cleanContentVisibility();
         fn.scrolltoElement(volantis.dom.commentTarget);
         e.stopImmediatePropagation();
       });
@@ -234,7 +241,7 @@ const VolantisApp = (() => {
           }
           volantis.dom.toc.removeClass('active');
         });
-      } else volantis.dom.toc.style.display = 'none'; // 隐藏toc目录按钮
+      } else if (volantis.dom.toc) volantis.dom.toc.style.display = 'none'; // 隐藏toc目录按钮
     }
   }
 
@@ -381,6 +388,23 @@ const VolantisApp = (() => {
     })
   }
 
+  // mathjax 引用跳转
+  fn.mathjaxRef = () => {
+    let ref = document.querySelectorAll('mjx-container a[href]');
+    ref.forEach(function (e, i) {
+      ref[i].click = () => { }; // 强制清空原 click 事件
+      let targetID = decodeURIComponent(ref[i].getAttribute('href').split('#')[1]).replace(/\ /g, '-');
+      volantis.dom.$(e).on('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        let target = document.getElementById(targetID);
+        if (target) {
+          volantis.scroll.to(target, { addTop: - volantis.dom.header.offsetHeight - 25, behavior: 'instant' })
+        }
+      });
+    })
+  }
+
   // hexo-reference 页脚跳转 https://github.com/volantis-x/hexo-theme-volantis/issues/647
   fn.footnotes = () => {
     let ref = document.querySelectorAll('#l_main .footnote-backref, #l_main .footnote-ref > a');
@@ -515,8 +539,8 @@ const VolantisApp = (() => {
   // 消息提示：标准
   fn.message = (title, message, option = {}, done = null) => {
     if (typeof iziToast === "undefined") {
-      volantis.css(volantis.GLOBAL_CONFIG.plugins.message.css)
-      volantis.js(volantis.GLOBAL_CONFIG.plugins.message.js, () => {
+      volantis.css(volantis.GLOBAL_CONFIG.cdn.izitoast_css)
+      volantis.js(volantis.GLOBAL_CONFIG.cdn.izitoast_js, () => {
         tozashMessage(title, message, option, done);
       });
     } else {
@@ -561,8 +585,8 @@ const VolantisApp = (() => {
   // 消息提示：询问
   fn.question = (title, message, option = {}, success = null, cancel = null, done = null) => {
     if (typeof iziToast === "undefined") {
-      volantis.css(volantis.GLOBAL_CONFIG.plugins.message.css)
-      volantis.js(volantis.GLOBAL_CONFIG.plugins.message.js, () => {
+      volantis.css(volantis.GLOBAL_CONFIG.cdn.izitoast_css)
+      volantis.js(volantis.GLOBAL_CONFIG.cdn.izitoast_js, () => {
         tozashQuestion(title, message, option, success, cancel, done);
       });
     } else {
@@ -622,8 +646,8 @@ const VolantisApp = (() => {
     }
 
     if (typeof iziToast === "undefined") {
-      volantis.css(volantis.GLOBAL_CONFIG.plugins.message.css)
-      volantis.js(volantis.GLOBAL_CONFIG.plugins.message.js, () => {
+      volantis.css(volantis.GLOBAL_CONFIG.cdn.izitoast_css)
+      volantis.js(volantis.GLOBAL_CONFIG.cdn.izitoast_js, () => {
         hideMessage(done);
       });
     } else {
@@ -668,6 +692,7 @@ const VolantisApp = (() => {
       fn.setScrollAnchor();
       fn.setTabs();
       fn.footnotes();
+      fn.mathjaxRef();
     },
     pjaxReload: () => {
       fn.event();
@@ -678,6 +703,7 @@ const VolantisApp = (() => {
       fn.setScrollAnchor();
       fn.setTabs();
       fn.footnotes();
+      fn.mathjaxRef();
 
       // 移除小尾巴的移除
       document.querySelector("#l_header .nav-main").querySelectorAll('.list-v:not(.menu-phone)').forEach(function (e) {
@@ -703,8 +729,8 @@ const VolantisFancyBox = (() => {
   const fn = {};
 
   fn.loadFancyBox = (done) => {
-    volantis.css(volantis.GLOBAL_CONFIG.plugins.fancybox.css);
-    volantis.js(volantis.GLOBAL_CONFIG.plugins.fancybox.js).then(() => {
+    volantis.css(volantis.GLOBAL_CONFIG.cdn.fancybox_css);
+    volantis.js(volantis.GLOBAL_CONFIG.cdn.fancybox_js).then(() => {
       if (done) done();
     })
   }
@@ -813,17 +839,6 @@ const VolantisFancyBox = (() => {
 Object.freeze(VolantisFancyBox);
 
 // highlightKeyWords 与 搜索功能搭配 https://github.com/next-theme/hexo-theme-next/blob/eb194a7258058302baf59f02d4b80b6655338b01/source/js/third-party/search/local-search.js
-// Question: 锚点稳定性未知
-// ToDo: 查找模式
-// 0. (/////////要知道浏览器自带全页面查找功能 CTRL + F)
-// 1. 右键开启查找模式 / 导航栏菜单开启?? / CTRL + F ???
-// 2. 查找模式面板 (可拖动? or 固定?)
-// 3. keyword mark id 从 0 开始编号 查找下一处 highlightKeyWords.scrollToNextHighlightKeywordMark() 查找上一处 scrollToPrevHighlightKeywordMark() 循环查找(取模%)
-// 4. 可输入修改 查找关键词 keywords(type:list)
-// 5. 区分大小写 caseSensitive (/ 全字匹配?? / 正则匹配??)
-// 6. 在选定区域中查找 querySelector ??
-// 7. 关闭查找模式
-// 8. 搜索跳转 (URL 入口) 自动开启查找模式 调用 scrollToNextHighlightKeywordMark()
 const highlightKeyWords = (() => {
   let fn = {}
   fn.markNum = 0
@@ -860,21 +875,21 @@ const highlightKeyWords = (() => {
     // Current target
     return target
   }
-  fn.scrollToPrevHighlightKeywordMark = (id) => {
-    // Prev Id
-    let input = id || (fn.markNextId - 1 + fn.markNum) % fn.markNum;
-    fn.markNextId = parseInt(input)
-    let target = document.getElementById("keyword-mark-" + fn.markNextId);
-    if (!target) {
-      fn.markNextId = (fn.markNextId - 1 + fn.markNum) % fn.markNum;
-      target = document.getElementById("keyword-mark-" + fn.markNextId);
-    }
-    if (target) {
-      volantis.scroll.to(target, { addTop: - volantis.dom.header.offsetHeight - 5, behavior: 'instant' })
-    }
-    // Current target
-    return target
-  }
+  // fn.scrollToPrevHighlightKeywordMark = (id) => {
+  //   // Prev Id
+  //   let input = id || (fn.markNextId - 1 + fn.markNum) % fn.markNum;
+  //   fn.markNextId = parseInt(input)
+  //   let target = document.getElementById("keyword-mark-" + fn.markNextId);
+  //   if (!target) {
+  //     fn.markNextId = (fn.markNextId - 1 + fn.markNum) % fn.markNum;
+  //     target = document.getElementById("keyword-mark-" + fn.markNextId);
+  //   }
+  //   if (target) {
+  //     volantis.scroll.to(target, { addTop: - volantis.dom.header.offsetHeight - 5, behavior: 'instant' })
+  //   }
+  //   // Current target
+  //   return target
+  // }
   fn.start = (keywords, querySelector) => {
     fn.markNum = 0
     if (!keywords.length || !querySelector || (keywords.length == 1 && keywords[0] == "null")) return;
@@ -982,30 +997,30 @@ const highlightKeyWords = (() => {
     mark.style["font-weight"] = "bold";
     return mark
   }
-  fn.cleanHighlightStyle = () => {
-    document.querySelectorAll(".keyword").forEach(mark => {
-      mark.style.background = "transparent";
-      mark.style["border-bottom"] = null;
-      mark.style["color"] = null;
-      mark.style["font-weight"] = null;
-    })
-  }
+  // fn.cleanHighlightStyle = () => {
+  //   document.querySelectorAll(".keyword").forEach(mark => {
+  //     mark.style.background = "transparent";
+  //     mark.style["border-bottom"] = null;
+  //     mark.style["color"] = null;
+  //     mark.style["font-weight"] = null;
+  //   })
+  // }
   return {
-    start: (keywords, querySelector) => {
-      fn.start(keywords, querySelector)
-    },
+    // start: (keywords, querySelector) => {
+    //   fn.start(keywords, querySelector)
+    // },
     startFromURL: () => {
       fn.startFromURL()
     },
-    scrollToNextHighlightKeywordMark: (id) => {
-      fn.scrollToNextHighlightKeywordMark(id)
-    },
-    scrollToPrevHighlightKeywordMark: (id) => {
-      fn.scrollToPrevHighlightKeywordMark(id)
-    },
-    cleanHighlightStyle: () => {
-      fn.cleanHighlightStyle()
-    },
+    // scrollToNextHighlightKeywordMark: (id) => {
+    //   fn.scrollToNextHighlightKeywordMark(id)
+    // },
+    // scrollToPrevHighlightKeywordMark: (id) => {
+    //   fn.scrollToPrevHighlightKeywordMark(id)
+    // },
+    // cleanHighlightStyle: () => {
+    //   fn.cleanHighlightStyle()
+    // },
   }
 })()
 Object.freeze(highlightKeyWords);
@@ -1136,46 +1151,46 @@ const DOMController = {
 }
 Object.freeze(DOMController);
 
-const VolantisRequest = {
-  timeoutFetch: (url, ms, requestInit) => {
-    const controller = new AbortController()
-    requestInit.signal?.addEventListener('abort', () => controller.abort())
-    let promise = fetch(url, { ...requestInit, signal: controller.signal })
-    if (ms > 0) {
-      const timer = setTimeout(() => controller.abort(), ms)
-      promise.finally(() => { clearTimeout(timer) })
-    }
-    promise = promise.catch((err) => {
-      throw ((err || {}).name === 'AbortError') ? new Error(`Fetch timeout: ${url}`) : err
-    })
-    return promise
-  },
+// const VolantisRequest = {
+//   timeoutFetch: (url, ms, requestInit) => {
+//     const controller = new AbortController()
+//     requestInit.signal?.addEventListener('abort', () => controller.abort())
+//     let promise = fetch(url, { ...requestInit, signal: controller.signal })
+//     if (ms > 0) {
+//       const timer = setTimeout(() => controller.abort(), ms)
+//       promise.finally(() => { clearTimeout(timer) })
+//     }
+//     promise = promise.catch((err) => {
+//       throw ((err || {}).name === 'AbortError') ? new Error(`Fetch timeout: ${url}`) : err
+//     })
+//     return promise
+//   },
 
-  Fetch: async (url, requestInit, timeout = 15000) => {
-    const resp = await VolantisRequest.timeoutFetch(url, timeout, requestInit);
-    if (!resp.ok) throw new Error(`Fetch error: ${url} | ${resp.status}`);
-    let json = await resp.json()
-    if (!json.success) throw json
-    return json
-  },
+//   Fetch: async (url, requestInit, timeout = 15000) => {
+//     const resp = await VolantisRequest.timeoutFetch(url, timeout, requestInit);
+//     if (!resp.ok) throw new Error(`Fetch error: ${url} | ${resp.status}`);
+//     let json = await resp.json()
+//     if (!json.success) throw json
+//     return json
+//   },
 
-  POST: async (url, data) => {
-    const requestInit = {
-      method: 'POST',
-    }
-    if (data) {
-      const formData = new FormData();
-      Object.keys(data).forEach(key => formData.append(key, String(data[key])))
-      requestInit.body = formData;
-    }
-    const json = await VolantisRequest.Fetch(url, requestInit)
-    return json.data;
-  },
+//   POST: async (url, data) => {
+//     const requestInit = {
+//       method: 'POST',
+//     }
+//     if (data) {
+//       const formData = new FormData();
+//       Object.keys(data).forEach(key => formData.append(key, String(data[key])))
+//       requestInit.body = formData;
+//     }
+//     const json = await VolantisRequest.Fetch(url, requestInit)
+//     return json.data;
+//   },
 
-  Get: async (url, data) => {
-    const json = await VolantisRequest.Fetch(url + (data ? (`?${new URLSearchParams(data)}`) : ''), {
-      method: 'GET'
-    })
-  }
-}
-Object.freeze(VolantisRequest);
+//   Get: async (url, data) => {
+//     const json = await VolantisRequest.Fetch(url + (data ? (`?${new URLSearchParams(data)}`) : ''), {
+//       method: 'GET'
+//     })
+//   }
+// }
+// Object.freeze(VolantisRequest);
