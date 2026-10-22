@@ -1,257 +1,416 @@
 ---
 title: Kubernetes共享存储
-tags: [Kubernetes, 存储, PV]
+tags: [Kubernetes, 存储, PV, CSI]
 date: 2020-04-05 19:06:54
 categories: [Kubernetes]
 comments: false
 ---
 
+本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV/PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、`kubernetes.io/*`、`--admission-control` 等内容已过时，不再作为操作依据。
+
 <!--more-->
 
-# PV
+- [存储模型](#%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B)
+- [Volume](#volume)
+- [PV 与 PVC](#pv-%E4%B8%8E-pvc)
+- [StorageClass 与动态供给](#storageclass-%E4%B8%8E%E5%8A%A8%E6%80%81%E4%BE%9B%E7%BB%99)
+- [CSI](#csi)
+- [快照与恢复](#%E5%BF%AB%E7%85%A7%E4%B8%8E%E6%81%A2%E5%A4%8D)
+- [扩容与拓扑](#%E6%89%A9%E5%AE%B9%E4%B8%8E%E6%8B%93%E6%89%91)
+- [NFS 示例](#nfs-%E7%A4%BA%E4%BE%8B)
+- [排障](#%E6%8E%92%E9%9A%9C)
+- [企业实践](#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5)
 
-PersistentVolume 是对底层网络共享存储的抽象，将共享存储定义为一种资源，由管理员创建配置，与共享存储的具体实现直接相关，通过插件式的机制完成与共享存储的对接。
+# 存储模型
 
-PV 主要包含以下参数的设置：
+Kubernetes 存储分三层：
 
-- 存储能力 `capacity`：描述存储设备具备的能力（空间大小）
-- 访问模式 `accessModes`：描述用户的应用对存储资源的访问权限。访问模式有：
-  - ReadWriteOnce：RWO，读写权限，只能被单个 Node 挂载
-  - ReadOnlyMany：ROX，只读权限，允许被多个 Node 挂载
-  - ReadWriteMany：RWX，读写权限，允许被多个 Node 挂载
-- 存储卷模式 `VolumeMode`：可选 Filesystem 和 Block，默认为 Filesystem
-- 存储类别 `storageClassName`：指定一个 StorageClass 资源对象名称，具有特定类别的 PV 只能和请求了该类别的 PVC 进行绑定，未设定类别的 PV 只能与不请求任何类别的 PVC 绑定。
-- 回收策略 `persistentVolumeReclaimPolicy`：当从持久卷声明释放持久卷时会发生什么。可选项为：
-  - Retain：保留数据，需要手动清理
-  - Delete：与PV相连的后端存储完成volume的删除
-- 挂载参数 `mountOptions`：需要根据后端存储的特点，进行额外的挂载参数设置。每个PV类型都有不同的挂载参数设置。
-- 节点亲和性 `nodeAffinity`：设置亲和性来限制只能通过某些Node访问Volume，使用这些Volume的pod会被调度到满足条件的Node。
+1. **Volume**：Pod 级别的挂载点，定义在 Pod spec 中
+2. **PV/PVC**：集群级存储资源与命名空间级请求
+3. **StorageClass + CSI**：动态创建 PV 的模板和驱动
 
-PV生命周期的各个阶段：
-1. Availabile：可用，还未与PVC绑定
-2. Bound：已与某PVC绑定
-3. Released：绑定的PVC已经删除，资源已释放，但没有被集群回收
-4. Failed：自动资源回收失败
+容器可写层不适合放持久化数据；数据库、日志、文件上传等应使用 Volume 或 PVC。
 
-# PVC
-PVC作为用户对存储资源的需求申请，主要包括存储空间要求、访问模式、PV选择条件和存储类别等信息的设置。
+# Volume
 
-PVC 主要包含以下参数的设置：
-- 资源请求 `resources`：描述对存储的要求，目前支持存储空间大小
-- 访问模式 `accessModes`：描述用户应用对存储资源的访问权限，参数与PV一致
-- 存储卷模式 `volumeModes`：参数与PV一致
-- PV选择条件 `selector`：通过对Label Selector设置，可使PVC对系统中已存在的PV进行筛选，系统会根据条件选出合适的PV进行绑定
-- 存储类别 `storageClassName`：设定需要的后端存储类型，只有设置了该类的PV会被匹配给PVC绑定。
-  PVC可以不设置存储类的要求，若设置`storageClassName=""`，则该PVC不要求特定class，系统只会选择未设置class的PV与之配对。也可以直接不设置`storageClassName`，则会根据系统是否启用名为DefaultStorageClass的admission controller进行对应操作。
-  - 若未启用DefaultStorageClass，则等效于PVC设置`storageClassName=""`
-  - 若启用了DefaultStorageClass，则需要有已定义的默认的storageClass，若不存在默认的storageClass，则等效于未启用DefaultStorageClass的情况；若存在默认的storageClass，则系统将自动为PVC创建一个PV，并绑定。
-  > 集群管理员如何设置DefaultStorageClass：在StorageClass定义中加上一个annotation 
-  > ```
-  > storageclass.kubernetes.io/is-default-class=true
-  > ```
-  > 若管理员将多个storageClass都定义为default，则由于不唯一，系统无法为PVC创建对应PV。
+常见 Volume 类型：
 
-PVC受限于命名空间，只有相同命名空间的PVC才能挂载到pod内。
+| 类型 | 生命周期 | 典型场景 |
+| --- | --- | --- |
+| `emptyDir` | 随 Pod | 临时缓存、容器间共享文件 |
+| `hostPath` | 随节点 | 节点代理、日志采集，生产慎用 |
+| `configMap` | 随对象 | 配置文件 |
+| `secret` | 随对象 | 证书、密码 |
+| `projected` | 随 Pod | 合并 Secret/ConfigMap/Downward API/SA token |
+| `persistentVolumeClaim` | 独立于 Pod | 数据库、持久化数据 |
+| `nfs` | 独立于 Pod | 共享文件 |
+| `csi` | 由驱动决定 | 云盘、文件存储、对象存储 |
 
-当selector和class都进行了设置时，系统将选择两个条件同时满足的PV进行配对。
-
-若资源供应使用的动态模式（见生命周期中描述），即管理员没有预先定义PV，仅通过storageClass交给系统自动完成PV的动态创建，则PVC再设定selector时，系统将无法为期供应任何存储资源。在启用了动态供应模式下，一旦用户删除PVC，与之绑定的PV也将根据默认回收策略Delete被删除。若需要保留PV，则在动态绑定成功后，用户需要将系统自动生产PV的回收策略从Delete变为Retain。
-
-# 生命周期
-![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207082350793.png)
-
-资源供应：k8s支持两种资源供应模式：静态模式static、动态模式dynamic。
-- 静态：集群管理员手动创建PV,在定义PV时需要将后端存储的特性进行设置。
-  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207090044511.png)
-- 动态：集群管理员无需手动创建PV，而是通过storageClass设置对后端存储进行描述，标记为某种类型，此时要求PVC对存储的类型进行声明，系统将自动完成PV的创建和PVC的绑定。若PVC的`Class=""`，则说明该PVC禁止使用动态模式。
-  ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207090052785.png)
-
-资源绑定：在用户定义好PVC后，系统根据PVC对存储资源的请求在已存在的PV中选择一个满足PVC要求的PV，一旦找到，就将该PV与用户定义的PVC进行绑定，用户的应用就可使用这个PVC了，若系统中没有满足PVC要求的PV，则PVC会处于Pending状态直到手动创建了一个符合要求的PV。PV一旦与PVC绑定，则就被这个PVC独占，不能再与其他PVC进行绑定。在这种情况下，当PVC申请的存储空间比PV少时，整个PV的空间就都能为PVC所用，可能造成浪费。若资源供应使用动态模式，则系统在为PVC找到合适StorageClass后，将自动创建一个PV并完成与PVC的绑定。
-
-资源使用：pod使用volume的定义，将PVC挂载到容器内的某个路径进行使用，若容器挂载一个PVC，则能被持续独占使用；若多个pod挂载同一个PVC，则需要考虑多个实例共同访问同一个存储空间的问题。
-
-资源释放：当用户对存储资源使用完毕后，用户可以删除PVC，与该PVC绑定的PV将会被标记为已释放（Released），但此时还不能立即被其他PVC绑定，之前的PVC写的数据可能还在存储设备上，只有在清除了该PV后才能再次使用。
-
-资源回收：只有PV存储空间完成回收，才能供信的PVC绑定和使用，
-
-# StorageClass
-StorageClass作为对存储资源的抽象，对用户设置的PVC申请屏蔽后端存储的细节，由系统自动完成PV的创建和绑定，实现动态的资源供应。
-
-定义包含以下参数：
-- provisioner；后端存储提供者。目前k8s支持的提供者都以`kubernetes.io/`开头
-- parameters：后端存储提供者的参数设置，不同提供者有对应不同的参数。
-
-设置默认的StorageClass，需要先启动DefaultStorageClass的admission controller，需要在kube-apiserver的命令行参数中`--admission-control`添加`DefaultStorageClass`。即：
-```
---admission-control=...,DefaultStorageClass
-```
-然后在StorageClass定义中设置一个annotation
 ```yaml
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
+volumes:
+- name: cache
+  emptyDir: {}
+- name: config
+  configMap:
+    name: app-config
+- name: data
+  persistentVolumeClaim:
+    claimName: app-data
 ```
 
-# NFS 动态存储
-> Github：https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+`emptyDir` 在容器重启时保留，Pod 删除时清理；`hostPath` 与节点强绑定，Pod 漂移后数据不跟随。
 
-nfs-client-provisioner 是一个Kubernetes的简易NFS的外部provisioner，本身不提供NFS，需要现有的NFS服务器提供存储
+# PV 与 PVC
 
-PV以 `${namespace}-${pvcName}-${pvName}`的命名格式提供（在NFS服务器上）
-PV回收的时候以 `archieved-${namespace}-${pvcName}-${pvName}` 的命名格式（在NFS服务器上）
+- **PV**：集群级资源，描述一块实际存储（容量、访问模式、回收策略、后端类型）
+- **PVC**：命名空间级请求，描述需要多大、什么访问模式
+- **绑定**：PVC 与 PV 一对一绑定；绑定后 PV 被该 PVC 独占
 
-首先创建RBAC权限以及SA
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: nfs-client-provisioner
-  namespace: kube-system
----
-kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: nfs-client-provisioner-runner
-rules:
-  - apiGroups: [""]
-    resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "create", "delete"]
-  - apiGroups: [""]
-    resources: ["persistentvolumeclaims"]
-    verbs: ["get", "list", "watch", "update"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["create", "update", "patch"]
----
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: run-nfs-client-provisioner
-subjects:
-  - kind: ServiceAccount
-    name: nfs-client-provisioner
-    namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: nfs-client-provisioner-runner
-  apiGroup: rbac.authorization.k8s.io
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: leader-locking-nfs-client-provisioner
-  namespace: kube-system
-rules:
-  - apiGroups: [""]
-    resources: ["endpoints"]
-    verbs: ["get", "list", "watch", "create", "update", "patch"]
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: leader-locking-nfs-client-provisioner
-  namespace: kube-system
-subjects:
-  - kind: ServiceAccount
-    name: nfs-client-provisioner
-    namespace: kube-system
-roleRef:
-  kind: Role
-  name: leader-locking-nfs-client-provisioner
-  apiGroup: rbac.authorization.k8s.io
-```
+![PV/PVC/StorageClass](https://kubernetes.io/images/blog/2018-07-12-resizing-persistent-volumes-using-kubernetes/pvc-storageclass.png)
 
-创建StorageClass
+*图 1：PVC、PV 与 StorageClass 的关系（Kubernetes 官方博客）*
+
+## 访问模式
+
+| 模式 | 缩写 | 含义 |
+| --- | --- | --- |
+| ReadWriteOnce | RWO | 单节点读写 |
+| ReadOnlyMany | ROX | 多节点只读 |
+| ReadWriteMany | RWX | 多节点读写 |
+| ReadWriteOncePod | RWOP | 单 Pod 读写，仅 CSI 支持 |
+
+注意：RWO 是“单节点”，不是“单 Pod”。同一节点上的多个 Pod 仍可能同时挂载同一个 RWO 卷。需要严格单 Pod 独占时用 RWOP。
+
+访问模式是能力声明，最终由 CSI/存储后端执行；不是所有驱动都支持 RWX。
+
+## 生命周期
+
+PVC 状态：
+
+- `Pending`：还没有绑定 PV
+- `Bound`：已绑定
+- `Lost`：绑定的 PV 不存在
+
+PV 状态：
+
+- `Available`：可用
+- `Bound`：已绑定
+- `Released`：PVC 已删除，但 PV 还未回收
+- `Failed`：回收失败
+
+回收策略：
+
+- `Delete`：删除 PV 和后端存储（动态 PV 常见默认）
+- `Retain`：保留 PV 和后端数据，需要手工清理
+- `Recycle`：已废弃，不要使用
+
+# StorageClass 与动态供给
+
+StorageClass 描述“用什么驱动、什么参数”创建 PV：
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: nfs-storage
+  name: standard
   annotations:
-    storageclass.kubernetes.io/is-default-class: "false"  ## 是否设置为默认的storageclass
-provisioner: nfs-client                                   ## 动态卷分配者名称
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
 parameters:
-  archiveOnDelete: "true"                                 ## 设置为"false"时删除PVC不会保留数据,"true"则保留数据
-#mountOptions: 
-#  - hard                                                  ## 指定为硬挂载方式
-#  - nfsvers=4                                             ## 指定NFS版本,这个需要根据NFS Server版本号设置
+  type: gp3
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
 ```
 
-创建nfs-client-provisioner
+- `provisioner` 填 CSI 驱动名称，例如 `ebs.csi.aws.com`、`pd.csi.storage.gke.io`、`nfs.csi.k8s.io`；旧的 `kubernetes.io/*` 仅用于历史兼容
+- `volumeBindingMode: WaitForFirstConsumer`：等 Pod 调度后再创建 PV，避免可用区不匹配
+- `allowVolumeExpansion: true`：允许扩容 PVC
+- 默认 StorageClass 用注解标记；多个默认类时以最近创建的为准，生产应只保留一个
+
+PVC 指定 StorageClass：
+
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: nfs-client-provisioner
-  namespace: kube-system
-  labels:
-    app: nfs-client-provisioner
+  name: data
 spec:
-  replicas: 1
-  strategy: 
-    type: Recreate # 设置升级策略为删除再创建(默认为滚动更新)
-  selector:
-    matchLabels:
-      app: nfs-client-provisioner
-  template:
-    metadata:
-      labels:
-        app: nfs-client-provisioner
-    spec:
-      serviceAccountName: nfs-client-provisioner
-      containers:
-      - name: nfs-client-provisioner
-        #image: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner:v4.0.0
-        image: registry.cn-beijing.aliyuncs.com/mydlq/nfs-subdir-external-provisioner:v4.0.0
-        volumeMounts:
-        - name: nfs-client-root
-          mountPath: /persistentvolumes
-        env:
-        - name: PROVISIONER_NAME     # Provisioner的名称,对应storageclass中配置的Provisioner的名称
-          value: nfs-client 
-        - name: NFS_SERVER           # NFS服务器地址,需和volumes参数中配置的保持一致
-          value: xx.xx.xx.xx
-        - name: NFS_PATH             # NFS服务器数据存储目录,需和valumes参数中配置的保持一致
-          value: /data/nfs/xxxx
-      volumes:
-      - name: nfs-client-root
-        nfs:
-          server: xx.xx.xx.xx     # NFS服务器地址
-          path: /data/nfs/xxxx    # NFS服务器数据存储目录
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 20Gi
 ```
 
-> **注：在创建nfs-client-provisioner之前，必须先确认nfs服务器上指定目录是否已经导出，**
-> 否则describe pod就会看到报错
-> ```
-> Unable to attach or mount volumes: unmounted volumes=[nfs-client-root]
-> MountVolume.SetUp failed for volume "nfs-client-root"
-> ```
+不写 `storageClassName` 时使用默认类；写 `storageClassName: ""` 表示不使用动态供给，走静态绑定。
 
-使用volumeClaimTemplates可以不用创建pvc和pv，会自动创建
+# CSI
+
+生产存储统一使用 CSI（Container Storage Interface）。CSI 驱动通常由以下 sidecar 组成：
+
+- **external-provisioner**：创建/删除 PV
+- **external-attacher**：ControllerPublish/ControllerUnpublish
+- **external-resizer**：扩容
+- **external-snapshotter**：快照
+- **node-driver-registrar**：在节点注册驱动
+- **livenessprobe**：健康检查
+
+相关对象：
+
+- `CSIDriver`：描述驱动能力，例如 `attachRequired`、`podInfoOnMount`、`volumeLifecycleModes`、`storageCapacity`、`fsGroupPolicy`；快照能力由 CSI 驱动和 `VolumeSnapshotClass` 决定，不在 `CSIDriver` 中声明
+- `CSINode`：描述节点上的驱动和拓扑
+- `VolumeAttachment`：描述卷挂载到哪个节点
+
+in-tree 存储插件已逐步迁移到 CSI，新集群不要再用 in-tree provisioner。
+
+# 快照与恢复
+
+快照依赖 VolumeSnapshot CRD，通常需要单独安装：
+
 ```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: data-snapshot
 spec:
-  volumeClaimTemplates:
-  - metadata:
-      name: data    # 这里设置的就是pvc的名字
-      annotations:
-        volume.beta.kubernetes.io/storage-class: "nfs-storage"   # 指定storage-class
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 3Gi
+  volumeSnapshotClassName: csi-snapclass
+  source:
+    persistentVolumeClaimName: data
 ```
 
-因此在sts的配置中直接指定volumeMounts即可
+恢复：
+
 ```yaml
-        volumeMounts:
-        - name: data   # 直接对应volumeClaimTemplates的pvc的名字即可
-          mountPath: /data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-restored
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: standard
+  dataSource:
+    kind: VolumeSnapshot
+    name: data-snapshot
+    apiGroup: snapshot.storage.k8s.io
+  resources:
+    requests:
+      storage: 20Gi
 ```
 
+快照不是备份的完整替代：还需要考虑跨区域复制、应用一致性（数据库应先做一致性快照或逻辑备份）和恢复演练。
 
-> 参考文章
-> 
-> https://jimmysong.io/kubernetes-handbook/practice/using-nfs-for-persistent-storage.html
+# 扩容与拓扑
+
+## 扩容 PVC
+
+```bash
+kubectl patch pvc data -p '{"spec":{"resources":{"requests":{"storage":"30Gi"}}}}'
+```
+
+前提：
+
+- StorageClass `allowVolumeExpansion: true`
+- CSI 驱动支持扩容
+- 文件系统扩容有时需要重启 Pod 或等待 kubelet 完成
+
+## 拓扑感知
+
+云盘通常绑定可用区。使用 `WaitForFirstConsumer` 可以让 PV 在 Pod 调度后创建，避免“Pod 调度到 A 区，PV 在 B 区”导致挂载失败。
+
+```yaml
+volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+- matchLabelExpressions:
+  - key: topology.kubernetes.io/zone
+    values: ["us-east-1a", "us-east-1b"]
+```
+
+# NFS 示例
+
+推荐使用 CSI NFS driver；旧版 `nfs-subdir-external-provisioner` 仍可用，但新集群优先 CSI。
+
+StorageClass：
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: 10.0.0.10
+  share: /data/nfs
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+```
+
+静态 NFS PV：
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes: ["ReadWriteMany"]
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: 10.0.0.10
+    path: /data/nfs
+```
+
+NFS 注意事项：
+
+- RWX 下多客户端并发写需要应用自己处理锁和一致性
+- `hard` mount 可能导致客户端永久阻塞，`soft` mount 可能丢数据，按业务权衡
+- NFS 版本、MTU、防火墙和 DNS 都要确认
+- 生产建议使用支持快照和扩容的 CSI NFS 驱动
+
+# 排障
+
+## PVC 一直 Pending
+
+- 是否有默认 StorageClass
+- provisioner 是否正常
+- 容量/访问模式是否满足
+- `volumeBindingMode: WaitForFirstConsumer` 时是否还没有 Pod 使用
+- 拓扑/可用区是否匹配
+
+```bash
+kubectl describe pvc <pvc>
+kubectl get storageclass
+kubectl get pods -n <csi-namespace>
+kubectl get events -n <ns> --sort-by=.lastTimestamp
+```
+
+## 多节点挂载失败
+
+- RWO 卷被其他节点挂载
+- 文件系统损坏或未卸载干净
+- 云盘仍挂载在旧节点
+
+查看 VolumeAttachment：
+
+```bash
+kubectl get volumeattachment
+kubectl describe volumeattachment <name>
+```
+
+## 权限问题
+
+- 容器 UID/GID 与存储目录属主不一致
+- NFS squash 配置
+- `fsGroup` 对某些 CSI 卷不生效
+- `readOnlyRootFilesystem` 下应用仍试图写根目录
+
+## 数据丢失风险
+
+- `reclaimPolicy: Delete` 时删除 PVC 会删后端存储
+- StatefulSet 的 PVC 默认不随 Pod 删除
+- 删除 Namespace 会删除其中的 PVC；PV 是否删除取决于 `reclaimPolicy`：`Delete`（动态供给默认）会同时删除 PV 和后端存储，`Retain` 则保留 PV 并进入 `Released`
+- 快照未做恢复演练
+
+# 企业实践
+
+## StorageClass 设计
+
+按性能和成本分层，而不是所有业务共用一个类：
+
+- `standard`：普通云盘/HDD，成本低
+- `ssd`：通用 SSD
+- `high-iops`：数据库、消息队列等低延迟场景
+- `archive`：冷数据、备份
+
+设计要点：
+
+- 默认类只保留一个，多个默认类行为以最近创建者为准，容易失控
+- 关键数据 `reclaimPolicy: Retain`，临时数据可以用 `Delete`
+- 默认使用 `volumeBindingMode: WaitForFirstConsumer`，避免拓扑不匹配
+- 需要扩容时设置 `allowVolumeExpansion: true`
+- 用 `mountOptions` 统一文件系统参数
+- 用 ResourceQuota 限制每个 Namespace 可用的存储总量和 PVC 数量
+- 多租户场景限制可用的 StorageClass，避免越权使用高成本存储
+
+## CSI 选型
+
+选型要看业务，不只看“能挂载”：
+
+- 块存储还是文件存储，是否需要 RWX
+- IOPS、吞吐、延迟和稳定性
+- 是否支持快照、克隆、扩容、加密
+- 是否支持拓扑感知和多可用区
+- 是否支持在线扩容和文件系统扩容
+- 多租户隔离和配额能力
+- 商业支持、升级路径和故障处理资料
+- 与 Kubernetes 版本的兼容性
+
+数据库优先块存储；共享文件、CI 缓存、内容目录可以用文件存储；对象存储不要把 PVC 当对象存储用。
+
+## 数据保护
+
+- 遵循 3-2-1：至少 3 份、2 种介质、1 份异地
+- 快照不是备份：快照通常在同一存储系统，误删、勒索、区域故障可能一起丢失
+- 数据库使用应用一致性备份（逻辑备份或一致性快照），不要只依赖卷快照
+- 关键 PVC 配置跨区域复制或定期导出
+- 备份加密，密钥独立管理
+- 定期做恢复演练，验证 RTO/RPO
+- 明确保留策略：小时/日/周/月，避免快照无限增长
+
+## 容量与配额
+
+- 用 `requests.storage` 限制 Namespace 总量
+- 用 `count/persistentvolumeclaims` 限制 PVC 数量
+- 监控 PVC 使用率、inode、IOPS、吞吐和延迟
+- 扩容要确认 StorageClass 和 CSI 支持，文件系统扩容有时需要重启 Pod
+- 定期清理未使用 PVC、Released PV 和孤儿快照
+- 容量告警要留出扩容和迁移时间
+
+## 性能
+
+- 块存储适合数据库和低延迟；文件存储适合共享读、内容目录
+- 关注 IOPS、吞吐、队列深度和尾延迟，不只看平均值
+- 数据库避免多个 Pod 同时写同一个 RWO/RWX 卷
+- 文件系统、块大小、mount options 会影响性能
+- 本地 SSD 性能好但生命周期跟节点绑定，不适合持久化关键数据
+- 用 fio 等工具做基准测试，记录基线
+
+## 多租户
+
+- 限制可用 StorageClass
+- 用 ResourceQuota 限制容量和 PVC 数量
+- 敏感数据启用加密和独立密钥
+- 网络和访问权限隔离，避免跨 Namespace 挂载
+- 明确数据归属和删除责任
+- 强隔离场景考虑独立存储后端或独立集群
+
+## 运维
+
+- 监控 CSI controller/node 组件、VolumeAttachment 和快照任务
+- 关注多挂载、挂载超时、文件系统损坏和卸载失败
+- CSI 升级前确认兼容性和回滚方案
+- 节点维护前确认卷是否能安全迁移
+- 定期检查卷的健康状态和后端容量
+- 把备份、恢复、扩容和故障处理写成 runbook
+
+## 常见坑
+
+- 删除 PVC 时 `reclaimPolicy: Delete` 会删后端数据
+- 删除 Namespace 会删 PVC，动态 PV 可能随后被删除
+- RWO 不是“单 Pod”，同一节点多个 Pod 仍可能同时挂载
+- RWX 多写需要应用处理锁和一致性
+- 多默认 StorageClass 行为不可控
+- 快照没做恢复演练，关键时刻不可用
+- 忽略 inode 和文件系统限制
+- 使用未固定版本的第三方 provisioner 镜像
+
+## 官方参考
+
+- [Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
+- [Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [Storage Classes](https://kubernetes.io/docs/concepts/storage/storage-classes/)
+- [CSI](https://kubernetes.io/docs/concepts/storage/volumes/#csi)
+- [Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
+- [动态供给](https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/)

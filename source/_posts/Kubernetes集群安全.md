@@ -1,463 +1,457 @@
 ---
 title: Kubernetes集群安全
-tags: [Kubernetes, 安全]
+tags: [Kubernetes, 安全, RBAC, PSA]
 date: 2020-04-05 19:05:37
 categories: [Kubernetes]
 comments: false
 ---
 
+本文基于 Kubernetes v1.37 官方文档重写。旧笔记中的 PodSecurityPolicy、Basic Auth、ABAC 示例和准入插件列表已经过时；本文按当前认证、鉴权、准入、运行时安全和供应链安全重新整理。
+
 <!--more-->
 
-# 云原生安全概述
+- [安全模型](#%E5%AE%89%E5%85%A8%E6%A8%A1%E5%9E%8B)
+- [认证](#%E8%AE%A4%E8%AF%81)
+- [鉴权](#%E9%89%B4%E6%9D%83)
+- [准入控制](#%E5%87%86%E5%85%A5%E6%8E%A7%E5%88%B6)
+- [Pod 安全](#pod-%E5%AE%89%E5%85%A8)
+- [Secret 与加密](#secret-%E4%B8%8E%E5%8A%A0%E5%AF%86)
+- [网络与运行时安全](#%E7%BD%91%E7%BB%9C%E4%B8%8E%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AE%89%E5%85%A8)
+- [供应链安全](#%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8)
+- [审计与监控](#%E5%AE%A1%E8%AE%A1%E4%B8%8E%E7%9B%91%E6%8E%A7)
+- [企业实践](#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5)
 
-云原生安全的 4 个 C 分别是云（Cloud）、集群（Cluster）、容器（Container）和代码（Code）。
+# 安全模型
 
-![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203251527867.png)
+Kubernetes 的安全通常按 4C 分层：
 
-1. 云（例如数据中心）是k8s集群的可信计算基（trusted computing base），如果云层容易受到攻击，就不能保证在此基础之上构建的组件是安全的。云基础设施的保护有几个关注的点：
-   - 对k8s控制平面的访问不允许在公网上开放，由网络访问控制列表控制（包含管理集群所用的IP地址集合）。
-   - 节点仅能从控制平面指定端口来连接，节点不应暴露在公网上。
-   - 对于云提供商，最好能给最小特权限制。
-   - 仅有控制平面能访问etcd，且使用tls访问
-   - etcd节点的磁盘最好能静态加密数据。
-2. 关于集群的保护分两点：一个是集群本身，一个是集群中的应用。保护集群有以下几个关注的点：
-   - 所有API交互都用tls加密
-   - 所有API客户端必须经过身份验证（如通过ServiceAccount或x509证书）
-   - 每个API多用都通过鉴权检查（如RBAC）
-   - 控制kubelet访问，默认是允许对API进行未经身份验证的访问。生产环境应启用kubelet身份认证授权。
-   - 限制集群资源使用（如ResourceQuota或LimitRange）
-   - 控制容器运行的特权，通过设置Pod安全策略，限制哪些用户或服务帐户可以提供危险的安全上下文设置。运行容器最好能用非root用户运行。
-   - 限制网络访问，通过编写网络策略（NetworkPolicy）实现。
-   - 限制云元数据API访问，在云平台上运行k8s时，需要限制对实例凭据的权限，使用网络策略限制Pod对元数据API的访问，并避免使用配置数据来传递机密信息。
-   - 控制Pod可以访问的节点（如NodeSelector或基于污点的Pod放置和放逐）
-   - 限制访问etcd，建议将etcd服务器隔离到只有API服务器可以访问的防火墙后面。
-   - 启用审计日志，能记录每个用户、使用API的应用以及控制面自身引发的活动。
-   - 限制使用 alpha 和 beta 特性
-   - 经常轮换基础设施证书，在证书上设置较短的生命期并实现自动轮换。
-   - 许多集成到k8s的第三方软件或服务都可能改变集群的安全配置。组件若能够在`kube-system`这类名字空间中创建 Pod， 则这类组件也可能获得意外的权限，因为这些Pod可以访问服务账户的Secret。
-3. 对于容器的安全性，主要关注以下几点：
-   - 容器漏洞扫描
-   - 镜像签名
-   - 禁止特权用户
-   - 使用带有较强隔离能力的容器运行时（RuntimeClass）
-4. 对于代码的安全性，主要关注以下几点：
-   - 加密传输所有内容
-   - 限制通信端口范围，只开放必要端口
-   - 定期扫描应用程序的第三方库以了解已知的安全漏洞
-   - 静态代码分析与动态探测攻击
+- **Cloud**：云账号、VPC、安全组、IAM
+- **Cluster**：apiserver、etcd、节点、证书、RBAC
+- **Container**：镜像、运行时、Pod 安全上下文
+- **Code**：应用依赖、配置、密钥、供应链
 
-集群安全性需要考虑几个目标：
+API 请求的安全链路：
 
-- 保证容器与其所在宿主机的隔离
-- 限制容器给基础设施或其他容器的干扰
-- 最小权限原则：限制单个组件的能力来限制它的权限范围
-- 明确组件间边界划分
-- 划分普通用户与管理员角色
-- 在必要时允许将管理员权限赋给普通用户
-- 允许拥有 Secret 数据的应用在集群中运行
+![API 访问控制](https://kubernetes.io/images/docs/admin/access-control-overview.svg)
 
-# K8S API 访问控制
-用户使用kubectl、客户端库或构造REST请求来访问K8S API，当请求到达API Server时，会经历以下阶段：
-1. 认证（Authentication）
-2. 鉴权（Authorization）
-3. 准入控制（Admission Control）
-
-## 认证
-在API Server与建立TLS连接后，HTTP请求进入认证步骤。API Server上运行着一个或多个身份认证组件，服务器依次尝试每个验证模块，直到其中一个成功。
-
-认证步骤的输入是整个HTTP请求，但通常情况组件只检查头部和客户端证书。
-
-认证模块包含：
-1. 客户端证书（HTTPS）
-2. 密码（HTTP Base），`"用户名:密码"`进行 BASE64 编码后的字符串放在 Header 的 Authorization 中
-3. 普通令牌（HTTP Token），Token 放在 Header 里
-4. 引导令牌
-5. JWT令牌
-
-如果请求认证不通过，服务器将以HTTP状态码`401`拒绝该请求。反之，该用户被认证为特定的`username`，并且该用户名可用于后续步骤。
-
-## 鉴权
-将请求验证为来自特定的用户后，请求必须被鉴权。
-
-请求必须包含**请求者的用户名、请求的行为以及受该操作影响的对象**。如果现有策略声明用户有权完成请求的操作，那么该请求被鉴权通过。
-
-Kubernetes 支持多种鉴权模块，例如**ABAC模式**、**RBAC 模式**和 **Webhook 模式**等。 管理员创建集群时会配置应在 API Server中使用的鉴权模块。 如果配置了多个鉴权模块，则 Kubernetes 会检查每个模块，**任意一个鉴权模块允许该请求，请求即可继续**，如果所有模块拒绝了该请求，请求将会被拒绝，返回HTTP状态码403。
-
-鉴权模块:
-- Node：节点鉴权是一种特殊用途的鉴权模式，**专门对 kubelet 发出的 API 请求进行鉴权**。
-- ABAC：**基于属性的访问控制**，通过使用将属性组合在一起的策略，将访问权限授予用户。策略可以使用任何类型的属性（用户属性、资源属性、 对象，环境属性等）
-- RBAC：**基于角色的访问控制**，权限是单个用户执行特定任务的能力，例如查看、创建或修改文件。
-- Webhook：是一个 HTTP 回调：发生某些事情时调用的 HTTP POST，从而通过 HTTP POST 进行简单的事件通知
-- AlwaysDeny：阻止所有请求。仅用于测试。
-- AlwaysAllow：允许所有请求。仅在不需要 API 请求的鉴权时才使用。
-
-在API server启动参数中添加一条`--authorization-mode=`指定鉴权模块，这条也必须配置至少一种，若配置多种则以`,`分隔，例如`--authorization-mode=Node,RBAC`，模块按顺序检查，较靠前的模块具有更高的优先级来允许或拒绝请求。
-
-可使用`kubectl auth can-i <verb> <resource>` 了解当前用户是否有权限做指定操作，可以则为`yes`，反之为`no`。
+*图 1：Kubernetes API 请求的认证、鉴权、准入流程（官方文档）*
 
 ```
-# kubectl auth can-i create deployment -n dev
-yes
-# kubectl auth can-i delete deployment -n kube-system
-yes
+请求 → 认证（你是谁）→ 鉴权（你能做什么）→ 准入（对象是否合规）→ 写入 etcd
 ```
 
-## 准入控制
-准入控制模块是可以修改或拒绝请求的软件模块。除鉴权模块可用的属性外，准入控制模块还可以访问正在创建或修改的对象的内容。
+任何一层缺失都会留下风险。
 
-准入控制器对创建、修改、删除或（通过代理）连接对象的请求进行操作。准入控制器不会对仅读取对象的请求起作用。有多个准入控制器被配置时，服务器将依次调用它们。
+# 认证
 
-**与身份认证和鉴权模块不同，如果任何准入控制器模块拒绝某请求，则该请求将立即被拒绝。**
+kube-apiserver 支持多种认证方式：
 
-## 鉴权概述
-Kubernetes 仅审查以下 API 请求属性：
-1. 用户：身份验证期间提供的`user`。
-2. 组：经过身份验证的用户所属的组名列表。
-3. 额外信息：由身份验证层提供的任意字符串键到字符串值的映射。
-4. API：指示请求是否针对 API 资源。
-5. 请求路径：各种非资源端点的路径，如 `/api` 或 `/healthz`。
-6. API 请求动词：API 动词 `get`、`list`、`create`、`update`、`patch`、`watch`、`proxy`、`redirect`、`delete` 和 `deletecollection` 用于资源请求。
-7. HTTP 请求动词：HTTP 动词 `get`、`post`、`put` 和 `delete` 用于非资源请求。
-8. Resource：正在访问的资源的 ID 或名称（仅限资源请求），对于使用 `get`、`update`、`patch` 和 `delete` 动词的资源请求必须提供资源名称。
-9. 子资源：正在访问的子资源（仅限资源请求）。
-10. 名字空间：正在访问的对象的名称空间（仅适用于名字空间资源请求）。
-11. API组：正在访问的API组 （仅限资源请求）。空字符串表示核心API组（apiVersion: v1）。
+- **X.509 客户端证书**：集群组件、kubelet、管理员常用
+- **ServiceAccount token**：Pod 内工作负载身份，推荐使用 projected token
+- **OIDC**：对接企业身份提供商
+- **Webhook token authentication**：对接外部认证服务
+- **Bootstrap token**：节点加入集群
 
-### 请求动词
-#### 非资源请求
-除`/api/v1/...`或`/apis/<group>/<version>/...`之外的请求被视为非资源请求（Non-Resource Requests），并使用该HTTP请求的小写形式作为其请求动词（如`get`）
+Basic Auth 已移除；静态 token 文件（`--token-auth-file`）仍支持，但令牌永不过期、修改需重启 apiserver，不适合生产。
 
-#### 资源请求
-| HTTP动词 | 请求动词 |
-|-|-|
-|POST|create|
-|GET, HEAD|get （针对单个资源）、list（针对集合）|
-|PUT|update|
-|PATCH | patch|
-|DELETE|	delete（针对单个资源）、deletecollection（针对集合）|
+## ServiceAccount
 
-有时使用专门的动词以对额外的权限进行鉴权。例如：
-- PodSecurityPolicy：`policy` API 组中 `podsecuritypolicies` 资源使用 `use` 动词
-- RBAC：对 `rbac.authorization.k8s.io` API 组中 `roles` 和 `clusterroles` 资源的 `bind` 和 `escalate` 动词
-- 身份认证：对核心 API 组中 `users`、`groups` 和 `serviceaccounts` 以及 `authentication.k8s.io` API 组中的 `userextras` 所使用的 `impersonate` 动词。
+ServiceAccount 是 Pod 的身份。从 v1.24 起，默认不再自动创建长期 Secret token，而是使用 projected token：
 
-
-
-## API Server 授权管理
-
-客户端发起 API server 调用时，API server 要先内部进行用户认证，然后执行用户授权，通过授权策略决定一个 API 调用是否合法。
-API server 支持的几种授权策略：
-
-
-API server 收到请求后，会读取请求中的数据，生成一个访问策略对象，然后将这个对象与策略文件中所有访问策略对象逐条匹配，只要至少一个策略通过，则请求被鉴权通过。
-
-### ABAC
-
-若要启用 ABAC，则需要指定策略文件路径`--authorization-policy-file`，策略文件中每一行为一个 JSON 对象，称为访问策略对象。
-一个对象需要包含三块：
-
-- apiVersion：设为`abac.authorization.kubernetes.io/v1beta1`
-- kind：设为`Policy`
-- spec：详细的策略配置，包含：主体属性、资源属性、非资源属性
-  - 主体属性：
-    - user：来源于 Token 文件或 base 认证的用户名
-    - group：若为`system:authenticated`则匹配所有已认证的请求，若为`system:unauthenticated`则匹配所有未认证的请求
-  - 资源属性：
-    - apiGroup：匹配哪些 API group
-    - namespace：该策略允许访问某个 namespace 的资源
-    - resource：API 资源对象
-  - 非资源属性：
-    - nonResourcePath：非资源对象类的 URL 路径
-    - readonly：若为 true，则只允许 GET 请求
-
-ABAC 授权算法：API server 收到请求后，先识别请求携带的策略对象的属性，然后根据策略对属性逐条匹配。常见策略配置：
-
-- 允许所有认证用户做某事：将 group 属性设为`system:authenticated`
-- 允许所有未认证用户做某事：将 group 属性设为`system:unauthenticated`
-- 允许一个用户做任何事：将 apiGroup、namespace、resource、nonResourcePath 都设为'\*'
-
-使用 kubelet 的授权机制：kubelet 通过 apiserver 的`/api` 和`/apis` 获取版本信息，要验证`kubectl create或update`的对象，需要向 OpenAPI 进行查询（`/openapi/v2`）
-使用 ABAC 模式时，必须对 nonResourcePath 进行设置：
-
-- /api、/apis、/api/\*、/apis/\*
-- /version
-- /swaggerapi/\*
-
-```json
-# 允许jack对所有资源操作
-{
-  "apiVersion": "abac.authorization.kubernetes.io/v1beta1",
-  "kind": "Policy",
-  "spec": {
-    "user": "jack",
-    "namespace": "*",
-    "resource": "*",
-    "apiGroup": "*"
-  }
-}
-
-# kubelet可读任意pod
-{
-  "apiVersion": "abac.authorization.kubernetes.io/v1beta1",
-  "kind": "Policy",
-  "spec": {
-    "user": "*",
-    "namespace": "*",
-    "resource": "pods",
-    "readonly": true
-  }
-}
-
-# kubelet可读写event对象
-{
-  "apiVersion": "abac.authorization.kubernetes.io/v1beta1",
-  "kind": "Policy",
-  "spec": {
-    "user": "kubelet",
-    "namespace": "*",
-    "resource": "events"
-  }
-}
-
-# bob只能读namespace为dev中的pod
-{
-  "apiVersion": "abac.authorization.kubernetes.io/v1beta1",
-  "kind": "Policy",
-  "spec": {
-    "user": "bob",
-    "namespace": "dev",
-    "resource": "pods",
-    "readonly": true
-  }
-}
-
-# 任何用户能对nonResourcePath进行只读请求
-{
-  "apiVersion": "abac.authorization.kubernetes.io/v1beta1",
-  "kind": "Policy",
-  "spec": {
-    "group": {
-      "system": "authenticated"
-    },
-    "readonly": true,
-    "nonResourcePath": "*"
-  }
-}
-```
-
-### RBAC
-
-RBAC 的优势：
-
-- 对集群的资源和非资源权限都有完整的覆盖
-- 整个 RBAC 完全由几个 API 对象完成，可用 kubectl 或 API 操作
-- 可在运行时调整，无需重启 API server
-
-RBAC 有 4 个顶级资源对象：
-
-- Role：一个角色是一组权限的集合，都是许可形式。若是集群级别，则需要使用 ClusterRole。
-  ```yaml
-  apiVersion: rbac.authorization.k8s.io/v1
-  kind: Role
-  metadata:
-    namespace: default
-    name: pod-reader
-  rules:
-    - apiGroups: [""]
-    resources: ["pods"]
-    verbs: ["get", "watch", "list"]
-  ```
-  rules 中参数：
-  - apiGroups：支持的 API 组列表
-  - resources：支持的资源对象列表
-  - verbs：对资源对象的操作方法列表
-- ClusterRole：除了 Role 的功能外，还可用于特殊元素的授权：
-  - 集群范围的资源，如 Node
-  - 非资源型的路径
-  - 全部命名空间的资源
-  ```yaml
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: ClusterRole
-    metadata:
-    rules:
-    - apiGroups: [""]
-        resources: ["secrets"]
-        verbs: ["get", "watch", "list"]
-  ```
-  ClusterRole 不受限于命名空间，所以无须设置 metadata 的 namespace
-- RoleBinding 和 ClusterRoleBinding：用于将一个角色绑定到一个目标上，目标可以是 user 或 group 或 Service Account
-
-
-### Admission Control
-请求通过认证和鉴权后，还不能得到响应，需要先经过Admission Control准入控制链，才能得到响应。
-
-在kube-apiserver服务器上执行以下命令，就能看到默认已开启的准入控制器以及全部控制器列表
-```
-# kube-apiserver -h | grep enable-admission-plugins
-      --enable-admission-plugins strings      
-```
-
-以下为默认开启：
-- NamespaceLifecycle
-- LimitRanger
-- ServiceAccount
-- TaintNodesByCondition
-- Priority
-- DefaultTolerationSeconds
-- DefaultStorageClass
-- PersistentVolumeClaimResize
-- RuntimeClass
-- CertificateApproval
-- CertificateSigning
-- CertificateSubjectRestriction
-- DefaultIngressClass
-- MutatingAdmissionWebhook
-- ValidatingAdmissionWebhook
-- ResourceQuota
-
-以下为非默认开启：
-- AlwaysAdmit
-- AlwaysDeny
-- AlwaysPullImages
-- DenyEscalatingExec
-- DenyExecOnPrivileged
-- EventRateLimit
-- ExtendedResourceToleration
-- ImagePolicyWebhook
-- LimitPodHardAntiAffinityTopology
-- MutatingAdmissionWebhook
-- NamespaceAutoProvision
-- NamespaceExists
-- NodeRestriction
-- OwnerReferencesPermissionEnforcement
-- PersistentVolumeClaimResize
-- PersistentVolumeLabel
-- PodNodeSelector
-- PodPreset
-- PodSecurityPolicy
-- PodTolerationRestriction
-- SecurityContextDeny
-- StorageObjectInUseProtection
-
-### Service Account
-
-
-# Secret
-Secret用于保管私密数据，如密码、Token、SSH key等信息。
-
-|内置类型	|用法|
-|--|--|
-|Opaque	                             | 用户定义的任意数据|
-|kubernetes.io/service-account-token | 服务账号令牌|
-|kubernetes.io/dockercfg             | ~/.dockercfg 文件的序列化形式|
-|kubernetes.io/dockerconfigjson	     | ~/.docker/config.json 文件的序列化形式|
-|kubernetes.io/basic-auth            | 用于基本身份认证的凭据|
-|kubernetes.io/ssh-auth              | 用于 SSH 身份认证的凭据|
-|kubernetes.io/tls                   | 用于 TLS 客户端或者服务器端的数据|
-|bootstrap.kubernetes.io/token       | 启动引导令牌数据|
-
-通过`type` 字段设置Secret的类型。如果 `type` 值为空字符串（即没设置type参数），则被视为 `Opaque` 类型。
-
-注：data域的各子域的值必须为BASE64编码
-
-当pod被APIserver创建是，APIserver不会校验该pod引用的secert是否存在，一旦这个pod被调度，则kubelet会尝试获取该secert值。
-
-若secert不存在或暂时无法连接到APIserver，kubelet会按一定时间间隔定期重试获取该secert值，并发送一个Event解释pod没有启动的原因。
-一旦secert被pod获取，则kubelet会创建并挂载包含secert的volume。只有所有的volume都挂载成功，pod中的container才会被启动。**在kubelet启动pod中的container后，container中和secert相关的volume将不会被改变，即使secret本身被修改**，因此若要让pod使用更新后的secret，则需要重启pod。
-
-## 创建Opaque类型
-### 通过yaml创建
-创建一个包含username=admin，password=123456的secret
-首先对值进行base64编码，echo后的`-n`一定要加，不加就会把`\n`也一起编码了
-```
-echo -n "admin" | base64
-echo -n "123456" | base64
-```
-编写以下yaml文件
 ```yaml
-apiVersion: v1
-data:
-  password: MTIzNDU2
-  username: YWRtaW4=
-kind: Secret
-metadata:
-  name: secret-test
-  namespace: default
-type: Opaque
+volumes:
+- name: token
+  projected:
+    sources:
+    - serviceAccountToken:
+        path: token
+        expirationSeconds: 3600
 ```
 
-### 通过命令行创建
-- `--from-literal`
-  ```
-  kubectl create secret generic secret-test --from-literal=username=admin --from-literal=password=123456
-  ```
-- `--from-env-file`
-  ```
-  # 先编写account.env文件（名字随意）
-  # cat account.env
-  username=admin
-  password=123456
+最佳实践：
 
-  # kubectl create secret generic secret-test --from-env-file=account.env
-  ```
-- `--from-file`
-  ```
-  # kubectl create secret generic my-secret --from-file=ssh-privatekey=/root/.ssh/id_rsa
+- 每个应用使用独立 ServiceAccount
+- 不需要访问 API 时设置 `automountServiceAccountToken: false`
+- 用 RBAC 只授予必要权限
+- 不要把 token 写进镜像或 ConfigMap
 
-  apiVersion: v1
-  data:
-  ssh-privatekey: LS0tLS1CRUdJTiBSU0EgUFJJV.........................
-  kind: Secret
-  metadata:
-    name: my-secret
-  type: Opaque
-  ```
+## 证书
 
-## 创建dockerconfigjson类型
-### 通过yaml创建
-先对~/.docker/config.json文件进行base64编码
+kubeadm 集群的证书：
+
+```bash
+kubeadm certs check-expiration
+kubeadm certs renew all
 ```
-# cat /root/.docker/config.json | base64
-```
-将加密后的字符串填入yaml文件
+
+renew 后需要在每个控制面节点重启 apiserver、controller-manager、scheduler 等静态 Pod（移走 manifest 或重启 kubelet），旧进程不会自动重新加载证书。
+
+要点：
+
+- CA 有效期长，叶子证书通常 1 年
+- 升级时注意轮换
+- kubelet 客户端证书可以开启自动轮换
+- `--insecure-port` 已在 v1.24 移除，不要跳过 TLS 校验
+
+# 鉴权
+
+鉴权模块按 `--authorization-mode` 顺序检查：
+
+- 第一个明确 allow 或 deny 的模块决定结果
+- 如果所有模块都返回 no opinion，请求被拒绝
+- RBAC 没有 deny 规则，最小权限靠“只授予需要的 verb/resource”
+
+## RBAC
+
+四个对象：
+
+- `Role`：命名空间级权限
+- `ClusterRole`：集群级权限，或跨命名空间复用
+- `RoleBinding`：把 Role/ClusterRole 绑定到主体
+- `ClusterRoleBinding`：集群级绑定
+
 ```yaml
-apiVersion: v1
-data:
-  .dockerconfigjson: |
-    ................................
-kind: Secret
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  name: my-secret
-type: kubernetes.io/dockerconfigjson
-```
-
-### 通过命令行创建
-
-- 命令行中输入仓库信息
-  ```
-  # kubectl create secret docker-registry my-secret --docker-server=DOCKER_REGISTRY_SERVER --docker-username=DOCKER_USER --docker-password=DOCKER_PASSWORD --docker-email=DOCKER_EMAIL
-  ``` 
-- 从已有的config.json创建
-  ```
-  # kubectl create secret docker-registry my-secret --from-file=.dockerconfigjson=path/to/.docker/config.json
-  ```
-
-### 使用secret进行pod拉取镜像时鉴权
-由上述方法创建完secret后，在workload资源中添加`imagePullSecrets`添加即可。
-```yaml
-apiVersion: apps/v1
-kind: Deployment
+  namespace: prod
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
 metadata:
+  namespace: prod
+  name: read-pods
+subjects:
+- kind: ServiceAccount
   name: app
-spec:
-  ......
-  template:
-    ......
-    spec:
-      containers:
-      .....
-      imagePullSecrets:
-      - name: my-secret
+  namespace: prod
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
 ```
 
-# Pod 安全策略配置
+常见高危权限：
+
+- `secrets` 的 `get/list/watch`
+- `pods/exec`、`pods/attach`
+- `pods/portforward`
+- `serviceaccounts/token` 的 `create`
+- `clusterrolebindings` 的 `create`
+- `escalate`、`bind`、`impersonate`
+
+## 鉴权排障
+
+```bash
+kubectl auth can-i get pods -n prod
+kubectl auth can-i --list -n prod
+kubectl auth whoami
+kubectl get rolebinding,clusterrolebinding -A
+```
+
+`kubectl auth can-i --list` 能看到当前身份的权限集合，是排查 403 的第一步。
+
+# 准入控制
+
+认证和鉴权通过后，请求还要经过准入控制：
+
+- **MutatingAdmissionWebhook**：修改对象，例如注入 Sidecar
+- **ValidatingAdmissionWebhook**：校验对象
+- **Pod Security Admission**：按命名空间执行 Pod 安全标准
+- **ValidatingAdmissionPolicy**：用 CEL 写校验规则，无需 Webhook
+
+![准入控制阶段](https://kubernetes.io/images/blog/2019-03-21-a-guide-to-kubernetes-admission-controllers/admission-controller-phases.png)
+
+*图 2：准入控制阶段（Kubernetes 官方博客）*
+
+Webhook 要注意：
+
+- `failurePolicy: Fail` 会在 Webhook 不可用时阻断请求，可能造成集群级故障
+- 用 `namespaceSelector`、`objectSelector`、`matchConditions` 缩小范围
+- 设置 `timeoutSeconds`，避免请求长时间挂起
+- Webhook 自身要有多副本、PDB 和监控
+
+PodSecurityPolicy 已在 v1.25 移除，不要再使用。
+
+# Pod 安全
+
+## Pod Security Admission
+
+PSA 是内置的准入控制器，按命名空间标签执行三档标准：
+
+- `privileged`：几乎不限制
+- `baseline`：阻止已知提权
+- `restricted`：最严格，要求非 root、禁止提权、限制能力、seccomp 等
+
+```yaml
+metadata:
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+```
+
+建议先在 `audit`/`warn` 模式观察，再切 `enforce`。PSA 覆盖不到细粒度策略时，用 Kyverno、Gatekeeper 或 ValidatingAdmissionPolicy 补足。
+
+## SecurityContext
+
+Pod 级：
+
+```yaml
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+```
+
+容器级：
+
+```yaml
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+```
+
+`fsGroup` 只能放在 Pod 级；`allowPrivilegeEscalation`、`readOnlyRootFilesystem`、`capabilities` 只能放在容器级。混用会被 API 校验拒绝。
+
+容器级别还可以设置：
+
+```yaml
+securityContext:
+  privileged: false
+  capabilities:
+    add: ["NET_BIND_SERVICE"]
+```
+
+原则：
+
+- 默认非 root
+- 禁止 privilege escalation
+- 裁剪 capabilities
+- 启用 seccomp/AppArmor
+- 只读 rootfs，需要写入的目录挂 volume
+- 不要挂载 `/var/run/docker.sock`
+- 不要使用 `hostNetwork`、`hostPID`、`hostIPC`，除非确有必要
+
+# Secret 与加密
+
+Secret 默认只是 base64 编码，不是加密。任何能读 Secret 的人都能解码。
+
+生产建议：
+
+- 启用 etcd 静态加密（EncryptionConfiguration，推荐 KMS v2）
+- RBAC 限制 Secret 读取
+- 优先 volume 挂载，少用环境变量
+- 使用 External Secrets Operator、Vault、云 KMS 等外部密钥管理
+- 普通 Secret 不会自动轮换，需要用 External Secrets、Vault 或应用双密钥方案实现；ServiceAccount token 由 kubelet 自动轮换
+- 不要把 Secret 提交到 Git
+
+etcd 加密配置示例：
+
+```yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+- resources:
+  - secrets
+  providers:
+  - kms:
+      apiVersion: v2
+      name: my-kms
+      endpoint: unix:///var/run/kms-plugin.sock
+      timeout: 3s
+  - identity: {}
+```
+
+`identity` 作为最后的回退，表示未加密读取；生产要确认加密 provider 生效。
+
+# 网络与运行时安全
+
+## NetworkPolicy
+
+默认拒绝入站：
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: prod
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress"]
+```
+
+NetworkPolicy 需要 CNI 支持。它不是身份认证，不能替代 mTLS 和授权。
+
+## 运行时安全
+
+- 使用 containerd/CRI-O，不用 dockershim
+- 启用 seccomp `RuntimeDefault`
+- 启用 AppArmor 或 SELinux
+- 限制节点上的特权容器
+- 定期扫描镜像漏洞
+- 使用只读根文件系统
+- 监控异常进程、异常网络连接和容器逃逸
+
+# 供应链安全
+
+- 镜像固定 digest，不用浮动 tag
+- 只从可信仓库拉取镜像
+- 使用 cosign/Notation 做镜像签名
+- 生成并校验 SBOM
+- 在准入层校验签名和漏洞等级（Kyverno、Gatekeeper、Sigstore Policy Controller）
+- 扫描依赖和基础镜像
+- 限制构建凭据，不在 Dockerfile 中写密钥
+- 使用 SLSA provenance 或类似构建证明
+
+# 审计与监控
+
+启用 apiserver 审计日志：
+
+```yaml
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+  resources:
+  - group: ""
+    resources: ["secrets"]
+- level: RequestResponse
+  resources:
+  - group: ""
+    resources: ["configmaps"]
+  verbs: ["create", "update", "patch", "delete"]
+```
+
+关注：
+
+- 谁读取了 Secret
+- 谁创建了 ClusterRoleBinding
+- 谁执行了 `pods/exec`
+- 谁修改了 PSA 标签
+- 异常 ServiceAccount token 使用
+- 异常外部访问和 NodePort 暴露
+
+# 企业实践
+
+## 最小权限
+
+- 每个应用使用独立 ServiceAccount
+- 默认 `automountServiceAccountToken: false`
+- Role 只授予需要的 verb/resource，不用 `*`
+- 禁止给应用 `cluster-admin` 或 `system:masters`
+- 高危权限单独审批：`secrets`、`pods/exec`、`pods/portforward`、`serviceaccounts/token`、`escalate`、`bind`、`impersonate`
+- 建立权限申请、审批、到期回收流程
+- 定期审计 RBAC，清理闲置账号、过期 token 和不再使用的绑定
+- 用 `kubectl auth can-i --list` 和工具做权限可视化
+
+## 多租户
+
+隔离层次：
+
+- 软多租户：Namespace + RBAC + Quota + NetworkPolicy + PSA
+- 强隔离：vCluster、独立集群、独立 etcd/网络/存储
+
+落地要点：
+
+- Namespace 按团队/环境/业务域划分
+- ResourceQuota 限制总量，LimitRange 设置默认值
+- NetworkPolicy 默认拒绝，按依赖放行
+- PSA baseline/restricted
+- 限制可用 StorageClass、镜像仓库、NodePort 和 LoadBalancer
+- 敏感数据独立加密密钥
+- 明确平台团队和租户的责任边界
+
+## 集群基线
+
+- 控制面只暴露必要端口，apiserver 不暴露公网
+- etcd 只监听内网，启用 TLS 和客户端证书
+- 启用审计日志和 etcd 静态加密
+- 启用 PSA，至少 baseline
+- 限制 NodePort 和 LoadBalancer，入口统一
+- 节点最小化，及时打补丁，禁用不必要服务
+- 启用 seccomp/AppArmor，限制特权容器
+- 定期做 CIS Benchmark、kube-bench 和渗透测试
+- 控制面、节点、etcd 的证书和 kubeconfig 纳入安全管理
+
+## 供应链安全
+
+- 镜像只从可信仓库拉取，固定 digest
+- 构建环境隔离，构建凭据最小权限
+- 生成 SBOM，记录依赖和构建来源
+- 用 cosign/Notation 做镜像签名
+- 准入层校验签名、漏洞等级和来源
+- 定期扫描基础镜像、依赖和运行时漏洞
+- 禁止在 Dockerfile、ConfigMap、Git 中写密钥
+- 保留构建证明和审计记录
+
+## 审计与监控
+
+审计策略建议：
+
+- 元数据级别记录大多数请求
+- 对 Secret、RBAC、exec、节点操作提高级别
+- 避免对所有资源开 `RequestResponse`，日志量和敏感数据风险大
+- 审计日志接入 SIEM，设置保留周期
+
+重点告警：
+
+- 读取 Secret 的异常身份
+- 创建 ClusterRoleBinding 或提权
+- `pods/exec` 进入生产容器
+- 修改 PSA 标签或准入策略
+- ServiceAccount token 异常使用
+- 异常外部访问、NodePort 暴露和镜像拉取失败
+
+## 应急
+
+**Secret 泄露**
+
+1. 立即轮换 Secret 或撤销 token
+2. 检查审计日志，确认读取范围
+3. 排查使用该 Secret 的工作负载和外部系统
+4. 评估是否需要隔离节点或回滚
+
+**容器逃逸**
+
+1. 隔离节点，停止调度
+2. 保留现场：容器、镜像、进程、网络连接
+3. 排查特权容器、hostPath、hostNetwork、危险 capability
+4. 检查是否有横向移动和凭据泄露
+5. 修复后重新镜像和重建节点
+
+**镜像投毒**
+
+1. 阻断仓库或镜像
+2. 回滚到已知安全版本
+3. 重新扫描全部镜像和运行中容器
+4. 校验签名和 SBOM
+5. 审计构建链和凭据
+
+**RBAC 提权**
+
+1. 撤销可疑绑定和 token
+2. 审计 ServiceAccount、Webhook 和控制器
+3. 检查是否有后门资源或恶意 Job
+4. 收紧准入和 RBAC 策略
+
+## 官方参考
+
+- [访问控制](https://kubernetes.io/docs/concepts/security/controlling-access/)
+- [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+- [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
+- [Secret 最佳实践](https://kubernetes.io/docs/concepts/security/secrets-good-practices/)
+- [加密数据](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/)
+- [审计](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
