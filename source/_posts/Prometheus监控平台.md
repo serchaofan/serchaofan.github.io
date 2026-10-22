@@ -14,22 +14,22 @@ Prometheus 是 CNCF 毕业项目，最初由 SoundCloud 开发，现已成为云
 
 <!-- more -->
 
-- [Prometheus 简介](#Prometheus-简介)
-- [核心架构](#核心架构)
-- [数据模型](#数据模型)
-- [安装与启动](#安装与启动)
-- [配置体系](#配置体系)
-- [服务发现与 Relabel](#服务发现与-Relabel)
-- [PromQL](#PromQL)
-- [告警与 Alertmanager](#告警与-Alertmanager)
-- [Kubernetes 监控](#Kubernetes-监控)
-- [生产实践](#生产实践)
-- [高可用与长期存储](#高可用与长期存储)
-- [安全](#安全)
-- [自监控与排错](#自监控与排错)
-- [升级到 Prometheus 3.x](#升级到-Prometheus-3-x)
-- [最佳实践清单](#最佳实践清单)
-- [参考资料](#参考资料)
+- [Prometheus 简介](#prometheus-%E7%AE%80%E4%BB%8B)
+- [核心架构](#%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84)
+- [数据模型](#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B)
+- [安装与启动](#%E5%AE%89%E8%A3%85%E4%B8%8E%E5%90%AF%E5%8A%A8)
+- [配置体系](#%E9%85%8D%E7%BD%AE%E4%BD%93%E7%B3%BB)
+- [服务发现与 Relabel](#%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E4%B8%8E-relabel)
+- [PromQL](#promql)
+- [告警与 Alertmanager](#%E5%91%8A%E8%AD%A6%E4%B8%8E-alertmanager)
+- [Kubernetes 监控](#kubernetes-%E7%9B%91%E6%8E%A7)
+- [生产实践](#%E7%94%9F%E4%BA%A7%E5%AE%9E%E8%B7%B5)
+- [高可用与长期存储](#%E9%AB%98%E5%8F%AF%E7%94%A8%E4%B8%8E%E9%95%BF%E6%9C%9F%E5%AD%98%E5%82%A8)
+- [安全](#%E5%AE%89%E5%85%A8)
+- [自监控与排错](#%E8%87%AA%E7%9B%91%E6%8E%A7%E4%B8%8E%E6%8E%92%E9%94%99)
+- [升级到 Prometheus 3.x](#%E5%8D%87%E7%BA%A7%E5%88%B0-prometheus-3x)
+- [最佳实践清单](#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E6%B8%85%E5%8D%95)
+- [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
 
 # Prometheus 简介
 

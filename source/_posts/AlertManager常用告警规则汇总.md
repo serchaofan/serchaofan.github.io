@@ -6,13 +6,17 @@ date: 2022-07-10 15:44:12
 ---
 <!--more-->
 
+> 复核说明（2026-10）：以下规则是示例集合，不是开箱即用模板。`env`、`dept`、`project`、`addr` 等标签依赖 relabel 注入；指标名依赖具体 Exporter 版本。直接使用前请先执行 `promtool check rules`，并在测试环境验证阈值和标签。生产环境建议统一使用 ASCII `alertname`、明确 `severity`、补充 `runbook_url`，并避免把原因型指标全部设为 page。
+>
+> 本次复核重点修正了无效 PromQL、gauge/counter 误用、逻辑反转、全角正则、阈值与描述不一致等问题；末尾补充了规则治理建议。
+
 # 主机
 ```yaml
 groups:
 - name: 主机监控告警 # host_alert
   rules:
   - alert: "CPU负载"
-    expr: node_load15 > on(instance, env, dept,group, job, project) (count by(instance, env, group, job, project) (node_cpu_seconds_total{mode="idle"}) * 5)
+    expr: node_load15 / on(instance) count by(instance) (node_cpu_seconds_total{mode="idle"}) > 5
     for: 5m
     labels:
       severity: critical
@@ -21,7 +25,7 @@ groups:
       summary: CPU负载过高
 
   - alert: "CPU使用率大于90%"
-    expr: 100- (avg by(instance, env, dept,group, job, project) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+    expr: 100 - avg by(instance, env, dept, group, job, project) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 90
     for: 5m
     labels:
       severity: critical
@@ -29,15 +33,15 @@ groups:
       description: '实例: {{$labels.instance}} CPU使用率为{{ $value| printf `%.2f`}}%持续时间5分钟'
 
   - alert: "磁盘使用率"
-    # 磁盘使用率
-    # expr: (100 - ((node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"})) > 80
-    # 剩余多少G
-    expr: (node_filesystem_avail_bytes{device!="rootfs",mountpoint!~"/boot|/selinux|/cgroup/.*|/mnt/.*|/run.*"} / 1024 ^ 3 < 10) and ((1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 > 90)
+    expr: |
+      (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/boot|/selinux|/cgroup/.*|/mnt/.*|/run.*"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/boot|/selinux|/cgroup/.*|/mnt/.*|/run.*"}) * 100 > 90
+      and on(instance, device, mountpoint)
+      node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint!~"/boot|/selinux|/cgroup/.*|/mnt/.*|/run.*"} / 1024^3 < 10
     for: 5m
     labels:
       severity: warning
     annotations:
-      description: '实例: {{$labels.instance}} 剩余空间为{{ $value|printf `%.2f`}}G'
+      description: '实例: {{$labels.instance}} 挂载点 {{$labels.mountpoint}} 磁盘使用率为 {{ $value | printf `%.2f` }}%'
       summary: 剩余空间不足
 
   - alert: "主机离线"
@@ -67,7 +71,7 @@ groups:
       description: '{{if (gt $value 0.95)}} 【严重】[Uh-Oh] {{else if (gt $value 0.9)}} 【预警】[Hot] {{else}} 【提醒】[Staple] {{end}}实例: {{$labels.instance}}文件打开数达到最大限制的{{ $value }}'
       summary: 文件打开数达到90%
 
-  - alert: 内存使用率大于92%
+  - alert: 内存使用率大于95%
     expr: 100 - ((node_memory_MemAvailable_bytes * 100) / node_memory_MemTotal_bytes) > 95
     for: 10m
     labels:
@@ -84,13 +88,13 @@ groups:
       description: '实例:{{$labels.instance}} 内存使用率为{{ $value| printf `%.2f`}}%持续时间为5分钟'
 
   - alert: 主机swap内存使用率
-    expr: (1 - (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)) * 100 > 80
+    expr: (1 - (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)) * 100 > 80 and (node_memory_SwapTotal_bytes > 0)
     for: 3m
     labels:
       severity: warning
     annotations:
       description: '实例: {{$labels.instance}} swap内存使用率为{{ $value| printf `%.2f`}}%'
-      summary: swap内存使用率超过90%
+      summary: swap内存使用率超过80%
 
   - alert: 主机事件OOM kill # HostOomKillDetected
     expr: increase(node_vmstat_oom_kill[2m]) > 0
@@ -102,21 +106,21 @@ groups:
       summary: "主机2分钟内发生过 OOM kill"
 
   - alert: 流出网络带宽TX过高  # OuNetworkUsage
-    expr: ((sum by(instance,addr,env) (rate(node_network_transmit_bytes_total{device!~"tap.*|veth.*|br.*|docker.*|virbr*|lo*"}[5m])))) / 1024 / 1024 > 500
+    expr: sum by(instance,addr,env) (rate(node_network_transmit_bytes_total{device!~"tap.*|veth.*|br.*|docker.*|virbr.*|lo"}[5m])) / 1024 / 1024 > 500
     for: 10m
     labels:
       severity: warning
     annotations:
-      description: '实例: {{$labels.instance}} TX带宽为{{$value| printf `%.2f`}}Mbps'
+      description: '实例: {{$labels.instance}} TX带宽为{{$value| printf `%.2f`}}MB/s'
       summary: 流出网络带宽过高
 
   - alert: 流入网络带宽RX过高  # IntNetworkUsage
-    expr: ((sum by(instance,addr,env) (rate(node_network_receive_bytes_total{device!~"tap.*|veth.*|br.*|docker.*|virbr*|lo*"}[5m])))) / 1024 /1024 > 500
+    expr: sum by(instance,addr,env) (rate(node_network_receive_bytes_total{device!~"tap.*|veth.*|br.*|docker.*|virbr.*|lo"}[5m])) / 1024 /1024 > 500
     for: 10m
     labels:
       severity: warning
     annotations:
-      description: '实例: {{$labels.instance}} RX带宽为{{$value| printf `%.2f`}}Mbps'
+      description: '实例: {{$labels.instance}} RX带宽为{{$value| printf `%.2f`}}MB/s'
       summary: 流入网络带宽过高
 
   - alert: TCP连接数 # TcpUsage
@@ -286,7 +290,8 @@ groups:
       summary: "ES进程CPU使用百分比大于80%"
 
   - alert: "ES_os_load5"
-    expr: irate(elasticsearch_os_load5[5m])  > 10
+    expr: elasticsearch_os_load5 > 10
+    for: 5m
     labels:
       severity: warning
     annotations:
@@ -311,14 +316,14 @@ groups:
       description: "ES集群:{{$labels.app}} 线程池操作排队数为:{{ $value| printf `%.2f`}}"
       summary: "ES线程池操作排队 is not 0"
 
-  - alert: "ES线程池线程活动"
-    expr: elasticsearch_thread_pool_active_count{type="management"} < 1
+  - alert: "ES线程池拒绝"
+    expr: increase(elasticsearch_thread_pool_rejected_count[5m]) > 0
     for: 5m
     labels:
       severity: warning
     annotations:
-      description: "ES集群:{{$labels.app}} 线程池线程活动数为:{{ $value| printf `%.2f`}}"
-      summary: "ES线程池线程活动数异常"
+      description: "ES集群:{{$labels.app}} 线程池 {{$labels.type}} 5分钟拒绝数为:{{ $value| printf `%.f`}}"
+      summary: "ES线程池出现拒绝任务"
 
   - alert: "打开文件描述符超过系统最大值的90%"
     expr: (elasticsearch_process_open_files_count/max_file_descriptor_count) * 100 > 90
@@ -329,12 +334,13 @@ groups:
       description: "ES集群:{{$labels.app}} 打开文件描述符使用率为:{{ $value| printf `%.2f`}}"
 
   - alert: "JVM GC次数"
-    expr: irate(elasticsearch_jvm_gc_collection_seconds_count[1m]) > 8
+    expr: increase(elasticsearch_jvm_gc_collection_seconds_count[1m]) > 8
+    for: 5m
     labels:
       severity: warning
     annotations:
       description: "ES集群:{{$labels.app}} 主机:{{$labels.host}} gc:{{$labels.gc}} 1分钟GC次数为:{{ $value| printf `%.2f`}}"
-      summary: "每分钟GC数量大于3"
+      summary: "每分钟GC次数大于8"
 
   - alert: ES tripped for breaker(断路器跳闸)
     expr: elasticsearch_breakers_tripped > 0
@@ -388,7 +394,7 @@ groups:
       description: "mysql实例: {{$labels.instance}} 连接数超过90%"
 
   - alert: 主从同步延迟告警 # MySQLReplicationLag
-    expr: (mysql_slave_status_seconds_behind_master > 300) and on(instance) (predict_linear(mysql_slave_status_seconds_behind_master[5m], 60 * 2) > 0)
+    expr: (mysql_slave_status_seconds_behind_master > 120) and on(instance) (predict_linear(mysql_slave_status_seconds_behind_master[5m], 120) > 0)
     for: 5m
     labels:
       severity: warning
@@ -414,23 +420,14 @@ groups:
       summary: "文件打开数达到80%"
       description: "mysql实例:{{ $labels.instance }} 文件打开数值为: {{ $value }}"
 
-  - alert: 从同步延迟告警 # slave delay
-    expr: mysql_slave_status_seconds_behind_master > 120
-    for: 1m
-    labels:
-      severity: warning
-    annotations:
-      summary: "主从同步延迟"
-      description: "从库{{ $labels.instance }}与主库{{ $labels.master_host }}延迟:{{ $value }} 秒"
-
   - alert: "慢SQL告警"
-    expr: rate(mysql_global_status_slow_queries[5m]) > 300
+    expr: increase(mysql_global_status_slow_queries[5m]) > 300
     for: 5m
     labels:
       alertname: "mysql慢SQL告警"
       severity: "warning"
     annotations:
-      summary: "mysql出现慢SQL告"
+      summary: "mysql出现慢SQL告警"
       description: "mysql实例:{{ $labels.instance }}出现慢SQL{{ $value| printf `%.f`}}次"
 ```
 
@@ -440,7 +437,7 @@ groups:
 - name: redis_alert
   rules:
   - alert: "内存使用率超过" # RedisMemoryUsage
-    expr: redis_memory_used_bytes/redis_config_maxmemory * 100  != +Inf > 80
+    expr: (redis_memory_used_bytes / redis_config_maxmemory * 100 > 80) and (redis_config_maxmemory > 0)
     for: 1m
     labels:
       severity: "critical"
@@ -473,7 +470,7 @@ groups:
 - name: "nginx告警"
   rules:
   - alert: "nginx_reading异常告警"
-    expr: increase(nginx_vts_main_connections{ status=~"reading"}[3m]) > 2
+    expr: avg_over_time(nginx_vts_main_connections{status="reading"}[3m]) > 2
     for: 3m
     labels:
       severity: "warning"
@@ -523,7 +520,7 @@ groups:
       summary: "pod不可调度"
 
   - alert: "node可运行pod数量不足告警"
-    expr: count by(node,project,env,dept) ((kube_pod_status_phase{name=~".+",phase="Running"} == 1) * on(instance,pod,namespace,name,dept) group_left(node) topk by(instance,pod,namespace,name) (1, kube_pod_info{name=~".+",}))/max by(node,project,env) (kube_node_status_capacity{name=~".+",resource="pods"} != 1) *100 >= 80
+    expr: sum by(node) (kube_pod_info) / on(node) kube_node_status_capacity{resource="pods"} * 100 > 90
     for: 5m
     labels:
       severity: "critical"
@@ -572,12 +569,14 @@ groups:
       summary: "pod运行处于终止状态"
 
   - alert: "pod5分钟内发生过OOM告警"
-    expr: increase(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[5m]) > 0
+    expr: changes(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[5m]) > 0
+    for: 1m
     labels:
       alertname: "pod发生OOM告警"
       severity: "critical"
     annotations:
       description: "pod:{{$labels.name}}-{{$labels.namespace}}-{{$labels.pod}} 发生OOM!"
+      summary: "pod 5分钟内发生过 OOMKill"
 
   - alert: "pod发生重启告警"
     expr: increase(kube_pod_container_status_restarts_total{namespace!="kube-system"}[5m]) > 1
@@ -614,7 +613,11 @@ groups:
       description: "{{$labels.pod}}占用磁盘空间量为:{{ $value| printf `%.f` }} G"
 
   - alert: "pod内存使用率告警"
-    expr: sum by(pod_name, namespace,project,pod,env,dept) (container_memory_rss{image!=""}) / sum by(pod_name, namespace,project,pod,env,dept) (container_spec_memory_limit_bytes{image!=""}) * 100 != +Inf > 96
+    expr: |
+      (sum by(pod_name, namespace, project, pod, env, dept) (container_memory_rss{image!=""})
+       / sum by(pod_name, namespace, project, pod, env, dept) (container_spec_memory_limit_bytes{image!=""}) * 100 > 96)
+      and
+      (sum by(pod_name, namespace, project, pod, env, dept) (container_spec_memory_limit_bytes{image!=""}) > 0)
     for: 5m
     labels:
       alertname: "pod 内存使用率告警"
@@ -630,7 +633,7 @@ groups:
       severity: "critical"
     annotations:
       summary: "{{$labels.pod}} CPU使用率为:{{ $value| printf `%.2f` }} %"
-      description: "CPU使用率超过80%"
+      description: "CPU使用率超过90%"
 
   - alert: "pod 出网带宽大于100MB"
     expr: round(sum by (namespace,job,name,project,env,dept) (irate(container_network_transmit_bytes_total{image!=""}[5m]))  / 1024 /1024*1000)/1000 > 100
@@ -641,7 +644,7 @@ groups:
       summary: "{{$labels.pod}}出网带宽为:{{ $value| printf `%.2f` }} MB"
 
   - alert: "pod 入网带宽大于10MB"
-    expr: round(sum by (namespace,job,name,project,env,dept) (irate(container_network_receive_bytes_total{image!=""}[5m]))  / 1024 /1024*1000)/1000 > 100
+    expr: round(sum by (namespace,job,name,project,env,dept) (irate(container_network_receive_bytes_total{image!=""}[5m]))  / 1024 /1024*1000)/1000 > 10
     for: 3m
     labels:
       severity: "warning"
@@ -686,7 +689,7 @@ groups:
       severity: "critical"
     annotations:
       description: "kafka:{{$labels.app}}消息未消费的数量为:{{ $value| printf `%.f` }}"
-      summary: "kafka_consumergroup未消费消息>100000"
+      summary: "kafka_consumergroup未消费消息>500000"
 ```
 
 # JVM
@@ -710,17 +713,17 @@ groups:
     labels:
       severity: warning
     annotations:
-      description: "{{$labels.application_name}}-{{$labels.area}}使用率为:{{ $value| printf `%.2f`}}%"
+      description: "{{$labels.application_name}} 堆内存使用率为:{{ $value| printf `%.2f`}}%"
       summary: "heap使用率大于95%"
 
   - alert: "JVM pool使用率告警(不包含Compressed Class Space和Metaspace)"
-    expr: (sum by(project,application_name,instance_name,env,job)(jvm_memory_bytes_used{pool!~"Compressed Class Space｜Metaspace")*100) / sum by(project,application_name,instance_name,env,job)(jvm_memory_bytes_max{pool!~"Compressed Class Space｜Metaspace"}) > 125
+    expr: (sum by(project,application_name,instance_name,env,job)(jvm_memory_bytes_used{pool!~"Compressed Class Space|Metaspace"})*100) / sum by(project,application_name,instance_name,env,job)(jvm_memory_bytes_max{pool!~"Compressed Class Space|Metaspace"}) > 95
     for: 5m
     labels:
       severity: warning
     annotations:
-      description: "{{$labels.application_name}}-{{$labels.area}}使用率为:{{ $value| printf `%.2f`}}%"
-      summary: "pool—5分钟平均使用率大于95%"
+      description: "{{$labels.application_name}} 内存池使用率为:{{ $value| printf `%.2f`}}%"
+      summary: "JVM 内存池 5 分钟平均使用率大于 95%"
 
   - alert: "JVM当前线程数"
     expr: jvm_threads_current > 250
@@ -733,9 +736,129 @@ groups:
 
   - alert: "jvm_threads_deadlocked异常"
     expr: jvm_threads_deadlocked != 0
+    for: 1m
     labels:
       severity: warning
     annotations:
       description: "{{$labels.application_name}}-{{$labels.instance_name}}最近监控值为:{{ $value| printf `%.2f`}}"
       summary: "jvm_threads_deadlocked值不为0"
 ```
+
+# 规则治理与上线检查
+
+## 告警命名与分级
+
+| 项目 | 建议 |
+| ---- | ---- |
+| `alertname` | 使用 ASCII CamelCase，如 `HostHighCPU`、`PodOOMKilled`；中文放在 annotations |
+| `severity` | `critical` 用于 page，`warning` 用于 ticket，`info` 只进 Dashboard |
+| `team` | 标明归属团队，便于路由 |
+| `service` | 标明服务/组件，便于聚合 |
+| `runbook_url` | 每个 page 告警必须有可执行的 runbook |
+| `summary` | 一句话说明用户/系统影响 |
+| `description` | 带实例、当前值、阈值、持续时间 |
+
+原则：
+
+- **page 只给需要立即人工介入的告警**；CPU 高、磁盘 IO 高等原因型指标通常先走 ticket。
+- 面向用户的错误率、延迟、不可用，优先用 SLO 燃尽率告警，而不是静态阈值。
+- 同类原因只保留一个告警，避免重复通知。
+- 每个告警都要回答：收到后做什么？是否可自动恢复？是否需要升级？
+
+## 标签与指标可用性
+
+文中的 `env`、`dept`、`project`、`addr` 等标签依赖 relabel 注入，使用前必须确认：
+
+```promql
+count by (env, dept, project) (up)
+```
+
+如果返回空标签，说明 relabel 没有注入，相关表达式会静默失效。
+
+还需要按实际 Exporter 版本核对指标名，例如：
+
+- ES：`elasticsearch_os_load5`、`elasticsearch_thread_pool_*` 的字段随 exporter 版本变化。
+- Nginx VTS：`nginx_vts_main_connections`、`nginx_vts_upstream_response_seconds` 的类型和标签需确认。
+- JVM/Micrometer：`jvm_memory_bytes_used` 的 `area`/`pool` 标签与实际埋点一致。
+- Kubernetes：`kube_pod_container_status_last_terminated_reason` 是 gauge，不是 counter。
+
+## 规则校验与单元测试
+
+```bash
+promtool check config prometheus.yml
+promtool check rules rules/*.yml
+promtool test rules rules_test.yml
+```
+
+单元测试示例：
+
+```yaml
+rule_files:
+  - rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'up{job="node",instance="node-1:9100"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: 主机离线
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "实例 Down"
+```
+
+复杂表达式建议先做成 recording rule，再用告警规则引用，降低重复计算和查询压力。
+
+## 抑制与路由
+
+典型抑制：主机离线时，抑制该主机上的 CPU、内存、磁盘、端口类告警。
+
+```yaml
+inhibit_rules:
+  - source_matchers:
+      - alertname="主机离线"
+    target_matchers:
+      - severity=~"warning|critical"
+    equal: [instance]
+```
+
+路由建议：
+
+- 按 `severity` 分流：`critical` 进 PagerDuty/电话，`warning` 进工单/IM。
+- 按 `team` 路由到对应值班组。
+- 使用 `group_by: [alertname, cluster, instance]` 控制通知聚合。
+- 维护静默记录，避免长期静默掩盖真实故障。
+
+## 告警质量指标
+
+| 指标 | 说明 |
+| ---- | ---- |
+| page 量/班次 | 每班可行动 page 数 |
+| 告警可行动率 | 收到后有明确动作的比例 |
+| 误报率 | 无需处理的告警比例 |
+| MTTA | 平均确认时间 |
+| 重复告警率 | 同一问题重复通知比例 |
+| 告警到事故转化率 | 多少告警最终成为事故 |
+
+建议每季度复核一次阈值、告警量和误报率，持续删除无效告警。
+
+## 上线检查清单
+
+- [ ] `alertname` 使用 ASCII CamelCase
+- [ ] 每个告警有 `severity`、`team`、`runbook_url`
+- [ ] page 告警都可行动，原因型指标已降级为 ticket
+- [ ] 配置了合理的 `for` 和 `keep_firing_for`
+- [ ] 确认 `env/dept/project/addr` 等标签已由 relabel 注入
+- [ ] 按实际 Exporter 版本核对指标名和标签
+- [ ] `promtool check rules` 和 `promtool test rules` 通过
+- [ ] 配置了抑制规则，避免故障时告警风暴
+- [ ] 阈值基于历史基线，而不是拍脑袋
+- [ ] 面向用户的告警优先使用 SLO 燃尽率
+- [ ] 告警路由、静默、升级路径已演练
+- [ ] Dashboard、日志、链路追踪链接已写入 annotations

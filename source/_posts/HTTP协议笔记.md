@@ -6,429 +6,980 @@ categories: [网络]
 comments: false
 ---
 
-- [Web 概述](#web-概述)
-- [HTTP 概述](#http-概述)
-- [HTTP 报文](#http-报文)
-  - [HTTP 请求方式](#http-请求方式)
-  - [HTTP 首部](#http-首部)
-    - [HTTP 请求报文（Request）](#http-请求报文request)
-    - [HTTP 响应报文（Response）](#http-响应报文response)
-  - [状态码](#状态码)
-- [HTTP Cookie](#http-cookie)
-- [HTTP 连接](#http-连接)
-- [HTTP 缓存](#http-缓存)
-- [HTTP 安全](#http-安全)
-  - [内容安全策略 CSP](#内容安全策略-csp)
-  - [HTTP 公钥锁定 HPKP](#http-公钥锁定-hpkp)
-  - [HTTP 严格传输安全 HSTS](#http-严格传输安全-hsts)
-  - [X-Content-Type-Options](#x-content-type-options)
-  - [X-Frame-Options](#x-frame-options)
-  - [X-XSS-Protection](#x-xss-protection)
+HTTP（HyperText Transfer Protocol）是 Web 的应用层协议，负责在客户端和服务端之间传输请求与响应。它看起来简单，但真正做深会涉及语义、缓存、连接管理、HTTP/2/3、代理、安全、Cookie、CORS 和请求走私等大量细节。
+
+本文按 RFC 9110（HTTP Semantics）、RFC 9111（Caching）、RFC 9112（HTTP/1.1）、RFC 9113（HTTP/2）、RFC 9114（HTTP/3）以及 Cookie、TLS、CORS 等规范重写，重点讲清「协议语义」和「生产环境里的坑」。
+
+> HTTP 的版本只影响**怎么传输**，不改变核心语义。方法是否安全、是否幂等、缓存是否可用、状态码含义，在 HTTP/1.1、HTTP/2、HTTP/3 中是一致的。
 
 <!-- more -->
 
-# Web 概述
+- [HTTP 是什么](#http-%E6%98%AF%E4%BB%80%E4%B9%88)
+- [版本演进](#%E7%89%88%E6%9C%AC%E6%BC%94%E8%BF%9B)
+- [URI 与资源](#uri-%E4%B8%8E%E8%B5%84%E6%BA%90)
+- [消息与分帧](#%E6%B6%88%E6%81%AF%E4%B8%8E%E5%88%86%E5%B8%A7)
+- [方法与语义](#%E6%96%B9%E6%B3%95%E4%B8%8E%E8%AF%AD%E4%B9%89)
+- [状态码](#%E7%8A%B6%E6%80%81%E7%A0%81)
+- [首部字段](#%E9%A6%96%E9%83%A8%E5%AD%97%E6%AE%B5)
+- [连接管理](#%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86)
+- [HTTP/2](#http2-1)
+- [HTTP/3](#http3-1)
+- [缓存](#%E7%BC%93%E5%AD%98)
+- [条件请求与范围请求](#%E6%9D%A1%E4%BB%B6%E8%AF%B7%E6%B1%82%E4%B8%8E%E8%8C%83%E5%9B%B4%E8%AF%B7%E6%B1%82)
+- [Cookie 与会话](#cookie-%E4%B8%8E%E4%BC%9A%E8%AF%9D)
+- [内容协商与压缩](#%E5%86%85%E5%AE%B9%E5%8D%8F%E5%95%86%E4%B8%8E%E5%8E%8B%E7%BC%A9)
+- [认证与授权](#%E8%AE%A4%E8%AF%81%E4%B8%8E%E6%8E%88%E6%9D%83)
+- [同源与 CORS](#%E5%90%8C%E6%BA%90%E4%B8%8E-cors)
+- [Web 安全头](#web-%E5%AE%89%E5%85%A8%E5%A4%B4)
+- [代理 CDN 与转发](#%E4%BB%A3%E7%90%86-cdn-%E4%B8%8E%E8%BD%AC%E5%8F%91)
+- [性能优化](#%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96)
+- [调试与工具](#%E8%B0%83%E8%AF%95%E4%B8%8E%E5%B7%A5%E5%85%B7)
+- [常见误区](#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA)
+- [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
 
-WWW（World Wide Web）环球信息网，也称万维网，由 W3C 万维网联盟管理。万维网并不等同互联网，万维网只是互联网所能提供的服务其中之一，是靠着互联网运行的一项服务。
-WWW 的三种技术：HTML，HTTP，URL
+# HTTP 是什么
 
-**URI：** 统一资源标识符，表示服务器资源名称，给定了 URI，HTTP 便能解析资源。URI 有两种形式：
+## 定位
 
-- **URL 统一资源定位符**：描述特定服务器上指定资源的位置，是固定的。包含三部分：
-  - 方案 scheme：说明访问资源使用的协议方式，如 `http://`
-  - 服务器因特网地址，即域名或 IP 地址
-  - 指定服务器上的指定资源，即访问路径
-    **几乎所有 URI 都是 URL**
-- **URN 统一资源名**：特定资源的唯一名称，与资源所在地址无关，资源可以四处搬运。
+HTTP 是应用层协议，通常基于 TCP（HTTP/1.1、HTTP/2）或 QUIC（HTTP/3），采用请求/响应模型：
 
-# HTTP 概述
-
-超文本传输 ​​ 协议 Hyper Text Transfer Protocol（HTTP）是用于传输诸如 HTML 的超媒体文档的应用层协议，用于 Web 浏览器和 Web 服务器之间的通信，基于 TCP/IP，采用 C/S 模式。HTTP 是无状态协议，意味着服务器不会在两个请求之间保留任何数据（状态）。
-
-HTTP 的三个常见版本：
-
-- HTTP/1.0：客户端只能从 web 服务器获取一个 web 资源
-- HTTP/1.1：客户端能在一个连接上获取多个 web 资源（有数量限制，超出部分请求被阻塞）
-- HTTP/2.0：多流并行，一个连接可获取多个 web 资源
-
-特点：
-
-- 简单快速：HTTP 协议简单，报文简单易懂，HTTP 服务器程序规模 小，通信速度快。
-- 灵活：HTTP 允许传输任意类型的数据对象。正在传输的类型由`Content-Type`加以标记。
-- 可扩展：通过 HTTP 首部，只要服务端和客户端就新首部达成语义一致，新功能就可以被轻松加入进来。
-- 无状态：在同一个连接中，两个执行成功的请求之间是没有关系的。但是可以通过 HTTP 的头部扩展和 HTTP Cookies 解决，把 Cookies 添加到头部中，让每次请求都能共享相同的上下文信息，来创建有状态的会话。
-
-# HTTP 报文
-
-## HTTP 请求方式
-
-- GET：请求访问已被 URL 识别的资源，不会对信息产生影响，每次 GET 方法都是相同的，GET 放在 URL 首部，GET 提交的数据大小一般限制为 1024 字节，大小随浏览器而。采用明文传输，速度快。只产生一个 TCP 数据包。GET 能被缓存。
-- POST：请求服务器传输信息实体的主体，POST 放在报文中，没有具体限制，由于放在报文中所以无法看见，安全，form 表单必须使用 POST。会产生两个 TCP 数据包。POST 不可被缓存。POST 提交数据大小没有限制。
-- PUT：传输文件，在请求报文的主体中包含文件内容，然后保存到请求 URL 指定的位置（出于安全，网站一般不会用）
-- HEAD：获取报文首部，用于确认 URI 的有效性及资源更新的日期时间等
-- DELETE：请求 URL 删除指定的资源，与 PUT 相反（同样一般不用）
-- OPTIONS：查询指定 URL 资源支持的方法
-- TRACE：追踪路径，让服务器将之前的请求通信返还给客户端
-- CONNECT：要求在与代理服务器通信时建立隧道，实现用隧道协议进行 TCP 通信，主要使用 SSL（安全套接层）和 TLS（传输层安全）协议把通信内容加密后经过网络传输。
-
-GET 与 POST 的区别：
-
-| GET                                        | POST                 |
-| ------------------------------------------ | -------------------- |
-| 请求访问已被 URL 识别的资源                | 将实体提交到指定资源 |
-| 放在 URL 首部，明文传输，可见              | 封装在报文中，不可见 |
-| 产生一个 TCP 包                            | 产生两个 TCP 包      |
-| 能被缓存                                   | 不可被缓存           |
-| 数据传输大小随浏览器而定，一般为 1024 字节 | 没有具体限制         |
-
-## HTTP 首部
-
-### HTTP 请求报文（Request）
-
-```
-GET https://developer.mozilla.org/zh-CN/docs/Web/HTTP HTTP/2.0
-Host: developer.mozilla.org
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:60.0) Gecko/20100101 Firefox/60.0
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-Accept-Language: zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2
-Accept-Encoding: gzip, deflate, br
-Cookie: dwf_sg_task_completion=False; messages="67ba01ba64d7aac589a5e34d72bb89050449f64e$[[\"__json_message\"\0541\05430\054\"Redirected from https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Forms\"\054\"wiki_redirect\"]]"
-Connection: keep-alive
+```text
+Client ── request ──▶ Server
+Client ◀─ response ── Server
 ```
 
-**报文解析：**
-第一行为请求行，包含三个部分：
+HTTP 的核心抽象：
 
-- 执行动作：即请求方式。
-- 请求目标：完整路径，通常是一个 URL，或者是协议、端口和域名的绝对路径
-  - 绝对路径，末尾加上?与查询字符串，称为原始形式
-  - 完整 URL，称为绝对形式，通常 GET 使用
-  - 域名:端口，仅在使用 CONNECT 建立 HTTP 隧道时才使用
-  - 星号形式\*，配合 OPTIONS 方法使用，代表整个服务器
-- HTTP 版本
+- **资源（Resource）**：由 URI 标识。
+- **方法（Method）**：对资源做什么。
+- **状态码（Status Code）**：结果类别。
+- **首部（Header Fields）**：元数据、缓存、认证、内容协商。
+- **消息体（Content）**：可选的数据。
 
-第二行以后的内容都称为 HTTP 头（Headers），可分为：
+HTTP 是**无状态**的：每个请求独立，服务端不自动保留上一次请求的上下文。状态通过 Cookie、Token、Session、缓存等机制在上层实现。
 
-1. 通用（一般）头（general headers）：适用于请求和响应消息，但与最终消息主体中传输的数据无关。
-   例：`Connection`，`Date`，`Keep-Alive`等
-2. 请求头（request headers）：包含有关要获取的资源或客户端本身更多信息
-   例：`Host`，`User-Agent`，`Accept`，`Accept-Encoding`等
-3. 响应头（response headers）：包含有关服务器响应的补充信息，如其位置或服务器本身（名称和版本等）。
-   例：`Server`，`Set-Cookie`，`X-Frame-Options`，`Etag`等
-4. 实体头（entity headers）：包含有关实体主体的更多信息，比如主体长(`Content-Length`)度或其 MIME 类型。
-   例：`Content-Type`，`Content-Length`，`Content-Encoding`等
+## 语义与传输分离
 
-消息头也可以根据代理对其的处理方式分为：
+这是理解 HTTP 的关键：
 
-- 端到端消息头：这类消息头必须被传输到最终的消息接收者，也即，请求的服务器或响应的客户端。中间的代理服务器必须转发未经修改的端到端消息头，并且必须缓存它们。
-- 逐跳消息头：这类消息头仅对单次传输连接有意义，不能通过代理或缓存进行重新转发。这些消息头包括 `Connection`, `Keep-Alive`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailer`, `Transfer-Encoding` 及 `Upgrade`。注意，只能使用 `Connection` 来设置逐跳一般头。
+- **语义**：方法、状态码、缓存、条件请求、内容协商。由 RFC 9110/9111 定义。
+- **传输**：连接复用、分帧、多路复用、压缩。由 HTTP/1.1、HTTP/2、HTTP/3 分别定义。
 
-请求的最后一部分是它的 body。不是所有的请求都有一个 body：例如获取资源的请求，GET，HEAD，DELETE 和 OPTIONS，通常它们不需要 body。 有些请求将数据发送到服务器以便更新数据：常见的的情况是 POST 请求（包含 HTML 表单数据）。
-Body 大致可分为两类：
+升级到 HTTP/2 或 HTTP/3 不会让 `GET` 变成非安全方法，也不会改变 `304` 的含义。
 
-- Single-resource bodies，由一个单文件组成。该类型 body 由两个 header 定义： `Content-Type` 和 `Content-Length`.
-- Multiple-resource bodies，由多部分 body 组成，每一部分包含不同的信息位。通常是和 HTML Forms 连系在一起。
+## 常见误解
 
-### HTTP 响应报文（Response）
+- **“HTTP 是无状态，所以不能登录”**：登录靠 Cookie/Token，不是 HTTP 本身。
+- **“HTTP/2 一定比 HTTP/1.1 快”**：高丢包、单连接、错误优先级下不一定。
+- **“HTTPS 就是 HTTP 加密”**：HTTPS 是 HTTP over TLS，还包含证书、身份认证、HSTS 等。
+- **“CORS 是服务端安全机制”**：CORS 是浏览器同源策略的放宽机制，不保护服务端。
+- **“缓存就是存文件”**：HTTP 缓存有完整的 freshness、validation、Vary 语义。
 
-```
-HTTP/2.0 200 OK
-content-type: text/css; charset="utf-8"
-access-control-allow-origin: *
-cache-control: max-age=315360000, public, immutable
-date: Tue, 05 Jun 2018 16:24:09 GMT
-last-modified: Tue, 05 Jun 2018 15:59:27 GMT
-server: meinheld/0.6.1
-strict-transport-security: max-age=63072000
-x-content-type-options: nosniff
-x-xss-protection: 1; mode=block
-content-encoding: gzip
-vary: Accept-Encoding
-age: 336026
-x-cache: Hit from cloudfront
-via: 1.1 ec1e0045303188984bc160bff8921bbd.cloudfront.net (CloudFront)
-x-amz-cf-id: D0Bs8VzYr7qYkVfUiXYivsQqygQPctoPwabrnWC0zSPCwYedUyHAWg==
-X-Firefox-Spdy: h2
-```
+# 版本演进
 
-**响应报文解析：**
+| 版本 | 传输 | 关键特性 | 典型问题 |
+| ---- | ---- | -------- | -------- |
+| HTTP/0.9 | TCP | 只有 GET，无首部 | 历史 |
+| HTTP/1.0 | TCP | 首部、状态码、Content-Type | 每个请求一个连接 |
+| HTTP/1.1 | TCP | 持久连接、chunked、Host、缓存 | 队头阻塞、pipelining 少支持 |
+| HTTP/2 | TCP + TLS（通常） | 二进制分帧、多路复用、HPACK、流控 | TCP 层队头阻塞、复杂度 |
+| HTTP/3 | QUIC/UDP + TLS 1.3 | 独立流、QPACK、0-RTT、连接迁移 | UDP 部署、0-RTT 重放、生态 |
 
-- 第一行为响应行，包含三个字段：
-  - HTTP 版本
-  - 状态码
-  - 状态信息
-- 第二行开始为响应头，与请求头类似
-- 以及可选项，比起请求报文，响应报文中更常见地包含获取的资源 body。
+## HTTP/1.1
 
-响应的最后一部分是 body。不是所有的响应都有 body：具有状态码 (如 201 或 204) 的响应，通常不会有 body。
+- 默认持久连接（keep-alive）。
+- `Host` 首部成为必需，支持虚拟主机。
+- chunked transfer coding、trailers、范围请求、条件请求、缓存语义完善。
+- pipelining 理论上可复用连接发送多个请求，但因队头阻塞和中间件支持差，实际很少使用。
 
-Body 大致可分为三类：
+## HTTP/2
 
-- Single-resource bodies，由已知长度的单个文件组成。该类型 body 由两个 header 定义：Content-Type 和 Content-Length。
-- Single-resource bodies，由未知长度的单个文件组成，通过将 Transfer-Encoding 设置为 chunked 来使用 chunks 编码。
-- Multiple-resource bodies，由多部分 body 组成，每部分包含不同的信息段。但这是比较少见的。
+- 二进制分帧，一个 TCP 连接上多路复用多个 stream。
+- HPACK 压缩首部。
+- 流控、优先级、服务器推送（已基本废弃）。
+- 仍受 TCP 层队头阻塞影响：一个丢包会阻塞所有 stream。
 
-## 状态码
+## HTTP/3
 
-**类别：**
+- 基于 QUIC（UDP），TLS 1.3 内置。
+- 每个 stream 独立，解决 TCP 层队头阻塞。
+- QPACK 压缩首部。
+- 0-RTT、连接迁移、改进的丢包恢复。
+- 部署依赖 UDP 443、负载均衡和 CDN 支持。
 
-- 1XX：信息类------->请求正在处理，属于临时响应
-- 2XX：成功类------->请求正常处理完毕
-- 3XX：重定向------->需要附加操作完成请求
-- 4XX：客户端错误---->服务器无法处理请求
-- 5XX：服务器错误---->服务器处理请求出错
+# URI 与资源
 
-**常见状态码：**
+## URI / URL / URN
 
-**1XX 信息响应**
+- **URI**：统一资源标识符，广义的资源标识。
+- **URL**：统一资源定位符，包含访问方式（scheme、host、path）。
+- **URN**：统一资源名，与位置无关的持久名称。
 
-- 100 Continue：迄今为止的所有内容都是可行的，客户端应该继续请求，如果已经完成，则忽略它。
-- 101 Switching Protocol：响应客户端的 Upgrade 标头发送的，并且指示服务器也正在切换的协议。
-- 102 Processing (WebDAV)：服务器已收到并正在处理该请求，但没有响应可用。
+HTTP 请求目标通常是 URL 的 path + query：
 
-**2XX 成功响应**
-
-- **200** OK：正常，客户端的请求在服务器被正常处理
-- 201 Created：该请求已成功，并因此创建了一个新的资源。这通常是在 PUT 请求之后发送的响应。
-- **202** Accepted：请求已经接收到，但还未响应，没有结果。意味着不会有一个异步的响应去表明当前请求的结果，预期另外的进程和服务去处理请求，或者批处理。
-- 203 Non-Authoritative Information：服务器已成功处理了请求，但返回的信息可能来自另一来源。
-- **204** No Content：正常处理，但无资源返回，响应报文中不含实体主体
-- **205** Reset Content：服务器成功处理了请求，且没有返回任何内容。
-- 206 Partial Content：客户端进行了范围请求且服务器成功执行了这部分的 GET 请求
-
-**3XX 重定向**
-
-- **300** Multiple Choice：针对请求，服务器可执行多种操作。 服务器可根据 user agent 选择一项操作，或提供操作列表供请求者选择。
-- **301** Moved Permanently：永久性重定向，请求的资源已被分配了新的 URI（以后都用新 URI）
-- **302** Found：临时性重定向，请求的资源被暂时的移动到了由 Location 头部指定的 URL 上（本次使用新 URI 访问）
-- 303 See Other：请求对应的资源存在另一个 URI,应该使用 GET 方法定向获取请求的资源
-  当 301、302、303 响应状态码返回，几乎所有浏览器都会把 POST 改成 GET，并删除请求报文内的主体，之后请求自动再次发送
-- 304 Not Modified：如果客户端发送了一个带条件的 GET 请求且该请求已被允许，而文档的内容（自上次访问以来或者根据请求的条件）并没有改变，则服务器应当返回这个状态码。304 响应禁止包含消息体，因此始终以消息头后的第一个空行结尾。
-- 305 Use Proxy：请求者只能使用代理访问请求的网页。 （已不再使用，但目前仍能生效）
-- 307 Temporary Redirect：服务器目前从不同位置的网页响应请求，但请求者应继续使用原有位置来进行以后的请求。
-- **308** Permanent Redirect：资源现在永久位于响应头中`Location`指定的另一个 URI。
-
-**4XX 请求错误**
-
-- **400** Bad Request：响应状态码表示由于语法无效，服务器无法理解该请求
-- **401** Unauthorized：发送的请求需要有通过 http 认证（BASIC 认证、DIGEST 认证）的认证信息。该响应必须包含一个适用于被请求资源的 WWW-Authenticate 信息头用以询问用户信息。若之前已经进行了一次请求，则表示用户认证失败
-- **403** Forbidden：服务器端有能力处理该请求，但是拒绝授权访问
-- **404** Not Found：服务器端无法找到所请求的资源
-- 405 Method Not Allowed：禁用请求中指定的方法。
-- 406 Not Acceptable：无法使用请求的内容特性响应请求的网页。
-- 407 Proxy Authentication Required：此状态代码与 401（未授权）类似，但指定请求者应当授权使用代理。
-- **408** Request Timeout：服务器等候请求时发生超时。
-- 409 Conflict：服务器在完成请求时发生冲突。 服务器必须在响应中包含有关冲突的信息。
-- **410** Gone：如果请求的资源已永久删除，服务器就会返回此响应。
-- 411 Length Required：服务器不接受不含有效内容长度标头字段的请求。
-- 412 Precondition Failed：服务器未满足请求者在请求中设置的其中一个前提条件。
-- 413 Payload Too Large：服务器无法处理请求，因为请求实体过大，超出服务器的处理能力。
-- 414 URI Too Long：请求的 URI 过长，服务器无法处理。
-- 415 Unsupported Media Type：请求的格式不受请求页面的支持。
-- 416 Requested Range Not Satisfiable：如果页面无法提供请求的范围，则服务器会返回此状态代码。
-- 417 Expectation Failed：服务器未满足”期望”请求标头字段的要求。
-
-**5XX 服务器错误**
-
-- **500** Internal Server Error ：服务器端错误，所请求的服务器遇到意外的情况并阻止其执行请求。
-- **502** Bad Gateway：服务器作为网关或代理，从上游服务器收到无效响应。
-- **503** Server Unavailable：服务器暂时处于超负载或者正在停机维护，现在无法处理请求
-- **504** Gateway Timeout：服务器作为网关或代理，但是没有及时从上游服务器收到请求。
-- 505 HTTP Version Not Supported：服务器不支持请求中所用的 HTTP 协议版本。
-
-# HTTP Cookie
-
-HTTP Cookie（也叫 Web Cookie 或浏览器 Cookie）是服务器发送到用户浏览器并保存在本地的一小块数据，它会在浏览器下次向同一服务器再发起请求时被携带并发送到服务器上。通常，它用于告知服务端两个请求是否来自同一浏览器，如保持用户的登录状态。Cookie 使基于无状态的 HTTP 协议记录稳定的状态信息成为了可能。
-
-Cookie 主要用于以下三个方面：
-
-- 会话状态管理（如用户登录状态、购物车、游戏分数或其它需要记录的信息）
-- 个性化设置（如用户自定义设置、主题等）
-- 浏览器行为跟踪（如跟踪分析用户行为等）
-
-当服务器收到 HTTP 请求时，服务器可以在响应头里面添加一个 Set-Cookie 选项。浏览器收到响应后通常会保存下 Cookie，之后对该服务器每一次请求中都通过 Cookie 请求头部将 Cookie 信息发送给服务器。另外，Cookie 的过期时间、域、路径、有效期、适用站点都可以根据需要来指定。
-
-```
-Set-Cookie: <cookie名>=<cookie值>
+```text
+https://example.com:443/api/orders?id=123#detail
+└──┬──┘   └────┬────┘└┬┘└────┬────┘└──┬──┘└──┬──┘
+ scheme      host    port   path     query fragment
 ```
 
-- 会话期 Cookie 是最简单的 Cookie：浏览器关闭之后它会被自动删除，也就是说它仅在会话期内有效。会话期 Cookie 不需要指定过期时间（Expires）或者有效期（Max-Age）。需要注意的是，有些浏览器提供了会话恢复功能，这种情况下即使关闭了浏览器，会话期 Cookie 也会被保留下来，就好像浏览器从来没有关闭一样。
-- 持久性 Cookie 可以指定一个特定的过期时间（Expires）或有效期（Max-Age）。
-  ```
-  Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT;
-  ```
-  当 Cookie 的过期时间被设定时，设定的日期和时间只与客户端相关，而不是服务端。
+- `#fragment` 不会发送给服务器。
+- `Host`/`:authority` 用于虚拟主机路由。
+- path 的编码、归一化、`..`、`//`、大小写会影响路由和安全。
 
-标记为 Secure 的 Cookie 只应通过被 HTTPS 协议加密过的请求发送给服务端。但即便设置了 Secure 标记，敏感信息也不应该通过 Cookie 传输，因为 Cookie 有其固有的不安全性，Secure 标记也无法提供确实的安全保障。
+## 资源与表示
 
-```
-Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT; Secure; HttpOnly
-```
+- 资源是抽象实体，表示（representation）是某一时刻的字节形式。
+- 同一资源可以有多种表示：HTML/JSON、不同语言、不同压缩、不同图片格式。
+- 内容协商选择表示；`Vary` 告诉缓存按哪些请求头区分。
 
-Domain 和 Path 标识定义了 Cookie 的作用域：即 Cookie 应该发送给哪些 URL。
+# 消息与分帧
 
-- Domain 标识指定了哪些主机可以接受 Cookie。如果不指定，默认为当前文档的主机（不包含子域名）。如果指定了 Domain，则一般包含子域名。
-  例如，如果设置 `Domain=mozilla.org`，则 Cookie 也包含在子域名中（如`developer.mozilla.org`）。
-- Path 标识指定了主机下的哪些路径可以接受 Cookie（该 URL 路径必须存在于请求 URL 中）。以字符 `/`作为路径分隔符，子路径也会被匹配。
+## HTTP/1.1 消息结构
 
-SameSite Cookie 允许服务器要求某个 cookie 在跨站请求时不会被发送，从而可以阻止跨站请求伪造攻击（CSRF）。
+请求：
 
-```
-Set-Cookie: key=value; SameSite=Strict
-
-Strict：浏览器将只发送相同站点请求的cookie(即当前网页URL与请求目标URL完全一致)。如果请求来自与当前location的URL不同的URL，则不包括标记为Strict属性的cookie。
-若不开启SameSite，则设为None
-```
-
-每个 Cookie 都会有与之关联的域（Domain）
-如果 Cookie 的域和页面的域相同，那么称这个 Cookie 为第一方 Cookie（first-party cookie）
-如果 Cookie 的域和页面的域不同，则称之为第三方 Cookie（third-party cookie.）
-一个页面包含图片或存放在其他域上的资源（如图片广告）时，第一方的 Cookie 也只会发送给设置它们的服务器。
-通过第三方组件发送的第三方 Cookie 主要用于广告和网络追踪。
-大多数浏览器默认都允许第三方 Cookie，但是可以通过附加组件来阻止第三方 Cookie
-
-Cookie 的一个极端使用例子是僵尸 Cookie（或称之为“删不掉的 Cookie”），这类 Cookie 较难以删除，甚至删除之后会自动重建。它们一般是使用 Web storage API、Flash 本地共享对象或者其他技术手段来达到的。
-
-# HTTP 连接
-
-连接管理是一个 HTTP 的关键话题：打开和保持连接在很大程度上影响着网站和 Web 应用程序的性能。
-在 HTTP/1.x 里有多种模型：短连接, 长连接, 和 HTTP 流水线。
-
-HTTP 的连接管理适用于两个连续节点之间的连接，如 hop-by-hop，而不是 end-to-end。
-当模型用于从客户端到第一个代理服务器的连接和从代理服务器到目标服务器之间的连接时(或者任意中间代理)效果可能是不一样的。
-HTTP 协议头受不同连接模型的影响，比如 Connection 和 Keep-Alive，就是 hop-by-hop 协议头，它们的值是可以被中间节点修改的。
-
-**短连接**
-短连接是 HTTP 最早期的模型，也是 HTTP/1.0 的默认模型。每一个 HTTP 请求都由它自己独立的连接完成，这意味着发起每一个 HTTP 请求之前都会有一次 TCP 握手，而且是连续不断的。
-短连接破坏了 TCP 具备的能力，新的冷连接降低了其性能。
-在 HTTP/1.1 中，只有当 Connection 被设置为 close 时才会用到这个模型。
-
-**长连接**
-一个长连接会保持一段时间，重复用于发送一系列请求，节省了新建 TCP 连接握手的时间，还可以利用 TCP 的性能增强能力。
-当然这个连接也不会一直保留着：连接在空闲一段时间后会被关闭(服务器可以使用 Keep-Alive 协议头来指定一个最小的连接保持时间)。
-缺点：就算是在空闲状态，它还是会消耗服务器资源，而且在重负载时，还有可能遭受 DoS attacks 攻击。这种场景下，可以使用非长连接，即尽快关闭那些空闲的连接，也能对性能有所提升。
-把 `Connection` 设置成 `close` 以外的其它参数都可以让其保持长连接，通常会设置为 `retry-after`。在 HTTP/1.1 里，默认就是长连接的，协议头都不用再去声明它。
-
-**流水线**
-默认情况下，HTTP 请求是按顺序发出的。下一个请求只有在当前请求收到应答过后才会被发出。由于会受到网络延迟和带宽的限制，在下一个请求被发送到服务器之前，可能需要等待很长时间。
-流水线是在同一条长连接上发出连续的请求，而不用等待应答返回。这样可以避免连接延迟。理论上讲，性能还会因为两个 HTTP 请求有可能被打包到一个 TCP 消息包中而得到提升。
-并不是所有类型的 HTTP 请求都能用到流水线：只有 idempotent 方式，比如 GET、HEAD、PUT 和 DELETE 能够被安全的重试：如果有故障发生时，流水线的内容要能被轻易的重试。
-
-HTTP 流水线在现代浏览器中并不是默认被启用的，因为：
-
-- Web 开发者并不能轻易的遇见和判断那些搞怪的代理服务器的各种莫名其妙的行为。
-- 正确的实现流水线是复杂的：传输中的资源大小，多少有效的 RTT 会被用到，还有有效带宽，流水线带来的改善有多大的影响范围。
-- 流水线受制于 HOL（Head-Of-Line）问题。
-
-**域名分片**
-作为 HTTP/1.x 的连接，请求是序列化的，哪怕本来是无序的，在没有足够庞大可用的带宽时，也无从优化。
-一个解决方案是，浏览器为每个域名建立多个连接，以实现并发请求。曾经默认的连接数量为 2 到 3 个，现在比较常用的并发连接数已经增加到 6 条。如果尝试大于这个数字，就有触发服务器 DoS 保护的风险。
-
-如果服务器端想要更快速的响应网站或应用程序的应答，它可以迫使客户端建立更多的连接。
-例如，不要在同一个域名下获取所有资源，假设有个域名是 `www.example.com`，可以把它拆分成好几个域名：`www1.example.com`、`www2.example.com`、`www3.example.com`。所有这些域名都指向同一台服务器，浏览器会同时为每个域名建立 6 条连接(在这个例子中，连接数会达到 18 条)。
-
-# HTTP 缓存
-
-缓存大致分为两类：
-
-- 私有缓存：只能用于单独用户。浏览器缓存拥有用户通过 HTTP 下载的所有文档。这些缓存为浏览过的文档提供向后/向前导航，保存网页，查看源码等功能，可以避免再次向服务器发起多余的请求。它同样可以提供缓存内容的离线浏览。
-- 共享缓存可以被多个用户使用。例如，ISP 或你所在的公司可能会架设一个 web 代理来作为本地网络基础的一部分提供给用户。这样热门的资源就会被重复使用，减少网络拥堵与延迟。
-
-常见的 HTTP 缓存只能存储 GET 响应，对于其他类型的响应则无能为力。缓存的关键主要包括 request method 和目标 URI（一般只有 GET 请求才会被缓存）。 普遍的缓存案例:
-
-- 一个检索请求的成功响应: 对于 GET 请求，响应状态码为：200，则表示为成功。一个包含例如 HTML 文档，图片，或者文件的响应。
-- 永久重定向: 响应状态码：301。
-- 错误响应: 响应状态码：404 的一个页面。
-- 不完全的响应: 响应状态码 206，只返回局部的信息。
-- 除了 GET 请求外，如果匹配到作为一个已被定义的 cache 键名的响应。
-
-HTTP/1.1 定义的 `Cache-Control`头用来区分对缓存机制的支持情况， 请求头和响应头都支持这个属性。通过它提供的不同的值来定义缓存策略。
-
-- 禁止缓存：缓存中不得存储任何关于客户端请求和服务端响应的内容。
-  ```
-  Cache-Control: no-store
-  ```
-- 强制确定缓存：每次有请求发出时，缓存会将此请求发到服务器，服务器端会验证请求中所描述的缓存是否过期，若未过期（注：实际就是返回 304），则缓存才使用本地缓存副本。
-  ```
-  Cache-Control: no-cache
-  ```
-- 共有缓存：该响应可以被任何中间人（比如中间代理、CDN 等）缓存。若指定了 public，则一些通常不被中间人缓存的页面（比如 带有 HTTP 验证信息（帐号密码）的页面 或 某些特定状态码的页面），将会被其缓存。
-  ```
-  Cache-Control: public
-  ```
-- 私有缓存：该响应是专用于某单个用户的，中间人不能缓存此响应，该响应只能应用于浏览器私有缓存中。默认为 private。
-  ```
-  Cache-Control: private
-  ```
-
-**缓存过期机制：**
-
-- `max-age`：指定的是距离请求发起的时间的秒数
-  ```
-  Cache-Control: max-age=31536000
-  ```
-- `expires`：指定的是日期
-  ```
-  Expires: Wed, 21 Oct 2015 07:28:00 GMT
-  ```
-
-缓存会定期地将一些副本删除，这个过程叫做**缓存驱逐**。
-服务器更新一个资源时，不可能直接通知客户端更新缓存，所以双方必须为该资源约定一个过期时间，**在该过期时间之前，该资源（缓存副本）就是新鲜的，当过了过期时间后，该资源（缓存副本）则变为陈旧的**。
-驱逐算法用于将陈旧的资源（缓存副本）替换为新鲜的，注意，**一个陈旧的资源（缓存副本）是不会直接被清除或忽略的**。
-当客户端发起一个请求时，**缓存检索到已有一个对应的陈旧资源（缓存副本），则缓存会先将此请求附加一个`If-None-Match`头，然后发给目标服务器，以此来检查该资源副本是否是依然还是算新鲜的**。
-若服务器返回了 `304 (Not Modified)`（该响应不会有带有实体信息），则表示此资源副本是新鲜的。
-若服务器通过 `If-None-Match` 或 `If-Modified-Since`判断后发现已过期，那么会带有该资源的实体内容返回。
-
-对于请求，服务器会先查看`Cache-control: max-age`，若不含该属性则会去查看是否包含 `Expires` 属性。
-如果 `max-age` 和 `expires` 属性都没有，则会找头里的 `Last-Modified` 信息，如果有，缓存的寿命就等于头里面 `Date` 减去 `Last-Modified`除以 10，即`Date - Last-Modified / 10`
-
-**缓存验证确认：**当使用了`must-revalidate`指令，那就意味着缓存在考虑使用一个陈旧的资源时，必须先验证它的状态，已过期的缓存将不被使用。
+```http
+GET /api/orders?id=123 HTTP/1.1
+Host: example.com
+Accept: application/json
+User-Agent: curl/8
 
 ```
-Cache-Control: must-revalidate
+
+响应：
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 42
+Cache-Control: max-age=60
+
+{"id":123,"status":"created"}
 ```
 
-用户点击刷新按钮时会开始缓存验证。如果缓存的响应头信息里含有`Cache-control: must-revalidate`的定义，在浏览的过程中也会触发缓存验证。
-另外，在浏览器偏好设置里设置 `Advanced->Cache` 为强制验证缓存也能达到相同的效果。
+- 起始行：请求行/状态行。
+- 首部字段：`name: value`，字段名大小写不敏感。
+- 空行 CRLF。
+- 消息体可选。
+- obs-fold（首部折行）已废弃，不要依赖。
+- 首部值的前后空白、逗号列表、重复字段要按规范处理。
 
-当缓存的文档过期后，需要进行缓存验证或者重新获取资源。只有在服务器返回强校验器或者弱校验器时才会进行验证。
+## 消息体长度
 
-`ETag` 响应头作为**缓存的一种强校验器**，是一个对用户代理不透明的值。对于像浏览器这样的 HTTP 用户代理，不知道 ETag 代表什么，不能预测它的值是多少。如果资源请求的响应头里含有 ETag, 客户端可以在后续的请求的头中带上 `If-None-Match`头来验证缓存。
+HTTP/1.1 判断 body 长度：
 
+1. `Transfer-Encoding: chunked`：chunked 编码，最后 0 长度 chunk + trailers。
+2. `Content-Length`：精确字节数。
+3. 连接关闭：读到 EOF（仅响应，且不推荐）。
+4. 请求方法/状态码本身无 body（如 HEAD、204、304）。
+
+规则：
+
+- `Content-Length` 和 `Transfer-Encoding` 同时出现是危险的，可能导致请求走私。
+- 多个 `Content-Length` 或值不一致必须拒绝。
+- chunked 的 chunk size 是十六进制，trailer 可以携带额外首部。
+- HTTP/2/3 用 DATA 帧表达 body，不再使用 chunked；`Transfer-Encoding` 被禁止（`TE: trailers` 例外）。
+
+## 请求走私
+
+请求走私（Request Smuggling）来自前后端对消息边界理解不一致：
+
+- `CL.TE`：前端按 Content-Length，后端按 Transfer-Encoding。
+- `TE.CL`：前端按 Transfer-Encoding，后端按 Content-Length。
+- `TE.TE`：两端对 Transfer-Encoding 的混淆/重复处理不同。
+- 重复 Content-Length、变形 Transfer-Encoding、HTTP/2 降级到 HTTP/1.1 都是高危点。
+
+防护：
+
+- 前端/后端使用同一套严格解析器。
+- 拒绝同时出现 CL 和 TE、重复 CL、非法 TE。
+- 不信任客户端传来的 hop-by-hop 头。
+- 尽量端到端 HTTP/2/3，减少降级。
+- WAF/网关做规范化，但不能替代正确实现。
+
+# 方法与语义
+
+| 方法 | 安全 | 幂等 | 可缓存 | 典型用途 |
+| ---- | ---- | ---- | ------ | -------- |
+| GET | 是 | 是 | 是 | 获取资源 |
+| HEAD | 是 | 是 | 是 | 获取元数据，无 body |
+| POST | 否 | 否 | 通常否 | 创建/提交/非幂等操作 |
+| PUT | 否 | 是 | 否 | 整体替换资源 |
+| PATCH | 否 | 否 | 否 | 部分更新 |
+| DELETE | 否 | 是 | 否 | 删除资源 |
+| OPTIONS | 是 | 是 | 否 | 能力查询/CORS 预检 |
+| TRACE | 是 | 是 | 否 | 回显请求（通常禁用） |
+| CONNECT | 否 | 否 | 否 | 建立隧道 |
+
+## 安全与幂等
+
+- **安全（Safe）**：不改变服务端状态，只读。GET/HEAD/OPTIONS/TRACE。
+- **幂等（Idempotent）**：重复执行结果一致。GET/HEAD/PUT/DELETE/OPTIONS/TRACE。
+- POST 不幂等；PATCH 不保证幂等。
+- 幂等不等于“不会产生副作用”，而是“重复执行的效果与一次相同”。
+- 网络超时后，幂等方法可以安全重试；POST 需要幂等键（`Idempotency-Key`，行业约定，不是 HTTP 标准方法语义）。
+
+## 常见错误
+
+- 用 GET 执行删除/支付等有副作用的操作。
+- 用 POST 代替 PUT，导致重试产生重复数据。
+- PATCH 使用 JSON Merge Patch 还是 JSON Patch 不明确。
+- 认为 DELETE 一定返回 204；也可能 200/202。
+- 认为 PUT 只能创建；PUT 也可以更新/创建。
+
+# 状态码
+
+| 类别 | 含义 |
+| ---- | ---- |
+| 1xx | 信息/临时响应 |
+| 2xx | 成功 |
+| 3xx | 重定向/缓存验证 |
+| 4xx | 客户端错误 |
+| 5xx | 服务端错误 |
+
+## 常见状态码
+
+| 状态码 | 含义 | 关键点 |
+| ------ | ---- | ------ |
+| 100 | Continue | `Expect: 100-continue` |
+| 101 | Switching Protocols | Upgrade/WebSocket |
+| 103 | Early Hints | 提前推送 Link/资源提示 |
+| 200 | OK | 通用成功 |
+| 201 | Created | 创建成功，配合 `Location` |
+| 202 | Accepted | 异步接受，未完成 |
+| 204 | No Content | 成功但无 body |
+| 206 | Partial Content | Range 请求 |
+| 301 | Moved Permanently | 永久重定向，可能改变方法 |
+| 302 | Found | 临时重定向，历史行为混乱 |
+| 303 | See Other | 用 GET 访问 `Location` |
+| 304 | Not Modified | 条件请求命中缓存 |
+| 307 | Temporary Redirect | 保持方法和 body |
+| 308 | Permanent Redirect | 永久 + 保持方法 |
+| 400 | Bad Request | 请求语法/语义错误 |
+| 401 | Unauthorized | 需要认证，配 `WWW-Authenticate` |
+| 403 | Forbidden | 已认证但无权限 |
+| 404 | Not Found | 资源不存在 |
+| 405 | Method Not Allowed | 配 `Allow` |
+| 406 | Not Acceptable | 内容协商失败 |
+| 408 | Request Timeout | 请求超时 |
+| 409 | Conflict | 版本/状态冲突 |
+| 410 | Gone | 永久不存在 |
+| 411 | Length Required | 需要 Content-Length |
+| 412 | Precondition Failed | 条件请求失败 |
+| 413 | Content Too Large | body 过大 |
+| 414 | URI Too Long | URI 过长 |
+| 415 | Unsupported Media Type | 媒体类型不支持 |
+| 416 | Range Not Satisfiable | Range 越界 |
+| 421 | Misdirected Request | 连接复用到错误主机 |
+| 422 | Unprocessable Content | 语义校验失败 |
+| 425 | Too Early | 0-RTT 重放风险 |
+| 426 | Upgrade Required | 需要升级协议 |
+| 428 | Precondition Required | 要求条件请求 |
+| 429 | Too Many Requests | 限流，配 `Retry-After` |
+| 431 | Request Header Fields Too Large | 首部过大 |
+| 451 | Unavailable For Legal Reasons | 法律原因 |
+| 500 | Internal Server Error | 服务端错误 |
+| 501 | Not Implemented | 方法不支持 |
+| 502 | Bad Gateway | 上游响应无效 |
+| 503 | Service Unavailable | 暂时不可用，配 `Retry-After` |
+| 504 | Gateway Timeout | 上游超时 |
+| 505 | HTTP Version Not Supported | 版本不支持 |
+| 511 | Network Authentication Required | 网络认证（ captive portal） |
+
+## 重定向语义
+
+- 301/302 历史上允许把 POST 改成 GET；不要依赖。
+- 303 明确要求用 GET 访问新位置。
+- 307/308 明确保持方法和 body。
+- 308 是永久 + 保持方法；301 是永久但方法行为历史不一致。
+- 重定向不要跨协议降级，不要把 HTTPS 跳到 HTTP。
+
+# 首部字段
+
+## 请求首部
+
+| 字段 | 作用 |
+| ---- | ---- |
+| `Host` | 目标主机（HTTP/1.1 必需） |
+| `User-Agent` | 客户端标识 |
+| `Accept` | 可接受的媒体类型 |
+| `Accept-Encoding` | 可接受的压缩编码 |
+| `Accept-Language` | 语言偏好 |
+| `Authorization` | 认证凭据 |
+| `Cookie` | Cookie |
+| `Referer` | 来源页面（注意拼写） |
+| `Origin` | CORS/跨源请求来源 |
+| `If-Match` / `If-None-Match` | 条件请求（ETag） |
+| `If-Modified-Since` / `If-Unmodified-Since` | 条件请求（时间） |
+| `Range` | 范围请求 |
+| `If-Range` | 范围请求条件 |
+| `Content-Type` | body 媒体类型 |
+| `Content-Length` | body 长度 |
+| `Content-Encoding` | body 压缩编码 |
+| `Transfer-Encoding` | 传输编码 |
+| `Expect` | 期望行为，如 100-continue |
+| `Connection` | 连接控制（hop-by-hop） |
+| `TE` | 可接受的传输编码/trailers |
+| `Upgrade` | 协议升级 |
+| `Via` | 代理链 |
+| `Forwarded` | 代理转发信息 |
+| `Sec-Fetch-*` | 浏览器请求元数据 |
+| `Sec-CH-UA` | 客户端提示 |
+
+## 响应首部
+
+| 字段 | 作用 |
+| ---- | ---- |
+| `Date` | 响应生成时间 |
+| `Server` | 服务端标识（可省略） |
+| `Content-Type` | 媒体类型 + charset |
+| `Content-Length` | body 长度 |
+| `Content-Encoding` | 压缩编码 |
+| `Transfer-Encoding` | chunked 等 |
+| `Connection` | 连接控制 |
+| `Cache-Control` | 缓存策略 |
+| `ETag` | 资源版本标识 |
+| `Last-Modified` | 最后修改时间 |
+| `Expires` | 过期时间（旧） |
+| `Vary` | 缓存按哪些请求头区分 |
+| `Age` | 缓存年龄 |
+| `Location` | 重定向/创建位置 |
+| `Set-Cookie` | 设置 Cookie |
+| `WWW-Authenticate` | 认证挑战 |
+| `Allow` | 允许的方法 |
+| `Retry-After` | 重试等待 |
+| `Alt-Svc` | 替代服务（HTTP/3 发现） |
+| `Strict-Transport-Security` | HSTS |
+| `Content-Security-Policy` | CSP |
+| `X-Content-Type-Options` | nosniff |
+| `X-Frame-Options` | 防 clickjacking |
+| `Referrer-Policy` | Referer 策略 |
+| `Permissions-Policy` | 浏览器能力策略 |
+| `Cross-Origin-Opener-Policy` | COOP |
+| `Cross-Origin-Embedder-Policy` | COEP |
+| `Cross-Origin-Resource-Policy` | CORP |
+
+## hop-by-hop 与 end-to-end
+
+- hop-by-hop 首部只对单跳有效：`Connection`、`Keep-Alive`、`Proxy-Authenticate`、`Proxy-Authorization`、`TE`、`Trailer`、`Transfer-Encoding`、`Upgrade`。
+- `Connection` 列出的字段也是 hop-by-hop，代理必须移除。
+- end-to-end 首部应透传，除非明确要修改。
+- 代理错误透传 hop-by-hop 头会导致请求走私/连接问题。
+
+# 连接管理
+
+## HTTP/1.1 持久连接
+
+- 默认 keep-alive，一个 TCP 连接可处理多个请求。
+- `Connection: close` 表示关闭。
+- `Keep-Alive` 可带 timeout/max，但不是标准必须。
+- 连接复用减少 TCP/TLS 握手，但要注意服务端超时、客户端连接池、负载均衡 idle timeout。
+
+## Pipelining
+
+- 客户端可以连续发送多个请求，不等待响应。
+- 响应必须按请求顺序返回，前一个慢请求会阻塞后面（队头阻塞）。
+- 中间件/代理支持差，现代浏览器基本不用。
+- HTTP/2 用 stream 多路复用替代。
+
+## 队头阻塞
+
+- HTTP/1.1：请求级队头阻塞。
+- HTTP/2：TCP 层丢包会阻塞所有 stream。
+- HTTP/3：QUIC stream 独立，减少跨 stream 阻塞，但仍有拥塞控制和应用层限制。
+
+## 100-continue
+
+```http
+Expect: 100-continue
 ```
-例：ETag: "51142bc1-7449-479b075b2891b"
+
+- 客户端先发首部，服务端认为可以接收时回 `100 Continue`，客户端再发 body。
+- 适合大 body，避免浪费带宽。
+- 服务端可以直接回 `417 Expectation Failed` 或最终响应。
+- 不是所有代理/客户端都正确实现。
+
+## Upgrade / CONNECT
+
+- `Upgrade: websocket` + `Connection: Upgrade` → `101 Switching Protocols`。
+- `CONNECT host:port` 用于代理隧道（HTTPS 代理）。
+- HTTP/2 中 CONNECT 语义保留，但 Upgrade 机制不同。
+- 代理要正确处理 CONNECT 的权限和超时，避免开放代理。
+
+# HTTP/2
+
+## 核心变化
+
+- 二进制分帧，不再是文本行。
+- 一个 TCP 连接多路复用多个 stream。
+- HPACK 压缩首部。
+- 流控、优先级、服务器推送。
+- 通常基于 TLS + ALPN `h2`；也支持 h2c（明文，通常仅内部）。
+
+## 帧结构
+
+每个帧 9 字节头：
+
+```text
++-----------------------------------------------+
+| Length (24) | Type (8) | Flags (8) | R | Stream ID (31) |
++-----------------------------------------------+
+| Frame Payload ...
 ```
 
-`Last-Modified`响应头可以作为一种弱校验器，因为它只能精确到一秒。如果响应头里含有这个信息，客户端可以在后续的请求中带上 `If-Modified-Since` 来验证缓存。
+常见帧类型：
 
-当向服务端发起缓存校验的请求时，服务端会返回 `200 ok`表示返回正常的结果或者 `304 Not Modified`(不返回 body)表示浏览器可以使用本地缓存文件。304 的响应头也可以同时更新缓存文档的过期时间。
+| 类型 | 值 | 作用 |
+| ---- | -- | ---- |
+| DATA | 0x0 | 传输 body |
+| HEADERS | 0x1 | 首部 |
+| PRIORITY | 0x2 | 优先级（已废弃） |
+| RST_STREAM | 0x3 | 终止 stream |
+| SETTINGS | 0x4 | 连接参数 |
+| PUSH_PROMISE | 0x5 | 服务器推送 |
+| PING | 0x6 | 保活/测量 |
+| GOAWAY | 0x7 | 关闭连接 |
+| WINDOW_UPDATE | 0x8 | 流控 |
+| CONTINUATION | 0x9 | 首部续帧 |
 
-**Vary 头**
-`Vary` HTTP 响应头决定了对于后续的请求头，如何判断是请求一个新的资源还是使用缓存的文件。
-当缓存服务器收到一个请求，只有当前的请求和原始（缓存）的请求头跟缓存的响应头里的 Vary 都匹配，才能使用缓存的响应。
+## Stream
 
+- 客户端发起奇数 stream ID，服务端偶数。
+- 一个 stream 是双向字节流。
+- 状态：idle、open、half-closed、closed。
+- `RST_STREAM` 取消单个 stream。
+- `GOAWAY` 告知不再接受新 stream，已存在的可继续/重试。
+- 并发 stream 数受 `SETTINGS_MAX_CONCURRENT_STREAMS` 限制。
+
+## HPACK
+
+- 静态表 + 动态表 + Huffman 编码。
+- 首部字段名小写。
+- 连接级动态表，跨 stream 共享。
+- 压缩上下文有状态，代理/网关必须正确维护。
+- 压缩可能带来侧信道风险（如 BREACH 类攻击），不要把 secret 和用户输入放在同一压缩上下文。
+
+## 流控
+
+- 连接级和 stream 级两个窗口。
+- 默认初始窗口 65535 字节，可用 `WINDOW_UPDATE` 扩大。
+- 接收方不读会导致发送方阻塞。
+- 代理/网关要正确处理窗口，避免死锁/内存膨胀。
+
+## 优先级与推送
+
+- RFC 9113 中 PRIORITY 帧/优先级树已废弃，改用扩展优先级（如 RFC 9218 `Priority` 头）。
+- 服务器推送在浏览器中基本被移除/不推荐，不要依赖。
+- 推送会增加复杂度和缓存问题；用 early hints/预加载替代。
+
+## HTTP/2 限制
+
+- 仍受 TCP 队头阻塞影响。
+- 单连接多路复用可能导致一个大响应影响其他流。
+- 连接级流控/窗口配置不当会吞吐下降。
+- 中间件对 h2 支持不完整时，可能出现降级/走私。
+- 禁止 connection-specific 首部：`Connection`、`Keep-Alive`、`Proxy-Connection`、`Transfer-Encoding`、`Upgrade`；`TE: trailers` 例外。
+
+# HTTP/3
+
+## 核心变化
+
+- 基于 QUIC（RFC 9000），UDP 443。
+- TLS 1.3 内置在 QUIC 握手中。
+- 每个 stream 独立，解决 TCP 层队头阻塞。
+- QPACK 压缩首部。
+- 支持 0-RTT、连接迁移。
+- ALPN `h3`。
+
+## QUIC 特性
+
+- 连接 ID 支持连接迁移/NAT rebinding。
+- 0-RTT 可减少握手延迟，但有重放风险。
+- 丢包恢复按 packet/stream 处理。
+- 加密和传输一体化，不再有“TCP + TLS”两层。
+- 需要 UDP 防火墙/负载均衡支持。
+
+## 0-RTT 与重放
+
+- 0-RTT 数据在握手完成前发送，可能被重放。
+- 只应对安全/幂等请求使用 0-RTT。
+- 服务端可用 `425 Too Early` 拒绝。
+- 代理可能添加 `Early-Data: 1` 标识。
+- 不要对支付、下单等非幂等操作使用 0-RTT。
+
+## 发现与部署
+
+- 服务端通过 `Alt-Svc: h3=":443"; ma=86400` 告知 HTTP/3 可用。
+- 也可通过 HTTPS DNS 记录发现。
+- 客户端首次可能仍走 HTTP/2，后续升级。
+- 负载均衡/CDN 必须支持 QUIC；UDP 被禁会导致回退。
+- 监控 UDP 丢包、MTU、连接迁移、0-RTT 拒绝率。
+
+## HTTP/3 限制
+
+- UDP 在部分企业网络被阻断。
+- 调试工具/生态不如 HTTP/2 成熟。
+- 0-RTT 重放、连接迁移、放大攻击防护需要正确配置。
+- QPACK 动态表仍可能带来头部阻塞，但比 TCP HOL 小。
+
+# 缓存
+
+## 缓存的关键概念
+
+- **fresh**：缓存副本仍在新鲜期内，可直接使用。
+- **stale**：过期，需要验证或重新获取。
+- **validation**：用 ETag/Last-Modified 询问源站是否变化。
+- **cache key**：通常 method + URI，加上 `Vary` 指定的请求头。
+- **private cache**：浏览器缓存。
+- **shared cache**：CDN/反向代理缓存。
+
+## Cache-Control
+
+| 指令 | 作用 |
+| ---- | ---- |
+| `max-age=N` | 新鲜期 N 秒 |
+| `s-maxage=N` | 共享缓存新鲜期，覆盖 max-age |
+| `public` | 可被共享缓存 |
+| `private` | 只允许私有缓存 |
+| `no-cache` | 可存但每次使用前必须验证 |
+| `no-store` | 不存储 |
+| `must-revalidate` | 过期后必须验证，不能使用 stale |
+| `proxy-revalidate` | 共享缓存必须验证 |
+| `immutable` | 新鲜期内不重新验证 |
+| `stale-while-revalidate=N` | 过期后 N 秒内可先返回 stale，同时后台刷新 |
+| `stale-if-error=N` | 源站错误时可用 stale N 秒 |
+| `must-understand` | 只有理解该指令的缓存才能存储 |
+| `no-transform` | 代理不得转换内容 |
+
+## 新鲜度计算
+
+```text
+freshness_lifetime = max-age 或 (Expires - Date)
+current_age = max(0, response_time - date_value) + Age
 ```
-例：Vary: User-Agent
+
+- `Age` 由共享缓存添加，表示副本已经存在多久。
+- 没有显式新鲜度时，缓存可能使用启发式（如 Last-Modified 的 10%），但不可靠。
+- `no-cache` 不是“不缓存”，`no-store` 才是“不存储”。
+
+## 验证
+
+- `ETag` + `If-None-Match`：强/弱比较。
+- `Last-Modified` + `If-Modified-Since`：秒级精度，弱验证。
+- 源站返回 `304 Not Modified`，可更新缓存首部，不返回 body。
+- `Vary` 决定缓存 key 的请求头维度；漏掉会导致缓存错乱/投毒。
+
+## Vary 与缓存键
+
+```http
+Vary: Accept-Encoding, Origin
 ```
 
-使用 vary 头有利于内容服务的动态多样性。例如，使用 `Vary: User-Agent` 头，缓存服务器需要通过 User-Agent 判断是否使用缓存的页面。如果需要区分移动端和桌面端的展示内容，利用这种方式就能避免在不同的终端展示错误的布局。
+- 同一 URL 因 `Accept-Encoding` 不同可能有 gzip/br 两个副本。
+- CORS 响应必须 `Vary: Origin`，否则一个源的响应可能被另一个源复用。
+- 多语言按 `Accept-Language` 变化时要 `Vary`。
+- `Vary: *` 基本不可缓存。
 
-# HTTP 安全
+## 缓存安全
 
-## 内容安全策略 CSP
+- 认证响应默认不应被共享缓存，除非显式 `public` 且理解风险。
+- `Set-Cookie` 响应不应被共享缓存。
+- 缓存键要包含 Host、路径归一化、Vary 维度；避免 Host header 投毒。
+- 不要缓存带用户敏感信息的响应到 CDN。
+- 缓存欺骗：攻击者让 CDN 缓存私有页面，再让受害者访问。
+- 缓存投毒：利用未纳入 key 的 header/参数注入内容。
 
-## HTTP 公钥锁定 HPKP
+# 条件请求与范围请求
 
-## HTTP 严格传输安全 HSTS
+## 条件请求
 
-## X-Content-Type-Options
+| 首部 | 作用 |
+| ---- | ---- |
+| `If-Match` | ETag 匹配才执行（强比较） |
+| `If-None-Match` | ETag 不匹配才执行；GET 命中返回 304 |
+| `If-Modified-Since` | 资源未修改则 304 |
+| `If-Unmodified-Since` | 未修改才执行，否则 412 |
+| `If-Range` | Range 与 ETag/时间匹配才返回部分内容 |
 
-## X-Frame-Options
+用途：
 
-## X-XSS-Protection
+- 缓存验证（304）。
+- 乐观并发控制（If-Match + ETag，失败 412）。
+- 断点续传（If-Range）。
 
-**参考文章**
+## Range
 
-> HTTP | MDN https://developer.mozilla.org/zh-CN/docs/Web/HTTP
-> 关于 HTTP 协议，一篇就够了 https://www.cnblogs.com/ranyonsue/p/5984001.html
-> 开发之前应该了解的 HTTP https://blog.csdn.net/qq_35414779/article/details/78981151
+```http
+Range: bytes=0-1023
+```
+
+响应：
+
+```http
+HTTP/1.1 206 Partial Content
+Content-Range: bytes 0-1023/5000
+Accept-Ranges: bytes
+```
+
+- 多段 Range 返回 `multipart/byteranges`。
+- 越界返回 `416 Range Not Satisfiable`，带 `Content-Range: bytes */5000`。
+- Range 可用于大文件、视频拖动，也可被滥用做放大/DoS；限制范围和并发。
+- 压缩与 Range 交互复杂，通常对压缩内容禁用/特殊处理。
+
+# Cookie 与会话
+
+## Set-Cookie / Cookie
+
+```http
+Set-Cookie: session=abc123; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=3600
+Cookie: session=abc123
+```
+
+属性：
+
+| 属性 | 作用 |
+| ---- | ---- |
+| `Domain` | 作用域；省略则 host-only |
+| `Path` | 路径前缀 |
+| `Expires` | 绝对过期时间 |
+| `Max-Age` | 相对过期秒数，优先于 Expires |
+| `Secure` | 仅 HTTPS 发送 |
+| `HttpOnly` | JS 不可读 |
+| `SameSite` | Lax/Strict/None 跨站策略 |
+| `Partitioned` | CHIPS 分区 Cookie |
+
+## SameSite
+
+- `Strict`：跨站请求不发送。
+- `Lax`：顶层导航 GET 可发送；现代浏览器默认。
+- `None`：跨站发送，必须配 `Secure`。
+- SameSite 不是 CSRF 的完整解决方案；仍需 CSRF token/Origin 校验。
+
+## Cookie 前缀
+
+- `__Secure-`：必须 Secure。
+- `__Host-`：必须 Secure、Path=/、不能有 Domain。
+- 用于防止子域覆盖/降级。
+
+## 安全
+
+- Cookie 不是加密存储，不要放敏感明文。
+- HttpOnly 防 XSS 读取，但不能防 XSS 发起请求。
+- Secure 防明文传输。
+- SameSite 降低 CSRF，但不能替代 CSRF token。
+- 防止 session fixation：登录后轮换 session ID。
+- 防止 cookie tossing：子域设置同名 Cookie 覆盖父域。
+- Cookie 大小通常 4KB，超限会被截断/拒绝。
+- 第三方 Cookie 被浏览器限制，跨站场景考虑 CHIPS/Storage Access API。
+
+# 内容协商与压缩
+
+## 内容协商
+
+请求：
+
+```http
+Accept: application/json, text/html;q=0.9
+Accept-Encoding: br, gzip
+Accept-Language: zh-CN,zh;q=0.9,en;q=0.8
+```
+
+- q-value 0-1，越大越优先。
+- 服务端可选择表示，不能接受时返回 406。
+- `Vary` 必须包含协商维度，否则缓存错乱。
+- `Content-Type` 的 charset 要明确，避免编码歧义。
+
+## 压缩
+
+- `Content-Encoding: gzip/br/zstd`：表示 body 压缩。
+- `Transfer-Encoding: chunked`：表示传输分块，不是压缩。
+- 压缩减少带宽，但增加 CPU；Brotli 通常比 gzip 更好，zstd 在某些场景更优。
+- 不要压缩已经压缩的图片/视频。
+- 压缩 + 加密 + 用户输入可能产生 BREACH 类侧信道；敏感响应慎用动态压缩。
+- 解压要有大小限制，防止压缩炸弹。
+
+# 认证与授权
+
+## 401 vs 403
+
+- 401：未认证/认证失败，响应带 `WWW-Authenticate`。
+- 403：已认证但无权限。
+- 404 也可用于隐藏资源存在性。
+
+## 常见方案
+
+| 方案 | 说明 |
+| ---- | ---- |
+| Basic | `Authorization: Basic base64(user:pass)`，必须 TLS |
+| Digest | 挑战响应，已不推荐 |
+| Bearer | `Authorization: Bearer <token>`，OAuth/JWT |
+| mTLS | 客户端证书 |
+| Cookie Session | 浏览器会话 |
+
+## Basic
+
+```http
+Authorization: Basic dXNlcjpwYXNz
+```
+
+- Base64 不是加密，只是编码。
+- 必须 HTTPS。
+- 适合内部工具/简单场景，不适合作为长期用户认证。
+
+## Bearer / OAuth / OIDC
+
+- Bearer token 是不透明凭据，泄露即失效。
+- JWT 要校验签名、issuer、audience、exp、nbf、alg。
+- 不要把 token 放 URL/日志。
+- OAuth 的授权码流程、PKCE、scope 由 OAuth 规范定义，不是 HTTP 本身。
+
+## 授权
+
+- 认证解决“你是谁”，授权解决“你能做什么”。
+- 服务端必须每次校验权限，不能只依赖前端隐藏按钮。
+- 对象级授权（IDOR）是常见漏洞：`/orders/123` 要校验当前用户是否有权访问 123。
+- 网关做粗粒度认证，业务做细粒度授权。
+
+# 同源与 CORS
+
+## 同源
+
+同源 = scheme + host + port 完全相同。
+
+- `https://a.com` 与 `http://a.com` 不同源。
+- `https://a.com` 与 `https://a.com:443` 同源（默认端口）。
+- `https://a.com` 与 `https://sub.a.com` 不同源。
+
+## CORS 流程
+
+简单请求直接发送，浏览器检查响应：
+
+```http
+Access-Control-Allow-Origin: https://app.example.com
+```
+
+非简单请求先预检：
+
+```http
+OPTIONS /api/orders
+Origin: https://app.example.com
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type, authorization
+```
+
+响应：
+
+```http
+Access-Control-Allow-Origin: https://app.example.com
+Access-Control-Allow-Methods: GET, POST
+Access-Control-Allow-Headers: content-type, authorization
+Access-Control-Allow-Credentials: true
+Access-Control-Max-Age: 600
+Vary: Origin
+```
+
+关键点：
+
+- 带 credentials 时，`Access-Control-Allow-Origin` 不能是 `*`。
+- `Access-Control-Allow-Credentials: true` 时，前端要 `credentials: include`。
+- 需要暴露的响应头用 `Access-Control-Expose-Headers`。
+- 预检结果要 `Vary: Origin`，避免缓存串源。
+- CORS 是浏览器行为，服务端仍要认证/授权。
+- 常见漏洞：反射任意 Origin、信任 `null`、子域信任过宽、正则绕过。
+
+# Web 安全头
+
+## HSTS
+
+```http
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+```
+
+- 只对 HTTPS 响应有效。
+- 让浏览器后续强制 HTTPS。
+- `includeSubDomains` 影响所有子域，确认都支持 HTTPS。
+- `preload` 进入浏览器内置列表，移除困难。
+- 首次访问仍可能走 HTTP，先做 301 跳转。
+
+## HPKP
+
+已废弃，不要使用。用 Certificate Transparency、CAA、HSTS 替代。
+
+## CSP
+
+```http
+Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-abc'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+```
+
+- 限制资源加载来源，降低 XSS 影响。
+- `nonce`/`hash` 比 `unsafe-inline` 安全。
+- `strict-dynamic` 可配合 nonce。
+- `report-only` 先观察再强制。
+- CSP 不是 XSS 的唯一防线，输出编码/模板转义仍必须。
+
+## 其他头
+
+| 头 | 作用 |
+| -- | ---- |
+| `X-Content-Type-Options: nosniff` | 禁止 MIME 嗅探 |
+| `X-Frame-Options: DENY/SAMEORIGIN` | 防 clickjacking（旧） |
+| `Content-Security-Policy: frame-ancestors` | 防 clickjacking（新） |
+| `Referrer-Policy` | 控制 Referer 泄露 |
+| `Permissions-Policy` | 限制摄像头/麦克风/地理位置等 |
+| `Cross-Origin-Opener-Policy` | 隔离窗口关系 |
+| `Cross-Origin-Embedder-Policy` | 要求跨源资源显式授权 |
+| `Cross-Origin-Resource-Policy` | 限制资源被跨源加载 |
+| `Content-Security-Policy: upgrade-insecure-requests` | 升级混合内容 |
+| `Subresource-Integrity`（SRI） | 校验脚本/样式完整性 |
+| `Clear-Site-Data` | 清除缓存/Cookie/存储 |
+
+## 混合内容
+
+HTTPS 页面加载 HTTP 资源会被浏览器阻止/升级。使用 HSTS、CSP `upgrade-insecure-requests`、全站 HTTPS。
+
+# 代理 CDN 与转发
+
+## 转发头
+
+| 头 | 说明 |
+| -- | ---- |
+| `Forwarded` | 标准化的代理链信息 |
+| `X-Forwarded-For` | 客户端 IP 链（事实标准） |
+| `X-Forwarded-Proto` | 原始协议 |
+| `X-Forwarded-Host` | 原始 Host |
+| `Via` | 代理链标识 |
+
+安全：
+
+- 只信任来自已知代理的转发头。
+- 客户端可以伪造 `X-Forwarded-For`，不能直接拿第一个值当真实 IP。
+- 代理应追加而不是覆盖，但入口代理要清洗客户端传入值。
+- `Forwarded` 的解析要严格，逗号/引号/IPv6 都可能被滥用。
+
+## 代理与缓存
+
+- 共享缓存要遵守 `Cache-Control`、`Vary`、`Authorization`、`Set-Cookie`。
+- 不要缓存带用户信息的响应。
+- Host header 投毒：缓存键包含错误 Host 可能影响其他用户。
+- 缓存欺骗：把私有页面伪装成静态资源缓存。
+- 代理要剥离 hop-by-hop 头，避免请求走私。
+
+## WebSocket / CONNECT
+
+- WebSocket 通过 `Upgrade` + `Connection: Upgrade` 建立。
+- 代理要支持长连接、超时、心跳、背压。
+- CONNECT 用于隧道，代理必须限制目标端口/权限，避免开放代理。
+- HTTP/2/3 对 WebSocket 有扩展支持（RFC 8441），不是所有代理都支持。
+
+# 性能优化
+
+## 连接与协议
+
+- 复用连接，减少 TCP/TLS 握手。
+- 开启 TLS session resumption（session ticket/PSK）。
+- HTTP/2 多路复用，避免 HTTP/1.1 队头阻塞。
+- 高丢包/移动网络考虑 HTTP/3。
+- 避免不必要的重定向和跨域预检。
+
+## 缓存与压缩
+
+- 静态资源长缓存 + 内容 hash 文件名。
+- HTML/API 使用合适的 `Cache-Control`、ETag、Vary。
+- 开启 Brotli/gzip/zstd，注意压缩侧信道。
+- CDN 缓存静态资源，动态内容按业务缓存。
+- 使用 103 Early Hints 提前提示关键资源。
+
+## 资源提示
+
+- `preconnect`：提前建立连接。
+- `dns-prefetch`：提前解析 DNS。
+- `preload`：提前加载关键资源。
+- `prefetch`：空闲时预取未来资源。
+- 不要滥用 preload，避免挤占带宽。
+
+## 服务端
+
+- 减少 TTFB：缓存、数据库索引、异步化。
+- 控制响应大小，分页/流式。
+- 避免大 Cookie/大 Header。
+- 合理设置 keep-alive/idle timeout，和负载均衡一致。
+- 监控 P50/P95/P99，不只看平均。
+
+# 调试与工具
+
+## curl
+
+```bash
+curl -v https://example.com
+curl -I https://example.com
+curl --http1.1 https://example.com
+curl --http2 https://example.com
+curl --http3 https://example.com
+curl --compressed https://example.com
+curl -w '%{http_code} %{time_total} %{time_connect} %{time_appconnect}\n' -o /dev/null -s https://example.com
+curl --resolve example.com:443:1.2.3.4 https://example.com
+```
+
+- `-k` 只用于测试，不要在生产跳过证书校验。
+- `--http2-prior-knowledge` 用于明文 h2c 测试。
+- `--http3` 需要 curl 编译支持 HTTP/3。
+
+## TLS / HTTP2
+
+```bash
+openssl s_client -connect example.com:443 -alpn h2 -servername example.com
+nghttp -nv https://example.com
+h2load -n 1000 -c 10 https://example.com
+```
+
+## 浏览器
+
+- DevTools Network：协议列（h2/h3）、Timing、Priority、Cache。
+- `chrome://net-export` 抓网络日志。
+- `chrome://net-internals/#hsts` 查看 HSTS。
+- 查看 `Alt-Svc` 判断 HTTP/3。
+
+## 抓包
+
+- Wireshark 解析 HTTP/1.1、HTTP/2、QUIC。
+- HTTP/2 需要 TLS key log 或明文 h2c。
+- QUIC 需要 UDP 抓包和密钥日志。
+
+# 常见误区
+
+- **301 和 302 可以随便用**：方法保持/改变行为不同，用 307/308 更明确。
+- **no-cache 是不缓存**：no-cache 是必须验证；no-store 才是不存储。
+- **Vary 不重要**：漏 Vary 会导致缓存串内容/投毒。
+- **CORS 能保护 API**：CORS 是浏览器策略，服务端仍需认证授权。
+- **SameSite 能完全防 CSRF**：不能，仍需 token/Origin 校验。
+- **HTTP/2 一定比 HTTP/1.1 快**：取决于丢包、连接复用、服务端实现。
+- **HTTP/2 推送是必须的**：浏览器已基本移除，不要依赖。
+- **0-RTT 可以随便用**：有重放风险，只对安全/幂等请求。
+- **X-Forwarded-For 第一个就是客户端 IP**：可伪造，只信任已知代理。
+- **Content-Length 和 Transfer-Encoding 可以共存**：高危，可能导致请求走私。
+- **HSTS preload 可以随便开**：移除困难，先确认所有子域 HTTPS。
+- **Range 只能用于下载**：也是 DoS 面，要限制范围和并发。
+- **压缩总是好事**：动态压缩 + 敏感数据有侧信道风险。
+
+# 参考资料
+
+- [RFC 9110 - HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110)
+- [RFC 9111 - HTTP Caching](https://www.rfc-editor.org/rfc/rfc9111)
+- [RFC 9112 - HTTP/1.1](https://www.rfc-editor.org/rfc/rfc9112)
+- [RFC 9113 - HTTP/2](https://www.rfc-editor.org/rfc/rfc9113)
+- [RFC 9114 - HTTP/3](https://www.rfc-editor.org/rfc/rfc9114)
+- [RFC 9000 - QUIC](https://www.rfc-editor.org/rfc/rfc9000)
+- [RFC 9204 - QPACK](https://www.rfc-editor.org/rfc/rfc9204)
+- [RFC 7541 - HPACK](https://www.rfc-editor.org/rfc/rfc7541)
+- [RFC 6265 - HTTP State Management Mechanism](https://www.rfc-editor.org/rfc/rfc6265)
+- [RFC 6797 - HSTS](https://www.rfc-editor.org/rfc/rfc6797)
+- [RFC 7469 - HPKP（已废弃）](https://www.rfc-editor.org/rfc/rfc7469)
+- [RFC 8446 - TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446)
+- [RFC 7617 - Basic Authentication](https://www.rfc-editor.org/rfc/rfc7617)
+- [RFC 6750 - Bearer Token](https://www.rfc-editor.org/rfc/rfc6750)
+- [RFC 8297 - 103 Early Hints](https://www.rfc-editor.org/rfc/rfc8297)
+- [RFC 5861 - stale-while-revalidate](https://www.rfc-editor.org/rfc/rfc5861)
+- [RFC 8246 - immutable](https://www.rfc-editor.org/rfc/rfc8246)
+- [MDN HTTP](https://developer.mozilla.org/docs/Web/HTTP)
+- [web.dev HTTP](https://web.dev/learn/http)

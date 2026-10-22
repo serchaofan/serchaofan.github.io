@@ -6,11 +6,8 @@ categories: [网络]
 comments: false
 ---
 
-- [SSH 协议](#SSH-协议)
-  - [sshd 服务](#sshd-服务)
-    - [sshd_config 配置](#sshd-config-配置)
-    - [密钥分发命令](#密钥分发命令)
-- [参考文章](#参考文章)
+- [SSH 协议](#ssh-%E5%8D%8F%E8%AE%AE)
+- [参考文章](#%E5%8F%82%E8%80%83%E6%96%87%E7%AB%A0)
 
 <!--more-->
 
