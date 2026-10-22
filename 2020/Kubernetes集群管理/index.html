@@ -35,20 +35,22 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>Kubernetes集群管理 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="Kubernetes, kubernetes,undefined">
-  <meta desc name="description" content="Tianyi的技术随笔 - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="Kubernetes, Kubernetes,运维,kubeadm,undefined">
+  <meta desc name="description" content="本文基于 Kubernetes v1.37 官方文档重写，覆盖节点管理、kubeadm 集群生命周期、升级、证书、etcd 备份、自动扩缩容、资源治理和可观测性。 - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kubernetes集群管理">
 <meta property="og:url" content="https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="Node 管理Node 隔离与恢复将 Node 纳入或脱离调度范围 创建 node 类型的 yaml，并设置unschedulable: true apiVersion: v1kind: Nodemetadata:  name: kubenode2  labels:    kubernetes.io&#x2F;hostname: kubenode2spec:  unschedulable: true  然">
+<meta property="og:description" content="本文基于 Kubernetes v1.37 官方文档重写，覆盖节点管理、kubeadm 集群生命周期、升级、证书、etcd 备份、自动扩缩容、资源治理和可观测性。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-04-05T11:06:01.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.839Z">
+<meta property="article:modified_time" content="2026-10-22T15:19:51.181Z">
 <meta property="article:author" content="Tianyi Gu">
-<meta property="article:tag" content="kubernetes">
+<meta property="article:tag" content="Kubernetes">
+<meta property="article:tag" content="运维">
+<meta property="article:tag" content="kubeadm">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
   <style>
@@ -2251,7 +2253,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792680709817),
+    lastupdate: new Date(1792682524855),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2298,7 +2300,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes集群管理/","name":"Kubernetes集群管理"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes集群管理","description":"Tianyi的技术随笔","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/","wordCount":0,"datePublished":"2020-04-05T11:06:01.000Z","dateModified":"2026-03-11T19:05:28.839Z","articleSection":"Kubernetes","keywords":"kubernetes","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes集群管理/","name":"Kubernetes集群管理"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes集群管理","description":"本文基于 Kubernetes v1.37 官方文档重写，覆盖节点管理、kubeadm 集群生命周期、升级、证书、etcd 备份、自动扩缩容、资源治理和可观测性。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/","wordCount":81,"datePublished":"2020-04-05T11:06:01.000Z","dateModified":"2026-10-22T15:19:51.181Z","articleSection":"Kubernetes","keywords":"Kubernetes,运维,kubeadm","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2679,136 +2681,288 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <span id="more"></span>
-<h1 id="Node-管理"><a href="#Node-管理" class="headerlink" title="Node 管理"></a>Node 管理</h1><h2 id="Node-隔离与恢复"><a href="#Node-隔离与恢复" class="headerlink" title="Node 隔离与恢复"></a>Node 隔离与恢复</h2><p>将 Node 纳入或脱离调度范围</p>
-<p>创建 node 类型的 yaml，并设置<code>unschedulable: true</code></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Node</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kubenode2</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">kubernetes.io/hostname:</span> <span class="string">kubenode2</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">unschedulable:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+    <p>本文基于 Kubernetes v1.37 官方文档重写，覆盖节点管理、kubeadm 集群生命周期、升级、证书、etcd 备份、自动扩缩容、资源治理和可观测性。</p>
+<span id="more"></span>
 
-<p>然后<code>kubectl replace -f</code>应用该配置，查看 nodes</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl get nodes</span><br><span class="line">NAME        STATUS                     ROLES    AGE   VERSION</span><br><span class="line">kubenode1   Ready                      master   18d   v1.18.0</span><br><span class="line">kubenode2   Ready,SchedulingDisabled   &lt;none&gt;   18d   v1.18.0</span><br><span class="line">kubenode3   Ready                      &lt;none&gt;   18d   v1.18.0</span><br></pre></td></tr></table></figure>
-
-<p>对于后续创建的 Pod 就不会再调度到该 Node 了。<br>若要重新将该节点纳入调度范围，只要将该参数改为 false 并应用即可。</p>
-<p>也可以直接通过命令<code>cordon</code>和<code>uncordon</code>进行设置</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl cordon kubenode3</span><br><span class="line">node/kubenode3 cordoned</span><br><span class="line"></span><br><span class="line"># kubectl get nodes kubenode3</span><br><span class="line">NAME        STATUS                     ROLES    AGE   VERSION</span><br><span class="line">kubenode3   Ready,SchedulingDisabled   &lt;none&gt;   18d   v1.18.0</span><br><span class="line"></span><br><span class="line"># kubectl uncordon kubenode3</span><br><span class="line">node/kubenode3 uncordoned</span><br></pre></td></tr></table></figure>
-
-<h2 id="Node-扩容"><a href="#Node-扩容" class="headerlink" title="Node 扩容"></a>Node 扩容</h2><p>只需在新的 Node 上安装 docker、kubelet 和 kube-proxy，并配置启动参数，将 Master URL 指定为当前 k8s 集群 master 的地址。通过 kubelet 默认注册机制，新的 node 就会自动加入到 k8s 集群中。</p>
-<h1 id="更新-Label"><a href="#更新-Label" class="headerlink" title="更新 Label"></a>更新 Label</h1><p>创建一个 deployment，标签为<code>app=nginx</code></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl get pods --show-labels</span><br><span class="line">NAME                            READY   STATUS    RESTARTS   AGE     LABELS</span><br><span class="line">nginx-deploy-5bf87f5f59-6r67l   1/1     Running   0          2m24s   app=nginx,pod-template-hash=5bf87f5f59</span><br><span class="line">nginx-deploy-5bf87f5f59-lt6v2   1/1     Running   0          2m24s   app=nginx,pod-template-hash=5bf87f5f59</span><br><span class="line">nginx-deploy-5bf87f5f59-sqrs6   1/1     Running   0          2m24s   app=nginx,pod-template-hash=5bf87f5f59</span><br></pre></td></tr></table></figure>
-
-<p>可通过<code>-L&lt;label_name&gt;</code>查看指定标签的值</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl get pods -Lapp</span><br><span class="line">NAME                            READY   STATUS    RESTARTS   AGE     APP</span><br><span class="line">nginx-deploy-5bf87f5f59-6r67l   1/1     Running   0          3m26s   nginx</span><br><span class="line">nginx-deploy-5bf87f5f59-lt6v2   1/1     Running   0          3m26s   nginx</span><br><span class="line">nginx-deploy-5bf87f5f59-sqrs6   1/1     Running   0          3m26s   nginx</span><br></pre></td></tr></table></figure>
-
-<p>若要更新标签，则通过<code>kubectl label</code>进行修改</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl get deployments.apps --show-labels</span><br><span class="line">NAME           READY   UP-TO-DATE   AVAILABLE   AGE     LABELS</span><br><span class="line">nginx-deploy   3/3     3            3           8m10s   app=nginx_1.17</span><br></pre></td></tr></table></figure>
-
-<p>若要删除该标签，则通过<code>&lt;label_name&gt;-</code>即可</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl label deployments.apps nginx-deploy app-</span><br><span class="line">deployment.apps/nginx-deploy labeled</span><br><span class="line"></span><br><span class="line"># kubectl get deployments.apps --show-labels</span><br><span class="line">NAME           READY   UP-TO-DATE   AVAILABLE   AGE     LABELS</span><br><span class="line">nginx-deploy   3/3     3            3           9m22s   &lt;none&gt;</span><br></pre></td></tr></table></figure>
-
-<h1 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a>Namespace</h1><p>K8s 通过命名空间和 Context 设置对不同工作组进行区分，使得它们互不干扰。</p>
-<p>namespace 的创建</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Namespace</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">dev</span></span><br></pre></td></tr></table></figure>
-
-<p>context 运行环境的创建</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 创建集群</span></span><br><span class="line"><span class="comment"># kubectl config set-cluster nginx-cluster-1 --server=http://192.168.60.3:8080</span></span><br><span class="line"><span class="string">Cluster</span> <span class="string">&quot;nginx-cluster-1&quot;</span> <span class="string">set.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置运行环境</span></span><br><span class="line"><span class="comment"># kubectl config set-context dev --namespace=dev --cluster=nginx-cluster-1 --user=dev</span></span><br><span class="line"><span class="string">Context</span> <span class="string">&quot;dev&quot;</span> <span class="string">created.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看已定义的context</span></span><br><span class="line"><span class="comment"># kubectl config view</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">clusters:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">cluster:</span></span><br><span class="line">    <span class="attr">certificate-authority-data:</span> <span class="string">DATA+OMITTED</span></span><br><span class="line">    <span class="attr">server:</span> <span class="string">https://192.168.60.3:6443</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kubernetes</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">cluster:</span></span><br><span class="line">    <span class="attr">server:</span> <span class="string">http://192.168.60.3:8080</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-cluster-1</span></span><br><span class="line"><span class="attr">contexts:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">context:</span></span><br><span class="line">    <span class="attr">cluster:</span> <span class="string">nginx-cluster-1</span></span><br><span class="line">    <span class="attr">namespace:</span> <span class="string">dev</span></span><br><span class="line">    <span class="attr">user:</span> <span class="string">dev</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">dev</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">context:</span></span><br><span class="line">    <span class="attr">cluster:</span> <span class="string">kubernetes</span></span><br><span class="line">    <span class="attr">user:</span> <span class="string">kubernetes-admin</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">kubernetes-admin@kubernetes</span></span><br><span class="line"><span class="attr">current-context:</span> <span class="string">kubernetes-admin@kubernetes</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Config</span></span><br><span class="line"><span class="attr">preferences:</span> &#123;&#125;</span><br><span class="line"><span class="attr">users:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">kubernetes-admin</span></span><br><span class="line">  <span class="attr">user:</span></span><br><span class="line">    <span class="attr">client-certificate-data:</span> <span class="string">REDACTED</span></span><br><span class="line">    <span class="attr">client-key-data:</span> <span class="string">REDACTED</span></span><br></pre></td></tr></table></figure>
-
-<p><code>kubectl config</code>会在<code>$&#123;HOME&#125;/.kube/</code>下生成一个名为 config 的文件，内容就是以上<code>kubectl config view</code>的内容。</p>
-<p>若要将工作组设置在指定 context 环境下工作，则通过<code>kubectl config use-context</code>指定</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl config use-context dev</span><br><span class="line">Switched to context &quot;dev&quot;.</span><br></pre></td></tr></table></figure>
-
-<p>此后创建的资源都使用的是该环境。</p>
-<h1 id="资源管理"><a href="#资源管理" class="headerlink" title="资源管理"></a>资源管理</h1><p>若对于 Pod 不定义 CPU Request 和 Memory Request，则 K8s 会认为该 Pod 所需资源很少，可调度到任意可用 Node 上，当集群的计算资源不充足时，就会使某个 Node 资源严重不足。为了避免系统挂掉，Node 会自动清理 pod 释放资源，但有的 Pod 十分重要，无论资源是否充足，也要保障 这些 Pod 的存活。对此 K8s 有以下保障机制：</p>
 <ul>
-<li>通过资源配额确保不同 Pod 只占用指定资源</li>
-<li>允许集群的资源被超额分配，提高资源利用率</li>
-<li>为 Pod 分级，确保不同等级 Pod 有不同的 QoS。资源不足时低等级的 Pod 被清理以确保高等级 Pod 正常运行。</li>
+<li><a href="#%E8%8A%82%E7%82%B9%E7%AE%A1%E7%90%86">节点管理</a></li>
+<li><a href="#%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85%E4%B8%8E%E9%AB%98%E5%8F%AF%E7%94%A8">集群安装与高可用</a></li>
+<li><a href="#%E7%89%88%E6%9C%AC%E5%8D%87%E7%BA%A7">版本升级</a></li>
+<li><a href="#%E8%AF%81%E4%B9%A6%E7%AE%A1%E7%90%86">证书管理</a></li>
+<li><a href="#etcd-%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D">etcd 备份与恢复</a></li>
+<li><a href="#%E8%87%AA%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9">自动扩缩容</a></li>
+<li><a href="#%E8%B5%84%E6%BA%90%E6%B2%BB%E7%90%86">资源治理</a></li>
+<li><a href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7">可观测性</a></li>
+<li><a href="#%E7%81%BE%E5%A4%87%E4%B8%8E%E6%BC%94%E7%BB%83">灾备与演练</a></li>
+<li><a href="#%E6%8E%92%E9%9A%9C">排障</a></li>
+<li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
 </ul>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;128Mi&quot;</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;500m&quot;</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;20m&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;55M&quot;</span></span><br></pre></td></tr></table></figure>
+<h1 id="节点管理"><a href="#节点管理" class="headerlink" title="节点管理"></a>节点管理</h1><h2 id="Node-状态"><a href="#Node-状态" class="headerlink" title="Node 状态"></a>Node 状态</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get nodes -o wide</span><br><span class="line">kubectl describe node &lt;node&gt;</span><br></pre></td></tr></table></figure>
 
-<p>CPU的资源值是绝对值，不是相对值，比如0.1CPU在单核或多核机器上都是一样的，都严格等于0.1CPU core。</p>
-<p>内存的资源值计量单位为字节数，值的表示方式为<code>整数+国际单位制</code></p>
-<p>国际单位制包含两类：</p>
+<p>常见 Conditions：</p>
 <ul>
-<li>十进制：E、P、T、G、M、K、m</li>
-<li>二进制：Ei、Pi、Ti、Gi、Mi、Ki</li>
+<li><code>Ready</code>：kubelet 健康、网络可用</li>
+<li><code>MemoryPressure</code>：内存压力</li>
+<li><code>DiskPressure</code>：磁盘压力</li>
+<li><code>PIDPressure</code>：进程数压力</li>
+<li><code>NetworkUnavailable</code>：网络未就绪</li>
 </ul>
-<p>CPU只能使用十进制的m单位或者不加单位，m表示千分之一单位，即<code>200m</code>表示0.2 cpu core。</p>
-<p>对于内存，十进制和二进制区别如下：</p>
-<ul>
-<li>1 KB (KiloByte) &#x3D; 1000 Bytes &#x3D; 8000 Bits</li>
-<li>1 KiB (KibiByte) &#x3D; 1024 Bytes &#x3D; 8192 Bits</li>
-</ul>
-<p>Pod的requests和limits是这个pod中所有容器的requests和limits的总和，例如：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp1</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;200Mi&quot;</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;200m&quot;</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;100m&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;100Mi&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp2</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;200Mi&quot;</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;200m&quot;</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;100m&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;100Mi&quot;</span></span><br></pre></td></tr></table></figure>
-<p>则这个Pod的CPU总体requests为200m，limits为400Mi，内存同理。</p>
-<h2 id="Pod的QoS服务质量"><a href="#Pod的QoS服务质量" class="headerlink" title="Pod的QoS服务质量"></a>Pod的QoS服务质量</h2><p>根据指定资源requests与limits的不同，创建的Pod会有三个不同的QoS（服务质量）属性。K8S提供三种QoS类，并使用QoS类决定Pod的调度与驱逐策略。</p>
-<ul>
-<li>Guaranteed 有保证</li>
-<li>Burstable 不稳定</li>
-<li>BestEffort 尽最大努力</li>
-</ul>
-<p>对于 QoS 类为 Guaranteed 的 Pod：<br><strong>Pod 中的每个容器都必须指定CPU与内存的<code>limits</code>和<code>requests</code>，且<code>limits=requests</code>。</strong></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;1&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;1Gi&quot;</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;1&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;1Gi&quot;</span></span><br></pre></td></tr></table></figure>
-<p>查看pod的status</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># kubectl get po -oyaml xxxx</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">status:</span></span><br><span class="line">  <span class="attr">qosClass:</span> <span class="string">Guaranteed</span></span><br></pre></td></tr></table></figure>
+<p>节点 NotReady 时，Pod 不会立即被驱逐：默认约 40s 标记 NotReady，随后 NoExecute 污点的 <code>tolerationSeconds=300</code> 到期才开始驱逐；分别由 <code>node-monitor-grace-period</code> 和污点容忍控制。</p>
+<h2 id="隔离与恢复"><a href="#隔离与恢复" class="headerlink" title="隔离与恢复"></a>隔离与恢复</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl cordon &lt;node&gt;      <span class="comment"># 标记不可调度</span></span><br><span class="line">kubectl drain &lt;node&gt; --ignore-daemonsets --delete-emptydir-data</span><br><span class="line">kubectl uncordon &lt;node&gt;    <span class="comment"># 恢复调度</span></span><br></pre></td></tr></table></figure>
 
-<p>对于 QoS 类为 Burstable 的 Pod：<br><strong>Pod 不符合Guaranteed标准，且Pod 中至少一个容器具有内存或CPU的请求或限制。</strong></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;2&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;2Gi&quot;</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">cpu:</span> <span class="string">&quot;1&quot;</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;1Gi&quot;</span></span><br><span class="line"><span class="string">或</span></span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">limits:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;2Gi&quot;</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">memory:</span> <span class="string">&quot;1Gi&quot;</span></span><br></pre></td></tr></table></figure>
-<p>查看pod的status</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># kubectl get po -oyaml xxxx</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">status:</span></span><br><span class="line">  <span class="attr">qosClass:</span> <span class="string">Burstable</span></span><br></pre></td></tr></table></figure>
+<p><code>drain</code> 会：</p>
+<ul>
+<li>驱逐节点上的 Pod</li>
+<li>遵守 PDB</li>
+<li>跳过 DaemonSet（需要 <code>--ignore-daemonsets</code>）</li>
+<li>删除 emptyDir 数据（需要 <code>--delete-emptydir-data</code>）</li>
+</ul>
+<p>节点维护前要确认关键服务有多副本和 PDB。</p>
+<h2 id="污点与容忍"><a href="#污点与容忍" class="headerlink" title="污点与容忍"></a>污点与容忍</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl taint node &lt;node&gt; dedicated=gpu:NoSchedule</span><br><span class="line">kubectl taint node &lt;node&gt; dedicated=gpu:NoSchedule-</span><br></pre></td></tr></table></figure>
 
-<p>对于 QoS 类为 BestEffort 的 Pod：<br><strong>Pod 中的容器必须没有设置内存和 CPU 限制或请求。</strong></p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">myapp</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">&lt;Image&gt;</span></span><br></pre></td></tr></table></figure>
-<p>查看pod的status</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># kubectl get po -oyaml xxxx</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">status:</span></span><br><span class="line">  <span class="attr">qosClass:</span> <span class="string">BestEffort</span></span><br></pre></td></tr></table></figure>
+<p>Pod 需要对应 toleration：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">tolerations:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">key:</span> <span class="string">dedicated</span></span><br><span class="line">  <span class="attr">operator:</span> <span class="string">Equal</span></span><br><span class="line">  <span class="attr">value:</span> <span class="string">gpu</span></span><br><span class="line">  <span class="attr">effect:</span> <span class="string">NoSchedule</span></span><br></pre></td></tr></table></figure>
 
-<p>K8S根据QoS进行的回收策略：</p>
-<ul>
-<li>当Pod出现资源不足情况时，先会杀死优先级低的pod，而优先级是通过OOM分数值来实现，范围为0-1000。OOM分数值根据<code>OOM_ADJ</code>参数计算得出。</li>
-<li>Guaranteed的Pod，<code>OOM_ADJ</code>值为<code>-998</code></li>
-<li>BestEffort的pod，<code>OOM_ADJ</code>值为<code>1000</code></li>
-<li>Burstable的pod，<code>OOM_ADJ</code>值范围为<code>2~999</code></li>
-<li><code>OOM_ADJ</code>值越大，Pod优先级越低，出现资源不足时会被优先kill掉。</li>
-<li>对于docker、kubelet等k8s的保留资源，<code>OOM_ADJ</code>值设置成了<code>-999</code>，即不会被OOM kill干掉。</li>
-<li>也就是说，当资源不足时，最先被kill掉的是BestEffort的pod，最晚被安排Kill掉的是Guaranteed的pod</li>
-<li>若资源充足，且想要提高资源利用率，资源限制按照Guaranteed配置。</li>
+<p>控制平面污点通常是 <code>node-role.kubernetes.io/control-plane:NoSchedule</code>；旧 <code>master</code> 污点在新集群中不再默认存在。</p>
+<h2 id="节点扩容"><a href="#节点扩容" class="headerlink" title="节点扩容"></a>节点扩容</h2><ul>
+<li>云环境：Cluster Autoscaler、Karpenter、节点池</li>
+<li>裸金属：手动加入节点或使用 Cluster API</li>
+<li>新节点加入后确认 CNI、kube-proxy、kubelet、容器运行时和证书正常</li>
 </ul>
-<h2 id="LimitRange"><a href="#LimitRange" class="headerlink" title="LimitRange"></a>LimitRange</h2><p>LimitRange用于设置容器的默认资源限制，就是说当pod未设置limits或requests时，则会采用limitrange定义的限制值。</p>
-<p>LimitRang支持两种type，一种为container，一种为pod。其中，pod与container都可以设置<code>min</code>、<code>max</code>、<code>maxLimitRequestRatio</code>参数，container可以设置<code>default</code>和<code>defaultRequest</code>参数，而Pod不可以。</p>
-<p>对以上几个参数的解释：</p>
+<p><img src="https://kubernetes.io/images/docs/node-capacity.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/node-capacity.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="节点容量"></p>
+<p><em>图 1：节点 Capacity、Allocatable 与资源保留</em></p>
+<p>节点可分配资源 &#x3D; Capacity - 系统保留 - kubelet 保留 - 驱逐阈值。调度只看 requests。</p>
+<h1 id="集群安装与高可用"><a href="#集群安装与高可用" class="headerlink" title="集群安装与高可用"></a>集群安装与高可用</h1><h2 id="kubeadm-高可用"><a href="#kubeadm-高可用" class="headerlink" title="kubeadm 高可用"></a>kubeadm 高可用</h2><p><img src="https://kubernetes.io/images/kubeadm/kubeadm-ha-topology-external-etcd.svg" class="lazyload" data-srcset="https://kubernetes.io/images/kubeadm/kubeadm-ha-topology-external-etcd.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="kubeadm 外部 etcd 拓扑"></p>
+<p><em>图 2：kubeadm 高可用集群（外部 etcd）</em></p>
+<p>生产建议：</p>
 <ul>
-<li><code>min</code>指的是<code>requests</code>的下限，<code>max</code>指的是<code>limits</code>的上限。若是在container中指定的，则是每个容器的，若是pod中指定的，则是pod中所有容器的总和。<code>min</code>和<code>max</code>指的就不是默认值了，而是真正的限制，若容器或pod的资源设置超过min和max的范围，则pod根本不会启动，就是<code>kubectl get pod</code>找不到这个pod。</li>
-<li>对于同一资源类型，必须满足：<code>min &lt;= default &lt;= defaultRequest &lt;= max</code></li>
-<li>container的<code>maxLimitRequestRatio</code>限制的是pod中所有容器的limits值与requests值的比例上限，若是pod则是pod中所有容器的limits值与requests<strong>值的总和</strong>的比例上限。</li>
+<li>控制面至少 3 个节点</li>
+<li>etcd 3 或 5 副本，独立磁盘</li>
+<li>apiserver 前放负载均衡器</li>
+<li>kubelet&#x2F;kubectl 通过 VIP 访问</li>
+<li>控制面和 etcd 做反亲和</li>
 </ul>
-<p>例如先创建一个LimitRange类型的资源，设置默认资源限制，内存的<code>requests=256Mi</code>，<code>limits=512Mi</code></p>
-<p>，以下展示两种类型。</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">LimitRange</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mem-limit-range-container</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">limits:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">default:</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">    <span class="attr">defaultRequest:</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">256Mi</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">Container</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># kubectl describe limitranges</span></span><br><span class="line"><span class="attr">Name:</span>       <span class="string">mem-limit-range-container</span></span><br><span class="line"><span class="attr">Namespace:</span>  <span class="string">default</span></span><br><span class="line"><span class="string">Type</span>        <span class="string">Resource</span>  <span class="string">Min</span>  <span class="string">Max</span>  <span class="string">Default</span> <span class="string">Request</span>  <span class="string">Default</span> <span class="string">Limit</span>  <span class="string">Max</span> <span class="string">Limit/Request</span> <span class="string">Ratio</span></span><br><span class="line"><span class="string">----</span>        <span class="string">--------</span>  <span class="string">---</span>  <span class="string">---</span>  <span class="string">---------------</span>  <span class="string">-------------</span>  <span class="string">-----------------------</span></span><br><span class="line"><span class="string">Container</span>   <span class="string">memory</span>    <span class="bullet">-</span>    <span class="bullet">-</span>    <span class="string">256Mi</span>            <span class="string">512Mi</span>          <span class="bullet">-</span></span><br></pre></td></tr></table></figure>
-<p>其中，<code>default</code>指定的是<code>limits</code>值，<code>defaultRequest</code>指定的是<code>requests</code>值。</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">LimitRange</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">mem-limit-range-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">limits:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">max:</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">    <span class="attr">min:</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">256Mi</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">Pod</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># kubectl describe limitranges</span></span><br><span class="line"><span class="attr">Name:</span>       <span class="string">mem-limit-range-pod</span></span><br><span class="line"><span class="attr">Namespace:</span>  <span class="string">default</span></span><br><span class="line"><span class="string">Type</span>        <span class="string">Resource</span>  <span class="string">Min</span>    <span class="string">Max</span>    <span class="string">Default</span> <span class="string">Request</span>  <span class="string">Default</span> <span class="string">Limit</span>  <span class="string">Max</span> <span class="string">Limit/Request</span> <span class="string">Ratio</span></span><br><span class="line"><span class="string">----</span>        <span class="string">--------</span>  <span class="string">---</span>    <span class="string">---</span>    <span class="string">---------------</span>  <span class="string">-------------</span>  <span class="string">-----------------------</span></span><br><span class="line"><span class="string">Pod</span>         <span class="string">memory</span>    <span class="string">256Mi</span>  <span class="string">512Mi</span>  <span class="bullet">-</span>                <span class="bullet">-</span>              <span class="bullet">-</span></span><br></pre></td></tr></table></figure>
-<p>其中，<code>max</code>指定的是<code>limits</code>值，<code>min</code>指定的是<code>requests</code>值。</p>
-<p>再创建一个deployment或者Pod，没有定义resources限制</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">app1</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">app1</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">app1</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> <span class="string">Always</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">app1</span></span><br></pre></td></tr></table></figure>
-<p>此时再查看pod的信息</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># kubectl describe pod app1-668c794b77-wv8sp</span></span><br><span class="line"><span class="attr">Name:</span>         <span class="string">app1-668c794b77-wv8sp</span></span><br><span class="line"><span class="attr">Namespace:</span>    <span class="string">default</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">Containers:</span></span><br><span class="line">  <span class="attr">app1:</span></span><br><span class="line">  <span class="string">......</span></span><br><span class="line">    <span class="attr">Limits:</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">    <span class="attr">Requests:</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">256Mi</span></span><br></pre></td></tr></table></figure>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm init --control-plane-endpoint=&lt;VIP&gt;:6443 \</span><br><span class="line">  --pod-network-cidr=10.244.0.0/16 \</span><br><span class="line">  --service-cidr=10.96.0.0/12 \</span><br><span class="line">  --upload-certs</span><br></pre></td></tr></table></figure>
 
-<h2 id="ResourceQuota"><a href="#ResourceQuota" class="headerlink" title="ResourceQuota"></a>ResourceQuota</h2><h1 id="Pod-驱逐机制"><a href="#Pod-驱逐机制" class="headerlink" title="Pod 驱逐机制"></a>Pod 驱逐机制</h1><p>kubelet 持续监控主机的资源使用情况，并尽可能防止计算资源被耗尽，一旦出现资源紧缺，kubelet会主动终止一个或多个pod运行。当一个pod被终止时，其中的容器会全部停止，pod状态会被置为Failed。</p>
-<p>kubelet会根据驱逐信号作为依据来触发驱逐行为。以下为一些驱逐信号</p>
+<p>加入 worker：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm <span class="built_in">join</span> &lt;VIP&gt;:6443 --token &lt;token&gt; \</span><br><span class="line">  --discovery-token-ca-cert-hash sha256:&lt;<span class="built_in">hash</span>&gt;</span><br></pre></td></tr></table></figure>
+
+<p>加入其他控制面：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm <span class="built_in">join</span> &lt;VIP&gt;:6443 --token &lt;token&gt; \</span><br><span class="line">  --discovery-token-ca-cert-hash sha256:&lt;<span class="built_in">hash</span>&gt; \</span><br><span class="line">  --control-plane --certificate-key &lt;key&gt;</span><br></pre></td></tr></table></figure>
+
+<p>安装 CNI 后再确认 CoreDNS 和节点 Ready。</p>
+<h2 id="kubeadm-配置"><a href="#kubeadm-配置" class="headerlink" title="kubeadm 配置"></a>kubeadm 配置</h2><p>kubeadm 配置 API 会随版本演进，使用当前版本生成模板：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm config <span class="built_in">print</span> init-defaults</span><br><span class="line">kubeadm config <span class="built_in">print</span> join-defaults</span><br></pre></td></tr></table></figure>
+
+<p>当前 kubeadm 配置 API 是 <code>kubeadm.k8s.io/v1beta4</code>。使用当前版本生成模板，不要照抄旧版本的 <code>v1beta2</code>&#x2F;<code>v1beta3</code> 配置。</p>
+<h1 id="版本升级"><a href="#版本升级" class="headerlink" title="版本升级"></a>版本升级</h1><p>原则：</p>
 <ul>
-<li>memory.available：值取自cgroupfs。若用户使用了node allocatable功能，则除了节点自身的内存需要判断，还需要利用cgroup根据用户pod部分情况判断。</li>
-<li>nodefs.available</li>
-<li>nodefs.inodesFree：</li>
-<li>imagefs.available：</li>
-<li>imagefs.inodesFree：</li>
+<li>一次只升一个 minor</li>
+<li>先控制面，再 kubelet&#x2F;kube-proxy，最后工作负载</li>
+<li>升级前扫描已移除 API</li>
+<li>升级前备份 etcd</li>
+<li>升级后验证 CNI、CoreDNS、Ingress、存储和关键业务</li>
 </ul>
-<p>kubelet支持以下两种文件系统：</p>
+<p>版本偏差：</p>
 <ul>
-<li>nodefs：保存kubelet的卷和守护进程日志等</li>
-<li>imagefs：在容器运行时保存镜像及可写入层</li>
+<li>kubelet、kube-proxy 最多可落后 apiserver 3 个 minor</li>
+<li>kube-controller-manager、kube-scheduler、cloud-controller-manager 最多落后 apiserver 1 个 minor，且不得新于 apiserver</li>
+<li>kubectl 支持 ±1 个 minor</li>
+<li>HA 中 apiserver 实例之间最多差 1 个 minor</li>
 </ul>
-<p>kubelet使用cAdvisor自动监控这些文件系统，kubelet不关注其他文件系统，不支持所有其他类型的配置。</p>
-<h1 id="Pod-Disruption-Budget"><a href="#Pod-Disruption-Budget" class="headerlink" title="Pod Disruption Budget"></a>Pod Disruption Budget</h1><h1 id="集群高可用"><a href="#集群高可用" class="headerlink" title="集群高可用"></a>集群高可用</h1><h1 id="集群监控"><a href="#集群监控" class="headerlink" title="集群监控"></a>集群监控</h1><h1 id="集群日志管理"><a href="#集群日志管理" class="headerlink" title="集群日志管理"></a>集群日志管理</h1><h1 id="审计机制"><a href="#审计机制" class="headerlink" title="审计机制"></a>审计机制</h1><h1 id="Helm"><a href="#Helm" class="headerlink" title="Helm"></a>Helm</h1><h1 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h1><blockquote>
-<p>参考文档<br>Kubernetes 权威指南</p>
-</blockquote>
+<p>具体以官方 Version Skew Policy 为准。</p>
+<p>升级前检查 cgroup 版本：v1.37 的 kubelet 默认 <code>FailCgroupV1: true</code>，只支持 cgroup v2。cgroup v1 节点必须先迁移到 v2，否则升级后 kubelet 启动失败。</p>
+<h2 id="控制面升级"><a href="#控制面升级" class="headerlink" title="控制面升级"></a>控制面升级</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm upgrade plan</span><br><span class="line">kubeadm upgrade apply v1.37.1</span><br></pre></td></tr></table></figure>
+
+<p>第一个控制面节点用 <code>apply</code>；其余控制面节点先升级 kubeadm 包，再执行 <code>kubeadm upgrade node</code>。</p>
+<h2 id="节点升级"><a href="#节点升级" class="headerlink" title="节点升级"></a>节点升级</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl drain &lt;node&gt; --ignore-daemonsets --delete-emptydir-data</span><br><span class="line"><span class="comment"># 先升级 kubeadm 包</span></span><br><span class="line">kubeadm upgrade node</span><br><span class="line"><span class="comment"># 再升级 kubelet/kubectl</span></span><br><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl restart kubelet</span><br><span class="line">kubectl uncordon &lt;node&gt;</span><br></pre></td></tr></table></figure>
+
+<p>逐个节点升级，确认业务可用后再继续。</p>
+<h2 id="升级前检查"><a href="#升级前检查" class="headerlink" title="升级前检查"></a>升级前检查</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl api-resources</span><br><span class="line">kubectl get --raw /metrics | <span class="built_in">head</span></span><br><span class="line">kubectl get events -A --sort-by=.lastTimestamp</span><br></pre></td></tr></table></figure>
+
+<p>可用 pluto、kubent 等工具扫描已移除 API。</p>
+<h1 id="证书管理"><a href="#证书管理" class="headerlink" title="证书管理"></a>证书管理</h1><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm certs check-expiration</span><br><span class="line">kubeadm certs renew all</span><br></pre></td></tr></table></figure>
+
+<p>要点：</p>
+<ul>
+<li>CA 有效期长，叶子证书通常 1 年</li>
+<li>升级时注意轮换</li>
+<li>kubelet 客户端证书可以开启自动轮换</li>
+<li>不要把私钥提交到 Git</li>
+<li>所有控制面共享同一 CA；在每个控制面节点分别执行 <code>kubeadm certs renew all</code> 并重启静态 Pod，不要复制叶子证书</li>
+</ul>
+<h1 id="etcd-备份与恢复"><a href="#etcd-备份与恢复" class="headerlink" title="etcd 备份与恢复"></a>etcd 备份与恢复</h1><h2 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl snapshot save snapshot.db \</span><br><span class="line">  --endpoints=https://127.0.0.1:2379 \</span><br><span class="line">  --cacert=/etc/kubernetes/pki/etcd/ca.crt \</span><br><span class="line">  --cert=/etc/kubernetes/pki/etcd/server.crt \</span><br><span class="line">  --key=/etc/kubernetes/pki/etcd/server.key</span><br></pre></td></tr></table></figure>
+
+<h2 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdutl --data-dir=/var/lib/etcd-restore snapshot restore snapshot.db</span><br></pre></td></tr></table></figure>
+
+<p>恢复前要停止所有 apiserver 和 etcd 进程；在所有 etcd 成员上恢复同一快照并配置 <code>initial-cluster</code>，再重启 etcd 和 apiserver。<code>etcdctl snapshot restore</code> 已标记为 Deprecated，优先使用 <code>etcdutl</code>。</p>
+<p>注意：</p>
+<ul>
+<li>不要直接复制 etcd 数据目录</li>
+<li>定期做恢复演练</li>
+<li>关注 quorum、defrag、compaction</li>
+<li>备份文件要异地保存并加密</li>
+</ul>
+<h1 id="自动扩缩容"><a href="#自动扩缩容" class="headerlink" title="自动扩缩容"></a>自动扩缩容</h1><h2 id="HPA"><a href="#HPA" class="headerlink" title="HPA"></a>HPA</h2><p><img src="https://kubernetes.io/images/docs/horizontal-pod-autoscaler.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/horizontal-pod-autoscaler.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="HPA 架构"></p>
+<p><em>图 3：HPA 根据指标调整副本数</em></p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">autoscaling/v2</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">HorizontalPodAutoscaler</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">scaleTargetRef:</span></span><br><span class="line">    <span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line">    <span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">minReplicas:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">maxReplicas:</span> <span class="number">20</span></span><br><span class="line">  <span class="attr">metrics:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">Resource</span></span><br><span class="line">    <span class="attr">resource:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">cpu</span></span><br><span class="line">      <span class="attr">target:</span></span><br><span class="line">        <span class="attr">type:</span> <span class="string">Utilization</span></span><br><span class="line">        <span class="attr">averageUtilization:</span> <span class="number">60</span></span><br><span class="line">  <span class="attr">behavior:</span></span><br><span class="line">    <span class="attr">scaleDown:</span></span><br><span class="line">      <span class="attr">stabilizationWindowSeconds:</span> <span class="number">300</span></span><br></pre></td></tr></table></figure>
+
+<p>依赖 metrics-server 或自定义指标适配器；没有 requests 时 CPU 利用率无法计算。</p>
+<h2 id="VPA"><a href="#VPA" class="headerlink" title="VPA"></a>VPA</h2><p><img src="https://kubernetes.io/images/docs/concepts/vpa-architecture.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/concepts/vpa-architecture.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="VPA 架构"></p>
+<p><em>图 4：VPA 架构</em></p>
+<p>VPA 默认只调整 requests（<code>controlledValues: RequestsOnly</code>），不会改 limits；需要同时调整时显式设置 <code>controlledValues: RequestsAndLimits</code>。需要单独部署 CRD 和组件。与 HPA 同时使用时注意指标冲突，常见做法是 HPA 用 CPU&#x2F;自定义指标，VPA 只做推荐模式。</p>
+<h2 id="Cluster-Autoscaler"><a href="#Cluster-Autoscaler" class="headerlink" title="Cluster Autoscaler"></a>Cluster Autoscaler</h2><p>按 Pending Pod 扩容节点，缩容时尊重 PDB、DaemonSet 和本地存储。云上也可用 Karpenter 做更灵活的节点供给。</p>
+<h1 id="资源治理"><a href="#资源治理" class="headerlink" title="资源治理"></a>资源治理</h1><h2 id="Requests-x2F-Limits"><a href="#Requests-x2F-Limits" class="headerlink" title="Requests&#x2F;Limits"></a>Requests&#x2F;Limits</h2><ul>
+<li>所有 Pod 设置 requests&#x2F;limits</li>
+<li>CPU limit 过紧会导致节流</li>
+<li>内存 limit 过紧会 OOMKilled</li>
+<li>requests 决定调度和容量规划</li>
+</ul>
+<h2 id="LimitRange"><a href="#LimitRange" class="headerlink" title="LimitRange"></a>LimitRange</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">LimitRange</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">default</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">limits:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">type:</span> <span class="string">Container</span></span><br><span class="line">    <span class="attr">defaultRequest:</span></span><br><span class="line">      <span class="attr">cpu:</span> <span class="string">100m</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">128Mi</span></span><br><span class="line">    <span class="attr">default:</span></span><br><span class="line">      <span class="attr">cpu:</span> <span class="string">500m</span></span><br><span class="line">      <span class="attr">memory:</span> <span class="string">256Mi</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="ResourceQuota"><a href="#ResourceQuota" class="headerlink" title="ResourceQuota"></a>ResourceQuota</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ResourceQuota</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">prod-quota</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">hard:</span></span><br><span class="line">    <span class="attr">requests.cpu:</span> <span class="string">&quot;20&quot;</span></span><br><span class="line">    <span class="attr">requests.memory:</span> <span class="string">40Gi</span></span><br><span class="line">    <span class="attr">limits.cpu:</span> <span class="string">&quot;40&quot;</span></span><br><span class="line">    <span class="attr">limits.memory:</span> <span class="string">80Gi</span></span><br><span class="line">    <span class="attr">count/pods:</span> <span class="string">&quot;100&quot;</span></span><br><span class="line">    <span class="attr">count/persistentvolumeclaims:</span> <span class="string">&quot;20&quot;</span></span><br><span class="line">    <span class="attr">requests.storage:</span> <span class="string">500Gi</span></span><br></pre></td></tr></table></figure>
+
+<p>PV 是集群级资源，不在 Namespace 配额内；配额统计的是 PVC 数量和存储请求。</p>
+<h1 id="可观测性"><a href="#可观测性" class="headerlink" title="可观测性"></a>可观测性</h1><ul>
+<li>metrics-server：Resource Metrics API</li>
+<li>Prometheus + Grafana：集群、节点、Pod、控制器指标</li>
+<li>日志：Fluent Bit&#x2F;Vector → Loki&#x2F;Elasticsearch</li>
+<li>事件：<code>kubectl get events --sort-by=.lastTimestamp</code></li>
+<li>审计日志：apiserver audit policy</li>
+<li>控制面指标：apiserver、etcd、scheduler、controller-manager</li>
+</ul>
+<p>关键告警：</p>
+<ul>
+<li>节点 NotReady</li>
+<li>etcd leader 变化、fsync 延迟、quorum 风险</li>
+<li>apiserver 5xx、限流</li>
+<li>Pending Pod 持续增长</li>
+<li>PVC 使用率、inode</li>
+<li>HPA 达到 maxReplicas</li>
+<li>证书到期</li>
+</ul>
+<h1 id="灾备与演练"><a href="#灾备与演练" class="headerlink" title="灾备与演练"></a>灾备与演练</h1><ul>
+<li>定期备份 etcd、PVC 快照、GitOps 仓库和密钥</li>
+<li>定期做节点故障、控制面故障、可用区故障演练</li>
+<li>验证恢复时间目标（RTO）和恢复点目标（RPO）</li>
+<li>多集群场景设计好 DNS、证书、网络和流量切换</li>
+<li>不要只备份不演练</li>
+</ul>
+<h1 id="排障"><a href="#排障" class="headerlink" title="排障"></a>排障</h1><h2 id="节点-NotReady"><a href="#节点-NotReady" class="headerlink" title="节点 NotReady"></a>节点 NotReady</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemctl status kubelet</span><br><span class="line">journalctl -u kubelet -f</span><br><span class="line">crictl ps</span><br><span class="line">crictl info</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<ul>
+<li>kubelet 证书</li>
+<li>容器运行时</li>
+<li>CNI</li>
+<li>磁盘&#x2F;inode</li>
+<li>内存&#x2F;PID 压力</li>
+<li>apiserver 连通性</li>
+</ul>
+<h2 id="Pending"><a href="#Pending" class="headerlink" title="Pending"></a>Pending</h2><ul>
+<li>资源不足</li>
+<li>污点&#x2F;亲和性</li>
+<li>PVC 未绑定</li>
+<li>节点 NotReady</li>
+<li>配额不足会在创建阶段直接拒绝（Forbidden），不是 Pending；PDB 只影响驱逐，不影响调度</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl describe pod &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">kubectl get events -n &lt;ns&gt; --sort-by=.lastTimestamp</span><br></pre></td></tr></table></figure>
+
+<h2 id="频繁驱逐"><a href="#频繁驱逐" class="headerlink" title="频繁驱逐"></a>频繁驱逐</h2><ul>
+<li>节点 MemoryPressure&#x2F;DiskPressure&#x2F;PIDPressure 和 kubelet 驱逐阈值</li>
+<li>requests 过大导致 Pending；超过 CPU limit 导致节流，超过 memory limit 导致 OOMKilled</li>
+<li>检查 QoS 和 PriorityClass</li>
+</ul>
+<h2 id="升级失败"><a href="#升级失败" class="headerlink" title="升级失败"></a>升级失败</h2><ul>
+<li>版本跨度过大</li>
+<li>已移除 API</li>
+<li>证书过期</li>
+<li>CNI&#x2F;CRI 不兼容</li>
+<li>etcd 不健康</li>
+<li>Kubernetes 不支持 minor 就地降级；失败时重跑 <code>kubeadm upgrade</code>（幂等）或 <code>kubeadm upgrade apply --force</code>，必要时从 etcd 快照恢复并用相同版本重建控制面</li>
+</ul>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="集群拓扑"><a href="#集群拓扑" class="headerlink" title="集群拓扑"></a>集群拓扑</h2><ul>
+<li>控制面至少 3 节点，etcd 3 或 5 副本，跨可用区部署</li>
+<li>控制面、etcd、工作负载按故障域反亲和</li>
+<li>不要盲目增加小集群；优先“少量大集群 + Namespace 多租户”</li>
+<li>需要强隔离、合规或不同网络域时再拆集群</li>
+<li>区分管理集群和业务集群，避免平台组件和业务互相影响</li>
+<li>负载均衡器放在 apiserver 前，kubelet&#x2F;kubectl 通过 VIP 访问</li>
+</ul>
+<h2 id="节点池"><a href="#节点池" class="headerlink" title="节点池"></a>节点池</h2><p>按业务拆分节点池：</p>
+<ul>
+<li>系统池：CoreDNS、CNI、Ingress、监控、日志</li>
+<li>普通业务池：无状态服务</li>
+<li>GPU&#x2F;高性能池：AI、渲染、视频</li>
+<li>内存型池：缓存、大数据</li>
+<li>Spot&#x2F;抢占池：可中断的批处理和无状态服务</li>
+</ul>
+<p>配套：</p>
+<ul>
+<li>用 taint&#x2F;toleration 和 nodeAffinity 隔离</li>
+<li>节点镜像标准化，预装运行时、CNI、监控 agent</li>
+<li>节点自动修复和替换，避免手工修节点</li>
+<li>控制节点最大 Pod 数、IP 耗尽和磁盘水位</li>
+<li>节点维护走 cordon&#x2F;drain&#x2F;uncordon，遵守 PDB</li>
+</ul>
+<h2 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h2><ul>
+<li>一次只升一个 minor，先测试集群再生产</li>
+<li>控制面 → kubelet&#x2F;kube-proxy → 工作负载</li>
+<li>第一个控制面用 <code>kubeadm upgrade apply</code>，其余用 <code>kubeadm upgrade node</code></li>
+<li>升级前扫描已移除 API，备份 etcd，确认 cgroup v2</li>
+<li>升级后验证 CNI、CoreDNS、Ingress、存储和关键业务</li>
+<li>Kubernetes 不支持 minor 降级，回滚以应用层和配置层为主</li>
+<li>设置变更窗口和冻结期，避免和大促&#x2F;发布冲突</li>
+</ul>
+<h2 id="证书与-etcd"><a href="#证书与-etcd" class="headerlink" title="证书与 etcd"></a>证书与 etcd</h2><ul>
+<li>所有控制面共享同一 CA，每个节点分别 renew，不复制叶子证书</li>
+<li><code>kubeadm certs check-expiration</code> 纳入监控</li>
+<li>kubelet 客户端证书开启自动轮换</li>
+<li>etcd 使用 <code>etcdutl snapshot save</code> 备份，异地加密保存</li>
+<li>恢复前停止 apiserver&#x2F;etcd，在所有成员上恢复同一快照</li>
+<li>定期做恢复演练，验证 RTO&#x2F;RPO</li>
+<li>关注 etcd quorum、fsync 延迟、defrag 和 compaction</li>
+</ul>
+<h2 id="自动扩缩容-1"><a href="#自动扩缩容-1" class="headerlink" title="自动扩缩容"></a>自动扩缩容</h2><ul>
+<li>HPA：按 CPU&#x2F;内存&#x2F;自定义指标扩 Pod，设置 maxReplicas 和 behavior</li>
+<li>VPA：默认只调 requests，适合 rightsizing；和 HPA 同时用要避免冲突</li>
+<li>Cluster Autoscaler&#x2F;Karpenter：按 Pending Pod 扩节点</li>
+<li>设置节点上限和预算告警，防止成本失控</li>
+<li>考虑冷启动、镜像拉取、CNI IP 和调度拓扑</li>
+<li>缩容尊重 PDB、DaemonSet、本地存储和长连接</li>
+</ul>
+<h2 id="可观测性-1"><a href="#可观测性-1" class="headerlink" title="可观测性"></a>可观测性</h2><ul>
+<li>指标：集群、节点、Pod、控制器、etcd、apiserver、scheduler</li>
+<li>日志：系统组件、审计、业务日志统一采集</li>
+<li>事件：<code>kubectl get events</code> 纳入告警</li>
+<li>审计：apiserver audit 接入 SIEM</li>
+<li>SLO：可用性、延迟、错误率、饱和度</li>
+<li>告警分级：P0&#x2F;P1 电话，P2 工单，避免告警疲劳</li>
+</ul>
+<h2 id="灾备"><a href="#灾备" class="headerlink" title="灾备"></a>灾备</h2><ul>
+<li>明确 RTO&#x2F;RPO，按业务分级</li>
+<li>备份 etcd、PVC 快照、GitOps 仓库、密钥和镜像</li>
+<li>多集群&#x2F;多区域设计 DNS、证书、网络和流量切换</li>
+<li>恢复顺序：基础设施 → 控制面 → 网络&#x2F;存储 → 工作负载</li>
+<li>定期演练节点故障、控制面故障、可用区故障和误删恢复</li>
+<li>不要只备份不演练</li>
+</ul>
+<h2 id="变更管理"><a href="#变更管理" class="headerlink" title="变更管理"></a>变更管理</h2><ul>
+<li>集群组件和应用配置都走 GitOps</li>
+<li>变更前 diff、dry-run、测试集群验证</li>
+<li>高风险变更双人复核，保留回滚方案</li>
+<li>记录变更窗口、影响范围和验证步骤</li>
+<li>变更后观察 SLO 和关键业务指标</li>
+<li>定期清理技术债和手工配置漂移</li>
+</ul>
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/">kubeadm</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/">升级集群</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/">证书</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/">etcd 备份</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/releases/version-skew-policy/">版本偏差</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/architecture/nodes/">节点管理</a></li>
+</ul>
 
   </div>
   
@@ -2837,8 +2991,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>kubernetes</p></a></div>
-  <span hidden itemprop="keywords">kubernetes</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E8%BF%90%E7%BB%B4/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>运维</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/kubeadm/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>kubeadm</p></a></div>
+  <span hidden itemprop="keywords">Kubernetes 运维 kubeadm</span>
   
 
 
@@ -2859,21 +3013,13 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
         <a class='prev' href='/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/'>
           <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Kubernetes共享存储</p>
-          <p class='content'>
-
-PVPersistentVolume 是对底层网络共享存储的抽象，将共享存储定义为一种资源，由管理员创建配置，与共享存储的具体实现直接相关，通过插件式的机制完成与共享存储的对接。
-PV 主要...</p>
+          <p class='content'>本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree prov...</p>
         </a>
       
       
         <a class='next' href='/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8/'>
           <p class='title'>Kubernetes集群安全<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>
-
-云原生安全概述云原生安全的 4 个 C 分别是云（Cloud）、集群（Cluster）、容器（Container）和代码（Code）。
-
-
-云（例如数据中心）是k8s集群的可信计算基（tru...</p>
+          <p class='content'>本文基于 Kubernetes v1.37 官方文档重写。旧笔记中的 PodSecurityPolicy、Basic Auth、ABAC 示例和准入插件列表已经过时；本文按当前认证、鉴权、准入、...</p>
         </a>
       
     </div>
@@ -2917,7 +3063,7 @@ PV 主要...</p>
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Node-%E7%AE%A1%E7%90%86"><span class="toc-text">Node 管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Node-%E9%9A%94%E7%A6%BB%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">Node 隔离与恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Node-%E6%89%A9%E5%AE%B9"><span class="toc-text">Node 扩容</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0-Label"><span class="toc-text">更新 Label</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Namespace"><span class="toc-text">Namespace</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86"><span class="toc-text">资源管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Pod%E7%9A%84QoS%E6%9C%8D%E5%8A%A1%E8%B4%A8%E9%87%8F"><span class="toc-text">Pod的QoS服务质量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LimitRange"><span class="toc-text">LimitRange</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ResourceQuota"><span class="toc-text">ResourceQuota</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Pod-%E9%A9%B1%E9%80%90%E6%9C%BA%E5%88%B6"><span class="toc-text">Pod 驱逐机制</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Pod-Disruption-Budget"><span class="toc-text">Pod Disruption Budget</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="toc-text">集群高可用</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E7%9B%91%E6%8E%A7"><span class="toc-text">集群监控</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E6%97%A5%E5%BF%97%E7%AE%A1%E7%90%86"><span class="toc-text">集群日志管理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%A1%E8%AE%A1%E6%9C%BA%E5%88%B6"><span class="toc-text">审计机制</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Helm"><span class="toc-text">Helm</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-text">常见问题</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E7%AE%A1%E7%90%86"><span class="toc-text">节点管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Node-%E7%8A%B6%E6%80%81"><span class="toc-text">Node 状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9A%94%E7%A6%BB%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">隔离与恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B1%A1%E7%82%B9%E4%B8%8E%E5%AE%B9%E5%BF%8D"><span class="toc-text">污点与容忍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E6%89%A9%E5%AE%B9"><span class="toc-text">节点扩容</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85%E4%B8%8E%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="toc-text">集群安装与高可用</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#kubeadm-%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="toc-text">kubeadm 高可用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">初始化</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kubeadm-%E9%85%8D%E7%BD%AE"><span class="toc-text">kubeadm 配置</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E5%8D%87%E7%BA%A7"><span class="toc-text">版本升级</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E9%9D%A2%E5%8D%87%E7%BA%A7"><span class="toc-text">控制面升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E5%8D%87%E7%BA%A7"><span class="toc-text">节点升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7%E5%89%8D%E6%A3%80%E6%9F%A5"><span class="toc-text">升级前检查</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AF%81%E4%B9%A6%E7%AE%A1%E7%90%86"><span class="toc-text">证书管理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#etcd-%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">etcd 备份与恢复</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD"><span class="toc-text">备份</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%81%A2%E5%A4%8D"><span class="toc-text">恢复</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9"><span class="toc-text">自动扩缩容</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#HPA"><span class="toc-text">HPA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VPA"><span class="toc-text">VPA</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cluster-Autoscaler"><span class="toc-text">Cluster Autoscaler</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%E6%B2%BB%E7%90%86"><span class="toc-text">资源治理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Requests-x2F-Limits"><span class="toc-text">Requests&#x2F;Limits</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LimitRange"><span class="toc-text">LimitRange</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ResourceQuota"><span class="toc-text">ResourceQuota</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7"><span class="toc-text">可观测性</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%81%BE%E5%A4%87%E4%B8%8E%E6%BC%94%E7%BB%83"><span class="toc-text">灾备与演练</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C"><span class="toc-text">排障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9-NotReady"><span class="toc-text">节点 NotReady</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Pending"><span class="toc-text">Pending</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%91%E7%B9%81%E9%A9%B1%E9%80%90"><span class="toc-text">频繁驱逐</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7%E5%A4%B1%E8%B4%A5"><span class="toc-text">升级失败</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E6%8B%93%E6%89%91"><span class="toc-text">集群拓扑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E6%B1%A0"><span class="toc-text">节点池</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7"><span class="toc-text">升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%81%E4%B9%A6%E4%B8%8E-etcd"><span class="toc-text">证书与 etcd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E6%89%A9%E7%BC%A9%E5%AE%B9-1"><span class="toc-text">自动扩缩容</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7-1"><span class="toc-text">可观测性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%81%BE%E5%A4%87"><span class="toc-text">灾备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%98%E6%9B%B4%E7%AE%A1%E7%90%86"><span class="toc-text">变更管理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 

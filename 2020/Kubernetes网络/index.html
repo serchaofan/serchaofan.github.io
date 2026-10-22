@@ -36,35 +36,17 @@
   <!-- 页面元数据 -->
   <title>Kubernetes网络 - Tianyi的技术随笔</title>
   <meta name="keywords" content="Kubernetes, 网络,Kubernetes,undefined">
-  <meta desc name="description" content="
-K8s网络模型概述
-ip地址分配
-k8s主机内组网
-k8s跨节点组网
-
-
-K8s网络策略
-K8s网络故障定位
-K8s 网络实现机制
-K8s DNS
-K8S网络插件
-Flannel
-Calico
-Weave
-Cilium
-
-
- - Tianyi Gu - Tianyi的技术随笔">
+  <meta desc name="description" content="本文基于 Kubernetes v1.37 官方文档重写，讲清 Pod 网络、Service 网络、Ingress&#x2F;Gateway、DNS、NetworkPolicy 和排障。旧笔记只有 80 多行且停留在 Docker&#x2F;Flannel 时代，不再作为操作依据。 - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kubernetes网络">
 <meta property="og:url" content="https://tianyigu.top/2020/Kubernetes%E7%BD%91%E7%BB%9C/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="K8s网络模型概述 ip地址分配 k8s主机内组网 k8s跨节点组网   K8s网络策略 K8s网络故障定位 K8s 网络实现机制 K8s DNS K8S网络插件 Flannel Calico Weave Cilium">
+<meta property="og:description" content="本文基于 Kubernetes v1.37 官方文档重写，讲清 Pod 网络、Service 网络、Ingress&#x2F;Gateway、DNS、NetworkPolicy 和排障。旧笔记只有 80 多行且停留在 Docker&#x2F;Flannel 时代，不再作为操作依据。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-01-07T14:48:17.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.838Z">
+<meta property="article:modified_time" content="2026-10-22T15:19:22.244Z">
 <meta property="article:author" content="Tianyi Gu">
 <meta property="article:tag" content="网络">
 <meta property="article:tag" content="Kubernetes">
@@ -2270,7 +2252,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792680709817),
+    lastupdate: new Date(1792682524855),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2317,7 +2299,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes网络/","name":"Kubernetes网络"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes网络","description":"\nK8s网络模型概述\nip地址分配\nk8s主机内组网\nk8s跨节点组网\n\n\nK8s网络策略\nK8s网络故障定位\nK8s 网络实现机制\nK8s DNS\nK8S网络插件\nFlannel\nCalico\nWeave\nCilium\n\n\n","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E7%BD%91%E7%BB%9C/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E7%BD%91%E7%BB%9C/","wordCount":113,"datePublished":"2020-01-07T14:48:17.000Z","dateModified":"2026-03-11T19:05:28.838Z","articleSection":"Kubernetes","keywords":"网络,Kubernetes","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes网络/","name":"Kubernetes网络"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes网络","description":"本文基于 Kubernetes v1.37 官方文档重写，讲清 Pod 网络、Service 网络、Ingress&#x2F;Gateway、DNS、NetworkPolicy 和排障。旧笔记只有 80 多行且停留在 Docker&#x2F;Flannel 时代，不再作为操作依据。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E7%BD%91%E7%BB%9C/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E7%BD%91%E7%BB%9C/","wordCount":141,"datePublished":"2020-01-07T14:48:17.000Z","dateModified":"2026-10-22T15:19:22.244Z","articleSection":"Kubernetes","keywords":"网络,Kubernetes","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2698,52 +2680,271 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <ul>
-<li><a href="#k8s%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0">K8s网络模型概述</a><ul>
-<li><a href="#ip%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D">ip地址分配</a></li>
-<li><a href="#k8s%E4%B8%BB%E6%9C%BA%E5%86%85%E7%BB%84%E7%BD%91">k8s主机内组网</a></li>
-<li><a href="#k8s%E8%B7%A8%E8%8A%82%E7%82%B9%E7%BB%84%E7%BD%91">k8s跨节点组网</a></li>
-</ul>
-</li>
-<li><a href="#k8s%E7%BD%91%E7%BB%9C%E7%AD%96%E7%95%A5">K8s网络策略</a></li>
-<li><a href="#k8s%E7%BD%91%E7%BB%9C%E6%95%85%E9%9A%9C%E5%AE%9A%E4%BD%8D">K8s网络故障定位</a></li>
-<li><a href="#k8s-%E7%BD%91%E7%BB%9C%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6">K8s 网络实现机制</a></li>
-<li><a href="#k8s-dns">K8s DNS</a></li>
-<li><a href="#k8s%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6">K8S网络插件</a><ul>
-<li><a href="#flannel">Flannel</a></li>
-<li><a href="#%E7%BA%AFco">Calico</a></li>
-<li><a href="#weave">Weave</a></li>
-<li><a href="#cilium">Cilium</a></li>
-</ul>
-</li>
-</ul>
+    <p>本文基于 Kubernetes v1.37 官方文档重写，讲清 Pod 网络、Service 网络、Ingress&#x2F;Gateway、DNS、NetworkPolicy 和排障。旧笔记只有 80 多行且停留在 Docker&#x2F;Flannel 时代，不再作为操作依据。</p>
 <span id="more"></span>
 
-<h1 id="K8s网络模型概述"><a href="#K8s网络模型概述" class="headerlink" title="K8s网络模型概述"></a>K8s网络模型概述</h1><p>在k8s网络模型中，每台服务器上的容器有自己独立的ip段，各个服务器之间的容器可以根据目标容器的ip地址进行访问。为实现这个目标，k8s网络重点要解决以下两点：</p>
+<ul>
+<li><a href="#%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B">网络模型</a></li>
+<li><a href="#pod-%E7%BD%91%E7%BB%9C%E4%B8%8E-cni">Pod 网络与 CNI</a></li>
+<li><a href="#service-%E7%BD%91%E7%BB%9C">Service 网络</a></li>
+<li><a href="#ingress-%E4%B8%8E-gateway-api">Ingress 与 Gateway API</a></li>
+<li><a href="#dns">DNS</a></li>
+<li><a href="#networkpolicy">NetworkPolicy</a></li>
+<li><a href="#%E8%B7%A8%E8%8A%82%E7%82%B9%E7%BD%91%E7%BB%9C%E4%B8%8E-cni-%E9%80%89%E5%9E%8B">跨节点网络与 CNI 选型</a></li>
+<li><a href="#%E6%8E%92%E9%9A%9C">排障</a></li>
+<li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
+</ul>
+<h1 id="网络模型"><a href="#网络模型" class="headerlink" title="网络模型"></a>网络模型</h1><p>Kubernetes 的网络模型有三条基本要求：</p>
 <ol>
-<li>各台服务器上的容器ip段不能重叠，所以需要某种ip段分配机制，为各台服务器分配独立的ip段</li>
-<li>从某个pod发出的流量到达其所在服务器时，服务器网络层应当具备根据目标ip地址将流量转发到该ip所属ip段对应服务器的能力。</li>
+<li>每个 Pod 有自己的 IP</li>
+<li>Pod 之间可以直接通信，不需要 NAT</li>
+<li>节点上的 agent（kubelet、kube-proxy）能和该节点上的所有 Pod 通信</li>
 </ol>
-<p>单pod单ip模型：每个pod都有一个独立ip地址，pod内所有容器共享network namespace。容器之间直接通信，不需要额外NAT，因此不存在源地址被伪装的情况，node与容器网络直连，同样不需要额外NAT。扁平化的网络优点在于：没有NAT带来的性能损耗，且可追溯源地址，为后面网络策略铺垫，降低网络拍错难度。</p>
-<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202208041802718.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202208041802718.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
-<h2 id="ip地址分配"><a href="#ip地址分配" class="headerlink" title="ip地址分配"></a>ip地址分配</h2><p>k8s会为节点、pod、服务分配ip地址。</p>
-<ol>
-<li>系统从集群VPC网络为每个节点分配一个ip，该节点ip用于提供从控制组件（kubelet和kube-proxy）到k8s master的连接。</li>
-<li>系统会为每个pod分配一个地址块内的ip地址，用户可选择在创建集群时通过<code>--pod-cidr</code>指定ip段范围</li>
-<li>系统会从集群VPC网络为每项服务分配一个ip地址，称为ClusterIP，大部分情况下，该VPC与节点ip地址不在同一个网段。</li>
-</ol>
-<h2 id="k8s主机内组网"><a href="#k8s主机内组网" class="headerlink" title="k8s主机内组网"></a>k8s主机内组网</h2><h2 id="k8s跨节点组网"><a href="#k8s跨节点组网" class="headerlink" title="k8s跨节点组网"></a>k8s跨节点组网</h2><h1 id="K8s网络策略"><a href="#K8s网络策略" class="headerlink" title="K8s网络策略"></a>K8s网络策略</h1><h1 id="K8s网络故障定位"><a href="#K8s网络故障定位" class="headerlink" title="K8s网络故障定位"></a>K8s网络故障定位</h1><h1 id="K8s-网络实现机制"><a href="#K8s-网络实现机制" class="headerlink" title="K8s 网络实现机制"></a>K8s 网络实现机制</h1><h1 id="K8s-DNS"><a href="#K8s-DNS" class="headerlink" title="K8s DNS"></a>K8s DNS</h1><h1 id="K8S网络插件"><a href="#K8S网络插件" class="headerlink" title="K8S网络插件"></a>K8S网络插件</h1><h2 id="Flannel"><a href="#Flannel" class="headerlink" title="Flannel"></a>Flannel</h2><p>Flannel 可为容器提供跨节点网络服务，其模型为集群内所有容器使用一个网络，然后在每个主机上从该网络中划分一个子网。flannel为主机上的容器创建网络时，从子网中划分一个IP给容器。</p>
-<p>容器跨节点访问的技术挑战以及flannel的解决方案：</p>
-<ol>
-<li>容器IP有重复问题：由于docker只是利用linux内核network namespace实现网络隔离，各个节点上的容器IP地址是在所属节点上自动分配的，从全局看，这种局部地址一旦拿到大的范围来看就可能有重复的。<br>解决：flannel设计了一种全局的网络地址分配机制，即使用etcd存储网段和节点之间的关系，然后flannel配置各个节点上Docker，只在分配到当前节点的网段中选择容器IP地址，确保了IP地址分配的全局唯一。</li>
-<li>容器IP地址路由问题：通常虚拟网络的IP和MAC地址在物理网络上是不认识的，所以数据包即使被发送到网络中，也会因无法进行路由而被丢掉。虽然地址唯一了，但是依然无法实现真正的网络通信。<br>解决：</li>
-</ol>
-<h2 id="Calico"><a href="#Calico" class="headerlink" title="Calico"></a>Calico</h2><p>Calico 是一个用于容器、虚拟机和本地基于主机的工作负载的开源网络和网络安全解决方案。Calico 支持广泛的平台，包括 Kubernetes、 OpenShift、 Mirantis Kubernetes Engine (MKE)、 OpenStack 和裸金属服务。Calico 提供了多种数据平面的支持，包括Linux eBPF数据平面，标准linux网络数据平面，以及Windows HNS数据平面。</p>
-<p>Calico提供了纯3层的网络模型，每个容器都通过IP直接通信，没有采用overlay进行转发，而是基于路由转发，容器所在节点便扮演了类似路由器的功能，或者叫做虚拟路由器（vRouter），而且这些虚拟路由器需要知道整个集群的网络路由信息。Calico是一个基于BGP的数据中心网络方案，也支持overlay网络，与kubernetes、openstack、AWS、GCE都有良好的集成。因此，通过三层BGP协议，这些节点上的虚拟路由器便将整个网络的路由信息进行传播与维护，实现了三层网络上的跨节点网络。</p>
-<p>Calico不仅提供容器网络方案，也可以用在虚拟机网络上。同时网络策略功能也是Calico的特点，通过Calico的网络策略语言，可以对容器、虚拟机负载和裸机之间网络通信进行细粒度和动态的安全规则控制。Calico基于iptables实现了k8s网络策略，通过在各节点上应用ACL策略进行工作负载的多租户隔离、安全组以及其他可达性限制等。Calico还可以与Istio集成，以便在服务网格层和网络基础架构层中实施网络策略。</p>
-<h2 id="Weave"><a href="#Weave" class="headerlink" title="Weave"></a>Weave</h2><h2 id="Cilium"><a href="#Cilium" class="headerlink" title="Cilium"></a>Cilium</h2><blockquote>
-<p>参考文章<br>《Kubernetes网络权威指南：基础、原理与实践》</p>
-</blockquote>
+<p>Pod 到 Pod 通常是扁平网络；Pod 访问 Service 时，由节点上的转发规则把虚拟 IP 转成某个 Pod IP；出集群流量是否 NAT 取决于 CNI 的 masquerade 配置。</p>
+<p>两个关键网段：</p>
+<ul>
+<li><strong>Pod CIDR</strong>：Pod IP 的地址范围，通常每个节点分配一个子网</li>
+<li><strong>Service CIDR</strong>：Service 虚拟 IP 的地址范围，不与 Pod CIDR 重叠</li>
+</ul>
+<p>kubeadm 创建集群时用 <code>--pod-network-cidr</code> 指定 Pod 网段；kube-apiserver 用 <code>--service-cluster-ip-range</code> 指定 Service 网段。</p>
+<h1 id="Pod-网络与-CNI"><a href="#Pod-网络与-CNI" class="headerlink" title="Pod 网络与 CNI"></a>Pod 网络与 CNI</h1><p>CNI（Container Network Interface）是容器运行时和网络插件之间的标准接口。kubelet 创建 Pod 沙箱后，调用 CNI 插件完成：</p>
+<ul>
+<li>创建 veth pair</li>
+<li>给 Pod 分配 IP</li>
+<li>配置路由</li>
+<li>把 Pod 接入节点网桥或 overlay</li>
+<li>安装 NetworkPolicy 规则（如果 CNI 支持）</li>
+</ul>
+<p>CNI 规范的基本操作是 <code>ADD</code>、<code>DEL</code>、<code>CHECK</code>、<code>VERSION</code>，部分插件还支持 <code>GC</code>、<code>STATUS</code>。</p>
+<p>常见实现：</p>
+<ul>
+<li><strong>Flannel</strong>：简单，常用 VXLAN 或 host-gw，本身不执行 NetworkPolicy</li>
+<li><strong>Calico</strong>：BGP 三层路由为主，也支持 IPIP&#x2F;VXLAN overlay；用 iptables 或 eBPF 执行 NetworkPolicy</li>
+<li><strong>Cilium</strong>：eBPF 数据面，支持 kube-proxy replacement、NetworkPolicy、Hubble 可观测性和 Gateway API</li>
+<li><strong>Antrea</strong>：基于 Open vSwitch，支持 NetworkPolicy 和流量可视化</li>
+<li><strong>Canal</strong>：Flannel + Calico 策略</li>
+</ul>
+<p>节点内通信通常通过 veth pair + 网桥&#x2F;路由；跨节点通信由 CNI 决定走 underlay 路由还是 overlay 隧道。</p>
+<h1 id="Service-网络"><a href="#Service-网络" class="headerlink" title="Service 网络"></a>Service 网络</h1><h2 id="为什么需要-Service"><a href="#为什么需要-Service" class="headerlink" title="为什么需要 Service"></a>为什么需要 Service</h2><p>Pod IP 会随重建变化，Service 提供稳定的虚拟 IP 和 DNS 名称，并通过 selector 选择后端 Pod。</p>
+<p><img src="https://kubernetes.io/images/docs/services-overview.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/services-overview.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Service 概览"></p>
+<p><em>图 1：Service 通过 selector 选择一组 Pod</em></p>
+<p><img src="https://kubernetes.io/images/docs/services-detail.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/services-detail.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Service 细节"></p>
+<p><em>图 2：Service 的虚拟 IP、端点与转发</em></p>
+<h2 id="类型"><a href="#类型" class="headerlink" title="类型"></a>类型</h2><ul>
+<li><code>ClusterIP</code>：集群内虚拟 IP，默认类型</li>
+<li><code>NodePort</code>：在每个节点监听端口，默认 30000-32767</li>
+<li><code>LoadBalancer</code>：云厂商负载均衡或 MetalLB</li>
+<li><code>ExternalName</code>：DNS CNAME，不做转发</li>
+<li><code>Headless</code>（<code>clusterIP: None</code>）：不分配 VIP，返回 Pod IP，StatefulSet 常用</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">ClusterIP</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">http</span></span><br><span class="line">    <span class="attr">port:</span> <span class="number">80</span></span><br><span class="line">    <span class="attr">targetPort:</span> <span class="number">8080</span></span><br></pre></td></tr></table></figure>
+
+<p><code>port</code> 是 Service 端口，<code>targetPort</code> 是容器端口。多个端口时 <code>name</code> 必须唯一。</p>
+<h2 id="EndpointSlice"><a href="#EndpointSlice" class="headerlink" title="EndpointSlice"></a>EndpointSlice</h2><p>Service 的后端由 EndpointSlice 表示：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get endpointslices -l kubernetes.io/service-name=web</span><br></pre></td></tr></table></figure>
+
+<p>新实现使用 <code>discovery.k8s.io/v1</code> EndpointSlice。旧的 Endpoints API 已废弃，不支持双栈，规模大时会被截断。</p>
+<h2 id="kube-proxy"><a href="#kube-proxy" class="headerlink" title="kube-proxy"></a>kube-proxy</h2><p><img src="https://kubernetes.io/images/docs/services-iptables-overview.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/services-iptables-overview.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="iptables 模式"></p>
+<p><em>图 3：iptables 模式下 Service 到 Pod 的 DNAT</em></p>
+<p>kube-proxy watch Service 和 EndpointSlice，把规则同步到节点：</p>
+<ul>
+<li><code>iptables</code>：常见默认，规则多时同步和匹配成本上升</li>
+<li><code>nftables</code>：规则管理更高效，新版本可用</li>
+<li><code>ipvs</code>：已进入废弃流程，新集群不建议作为主模式</li>
+</ul>
+<p>iptables&#x2F;nftables 模式下，NodePort 不是 kube-proxy 进程监听端口，而是转发规则；<code>ss -lntp</code> 看不到。</p>
+<p>主要 iptables 链：</p>
+<ul>
+<li><code>KUBE-SERVICES</code>：入口，匹配 ClusterIP</li>
+<li><code>KUBE-SVC-*</code>：Service 到后端的分发</li>
+<li><code>KUBE-SEP-*</code>：具体 Endpoint</li>
+<li><code>KUBE-MARK-MASQ</code>：源地址伪装</li>
+</ul>
+<h2 id="externalTrafficPolicy"><a href="#externalTrafficPolicy" class="headerlink" title="externalTrafficPolicy"></a>externalTrafficPolicy</h2><p><img src="https://kubernetes.io/images/docs/sourceip-externaltrafficpolicy.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/sourceip-externaltrafficpolicy.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="externalTrafficPolicy"></p>
+<p><em>图 4：externalTrafficPolicy 对源 IP 和转发路径的影响</em></p>
+<ul>
+<li><code>Cluster</code>：可以转发到其他节点的 Pod，源 IP 可能被 SNAT</li>
+<li><code>Local</code>：只转发到本节点 Pod，保留客户端源 IP；节点没有 Pod 时流量失败</li>
+</ul>
+<p><code>Local</code> 常配合节点本地负载均衡或 DaemonSet 网关使用。</p>
+<h2 id="双栈"><a href="#双栈" class="headerlink" title="双栈"></a>双栈</h2><p>集群可以同时分配 IPv4 和 IPv6：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">ipFamilyPolicy:</span> <span class="string">PreferDualStack</span></span><br><span class="line"><span class="attr">ipFamilies:</span> [<span class="string">&quot;IPv4&quot;</span>, <span class="string">&quot;IPv6&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>需要 CNI、kube-proxy、节点和底层网络都支持。双栈排障时先确认 Service 的 <code>ipFamilyPolicy</code>&#x2F;<code>ipFamilies</code>、EndpointSlice 的 <code>addressType</code>（IPv4&#x2F;IPv6&#x2F;FQDN）和 Pod 的 <code>status.podIPs</code>。</p>
+<h1 id="Ingress-与-Gateway-API"><a href="#Ingress-与-Gateway-API" class="headerlink" title="Ingress 与 Gateway API"></a>Ingress 与 Gateway API</h1><h2 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h2><p>Ingress 使用 <code>networking.k8s.io/v1</code>，通过 <code>ingressClassName</code> 绑定 Ingress Controller：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">ingressClassName:</span> <span class="string">nginx</span></span><br><span class="line">  <span class="attr">tls:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">hosts:</span> [<span class="string">&quot;web.example.com&quot;</span>]</span><br><span class="line">    <span class="attr">secretName:</span> <span class="string">web-tls</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">host:</span> <span class="string">web.example.com</span></span><br><span class="line">    <span class="attr">http:</span></span><br><span class="line">      <span class="attr">paths:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/</span></span><br><span class="line">        <span class="attr">pathType:</span> <span class="string">Prefix</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">service:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line">            <span class="attr">port:</span></span><br><span class="line">              <span class="attr">number:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>Ingress 只描述 L7 路由，实际转发由 Ingress Controller（NGINX、Traefik、HAProxy、云厂商 LB）完成。</p>
+<p>Ingress-NGINX 已于 2026-03 后停止维护，新项目应评估 Gateway API 或其他维护中的控制器。</p>
+<h2 id="Gateway-API"><a href="#Gateway-API" class="headerlink" title="Gateway API"></a>Gateway API</h2><p>Gateway API 通过 CRD 提供更强的表达能力：</p>
+<ul>
+<li><code>GatewayClass</code>：控制器类型</li>
+<li><code>Gateway</code>：监听器、端口、TLS</li>
+<li><code>HTTPRoute</code> &#x2F; <code>GRPCRoute</code>：路由规则</li>
+<li><code>ReferenceGrant</code>：跨命名空间引用授权</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">gateway.networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Gateway</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">gatewayClassName:</span> <span class="string">istio</span></span><br><span class="line">  <span class="attr">listeners:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">http</span></span><br><span class="line">    <span class="attr">port:</span> <span class="number">80</span></span><br><span class="line">    <span class="attr">protocol:</span> <span class="string">HTTP</span></span><br><span class="line">    <span class="attr">hostname:</span> <span class="string">web.example.com</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">gateway.networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">HTTPRoute</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">parentRefs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">hostnames:</span> [<span class="string">&quot;web.example.com&quot;</span>]</span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">backendRefs:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">web</span></span><br><span class="line">      <span class="attr">port:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>Gateway API CRD 通常需要单独安装，具体版本以官方文档为准。</p>
+<h1 id="DNS"><a href="#DNS" class="headerlink" title="DNS"></a>DNS</h1><p>集群 DNS 由 CoreDNS 提供。Service 域名：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;service&gt;.&lt;namespace&gt;.svc.cluster.local</span><br></pre></td></tr></table></figure>
+
+<p>Pod 域名（Headless Service）：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&lt;pod&gt;.&lt;service&gt;.&lt;namespace&gt;.svc.cluster.local</span><br></pre></td></tr></table></figure>
+
+<p>常见问题：</p>
+<ul>
+<li><code>ndots:5</code> 会让短域名先尝试多个 search 域，产生额外查询</li>
+<li>跨命名空间访问建议用 FQDN 或 <code>dnsConfig</code></li>
+<li>Headless Service 返回多个 A&#x2F;AAAA 记录，客户端要处理轮询和失败重试</li>
+<li>NetworkPolicy 要放行 UDP&#x2F;TCP 53</li>
+</ul>
+<p><img src="https://kubernetes.io/images/docs/nodelocaldns.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/nodelocaldns.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="NodeLocal DNSCache"></p>
+<p><em>图 5：NodeLocal DNSCache 减少 DNS 跨节点查询</em></p>
+<h1 id="NetworkPolicy"><a href="#NetworkPolicy" class="headerlink" title="NetworkPolicy"></a>NetworkPolicy</h1><p>NetworkPolicy 是命名空间级的 L3&#x2F;L4 访问控制，必须由 CNI 实现。Flannel 本身不执行 NetworkPolicy，需要 Calico&#x2F;Canal&#x2F;Antrea&#x2F;Cilium。</p>
+<p>默认拒绝入站：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NetworkPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">default-deny-ingress</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">podSelector:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">policyTypes:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">Ingress</span></span><br></pre></td></tr></table></figure>
+
+<p>允许同命名空间访问：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NetworkPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">allow-same-namespace</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">podSelector:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">ingress:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">from:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">podSelector:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>允许特定命名空间：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">ingress:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">from:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">namespaceSelector:</span></span><br><span class="line">      <span class="attr">matchLabels:</span></span><br><span class="line">        <span class="attr">kubernetes.io/metadata.name:</span> <span class="string">monitoring</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li><code>podSelector: &#123;&#125;</code> 表示本命名空间所有 Pod</li>
+<li><code>namespaceSelector</code> 和 <code>podSelector</code> 写在同一个 <code>from</code> 元素里表示 AND，分开写表示 OR</li>
+<li>NetworkPolicy 不处理 DNS 名称，只处理 IP&#x2F;端口&#x2F;标签</li>
+<li>不是身份认证，不能替代 mTLS</li>
+</ul>
+<h1 id="跨节点网络与-CNI-选型"><a href="#跨节点网络与-CNI-选型" class="headerlink" title="跨节点网络与 CNI 选型"></a>跨节点网络与 CNI 选型</h1><h2 id="Underlay-与-Overlay"><a href="#Underlay-与-Overlay" class="headerlink" title="Underlay 与 Overlay"></a>Underlay 与 Overlay</h2><ul>
+<li><strong>Underlay</strong>：Pod 直接使用底层网络可路由的 IP，性能好，但要求网络团队配合</li>
+<li><strong>Overlay</strong>：用 VXLAN&#x2F;IPIP 等隧道封装，跨子网方便，但有封装开销和 MTU 问题</li>
+</ul>
+<p>Calico 常用 BGP underlay，也可选 IPIP&#x2F;VXLAN；Flannel 常用 VXLAN 或 host-gw；Cilium 可用 native routing 或 tunnel。</p>
+<h2 id="MTU"><a href="#MTU" class="headerlink" title="MTU"></a>MTU</h2><p>Overlay 会增加封装头，Pod MTU 要相应调小，否则大包会丢。例如 VXLAN 通常把 1500 调成 1450。MTU 不一致会导致“小请求正常、大请求超时”的典型故障。</p>
+<h2 id="选型考虑"><a href="#选型考虑" class="headerlink" title="选型考虑"></a>选型考虑</h2><ul>
+<li>是否需要 NetworkPolicy</li>
+<li>是否需要 eBPF、可观测性、kube-proxy replacement</li>
+<li>是否有多集群、双栈、Windows 节点</li>
+<li>网络团队是否支持 BGP&#x2F;underlay</li>
+<li>是否需要加密（WireGuard&#x2F;IPsec）</li>
+<li>运维复杂度和故障排查成本</li>
+</ul>
+<h1 id="排障"><a href="#排障" class="headerlink" title="排障"></a>排障</h1><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get pods -A -o wide</span><br><span class="line">kubectl get svc,endpointslices -A</span><br><span class="line">kubectl get networkpolicy -A</span><br><span class="line">kubectl <span class="built_in">exec</span> -it &lt;pod&gt; -- ip addr</span><br><span class="line">kubectl <span class="built_in">exec</span> -it &lt;pod&gt; -- ip route</span><br><span class="line">kubectl <span class="built_in">exec</span> -it &lt;pod&gt; -- <span class="built_in">cat</span> /etc/resolv.conf</span><br><span class="line">kubectl <span class="built_in">exec</span> -it &lt;pod&gt; -- getent hosts &lt;service&gt;</span><br></pre></td></tr></table></figure>
+
+<p>节点侧：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">crictl ps</span><br><span class="line">crictl inspect &lt;container&gt;</span><br><span class="line">nsenter -t &lt;pid&gt; -n ip addr</span><br><span class="line">nsenter -t &lt;pid&gt; -n tcpdump -i eth0 -nn</span><br><span class="line">conntrack -L</span><br><span class="line">iptables -t nat -L KUBE-SERVICES -n -v</span><br></pre></td></tr></table></figure>
+
+<h2 id="典型故障"><a href="#典型故障" class="headerlink" title="典型故障"></a>典型故障</h2><p><strong>Pod 之间不通</strong></p>
+<ul>
+<li>Pod 是否在同一 CNI 网络</li>
+<li>NetworkPolicy 是否拦截</li>
+<li>节点路由&#x2F;BGP&#x2F;隧道是否正常</li>
+<li>MTU 是否一致</li>
+</ul>
+<p><strong>Pod 访问 Service 不通</strong></p>
+<ul>
+<li>EndpointSlice 是否有后端</li>
+<li>Service selector 和 targetPort 是否正确</li>
+<li>kube-proxy 是否正常</li>
+<li>conntrack 是否有旧连接</li>
+<li>NetworkPolicy 是否放行</li>
+</ul>
+<p><strong>外部访问 NodePort&#x2F;LoadBalancer 不通</strong></p>
+<ul>
+<li>externalTrafficPolicy 是否 Local 且节点无 Pod</li>
+<li>云安全组&#x2F;防火墙</li>
+<li>LoadBalancer 是否有 external IP</li>
+<li>kube-proxy 规则是否存在</li>
+</ul>
+<p><strong>DNS 解析失败</strong></p>
+<ul>
+<li>CoreDNS 是否 Running</li>
+<li>NetworkPolicy 是否放行 53</li>
+<li><code>ndots</code> 和 search 域</li>
+<li>NodeLocal DNSCache 是否正常</li>
+</ul>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="网段规划"><a href="#网段规划" class="headerlink" title="网段规划"></a>网段规划</h2><ul>
+<li>Pod CIDR、Service CIDR 不与 IDC、VPC、VPN、其他集群重叠</li>
+<li>每个集群预留足够地址，考虑节点数、Pod 密度和未来扩容</li>
+<li>多集群统一规划，避免跨集群访问时路由冲突</li>
+<li>双栈集群同时规划 IPv4&#x2F;IPv6，并确认 CNI、kube-proxy、节点和底层网络都支持</li>
+<li>网段记录到 IPAM&#x2F;CMDB，变更走审批，不要临时改 Service CIDR</li>
+</ul>
+<h2 id="CNI-选型"><a href="#CNI-选型" class="headerlink" title="CNI 选型"></a>CNI 选型</h2><p>选型不只看“能不能通”，还要看长期运维：</p>
+<ul>
+<li>是否需要 NetworkPolicy，是否需要 L7 策略</li>
+<li>是否需要 eBPF、kube-proxy replacement、Hubble 等可观测性</li>
+<li>是否有多集群、双栈、Windows 节点</li>
+<li>网络团队是否支持 BGP&#x2F;underlay</li>
+<li>是否需要 WireGuard&#x2F;IPsec 加密</li>
+<li>社区活跃度、商业支持、升级路径和故障排查资料</li>
+<li>更换 CNI 通常需要重建集群或复杂迁移，不要频繁更换</li>
+</ul>
+<p>常见组合：</p>
+<ul>
+<li>简单场景：Flannel + 独立 NetworkPolicy 方案（Canal）</li>
+<li>通用生产：Calico（BGP&#x2F;overlay + NetworkPolicy）</li>
+<li>eBPF&#x2F;高性能&#x2F;可观测性：Cilium</li>
+<li>云厂商：托管 CNI，结合云网络和安全组</li>
+</ul>
+<h2 id="NetworkPolicy-设计"><a href="#NetworkPolicy-设计" class="headerlink" title="NetworkPolicy 设计"></a>NetworkPolicy 设计</h2><ul>
+<li>默认拒绝入站，按需拒绝出站</li>
+<li>按应用依赖放行，不要按 Namespace 全开</li>
+<li>DNS、监控、apiserver、Ingress&#x2F;Gateway 单独放行</li>
+<li>策略纳入 GitOps，先在测试集群验证</li>
+<li>注意不同 CNI 对 policy 的支持差异（例如 Flannel 不执行 policy）</li>
+<li>定期审计“全开”策略和长期未使用的放行规则</li>
+<li>NetworkPolicy 不是身份认证，敏感服务仍需要 mTLS 和授权</li>
+</ul>
+<h2 id="Service-与入口"><a href="#Service-与入口" class="headerlink" title="Service 与入口"></a>Service 与入口</h2><ul>
+<li>内部服务优先 ClusterIP + DNS，不要滥用 NodePort</li>
+<li>需要保留客户端源 IP 时用 <code>externalTrafficPolicy: Local</code>，同时接受节点本地无 Pod 时流量失败的风险</li>
+<li>裸金属 LoadBalancer 用 MetalLB 或 BGP 实现，不要假设云厂商自动创建</li>
+<li>入口统一到 Ingress&#x2F;Gateway，不要每个团队自己暴露 NodePort</li>
+<li>统一规划 TLS 终止位置、证书管理和重定向策略</li>
+<li>入口层做限流、WAF、访问日志、trace 和灰度</li>
+<li>Ingress-NGINX 退役后，新项目优先 Gateway API</li>
+</ul>
+<h2 id="DNS-1"><a href="#DNS-1" class="headerlink" title="DNS"></a>DNS</h2><ul>
+<li>CoreDNS 多副本、PDB、反亲和</li>
+<li>大规模集群用 NodeLocal DNSCache 降低延迟和跨节点查询</li>
+<li>控制 <code>ndots</code> 和 search 域，避免大量无效查询</li>
+<li>NetworkPolicy 放行 UDP&#x2F;TCP 53</li>
+<li>监控 DNS 延迟、NXDOMAIN、CoreDNS 错误和上游超时</li>
+<li>跨命名空间访问使用 FQDN，减少 search 域依赖</li>
+</ul>
+<h2 id="MTU-与性能"><a href="#MTU-与性能" class="headerlink" title="MTU 与性能"></a>MTU 与性能</h2><ul>
+<li>overlay 场景统一 MTU，VXLAN 常见 1450，具体按封装头计算</li>
+<li>验证大包、跨节点、跨可用区，避免“小请求正常、大请求超时”</li>
+<li>eBPF 模式关注内核版本、特性开关和 CNI 版本</li>
+<li>高吞吐场景评估 underlay&#x2F;native routing</li>
+<li>用 iperf&#x2F;netperf 做基准测试，记录基线</li>
+</ul>
+<h2 id="多集群"><a href="#多集群" class="headerlink" title="多集群"></a>多集群</h2><ul>
+<li>Pod&#x2F;Service CIDR 不重叠</li>
+<li>跨集群 DNS、网关、证书和策略统一规划</li>
+<li>东西向网关和 NetworkPolicy 要单独设计</li>
+<li>不要只靠多集群做多租户隔离，成本和运维复杂度会上升</li>
+<li>明确故障域和流量切换方案</li>
+</ul>
+<h2 id="排障体系"><a href="#排障体系" class="headerlink" title="排障体系"></a>排障体系</h2><ul>
+<li>分层排查：Pod 网络 → Service → Ingress&#x2F;Gateway → 外部网络</li>
+<li>标准化命令：<code>get endpointslices</code>、<code>getent hosts</code>、<code>tcpdump</code>、<code>conntrack</code></li>
+<li>保留网络拓扑、CIDR、路由和流量路径文档</li>
+<li>重大变更前做连通性、MTU 和 DNS 验证</li>
+<li>把常见故障和排查步骤写成 runbook</li>
+</ul>
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/cluster-administration/networking/">集群网络</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/service/">Service</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/ingress/">Ingress</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">NetworkPolicy</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/">DNS</a></li>
+<li><a target="_blank" rel="noopener" href="https://gateway-api.sigs.k8s.io/">Gateway API</a></li>
+</ul>
 
   </div>
   
@@ -2854,7 +3055,7 @@ API官方案例import jsonimport shutilfrom ansible.module_...</p>
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#K8s%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%BF%B0"><span class="toc-text">K8s网络模型概述</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#ip%E5%9C%B0%E5%9D%80%E5%88%86%E9%85%8D"><span class="toc-text">ip地址分配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#k8s%E4%B8%BB%E6%9C%BA%E5%86%85%E7%BB%84%E7%BD%91"><span class="toc-text">k8s主机内组网</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#k8s%E8%B7%A8%E8%8A%82%E7%82%B9%E7%BB%84%E7%BD%91"><span class="toc-text">k8s跨节点组网</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#K8s%E7%BD%91%E7%BB%9C%E7%AD%96%E7%95%A5"><span class="toc-text">K8s网络策略</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#K8s%E7%BD%91%E7%BB%9C%E6%95%85%E9%9A%9C%E5%AE%9A%E4%BD%8D"><span class="toc-text">K8s网络故障定位</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#K8s-%E7%BD%91%E7%BB%9C%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6"><span class="toc-text">K8s 网络实现机制</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#K8s-DNS"><span class="toc-text">K8s DNS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#K8S%E7%BD%91%E7%BB%9C%E6%8F%92%E4%BB%B6"><span class="toc-text">K8S网络插件</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Flannel"><span class="toc-text">Flannel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Calico"><span class="toc-text">Calico</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Weave"><span class="toc-text">Weave</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cilium"><span class="toc-text">Cilium</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E6%A8%A1%E5%9E%8B"><span class="toc-text">网络模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Pod-%E7%BD%91%E7%BB%9C%E4%B8%8E-CNI"><span class="toc-text">Pod 网络与 CNI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Service-%E7%BD%91%E7%BB%9C"><span class="toc-text">Service 网络</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Service"><span class="toc-text">为什么需要 Service</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B1%BB%E5%9E%8B"><span class="toc-text">类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EndpointSlice"><span class="toc-text">EndpointSlice</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#kube-proxy"><span class="toc-text">kube-proxy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#externalTrafficPolicy"><span class="toc-text">externalTrafficPolicy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8C%E6%A0%88"><span class="toc-text">双栈</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Ingress-%E4%B8%8E-Gateway-API"><span class="toc-text">Ingress 与 Gateway API</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Ingress"><span class="toc-text">Ingress</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Gateway-API"><span class="toc-text">Gateway API</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#DNS"><span class="toc-text">DNS</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NetworkPolicy"><span class="toc-text">NetworkPolicy</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B7%A8%E8%8A%82%E7%82%B9%E7%BD%91%E7%BB%9C%E4%B8%8E-CNI-%E9%80%89%E5%9E%8B"><span class="toc-text">跨节点网络与 CNI 选型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Underlay-%E4%B8%8E-Overlay"><span class="toc-text">Underlay 与 Overlay</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MTU"><span class="toc-text">MTU</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%89%E5%9E%8B%E8%80%83%E8%99%91"><span class="toc-text">选型考虑</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C"><span class="toc-text">排障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B8%E5%9E%8B%E6%95%85%E9%9A%9C"><span class="toc-text">典型故障</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E6%AE%B5%E8%A7%84%E5%88%92"><span class="toc-text">网段规划</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CNI-%E9%80%89%E5%9E%8B"><span class="toc-text">CNI 选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NetworkPolicy-%E8%AE%BE%E8%AE%A1"><span class="toc-text">NetworkPolicy 设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Service-%E4%B8%8E%E5%85%A5%E5%8F%A3"><span class="toc-text">Service 与入口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DNS-1"><span class="toc-text">DNS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MTU-%E4%B8%8E%E6%80%A7%E8%83%BD"><span class="toc-text">MTU 与性能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E9%9B%86%E7%BE%A4"><span class="toc-text">多集群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C%E4%BD%93%E7%B3%BB"><span class="toc-text">排障体系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 

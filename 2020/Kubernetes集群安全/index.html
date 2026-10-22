@@ -35,21 +35,23 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>Kubernetes集群安全 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="Kubernetes, Kubernetes,安全,undefined">
-  <meta desc name="description" content="Tianyi的技术随笔 - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="Kubernetes, Kubernetes,安全,RBAC,PSA,undefined">
+  <meta desc name="description" content="本文基于 Kubernetes v1.37 官方文档重写。旧笔记中的 PodSecurityPolicy、Basic Auth、ABAC 示例和准入插件列表已经过时；本文按当前认证、鉴权、准入、运行时安全和供应链安全重新整理。 - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kubernetes集群安全">
 <meta property="og:url" content="https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="云原生安全概述云原生安全的 4 个 C 分别是云（Cloud）、集群（Cluster）、容器（Container）和代码（Code）。   云（例如数据中心）是k8s集群的可信计算基（trusted computing base），如果云层容易受到攻击，就不能保证在此基础之上构建的组件是安全的。云基础设施的保护有几个关注的点： 对k8s控制平面的访问不允许在公网上开放，由网络访问控制列表控制（">
+<meta property="og:description" content="本文基于 Kubernetes v1.37 官方文档重写。旧笔记中的 PodSecurityPolicy、Basic Auth、ABAC 示例和准入插件列表已经过时；本文按当前认证、鉴权、准入、运行时安全和供应链安全重新整理。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-04-05T11:05:37.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.839Z">
+<meta property="article:modified_time" content="2026-10-22T15:19:42.397Z">
 <meta property="article:author" content="Tianyi Gu">
 <meta property="article:tag" content="Kubernetes">
 <meta property="article:tag" content="安全">
+<meta property="article:tag" content="RBAC">
+<meta property="article:tag" content="PSA">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
   <style>
@@ -2252,7 +2254,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792680709817),
+    lastupdate: new Date(1792682524855),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2299,7 +2301,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes集群安全/","name":"Kubernetes集群安全"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes集群安全","description":"Tianyi的技术随笔","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8/","wordCount":0,"datePublished":"2020-04-05T11:05:37.000Z","dateModified":"2026-03-11T19:05:28.839Z","articleSection":"Kubernetes","keywords":"Kubernetes,安全","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes集群安全/","name":"Kubernetes集群安全"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes集群安全","description":"本文基于 Kubernetes v1.37 官方文档重写。旧笔记中的 PodSecurityPolicy、Basic Auth、ABAC 示例和准入插件列表已经过时；本文按当前认证、鉴权、准入、运行时安全和供应链安全重新整理。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E9%9B%86%E7%BE%A4%E5%AE%89%E5%85%A8/","wordCount":113,"datePublished":"2020-04-05T11:05:37.000Z","dateModified":"2026-10-22T15:19:42.397Z","articleSection":"Kubernetes","keywords":"Kubernetes,安全,RBAC,PSA","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2680,326 +2682,288 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <span id="more"></span>
+    <p>本文基于 Kubernetes v1.37 官方文档重写。旧笔记中的 PodSecurityPolicy、Basic Auth、ABAC 示例和准入插件列表已经过时；本文按当前认证、鉴权、准入、运行时安全和供应链安全重新整理。</p>
+<span id="more"></span>
 
-<h1 id="云原生安全概述"><a href="#云原生安全概述" class="headerlink" title="云原生安全概述"></a>云原生安全概述</h1><p>云原生安全的 4 个 C 分别是云（Cloud）、集群（Cluster）、容器（Container）和代码（Code）。</p>
-<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203251527867.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203251527867.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<ul>
+<li><a href="#%E5%AE%89%E5%85%A8%E6%A8%A1%E5%9E%8B">安全模型</a></li>
+<li><a href="#%E8%AE%A4%E8%AF%81">认证</a></li>
+<li><a href="#%E9%89%B4%E6%9D%83">鉴权</a></li>
+<li><a href="#%E5%87%86%E5%85%A5%E6%8E%A7%E5%88%B6">准入控制</a></li>
+<li><a href="#pod-%E5%AE%89%E5%85%A8">Pod 安全</a></li>
+<li><a href="#secret-%E4%B8%8E%E5%8A%A0%E5%AF%86">Secret 与加密</a></li>
+<li><a href="#%E7%BD%91%E7%BB%9C%E4%B8%8E%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AE%89%E5%85%A8">网络与运行时安全</a></li>
+<li><a href="#%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8">供应链安全</a></li>
+<li><a href="#%E5%AE%A1%E8%AE%A1%E4%B8%8E%E7%9B%91%E6%8E%A7">审计与监控</a></li>
+<li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
+</ul>
+<h1 id="安全模型"><a href="#安全模型" class="headerlink" title="安全模型"></a>安全模型</h1><p>Kubernetes 的安全通常按 4C 分层：</p>
+<ul>
+<li><strong>Cloud</strong>：云账号、VPC、安全组、IAM</li>
+<li><strong>Cluster</strong>：apiserver、etcd、节点、证书、RBAC</li>
+<li><strong>Container</strong>：镜像、运行时、Pod 安全上下文</li>
+<li><strong>Code</strong>：应用依赖、配置、密钥、供应链</li>
+</ul>
+<p>API 请求的安全链路：</p>
+<p><img src="https://kubernetes.io/images/docs/admin/access-control-overview.svg" class="lazyload" data-srcset="https://kubernetes.io/images/docs/admin/access-control-overview.svg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="API 访问控制"></p>
+<p><em>图 1：Kubernetes API 请求的认证、鉴权、准入流程（官方文档）</em></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">请求 → 认证（你是谁）→ 鉴权（你能做什么）→ 准入（对象是否合规）→ 写入 etcd</span><br></pre></td></tr></table></figure>
+
+<p>任何一层缺失都会留下风险。</p>
+<h1 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h1><p>kube-apiserver 支持多种认证方式：</p>
+<ul>
+<li><strong>X.509 客户端证书</strong>：集群组件、kubelet、管理员常用</li>
+<li><strong>ServiceAccount token</strong>：Pod 内工作负载身份，推荐使用 projected token</li>
+<li><strong>OIDC</strong>：对接企业身份提供商</li>
+<li><strong>Webhook token authentication</strong>：对接外部认证服务</li>
+<li><strong>Bootstrap token</strong>：节点加入集群</li>
+</ul>
+<p>Basic Auth 已移除；静态 token 文件（<code>--token-auth-file</code>）仍支持，但令牌永不过期、修改需重启 apiserver，不适合生产。</p>
+<h2 id="ServiceAccount"><a href="#ServiceAccount" class="headerlink" title="ServiceAccount"></a>ServiceAccount</h2><p>ServiceAccount 是 Pod 的身份。从 v1.24 起，默认不再自动创建长期 Secret token，而是使用 projected token：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumes:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">token</span></span><br><span class="line">  <span class="attr">projected:</span></span><br><span class="line">    <span class="attr">sources:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">serviceAccountToken:</span></span><br><span class="line">        <span class="attr">path:</span> <span class="string">token</span></span><br><span class="line">        <span class="attr">expirationSeconds:</span> <span class="number">3600</span></span><br></pre></td></tr></table></figure>
+
+<p>最佳实践：</p>
+<ul>
+<li>每个应用使用独立 ServiceAccount</li>
+<li>不需要访问 API 时设置 <code>automountServiceAccountToken: false</code></li>
+<li>用 RBAC 只授予必要权限</li>
+<li>不要把 token 写进镜像或 ConfigMap</li>
+</ul>
+<h2 id="证书"><a href="#证书" class="headerlink" title="证书"></a>证书</h2><p>kubeadm 集群的证书：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubeadm certs check-expiration</span><br><span class="line">kubeadm certs renew all</span><br></pre></td></tr></table></figure>
+
+<p>renew 后需要在每个控制面节点重启 apiserver、controller-manager、scheduler 等静态 Pod（移走 manifest 或重启 kubelet），旧进程不会自动重新加载证书。</p>
+<p>要点：</p>
+<ul>
+<li>CA 有效期长，叶子证书通常 1 年</li>
+<li>升级时注意轮换</li>
+<li>kubelet 客户端证书可以开启自动轮换</li>
+<li><code>--insecure-port</code> 已在 v1.24 移除，不要跳过 TLS 校验</li>
+</ul>
+<h1 id="鉴权"><a href="#鉴权" class="headerlink" title="鉴权"></a>鉴权</h1><p>鉴权模块按 <code>--authorization-mode</code> 顺序检查：</p>
+<ul>
+<li>第一个明确 allow 或 deny 的模块决定结果</li>
+<li>如果所有模块都返回 no opinion，请求被拒绝</li>
+<li>RBAC 没有 deny 规则，最小权限靠“只授予需要的 verb&#x2F;resource”</li>
+</ul>
+<h2 id="RBAC"><a href="#RBAC" class="headerlink" title="RBAC"></a>RBAC</h2><p>四个对象：</p>
+<ul>
+<li><code>Role</code>：命名空间级权限</li>
+<li><code>ClusterRole</code>：集群级权限，或跨命名空间复用</li>
+<li><code>RoleBinding</code>：把 Role&#x2F;ClusterRole 绑定到主体</li>
+<li><code>ClusterRoleBinding</code>：集群级绑定</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">pod-reader</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">  <span class="attr">resources:</span> [<span class="string">&quot;pods&quot;</span>]</span><br><span class="line">  <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>]</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">RoleBinding</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">read-pods</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">app</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">pod-reader</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br></pre></td></tr></table></figure>
+
+<p>常见高危权限：</p>
+<ul>
+<li><code>secrets</code> 的 <code>get/list/watch</code></li>
+<li><code>pods/exec</code>、<code>pods/attach</code></li>
+<li><code>pods/portforward</code></li>
+<li><code>serviceaccounts/token</code> 的 <code>create</code></li>
+<li><code>clusterrolebindings</code> 的 <code>create</code></li>
+<li><code>escalate</code>、<code>bind</code>、<code>impersonate</code></li>
+</ul>
+<h2 id="鉴权排障"><a href="#鉴权排障" class="headerlink" title="鉴权排障"></a>鉴权排障</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl auth can-i get pods -n prod</span><br><span class="line">kubectl auth can-i --list -n prod</span><br><span class="line">kubectl auth <span class="built_in">whoami</span></span><br><span class="line">kubectl get rolebinding,clusterrolebinding -A</span><br></pre></td></tr></table></figure>
+
+<p><code>kubectl auth can-i --list</code> 能看到当前身份的权限集合，是排查 403 的第一步。</p>
+<h1 id="准入控制"><a href="#准入控制" class="headerlink" title="准入控制"></a>准入控制</h1><p>认证和鉴权通过后，请求还要经过准入控制：</p>
+<ul>
+<li><strong>MutatingAdmissionWebhook</strong>：修改对象，例如注入 Sidecar</li>
+<li><strong>ValidatingAdmissionWebhook</strong>：校验对象</li>
+<li><strong>Pod Security Admission</strong>：按命名空间执行 Pod 安全标准</li>
+<li><strong>ValidatingAdmissionPolicy</strong>：用 CEL 写校验规则，无需 Webhook</li>
+</ul>
+<p><img src="https://kubernetes.io/images/blog/2019-03-21-a-guide-to-kubernetes-admission-controllers/admission-controller-phases.png" class="lazyload" data-srcset="https://kubernetes.io/images/blog/2019-03-21-a-guide-to-kubernetes-admission-controllers/admission-controller-phases.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="准入控制阶段"></p>
+<p><em>图 2：准入控制阶段（Kubernetes 官方博客）</em></p>
+<p>Webhook 要注意：</p>
+<ul>
+<li><code>failurePolicy: Fail</code> 会在 Webhook 不可用时阻断请求，可能造成集群级故障</li>
+<li>用 <code>namespaceSelector</code>、<code>objectSelector</code>、<code>matchConditions</code> 缩小范围</li>
+<li>设置 <code>timeoutSeconds</code>，避免请求长时间挂起</li>
+<li>Webhook 自身要有多副本、PDB 和监控</li>
+</ul>
+<p>PodSecurityPolicy 已在 v1.25 移除，不要再使用。</p>
+<h1 id="Pod-安全"><a href="#Pod-安全" class="headerlink" title="Pod 安全"></a>Pod 安全</h1><h2 id="Pod-Security-Admission"><a href="#Pod-Security-Admission" class="headerlink" title="Pod Security Admission"></a>Pod Security Admission</h2><p>PSA 是内置的准入控制器，按命名空间标签执行三档标准：</p>
+<ul>
+<li><code>privileged</code>：几乎不限制</li>
+<li><code>baseline</code>：阻止已知提权</li>
+<li><code>restricted</code>：最严格，要求非 root、禁止提权、限制能力、seccomp 等</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">pod-security.kubernetes.io/enforce:</span> <span class="string">restricted</span></span><br><span class="line">    <span class="attr">pod-security.kubernetes.io/audit:</span> <span class="string">restricted</span></span><br><span class="line">    <span class="attr">pod-security.kubernetes.io/warn:</span> <span class="string">restricted</span></span><br></pre></td></tr></table></figure>
+
+<p>建议先在 <code>audit</code>&#x2F;<code>warn</code> 模式观察，再切 <code>enforce</code>。PSA 覆盖不到细粒度策略时，用 Kyverno、Gatekeeper 或 ValidatingAdmissionPolicy 补足。</p>
+<h2 id="SecurityContext"><a href="#SecurityContext" class="headerlink" title="SecurityContext"></a>SecurityContext</h2><p>Pod 级：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">securityContext:</span></span><br><span class="line">  <span class="attr">runAsNonRoot:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">runAsUser:</span> <span class="number">10001</span></span><br><span class="line">  <span class="attr">runAsGroup:</span> <span class="number">10001</span></span><br><span class="line">  <span class="attr">fsGroup:</span> <span class="number">10001</span></span><br><span class="line">  <span class="attr">seccompProfile:</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">RuntimeDefault</span></span><br></pre></td></tr></table></figure>
+
+<p>容器级：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">securityContext:</span></span><br><span class="line">  <span class="attr">allowPrivilegeEscalation:</span> <span class="literal">false</span></span><br><span class="line">  <span class="attr">readOnlyRootFilesystem:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">capabilities:</span></span><br><span class="line">    <span class="attr">drop:</span> [<span class="string">&quot;ALL&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p><code>fsGroup</code> 只能放在 Pod 级；<code>allowPrivilegeEscalation</code>、<code>readOnlyRootFilesystem</code>、<code>capabilities</code> 只能放在容器级。混用会被 API 校验拒绝。</p>
+<p>容器级别还可以设置：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">securityContext:</span></span><br><span class="line">  <span class="attr">privileged:</span> <span class="literal">false</span></span><br><span class="line">  <span class="attr">capabilities:</span></span><br><span class="line">    <span class="attr">add:</span> [<span class="string">&quot;NET_BIND_SERVICE&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>原则：</p>
+<ul>
+<li>默认非 root</li>
+<li>禁止 privilege escalation</li>
+<li>裁剪 capabilities</li>
+<li>启用 seccomp&#x2F;AppArmor</li>
+<li>只读 rootfs，需要写入的目录挂 volume</li>
+<li>不要挂载 <code>/var/run/docker.sock</code></li>
+<li>不要使用 <code>hostNetwork</code>、<code>hostPID</code>、<code>hostIPC</code>，除非确有必要</li>
+</ul>
+<h1 id="Secret-与加密"><a href="#Secret-与加密" class="headerlink" title="Secret 与加密"></a>Secret 与加密</h1><p>Secret 默认只是 base64 编码，不是加密。任何能读 Secret 的人都能解码。</p>
+<p>生产建议：</p>
+<ul>
+<li>启用 etcd 静态加密（EncryptionConfiguration，推荐 KMS v2）</li>
+<li>RBAC 限制 Secret 读取</li>
+<li>优先 volume 挂载，少用环境变量</li>
+<li>使用 External Secrets Operator、Vault、云 KMS 等外部密钥管理</li>
+<li>普通 Secret 不会自动轮换，需要用 External Secrets、Vault 或应用双密钥方案实现；ServiceAccount token 由 kubelet 自动轮换</li>
+<li>不要把 Secret 提交到 Git</li>
+</ul>
+<p>etcd 加密配置示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apiserver.config.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">EncryptionConfiguration</span></span><br><span class="line"><span class="attr">resources:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">resources:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">secrets</span></span><br><span class="line">  <span class="attr">providers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">kms:</span></span><br><span class="line">      <span class="attr">apiVersion:</span> <span class="string">v2</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">my-kms</span></span><br><span class="line">      <span class="attr">endpoint:</span> <span class="string">unix:///var/run/kms-plugin.sock</span></span><br><span class="line">      <span class="attr">timeout:</span> <span class="string">3s</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">identity:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>identity</code> 作为最后的回退，表示未加密读取；生产要确认加密 provider 生效。</p>
+<h1 id="网络与运行时安全"><a href="#网络与运行时安全" class="headerlink" title="网络与运行时安全"></a>网络与运行时安全</h1><h2 id="NetworkPolicy"><a href="#NetworkPolicy" class="headerlink" title="NetworkPolicy"></a>NetworkPolicy</h2><p>默认拒绝入站：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NetworkPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">default-deny-ingress</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">prod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">podSelector:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">policyTypes:</span> [<span class="string">&quot;Ingress&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>NetworkPolicy 需要 CNI 支持。它不是身份认证，不能替代 mTLS 和授权。</p>
+<h2 id="运行时安全"><a href="#运行时安全" class="headerlink" title="运行时安全"></a>运行时安全</h2><ul>
+<li>使用 containerd&#x2F;CRI-O，不用 dockershim</li>
+<li>启用 seccomp <code>RuntimeDefault</code></li>
+<li>启用 AppArmor 或 SELinux</li>
+<li>限制节点上的特权容器</li>
+<li>定期扫描镜像漏洞</li>
+<li>使用只读根文件系统</li>
+<li>监控异常进程、异常网络连接和容器逃逸</li>
+</ul>
+<h1 id="供应链安全"><a href="#供应链安全" class="headerlink" title="供应链安全"></a>供应链安全</h1><ul>
+<li>镜像固定 digest，不用浮动 tag</li>
+<li>只从可信仓库拉取镜像</li>
+<li>使用 cosign&#x2F;Notation 做镜像签名</li>
+<li>生成并校验 SBOM</li>
+<li>在准入层校验签名和漏洞等级（Kyverno、Gatekeeper、Sigstore Policy Controller）</li>
+<li>扫描依赖和基础镜像</li>
+<li>限制构建凭据，不在 Dockerfile 中写密钥</li>
+<li>使用 SLSA provenance 或类似构建证明</li>
+</ul>
+<h1 id="审计与监控"><a href="#审计与监控" class="headerlink" title="审计与监控"></a>审计与监控</h1><p>启用 apiserver 审计日志：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">audit.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Policy</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">level:</span> <span class="string">Metadata</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">group:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;secrets&quot;</span>]</span><br><span class="line"><span class="bullet">-</span> <span class="attr">level:</span> <span class="string">RequestResponse</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">group:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;configmaps&quot;</span>]</span><br><span class="line">  <span class="attr">verbs:</span> [<span class="string">&quot;create&quot;</span>, <span class="string">&quot;update&quot;</span>, <span class="string">&quot;patch&quot;</span>, <span class="string">&quot;delete&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>关注：</p>
+<ul>
+<li>谁读取了 Secret</li>
+<li>谁创建了 ClusterRoleBinding</li>
+<li>谁执行了 <code>pods/exec</code></li>
+<li>谁修改了 PSA 标签</li>
+<li>异常 ServiceAccount token 使用</li>
+<li>异常外部访问和 NodePort 暴露</li>
+</ul>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="最小权限"><a href="#最小权限" class="headerlink" title="最小权限"></a>最小权限</h2><ul>
+<li>每个应用使用独立 ServiceAccount</li>
+<li>默认 <code>automountServiceAccountToken: false</code></li>
+<li>Role 只授予需要的 verb&#x2F;resource，不用 <code>*</code></li>
+<li>禁止给应用 <code>cluster-admin</code> 或 <code>system:masters</code></li>
+<li>高危权限单独审批：<code>secrets</code>、<code>pods/exec</code>、<code>pods/portforward</code>、<code>serviceaccounts/token</code>、<code>escalate</code>、<code>bind</code>、<code>impersonate</code></li>
+<li>建立权限申请、审批、到期回收流程</li>
+<li>定期审计 RBAC，清理闲置账号、过期 token 和不再使用的绑定</li>
+<li>用 <code>kubectl auth can-i --list</code> 和工具做权限可视化</li>
+</ul>
+<h2 id="多租户"><a href="#多租户" class="headerlink" title="多租户"></a>多租户</h2><p>隔离层次：</p>
+<ul>
+<li>软多租户：Namespace + RBAC + Quota + NetworkPolicy + PSA</li>
+<li>强隔离：vCluster、独立集群、独立 etcd&#x2F;网络&#x2F;存储</li>
+</ul>
+<p>落地要点：</p>
+<ul>
+<li>Namespace 按团队&#x2F;环境&#x2F;业务域划分</li>
+<li>ResourceQuota 限制总量，LimitRange 设置默认值</li>
+<li>NetworkPolicy 默认拒绝，按依赖放行</li>
+<li>PSA baseline&#x2F;restricted</li>
+<li>限制可用 StorageClass、镜像仓库、NodePort 和 LoadBalancer</li>
+<li>敏感数据独立加密密钥</li>
+<li>明确平台团队和租户的责任边界</li>
+</ul>
+<h2 id="集群基线"><a href="#集群基线" class="headerlink" title="集群基线"></a>集群基线</h2><ul>
+<li>控制面只暴露必要端口，apiserver 不暴露公网</li>
+<li>etcd 只监听内网，启用 TLS 和客户端证书</li>
+<li>启用审计日志和 etcd 静态加密</li>
+<li>启用 PSA，至少 baseline</li>
+<li>限制 NodePort 和 LoadBalancer，入口统一</li>
+<li>节点最小化，及时打补丁，禁用不必要服务</li>
+<li>启用 seccomp&#x2F;AppArmor，限制特权容器</li>
+<li>定期做 CIS Benchmark、kube-bench 和渗透测试</li>
+<li>控制面、节点、etcd 的证书和 kubeconfig 纳入安全管理</li>
+</ul>
+<h2 id="供应链安全-1"><a href="#供应链安全-1" class="headerlink" title="供应链安全"></a>供应链安全</h2><ul>
+<li>镜像只从可信仓库拉取，固定 digest</li>
+<li>构建环境隔离，构建凭据最小权限</li>
+<li>生成 SBOM，记录依赖和构建来源</li>
+<li>用 cosign&#x2F;Notation 做镜像签名</li>
+<li>准入层校验签名、漏洞等级和来源</li>
+<li>定期扫描基础镜像、依赖和运行时漏洞</li>
+<li>禁止在 Dockerfile、ConfigMap、Git 中写密钥</li>
+<li>保留构建证明和审计记录</li>
+</ul>
+<h2 id="审计与监控-1"><a href="#审计与监控-1" class="headerlink" title="审计与监控"></a>审计与监控</h2><p>审计策略建议：</p>
+<ul>
+<li>元数据级别记录大多数请求</li>
+<li>对 Secret、RBAC、exec、节点操作提高级别</li>
+<li>避免对所有资源开 <code>RequestResponse</code>，日志量和敏感数据风险大</li>
+<li>审计日志接入 SIEM，设置保留周期</li>
+</ul>
+<p>重点告警：</p>
+<ul>
+<li>读取 Secret 的异常身份</li>
+<li>创建 ClusterRoleBinding 或提权</li>
+<li><code>pods/exec</code> 进入生产容器</li>
+<li>修改 PSA 标签或准入策略</li>
+<li>ServiceAccount token 异常使用</li>
+<li>异常外部访问、NodePort 暴露和镜像拉取失败</li>
+</ul>
+<h2 id="应急"><a href="#应急" class="headerlink" title="应急"></a>应急</h2><p><strong>Secret 泄露</strong></p>
 <ol>
-<li>云（例如数据中心）是k8s集群的可信计算基（trusted computing base），如果云层容易受到攻击，就不能保证在此基础之上构建的组件是安全的。云基础设施的保护有几个关注的点：<ul>
-<li>对k8s控制平面的访问不允许在公网上开放，由网络访问控制列表控制（包含管理集群所用的IP地址集合）。</li>
-<li>节点仅能从控制平面指定端口来连接，节点不应暴露在公网上。</li>
-<li>对于云提供商，最好能给最小特权限制。</li>
-<li>仅有控制平面能访问etcd，且使用tls访问</li>
-<li>etcd节点的磁盘最好能静态加密数据。</li>
-</ul>
-</li>
-<li>关于集群的保护分两点：一个是集群本身，一个是集群中的应用。保护集群有以下几个关注的点：<ul>
-<li>所有API交互都用tls加密</li>
-<li>所有API客户端必须经过身份验证（如通过ServiceAccount或x509证书）</li>
-<li>每个API多用都通过鉴权检查（如RBAC）</li>
-<li>控制kubelet访问，默认是允许对API进行未经身份验证的访问。生产环境应启用kubelet身份认证授权。</li>
-<li>限制集群资源使用（如ResourceQuota或LimitRange）</li>
-<li>控制容器运行的特权，通过设置Pod安全策略，限制哪些用户或服务帐户可以提供危险的安全上下文设置。运行容器最好能用非root用户运行。</li>
-<li>限制网络访问，通过编写网络策略（NetworkPolicy）实现。</li>
-<li>限制云元数据API访问，在云平台上运行k8s时，需要限制对实例凭据的权限，使用网络策略限制Pod对元数据API的访问，并避免使用配置数据来传递机密信息。</li>
-<li>控制Pod可以访问的节点（如NodeSelector或基于污点的Pod放置和放逐）</li>
-<li>限制访问etcd，建议将etcd服务器隔离到只有API服务器可以访问的防火墙后面。</li>
-<li>启用审计日志，能记录每个用户、使用API的应用以及控制面自身引发的活动。</li>
-<li>限制使用 alpha 和 beta 特性</li>
-<li>经常轮换基础设施证书，在证书上设置较短的生命期并实现自动轮换。</li>
-<li>许多集成到k8s的第三方软件或服务都可能改变集群的安全配置。组件若能够在<code>kube-system</code>这类名字空间中创建 Pod， 则这类组件也可能获得意外的权限，因为这些Pod可以访问服务账户的Secret。</li>
-</ul>
-</li>
-<li>对于容器的安全性，主要关注以下几点：<ul>
-<li>容器漏洞扫描</li>
-<li>镜像签名</li>
-<li>禁止特权用户</li>
-<li>使用带有较强隔离能力的容器运行时（RuntimeClass）</li>
-</ul>
-</li>
-<li>对于代码的安全性，主要关注以下几点：<ul>
-<li>加密传输所有内容</li>
-<li>限制通信端口范围，只开放必要端口</li>
-<li>定期扫描应用程序的第三方库以了解已知的安全漏洞</li>
-<li>静态代码分析与动态探测攻击</li>
-</ul>
-</li>
+<li>立即轮换 Secret 或撤销 token</li>
+<li>检查审计日志，确认读取范围</li>
+<li>排查使用该 Secret 的工作负载和外部系统</li>
+<li>评估是否需要隔离节点或回滚</li>
 </ol>
-<p>集群安全性需要考虑几个目标：</p>
-<ul>
-<li>保证容器与其所在宿主机的隔离</li>
-<li>限制容器给基础设施或其他容器的干扰</li>
-<li>最小权限原则：限制单个组件的能力来限制它的权限范围</li>
-<li>明确组件间边界划分</li>
-<li>划分普通用户与管理员角色</li>
-<li>在必要时允许将管理员权限赋给普通用户</li>
-<li>允许拥有 Secret 数据的应用在集群中运行</li>
-</ul>
-<h1 id="K8S-API-访问控制"><a href="#K8S-API-访问控制" class="headerlink" title="K8S API 访问控制"></a>K8S API 访问控制</h1><p>用户使用kubectl、客户端库或构造REST请求来访问K8S API，当请求到达API Server时，会经历以下阶段：</p>
+<p><strong>容器逃逸</strong></p>
 <ol>
-<li>认证（Authentication）</li>
-<li>鉴权（Authorization）</li>
-<li>准入控制（Admission Control）</li>
+<li>隔离节点，停止调度</li>
+<li>保留现场：容器、镜像、进程、网络连接</li>
+<li>排查特权容器、hostPath、hostNetwork、危险 capability</li>
+<li>检查是否有横向移动和凭据泄露</li>
+<li>修复后重新镜像和重建节点</li>
 </ol>
-<h2 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h2><p>在API Server与建立TLS连接后，HTTP请求进入认证步骤。API Server上运行着一个或多个身份认证组件，服务器依次尝试每个验证模块，直到其中一个成功。</p>
-<p>认证步骤的输入是整个HTTP请求，但通常情况组件只检查头部和客户端证书。</p>
-<p>认证模块包含：</p>
+<p><strong>镜像投毒</strong></p>
 <ol>
-<li>客户端证书（HTTPS）</li>
-<li>密码（HTTP Base），<code>&quot;用户名:密码&quot;</code>进行 BASE64 编码后的字符串放在 Header 的 Authorization 中</li>
-<li>普通令牌（HTTP Token），Token 放在 Header 里</li>
-<li>引导令牌</li>
-<li>JWT令牌</li>
+<li>阻断仓库或镜像</li>
+<li>回滚到已知安全版本</li>
+<li>重新扫描全部镜像和运行中容器</li>
+<li>校验签名和 SBOM</li>
+<li>审计构建链和凭据</li>
 </ol>
-<p>如果请求认证不通过，服务器将以HTTP状态码<code>401</code>拒绝该请求。反之，该用户被认证为特定的<code>username</code>，并且该用户名可用于后续步骤。</p>
-<h2 id="鉴权"><a href="#鉴权" class="headerlink" title="鉴权"></a>鉴权</h2><p>将请求验证为来自特定的用户后，请求必须被鉴权。</p>
-<p>请求必须包含<strong>请求者的用户名、请求的行为以及受该操作影响的对象</strong>。如果现有策略声明用户有权完成请求的操作，那么该请求被鉴权通过。</p>
-<p>Kubernetes 支持多种鉴权模块，例如<strong>ABAC模式</strong>、<strong>RBAC 模式</strong>和 <strong>Webhook 模式</strong>等。 管理员创建集群时会配置应在 API Server中使用的鉴权模块。 如果配置了多个鉴权模块，则 Kubernetes 会检查每个模块，<strong>任意一个鉴权模块允许该请求，请求即可继续</strong>，如果所有模块拒绝了该请求，请求将会被拒绝，返回HTTP状态码403。</p>
-<p>鉴权模块:</p>
-<ul>
-<li>Node：节点鉴权是一种特殊用途的鉴权模式，<strong>专门对 kubelet 发出的 API 请求进行鉴权</strong>。</li>
-<li>ABAC：<strong>基于属性的访问控制</strong>，通过使用将属性组合在一起的策略，将访问权限授予用户。策略可以使用任何类型的属性（用户属性、资源属性、 对象，环境属性等）</li>
-<li>RBAC：<strong>基于角色的访问控制</strong>，权限是单个用户执行特定任务的能力，例如查看、创建或修改文件。</li>
-<li>Webhook：是一个 HTTP 回调：发生某些事情时调用的 HTTP POST，从而通过 HTTP POST 进行简单的事件通知</li>
-<li>AlwaysDeny：阻止所有请求。仅用于测试。</li>
-<li>AlwaysAllow：允许所有请求。仅在不需要 API 请求的鉴权时才使用。</li>
-</ul>
-<p>在API server启动参数中添加一条<code>--authorization-mode=</code>指定鉴权模块，这条也必须配置至少一种，若配置多种则以<code>,</code>分隔，例如<code>--authorization-mode=Node,RBAC</code>，模块按顺序检查，较靠前的模块具有更高的优先级来允许或拒绝请求。</p>
-<p>可使用<code>kubectl auth can-i &lt;verb&gt; &lt;resource&gt;</code> 了解当前用户是否有权限做指定操作，可以则为<code>yes</code>，反之为<code>no</code>。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl auth can-i create deployment -n dev</span><br><span class="line">yes</span><br><span class="line"># kubectl auth can-i delete deployment -n kube-system</span><br><span class="line">yes</span><br></pre></td></tr></table></figure>
-
-<h2 id="准入控制"><a href="#准入控制" class="headerlink" title="准入控制"></a>准入控制</h2><p>准入控制模块是可以修改或拒绝请求的软件模块。除鉴权模块可用的属性外，准入控制模块还可以访问正在创建或修改的对象的内容。</p>
-<p>准入控制器对创建、修改、删除或（通过代理）连接对象的请求进行操作。准入控制器不会对仅读取对象的请求起作用。有多个准入控制器被配置时，服务器将依次调用它们。</p>
-<p><strong>与身份认证和鉴权模块不同，如果任何准入控制器模块拒绝某请求，则该请求将立即被拒绝。</strong></p>
-<h2 id="鉴权概述"><a href="#鉴权概述" class="headerlink" title="鉴权概述"></a>鉴权概述</h2><p>Kubernetes 仅审查以下 API 请求属性：</p>
+<p><strong>RBAC 提权</strong></p>
 <ol>
-<li>用户：身份验证期间提供的<code>user</code>。</li>
-<li>组：经过身份验证的用户所属的组名列表。</li>
-<li>额外信息：由身份验证层提供的任意字符串键到字符串值的映射。</li>
-<li>API：指示请求是否针对 API 资源。</li>
-<li>请求路径：各种非资源端点的路径，如 <code>/api</code> 或 <code>/healthz</code>。</li>
-<li>API 请求动词：API 动词 <code>get</code>、<code>list</code>、<code>create</code>、<code>update</code>、<code>patch</code>、<code>watch</code>、<code>proxy</code>、<code>redirect</code>、<code>delete</code> 和 <code>deletecollection</code> 用于资源请求。</li>
-<li>HTTP 请求动词：HTTP 动词 <code>get</code>、<code>post</code>、<code>put</code> 和 <code>delete</code> 用于非资源请求。</li>
-<li>Resource：正在访问的资源的 ID 或名称（仅限资源请求），对于使用 <code>get</code>、<code>update</code>、<code>patch</code> 和 <code>delete</code> 动词的资源请求必须提供资源名称。</li>
-<li>子资源：正在访问的子资源（仅限资源请求）。</li>
-<li>名字空间：正在访问的对象的名称空间（仅适用于名字空间资源请求）。</li>
-<li>API组：正在访问的API组 （仅限资源请求）。空字符串表示核心API组（apiVersion: v1）。</li>
+<li>撤销可疑绑定和 token</li>
+<li>审计 ServiceAccount、Webhook 和控制器</li>
+<li>检查是否有后门资源或恶意 Job</li>
+<li>收紧准入和 RBAC 策略</li>
 </ol>
-<h3 id="请求动词"><a href="#请求动词" class="headerlink" title="请求动词"></a>请求动词</h3><h4 id="非资源请求"><a href="#非资源请求" class="headerlink" title="非资源请求"></a>非资源请求</h4><p>除<code>/api/v1/...</code>或<code>/apis/&lt;group&gt;/&lt;version&gt;/...</code>之外的请求被视为非资源请求（Non-Resource Requests），并使用该HTTP请求的小写形式作为其请求动词（如<code>get</code>）</p>
-<h4 id="资源请求"><a href="#资源请求" class="headerlink" title="资源请求"></a>资源请求</h4><table>
-<thead>
-<tr>
-<th>HTTP动词</th>
-<th>请求动词</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>POST</td>
-<td>create</td>
-</tr>
-<tr>
-<td>GET, HEAD</td>
-<td>get （针对单个资源）、list（针对集合）</td>
-</tr>
-<tr>
-<td>PUT</td>
-<td>update</td>
-</tr>
-<tr>
-<td>PATCH</td>
-<td>patch</td>
-</tr>
-<tr>
-<td>DELETE</td>
-<td>delete（针对单个资源）、deletecollection（针对集合）</td>
-</tr>
-</tbody></table>
-<p>有时使用专门的动词以对额外的权限进行鉴权。例如：</p>
-<ul>
-<li>PodSecurityPolicy：<code>policy</code> API 组中 <code>podsecuritypolicies</code> 资源使用 <code>use</code> 动词</li>
-<li>RBAC：对 <code>rbac.authorization.k8s.io</code> API 组中 <code>roles</code> 和 <code>clusterroles</code> 资源的 <code>bind</code> 和 <code>escalate</code> 动词</li>
-<li>身份认证：对核心 API 组中 <code>users</code>、<code>groups</code> 和 <code>serviceaccounts</code> 以及 <code>authentication.k8s.io</code> API 组中的 <code>userextras</code> 所使用的 <code>impersonate</code> 动词。</li>
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/security/controlling-access/">访问控制</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/">RBAC</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/security/pod-security-admission/">Pod Security Admission</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/security/secrets-good-practices/">Secret 最佳实践</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/">加密数据</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/">审计</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">NetworkPolicy</a></li>
 </ul>
-<h2 id="API-Server-授权管理"><a href="#API-Server-授权管理" class="headerlink" title="API Server 授权管理"></a>API Server 授权管理</h2><p>客户端发起 API server 调用时，API server 要先内部进行用户认证，然后执行用户授权，通过授权策略决定一个 API 调用是否合法。<br>API server 支持的几种授权策略：</p>
-<p>API server 收到请求后，会读取请求中的数据，生成一个访问策略对象，然后将这个对象与策略文件中所有访问策略对象逐条匹配，只要至少一个策略通过，则请求被鉴权通过。</p>
-<h3 id="ABAC"><a href="#ABAC" class="headerlink" title="ABAC"></a>ABAC</h3><p>若要启用 ABAC，则需要指定策略文件路径<code>--authorization-policy-file</code>，策略文件中每一行为一个 JSON 对象，称为访问策略对象。<br>一个对象需要包含三块：</p>
-<ul>
-<li>apiVersion：设为<code>abac.authorization.kubernetes.io/v1beta1</code></li>
-<li>kind：设为<code>Policy</code></li>
-<li>spec：详细的策略配置，包含：主体属性、资源属性、非资源属性<ul>
-<li>主体属性：<ul>
-<li>user：来源于 Token 文件或 base 认证的用户名</li>
-<li>group：若为<code>system:authenticated</code>则匹配所有已认证的请求，若为<code>system:unauthenticated</code>则匹配所有未认证的请求</li>
-</ul>
-</li>
-<li>资源属性：<ul>
-<li>apiGroup：匹配哪些 API group</li>
-<li>namespace：该策略允许访问某个 namespace 的资源</li>
-<li>resource：API 资源对象</li>
-</ul>
-</li>
-<li>非资源属性：<ul>
-<li>nonResourcePath：非资源对象类的 URL 路径</li>
-<li>readonly：若为 true，则只允许 GET 请求</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<p>ABAC 授权算法：API server 收到请求后，先识别请求携带的策略对象的属性，然后根据策略对属性逐条匹配。常见策略配置：</p>
-<ul>
-<li>允许所有认证用户做某事：将 group 属性设为<code>system:authenticated</code></li>
-<li>允许所有未认证用户做某事：将 group 属性设为<code>system:unauthenticated</code></li>
-<li>允许一个用户做任何事：将 apiGroup、namespace、resource、nonResourcePath 都设为’*‘</li>
-</ul>
-<p>使用 kubelet 的授权机制：kubelet 通过 apiserver 的<code>/api</code> 和<code>/apis</code> 获取版本信息，要验证<code>kubectl create或update</code>的对象，需要向 OpenAPI 进行查询（<code>/openapi/v2</code>）<br>使用 ABAC 模式时，必须对 nonResourcePath 进行设置：</p>
-<ul>
-<li>&#x2F;api、&#x2F;apis、&#x2F;api&#x2F;*、&#x2F;apis&#x2F;*</li>
-<li>&#x2F;version</li>
-<li>&#x2F;swaggerapi&#x2F;*</li>
-</ul>
-<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"># 允许jack对所有资源操作</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;apiVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;abac.authorization.kubernetes.io/v1beta1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;kind&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Policy&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;spec&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;user&quot;</span><span class="punctuation">:</span> <span class="string">&quot;jack&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;namespace&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;resource&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;apiGroup&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line"># kubelet可读任意pod</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;apiVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;abac.authorization.kubernetes.io/v1beta1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;kind&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Policy&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;spec&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;user&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;namespace&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;resource&quot;</span><span class="punctuation">:</span> <span class="string">&quot;pods&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;readonly&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line"># kubelet可读写event对象</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;apiVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;abac.authorization.kubernetes.io/v1beta1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;kind&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Policy&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;spec&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;user&quot;</span><span class="punctuation">:</span> <span class="string">&quot;kubelet&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;namespace&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;resource&quot;</span><span class="punctuation">:</span> <span class="string">&quot;events&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line"># bob只能读namespace为dev中的pod</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;apiVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;abac.authorization.kubernetes.io/v1beta1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;kind&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Policy&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;spec&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;user&quot;</span><span class="punctuation">:</span> <span class="string">&quot;bob&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;namespace&quot;</span><span class="punctuation">:</span> <span class="string">&quot;dev&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;resource&quot;</span><span class="punctuation">:</span> <span class="string">&quot;pods&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;readonly&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br><span class="line"></span><br><span class="line"># 任何用户能对nonResourcePath进行只读请求</span><br><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;apiVersion&quot;</span><span class="punctuation">:</span> <span class="string">&quot;abac.authorization.kubernetes.io/v1beta1&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;kind&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Policy&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;spec&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;group&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;system&quot;</span><span class="punctuation">:</span> <span class="string">&quot;authenticated&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;readonly&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;nonResourcePath&quot;</span><span class="punctuation">:</span> <span class="string">&quot;*&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
 
-<h3 id="RBAC"><a href="#RBAC" class="headerlink" title="RBAC"></a>RBAC</h3><p>RBAC 的优势：</p>
-<ul>
-<li>对集群的资源和非资源权限都有完整的覆盖</li>
-<li>整个 RBAC 完全由几个 API 对象完成，可用 kubectl 或 API 操作</li>
-<li>可在运行时调整，无需重启 API server</li>
-</ul>
-<p>RBAC 有 4 个顶级资源对象：</p>
-<ul>
-<li>Role：一个角色是一组权限的集合，都是许可形式。若是集群级别，则需要使用 ClusterRole。<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">pod-reader</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">  <span class="attr">resources:</span> [<span class="string">&quot;pods&quot;</span>]</span><br><span class="line">  <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;list&quot;</span>]</span><br></pre></td></tr></table></figure>
-rules 中参数：<ul>
-<li>apiGroups：支持的 API 组列表</li>
-<li>resources：支持的资源对象列表</li>
-<li>verbs：对资源对象的操作方法列表</li>
-</ul>
-</li>
-<li>ClusterRole：除了 Role 的功能外，还可用于特殊元素的授权：<ul>
-<li>集群范围的资源，如 Node</li>
-<li>非资源型的路径</li>
-<li>全部命名空间的资源<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;secrets&quot;</span>]</span><br><span class="line">    <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;list&quot;</span>]</span><br></pre></td></tr></table></figure>
-ClusterRole 不受限于命名空间，所以无须设置 metadata 的 namespace</li>
-</ul>
-</li>
-<li>RoleBinding 和 ClusterRoleBinding：用于将一个角色绑定到一个目标上，目标可以是 user 或 group 或 Service Account</li>
-</ul>
-<h3 id="Admission-Control"><a href="#Admission-Control" class="headerlink" title="Admission Control"></a>Admission Control</h3><p>请求通过认证和鉴权后，还不能得到响应，需要先经过Admission Control准入控制链，才能得到响应。</p>
-<p>在kube-apiserver服务器上执行以下命令，就能看到默认已开启的准入控制器以及全部控制器列表</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kube-apiserver -h | grep enable-admission-plugins</span><br><span class="line">      --enable-admission-plugins strings      </span><br></pre></td></tr></table></figure>
-
-<p>以下为默认开启：</p>
-<ul>
-<li>NamespaceLifecycle</li>
-<li>LimitRanger</li>
-<li>ServiceAccount</li>
-<li>TaintNodesByCondition</li>
-<li>Priority</li>
-<li>DefaultTolerationSeconds</li>
-<li>DefaultStorageClass</li>
-<li>PersistentVolumeClaimResize</li>
-<li>RuntimeClass</li>
-<li>CertificateApproval</li>
-<li>CertificateSigning</li>
-<li>CertificateSubjectRestriction</li>
-<li>DefaultIngressClass</li>
-<li>MutatingAdmissionWebhook</li>
-<li>ValidatingAdmissionWebhook</li>
-<li>ResourceQuota</li>
-</ul>
-<p>以下为非默认开启：</p>
-<ul>
-<li>AlwaysAdmit</li>
-<li>AlwaysDeny</li>
-<li>AlwaysPullImages</li>
-<li>DenyEscalatingExec</li>
-<li>DenyExecOnPrivileged</li>
-<li>EventRateLimit</li>
-<li>ExtendedResourceToleration</li>
-<li>ImagePolicyWebhook</li>
-<li>LimitPodHardAntiAffinityTopology</li>
-<li>MutatingAdmissionWebhook</li>
-<li>NamespaceAutoProvision</li>
-<li>NamespaceExists</li>
-<li>NodeRestriction</li>
-<li>OwnerReferencesPermissionEnforcement</li>
-<li>PersistentVolumeClaimResize</li>
-<li>PersistentVolumeLabel</li>
-<li>PodNodeSelector</li>
-<li>PodPreset</li>
-<li>PodSecurityPolicy</li>
-<li>PodTolerationRestriction</li>
-<li>SecurityContextDeny</li>
-<li>StorageObjectInUseProtection</li>
-</ul>
-<h3 id="Service-Account"><a href="#Service-Account" class="headerlink" title="Service Account"></a>Service Account</h3><h1 id="Secret"><a href="#Secret" class="headerlink" title="Secret"></a>Secret</h1><p>Secret用于保管私密数据，如密码、Token、SSH key等信息。</p>
-<table>
-<thead>
-<tr>
-<th>内置类型</th>
-<th>用法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Opaque</td>
-<td>用户定义的任意数据</td>
-</tr>
-<tr>
-<td>kubernetes.io&#x2F;service-account-token</td>
-<td>服务账号令牌</td>
-</tr>
-<tr>
-<td>kubernetes.io&#x2F;dockercfg</td>
-<td>~&#x2F;.dockercfg 文件的序列化形式</td>
-</tr>
-<tr>
-<td>kubernetes.io&#x2F;dockerconfigjson</td>
-<td>~&#x2F;.docker&#x2F;config.json 文件的序列化形式</td>
-</tr>
-<tr>
-<td>kubernetes.io&#x2F;basic-auth</td>
-<td>用于基本身份认证的凭据</td>
-</tr>
-<tr>
-<td>kubernetes.io&#x2F;ssh-auth</td>
-<td>用于 SSH 身份认证的凭据</td>
-</tr>
-<tr>
-<td>kubernetes.io&#x2F;tls</td>
-<td>用于 TLS 客户端或者服务器端的数据</td>
-</tr>
-<tr>
-<td>bootstrap.kubernetes.io&#x2F;token</td>
-<td>启动引导令牌数据</td>
-</tr>
-</tbody></table>
-<p>通过<code>type</code> 字段设置Secret的类型。如果 <code>type</code> 值为空字符串（即没设置type参数），则被视为 <code>Opaque</code> 类型。</p>
-<p>注：data域的各子域的值必须为BASE64编码</p>
-<p>当pod被APIserver创建是，APIserver不会校验该pod引用的secert是否存在，一旦这个pod被调度，则kubelet会尝试获取该secert值。</p>
-<p>若secert不存在或暂时无法连接到APIserver，kubelet会按一定时间间隔定期重试获取该secert值，并发送一个Event解释pod没有启动的原因。<br>一旦secert被pod获取，则kubelet会创建并挂载包含secert的volume。只有所有的volume都挂载成功，pod中的container才会被启动。<strong>在kubelet启动pod中的container后，container中和secert相关的volume将不会被改变，即使secret本身被修改</strong>，因此若要让pod使用更新后的secret，则需要重启pod。</p>
-<h2 id="创建Opaque类型"><a href="#创建Opaque类型" class="headerlink" title="创建Opaque类型"></a>创建Opaque类型</h2><h3 id="通过yaml创建"><a href="#通过yaml创建" class="headerlink" title="通过yaml创建"></a>通过yaml创建</h3><p>创建一个包含username&#x3D;admin，password&#x3D;123456的secret<br>首先对值进行base64编码，echo后的<code>-n</code>一定要加，不加就会把<code>\n</code>也一起编码了</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">echo -n &quot;admin&quot; | base64</span><br><span class="line">echo -n &quot;123456&quot; | base64</span><br></pre></td></tr></table></figure>
-<p>编写以下yaml文件</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">password:</span> <span class="string">MTIzNDU2</span></span><br><span class="line">  <span class="attr">username:</span> <span class="string">YWRtaW4=</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">secret-test</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">Opaque</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="通过命令行创建"><a href="#通过命令行创建" class="headerlink" title="通过命令行创建"></a>通过命令行创建</h3><ul>
-<li><code>--from-literal</code><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl create secret generic secret-test --from-literal=username=admin --from-literal=password=123456</span><br></pre></td></tr></table></figure></li>
-<li><code>--from-env-file</code><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 先编写account.env文件（名字随意）</span><br><span class="line"># cat account.env</span><br><span class="line">username=admin</span><br><span class="line">password=123456</span><br><span class="line"></span><br><span class="line"># kubectl create secret generic secret-test --from-env-file=account.env</span><br></pre></td></tr></table></figure></li>
-<li><code>--from-file</code><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl create secret generic my-secret --from-file=ssh-privatekey=/root/.ssh/id_rsa</span><br><span class="line"></span><br><span class="line">apiVersion: v1</span><br><span class="line">data:</span><br><span class="line">ssh-privatekey: LS0tLS1CRUdJTiBSU0EgUFJJV.........................</span><br><span class="line">kind: Secret</span><br><span class="line">metadata:</span><br><span class="line">  name: my-secret</span><br><span class="line">type: Opaque</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h2 id="创建dockerconfigjson类型"><a href="#创建dockerconfigjson类型" class="headerlink" title="创建dockerconfigjson类型"></a>创建dockerconfigjson类型</h2><h3 id="通过yaml创建-1"><a href="#通过yaml创建-1" class="headerlink" title="通过yaml创建"></a>通过yaml创建</h3><p>先对~&#x2F;.docker&#x2F;config.json文件进行base64编码</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># cat /root/.docker/config.json | base64</span><br></pre></td></tr></table></figure>
-<p>将加密后的字符串填入yaml文件</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="string">.dockerconfigjson:</span> <span class="string">|</span></span><br><span class="line"><span class="string">    ................................</span></span><br><span class="line"><span class="string"></span><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">my-secret</span></span><br><span class="line"><span class="attr">type:</span> <span class="string">kubernetes.io/dockerconfigjson</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="通过命令行创建-1"><a href="#通过命令行创建-1" class="headerlink" title="通过命令行创建"></a>通过命令行创建</h3><ul>
-<li>命令行中输入仓库信息<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl create secret docker-registry my-secret --docker-server=DOCKER_REGISTRY_SERVER --docker-username=DOCKER_USER --docker-password=DOCKER_PASSWORD --docker-email=DOCKER_EMAIL</span><br></pre></td></tr></table></figure></li>
-<li>从已有的config.json创建<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># kubectl create secret docker-registry my-secret --from-file=.dockerconfigjson=path/to/.docker/config.json</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="使用secret进行pod拉取镜像时鉴权"><a href="#使用secret进行pod拉取镜像时鉴权" class="headerlink" title="使用secret进行pod拉取镜像时鉴权"></a>使用secret进行pod拉取镜像时鉴权</h3><p>由上述方法创建完secret后，在workload资源中添加<code>imagePullSecrets</code>添加即可。</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">app</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="string">......</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="string">......</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="string">.....</span></span><br><span class="line">      <span class="attr">imagePullSecrets:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">my-secret</span></span><br></pre></td></tr></table></figure>
-
-<h1 id="Pod-安全策略配置"><a href="#Pod-安全策略配置" class="headerlink" title="Pod 安全策略配置"></a>Pod 安全策略配置</h1>
   </div>
   
   
@@ -3027,8 +2991,8 @@ ClusterRole 不受限于命名空间，所以无须设置 metadata 的 namespace
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AE%89%E5%85%A8/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>安全</p></a></div>
-  <span hidden itemprop="keywords">Kubernetes 安全</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AE%89%E5%85%A8/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>安全</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/RBAC/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>RBAC</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PSA/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>PSA</p></a></div>
+  <span hidden itemprop="keywords">Kubernetes 安全 RBAC PSA</span>
   
 
 
@@ -3049,10 +3013,12 @@ ClusterRole 不受限于命名空间，所以无须设置 metadata 的 namespace
       
         <a class='prev' href='/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/'>
           <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Kubernetes集群管理</p>
-          <p class='content'>
-Node 管理Node 隔离与恢复将 Node 纳入或脱离调度范围
-创建 node 类型的 yaml，并设置unschedulable: true
-apiVersion: v1kind: No...</p>
+          <p class='content'>本文基于 Kubernetes v1.37 官方文档重写，覆盖节点管理、kubeadm 集群生命周期、升级、证书、etcd 备份、自动扩缩容、资源治理和可观测性。
+
+
+
+节点管理
+集群安装与高可...</p>
         </a>
       
       
@@ -3107,7 +3073,7 @@ OpenStack 概述OpenStack 项目是一个开源云计算平台，支持所有类
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%91%E5%8E%9F%E7%94%9F%E5%AE%89%E5%85%A8%E6%A6%82%E8%BF%B0"><span class="toc-text">云原生安全概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#K8S-API-%E8%AE%BF%E9%97%AE%E6%8E%A7%E5%88%B6"><span class="toc-text">K8S API 访问控制</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A4%E8%AF%81"><span class="toc-text">认证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%89%B4%E6%9D%83"><span class="toc-text">鉴权</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%86%E5%85%A5%E6%8E%A7%E5%88%B6"><span class="toc-text">准入控制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%89%B4%E6%9D%83%E6%A6%82%E8%BF%B0"><span class="toc-text">鉴权概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%B7%E6%B1%82%E5%8A%A8%E8%AF%8D"><span class="toc-text">请求动词</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9D%9E%E8%B5%84%E6%BA%90%E8%AF%B7%E6%B1%82"><span class="toc-text">非资源请求</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%E8%AF%B7%E6%B1%82"><span class="toc-text">资源请求</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API-Server-%E6%8E%88%E6%9D%83%E7%AE%A1%E7%90%86"><span class="toc-text">API Server 授权管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ABAC"><span class="toc-text">ABAC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RBAC"><span class="toc-text">RBAC</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Admission-Control"><span class="toc-text">Admission Control</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Service-Account"><span class="toc-text">Service Account</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Secret"><span class="toc-text">Secret</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAOpaque%E7%B1%BB%E5%9E%8B"><span class="toc-text">创建Opaque类型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87yaml%E5%88%9B%E5%BB%BA"><span class="toc-text">通过yaml创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%88%9B%E5%BB%BA"><span class="toc-text">通过命令行创建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAdockerconfigjson%E7%B1%BB%E5%9E%8B"><span class="toc-text">创建dockerconfigjson类型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87yaml%E5%88%9B%E5%BB%BA-1"><span class="toc-text">通过yaml创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%88%9B%E5%BB%BA-1"><span class="toc-text">通过命令行创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8secret%E8%BF%9B%E8%A1%8Cpod%E6%8B%89%E5%8F%96%E9%95%9C%E5%83%8F%E6%97%B6%E9%89%B4%E6%9D%83"><span class="toc-text">使用secret进行pod拉取镜像时鉴权</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Pod-%E5%AE%89%E5%85%A8%E7%AD%96%E7%95%A5%E9%85%8D%E7%BD%AE"><span class="toc-text">Pod 安全策略配置</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">安全模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%A4%E8%AF%81"><span class="toc-text">认证</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#ServiceAccount"><span class="toc-text">ServiceAccount</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%81%E4%B9%A6"><span class="toc-text">证书</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%89%B4%E6%9D%83"><span class="toc-text">鉴权</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#RBAC"><span class="toc-text">RBAC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%89%B4%E6%9D%83%E6%8E%92%E9%9A%9C"><span class="toc-text">鉴权排障</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%87%86%E5%85%A5%E6%8E%A7%E5%88%B6"><span class="toc-text">准入控制</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Pod-%E5%AE%89%E5%85%A8"><span class="toc-text">Pod 安全</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Pod-Security-Admission"><span class="toc-text">Pod Security Admission</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SecurityContext"><span class="toc-text">SecurityContext</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Secret-%E4%B8%8E%E5%8A%A0%E5%AF%86"><span class="toc-text">Secret 与加密</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E4%B8%8E%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AE%89%E5%85%A8"><span class="toc-text">网络与运行时安全</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#NetworkPolicy"><span class="toc-text">NetworkPolicy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E5%AE%89%E5%85%A8"><span class="toc-text">运行时安全</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8"><span class="toc-text">供应链安全</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%A1%E8%AE%A1%E4%B8%8E%E7%9B%91%E6%8E%A7"><span class="toc-text">审计与监控</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%80%E5%B0%8F%E6%9D%83%E9%99%90"><span class="toc-text">最小权限</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%9F%E6%88%B7"><span class="toc-text">多租户</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E5%9F%BA%E7%BA%BF"><span class="toc-text">集群基线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%9B%E5%BA%94%E9%93%BE%E5%AE%89%E5%85%A8-1"><span class="toc-text">供应链安全</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%A1%E8%AE%A1%E4%B8%8E%E7%9B%91%E6%8E%A7-1"><span class="toc-text">审计与监控</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E6%80%A5"><span class="toc-text">应急</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 

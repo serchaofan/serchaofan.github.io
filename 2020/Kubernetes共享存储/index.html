@@ -35,22 +35,23 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>Kubernetes共享存储 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="Kubernetes, Kubernetes,存储,PV,undefined">
-  <meta desc name="description" content="Tianyi的技术随笔 - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="Kubernetes, Kubernetes,存储,PV,CSI,undefined">
+  <meta desc name="description" content="本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、kubernetes.io&#x2F;*、--admission-control 等内容已过时，不再作为操作依据。 - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kubernetes共享存储">
 <meta property="og:url" content="https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="PVPersistentVolume 是对底层网络共享存储的抽象，将共享存储定义为一种资源，由管理员创建配置，与共享存储的具体实现直接相关，通过插件式的机制完成与共享存储的对接。 PV 主要包含以下参数的设置：  存储能力 capacity：描述存储设备具备的能力（空间大小） 访问模式 accessModes：描述用户的应用对存储资源的访问权限。访问模式有： ReadWriteOnce：RWO">
+<meta property="og:description" content="本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、kubernetes.io&#x2F;*、--admission-control 等内容已过时，不再作为操作依据。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-04-05T11:06:54.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.837Z">
+<meta property="article:modified_time" content="2026-10-22T15:19:33.348Z">
 <meta property="article:author" content="Tianyi Gu">
 <meta property="article:tag" content="Kubernetes">
 <meta property="article:tag" content="存储">
 <meta property="article:tag" content="PV">
+<meta property="article:tag" content="CSI">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
   <style>
@@ -2253,7 +2254,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792680709817),
+    lastupdate: new Date(1792682524855),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2300,7 +2301,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes共享存储/","name":"Kubernetes共享存储"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes共享存储","description":"Tianyi的技术随笔","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/","wordCount":0,"datePublished":"2020-04-05T11:06:54.000Z","dateModified":"2026-03-11T19:05:28.837Z","articleSection":"Kubernetes","keywords":"Kubernetes,存储,PV","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes共享存储/","name":"Kubernetes共享存储"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes共享存储","description":"本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、kubernetes.io/*、--admission-control 等内容已过时，不再作为操作依据。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/","wordCount":157,"datePublished":"2020-04-05T11:06:54.000Z","dateModified":"2026-10-22T15:19:33.348Z","articleSection":"Kubernetes","keywords":"Kubernetes,存储,PV,CSI","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2681,106 +2682,316 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <span id="more"></span>
+    <p>本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、<code>kubernetes.io/*</code>、<code>--admission-control</code> 等内容已过时，不再作为操作依据。</p>
+<span id="more"></span>
 
-<h1 id="PV"><a href="#PV" class="headerlink" title="PV"></a>PV</h1><p>PersistentVolume 是对底层网络共享存储的抽象，将共享存储定义为一种资源，由管理员创建配置，与共享存储的具体实现直接相关，通过插件式的机制完成与共享存储的对接。</p>
-<p>PV 主要包含以下参数的设置：</p>
 <ul>
-<li>存储能力 <code>capacity</code>：描述存储设备具备的能力（空间大小）</li>
-<li>访问模式 <code>accessModes</code>：描述用户的应用对存储资源的访问权限。访问模式有：<ul>
-<li>ReadWriteOnce：RWO，读写权限，只能被单个 Node 挂载</li>
-<li>ReadOnlyMany：ROX，只读权限，允许被多个 Node 挂载</li>
-<li>ReadWriteMany：RWX，读写权限，允许被多个 Node 挂载</li>
+<li><a href="#%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B">存储模型</a></li>
+<li><a href="#volume">Volume</a></li>
+<li><a href="#pv-%E4%B8%8E-pvc">PV 与 PVC</a></li>
+<li><a href="#storageclass-%E4%B8%8E%E5%8A%A8%E6%80%81%E4%BE%9B%E7%BB%99">StorageClass 与动态供给</a></li>
+<li><a href="#csi">CSI</a></li>
+<li><a href="#%E5%BF%AB%E7%85%A7%E4%B8%8E%E6%81%A2%E5%A4%8D">快照与恢复</a></li>
+<li><a href="#%E6%89%A9%E5%AE%B9%E4%B8%8E%E6%8B%93%E6%89%91">扩容与拓扑</a></li>
+<li><a href="#nfs-%E7%A4%BA%E4%BE%8B">NFS 示例</a></li>
+<li><a href="#%E6%8E%92%E9%9A%9C">排障</a></li>
+<li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
 </ul>
-</li>
-<li>存储卷模式 <code>VolumeMode</code>：可选 Filesystem 和 Block，默认为 Filesystem</li>
-<li>存储类别 <code>storageClassName</code>：指定一个 StorageClass 资源对象名称，具有特定类别的 PV 只能和请求了该类别的 PVC 进行绑定，未设定类别的 PV 只能与不请求任何类别的 PVC 绑定。</li>
-<li>回收策略 <code>persistentVolumeReclaimPolicy</code>：当从持久卷声明释放持久卷时会发生什么。可选项为：<ul>
-<li>Retain：保留数据，需要手动清理</li>
-<li>Delete：与PV相连的后端存储完成volume的删除</li>
-</ul>
-</li>
-<li>挂载参数 <code>mountOptions</code>：需要根据后端存储的特点，进行额外的挂载参数设置。每个PV类型都有不同的挂载参数设置。</li>
-<li>节点亲和性 <code>nodeAffinity</code>：设置亲和性来限制只能通过某些Node访问Volume，使用这些Volume的pod会被调度到满足条件的Node。</li>
-</ul>
-<p>PV生命周期的各个阶段：</p>
+<h1 id="存储模型"><a href="#存储模型" class="headerlink" title="存储模型"></a>存储模型</h1><p>Kubernetes 存储分三层：</p>
 <ol>
-<li>Availabile：可用，还未与PVC绑定</li>
-<li>Bound：已与某PVC绑定</li>
-<li>Released：绑定的PVC已经删除，资源已释放，但没有被集群回收</li>
-<li>Failed：自动资源回收失败</li>
+<li><strong>Volume</strong>：Pod 级别的挂载点，定义在 Pod spec 中</li>
+<li><strong>PV&#x2F;PVC</strong>：集群级存储资源与命名空间级请求</li>
+<li><strong>StorageClass + CSI</strong>：动态创建 PV 的模板和驱动</li>
 </ol>
-<h1 id="PVC"><a href="#PVC" class="headerlink" title="PVC"></a>PVC</h1><p>PVC作为用户对存储资源的需求申请，主要包括存储空间要求、访问模式、PV选择条件和存储类别等信息的设置。</p>
-<p>PVC 主要包含以下参数的设置：</p>
+<p>容器可写层不适合放持久化数据；数据库、日志、文件上传等应使用 Volume 或 PVC。</p>
+<h1 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h1><p>常见 Volume 类型：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>生命周期</th>
+<th>典型场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>emptyDir</code></td>
+<td>随 Pod</td>
+<td>临时缓存、容器间共享文件</td>
+</tr>
+<tr>
+<td><code>hostPath</code></td>
+<td>随节点</td>
+<td>节点代理、日志采集，生产慎用</td>
+</tr>
+<tr>
+<td><code>configMap</code></td>
+<td>随对象</td>
+<td>配置文件</td>
+</tr>
+<tr>
+<td><code>secret</code></td>
+<td>随对象</td>
+<td>证书、密码</td>
+</tr>
+<tr>
+<td><code>projected</code></td>
+<td>随 Pod</td>
+<td>合并 Secret&#x2F;ConfigMap&#x2F;Downward API&#x2F;SA token</td>
+</tr>
+<tr>
+<td><code>persistentVolumeClaim</code></td>
+<td>独立于 Pod</td>
+<td>数据库、持久化数据</td>
+</tr>
+<tr>
+<td><code>nfs</code></td>
+<td>独立于 Pod</td>
+<td>共享文件</td>
+</tr>
+<tr>
+<td><code>csi</code></td>
+<td>由驱动决定</td>
+<td>云盘、文件存储、对象存储</td>
+</tr>
+</tbody></table>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumes:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">cache</span></span><br><span class="line">  <span class="attr">emptyDir:</span> &#123;&#125;</span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">  <span class="attr">configMap:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">app-config</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line">  <span class="attr">persistentVolumeClaim:</span></span><br><span class="line">    <span class="attr">claimName:</span> <span class="string">app-data</span></span><br></pre></td></tr></table></figure>
+
+<p><code>emptyDir</code> 在容器重启时保留，Pod 删除时清理；<code>hostPath</code> 与节点强绑定，Pod 漂移后数据不跟随。</p>
+<h1 id="PV-与-PVC"><a href="#PV-与-PVC" class="headerlink" title="PV 与 PVC"></a>PV 与 PVC</h1><ul>
+<li><strong>PV</strong>：集群级资源，描述一块实际存储（容量、访问模式、回收策略、后端类型）</li>
+<li><strong>PVC</strong>：命名空间级请求，描述需要多大、什么访问模式</li>
+<li><strong>绑定</strong>：PVC 与 PV 一对一绑定；绑定后 PV 被该 PVC 独占</li>
+</ul>
+<p><img src="https://kubernetes.io/images/blog/2018-07-12-resizing-persistent-volumes-using-kubernetes/pvc-storageclass.png" class="lazyload" data-srcset="https://kubernetes.io/images/blog/2018-07-12-resizing-persistent-volumes-using-kubernetes/pvc-storageclass.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="PV/PVC/StorageClass"></p>
+<p><em>图 1：PVC、PV 与 StorageClass 的关系（Kubernetes 官方博客）</em></p>
+<h2 id="访问模式"><a href="#访问模式" class="headerlink" title="访问模式"></a>访问模式</h2><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>缩写</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ReadWriteOnce</td>
+<td>RWO</td>
+<td>单节点读写</td>
+</tr>
+<tr>
+<td>ReadOnlyMany</td>
+<td>ROX</td>
+<td>多节点只读</td>
+</tr>
+<tr>
+<td>ReadWriteMany</td>
+<td>RWX</td>
+<td>多节点读写</td>
+</tr>
+<tr>
+<td>ReadWriteOncePod</td>
+<td>RWOP</td>
+<td>单 Pod 读写，仅 CSI 支持</td>
+</tr>
+</tbody></table>
+<p>注意：RWO 是“单节点”，不是“单 Pod”。同一节点上的多个 Pod 仍可能同时挂载同一个 RWO 卷。需要严格单 Pod 独占时用 RWOP。</p>
+<p>访问模式是能力声明，最终由 CSI&#x2F;存储后端执行；不是所有驱动都支持 RWX。</p>
+<h2 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h2><p>PVC 状态：</p>
 <ul>
-<li>资源请求 <code>resources</code>：描述对存储的要求，目前支持存储空间大小</li>
-<li>访问模式 <code>accessModes</code>：描述用户应用对存储资源的访问权限，参数与PV一致</li>
-<li>存储卷模式 <code>volumeModes</code>：参数与PV一致</li>
-<li>PV选择条件 <code>selector</code>：通过对Label Selector设置，可使PVC对系统中已存在的PV进行筛选，系统会根据条件选出合适的PV进行绑定</li>
-<li>存储类别 <code>storageClassName</code>：设定需要的后端存储类型，只有设置了该类的PV会被匹配给PVC绑定。<br>PVC可以不设置存储类的要求，若设置<code>storageClassName=&quot;&quot;</code>，则该PVC不要求特定class，系统只会选择未设置class的PV与之配对。也可以直接不设置<code>storageClassName</code>，则会根据系统是否启用名为DefaultStorageClass的admission controller进行对应操作。<ul>
-<li>若未启用DefaultStorageClass，则等效于PVC设置<code>storageClassName=&quot;&quot;</code></li>
-<li>若启用了DefaultStorageClass，则需要有已定义的默认的storageClass，若不存在默认的storageClass，则等效于未启用DefaultStorageClass的情况；若存在默认的storageClass，则系统将自动为PVC创建一个PV，并绑定。<blockquote>
-<p>集群管理员如何设置DefaultStorageClass：在StorageClass定义中加上一个annotation </p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">storageclass.kubernetes.io/is-default-class=true</span><br></pre></td></tr></table></figure>
-<p>若管理员将多个storageClass都定义为default，则由于不唯一，系统无法为PVC创建对应PV。</p>
-</blockquote>
-</li>
+<li><code>Pending</code>：还没有绑定 PV</li>
+<li><code>Bound</code>：已绑定</li>
+<li><code>Lost</code>：绑定的 PV 不存在</li>
 </ul>
-</li>
-</ul>
-<p>PVC受限于命名空间，只有相同命名空间的PVC才能挂载到pod内。</p>
-<p>当selector和class都进行了设置时，系统将选择两个条件同时满足的PV进行配对。</p>
-<p>若资源供应使用的动态模式（见生命周期中描述），即管理员没有预先定义PV，仅通过storageClass交给系统自动完成PV的动态创建，则PVC再设定selector时，系统将无法为期供应任何存储资源。在启用了动态供应模式下，一旦用户删除PVC，与之绑定的PV也将根据默认回收策略Delete被删除。若需要保留PV，则在动态绑定成功后，用户需要将系统自动生产PV的回收策略从Delete变为Retain。</p>
-<h1 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h1><p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207082350793.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207082350793.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
-<p>资源供应：k8s支持两种资源供应模式：静态模式static、动态模式dynamic。</p>
+<p>PV 状态：</p>
 <ul>
-<li>静态：集群管理员手动创建PV,在定义PV时需要将后端存储的特性进行设置。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207090044511.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207090044511.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></li>
-<li>动态：集群管理员无需手动创建PV，而是通过storageClass设置对后端存储进行描述，标记为某种类型，此时要求PVC对存储的类型进行声明，系统将自动完成PV的创建和PVC的绑定。若PVC的<code>Class=&quot;&quot;</code>，则说明该PVC禁止使用动态模式。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207090052785.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207090052785.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></li>
+<li><code>Available</code>：可用</li>
+<li><code>Bound</code>：已绑定</li>
+<li><code>Released</code>：PVC 已删除，但 PV 还未回收</li>
+<li><code>Failed</code>：回收失败</li>
 </ul>
-<p>资源绑定：在用户定义好PVC后，系统根据PVC对存储资源的请求在已存在的PV中选择一个满足PVC要求的PV，一旦找到，就将该PV与用户定义的PVC进行绑定，用户的应用就可使用这个PVC了，若系统中没有满足PVC要求的PV，则PVC会处于Pending状态直到手动创建了一个符合要求的PV。PV一旦与PVC绑定，则就被这个PVC独占，不能再与其他PVC进行绑定。在这种情况下，当PVC申请的存储空间比PV少时，整个PV的空间就都能为PVC所用，可能造成浪费。若资源供应使用动态模式，则系统在为PVC找到合适StorageClass后，将自动创建一个PV并完成与PVC的绑定。</p>
-<p>资源使用：pod使用volume的定义，将PVC挂载到容器内的某个路径进行使用，若容器挂载一个PVC，则能被持续独占使用；若多个pod挂载同一个PVC，则需要考虑多个实例共同访问同一个存储空间的问题。</p>
-<p>资源释放：当用户对存储资源使用完毕后，用户可以删除PVC，与该PVC绑定的PV将会被标记为已释放（Released），但此时还不能立即被其他PVC绑定，之前的PVC写的数据可能还在存储设备上，只有在清除了该PV后才能再次使用。</p>
-<p>资源回收：只有PV存储空间完成回收，才能供信的PVC绑定和使用，</p>
-<h1 id="StorageClass"><a href="#StorageClass" class="headerlink" title="StorageClass"></a>StorageClass</h1><p>StorageClass作为对存储资源的抽象，对用户设置的PVC申请屏蔽后端存储的细节，由系统自动完成PV的创建和绑定，实现动态的资源供应。</p>
-<p>定义包含以下参数：</p>
+<p>回收策略：</p>
 <ul>
-<li>provisioner；后端存储提供者。目前k8s支持的提供者都以<code>kubernetes.io/</code>开头</li>
-<li>parameters：后端存储提供者的参数设置，不同提供者有对应不同的参数。</li>
+<li><code>Delete</code>：删除 PV 和后端存储（动态 PV 常见默认）</li>
+<li><code>Retain</code>：保留 PV 和后端数据，需要手工清理</li>
+<li><code>Recycle</code>：已废弃，不要使用</li>
 </ul>
-<p>设置默认的StorageClass，需要先启动DefaultStorageClass的admission controller，需要在kube-apiserver的命令行参数中<code>--admission-control</code>添加<code>DefaultStorageClass</code>。即：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">--admission-control=...,DefaultStorageClass</span><br></pre></td></tr></table></figure>
-<p>然后在StorageClass定义中设置一个annotation</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">annotations:</span></span><br><span class="line">  <span class="attr">storageclass.kubernetes.io/is-default-class:</span> <span class="string">&quot;true&quot;</span></span><br></pre></td></tr></table></figure>
+<h1 id="StorageClass-与动态供给"><a href="#StorageClass-与动态供给" class="headerlink" title="StorageClass 与动态供给"></a>StorageClass 与动态供给</h1><p>StorageClass 描述“用什么驱动、什么参数”创建 PV：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">storageclass.kubernetes.io/is-default-class:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">ebs.csi.aws.com</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">gp3</span></span><br><span class="line"><span class="attr">reclaimPolicy:</span> <span class="string">Delete</span></span><br><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">WaitForFirstConsumer</span></span><br><span class="line"><span class="attr">allowVolumeExpansion:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
 
-<h1 id="NFS-动态存储"><a href="#NFS-动态存储" class="headerlink" title="NFS 动态存储"></a>NFS 动态存储</h1><blockquote>
-<p>Github：<a target="_blank" rel="noopener" href="https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner">https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner</a></p>
-</blockquote>
-<p>nfs-client-provisioner 是一个Kubernetes的简易NFS的外部provisioner，本身不提供NFS，需要现有的NFS服务器提供存储</p>
-<p>PV以 <code>$&#123;namespace&#125;-$&#123;pvcName&#125;-$&#123;pvName&#125;</code>的命名格式提供（在NFS服务器上）<br>PV回收的时候以 <code>archieved-$&#123;namespace&#125;-$&#123;pvcName&#125;-$&#123;pvName&#125;</code> 的命名格式（在NFS服务器上）</p>
-<p>首先创建RBAC权限以及SA</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-client-provisioner-runner</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;persistentvolumes&quot;</span>]</span><br><span class="line">    <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;create&quot;</span>, <span class="string">&quot;delete&quot;</span>]</span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;persistentvolumeclaims&quot;</span>]</span><br><span class="line">    <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;update&quot;</span>]</span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;storage.k8s.io&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;storageclasses&quot;</span>]</span><br><span class="line">    <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>]</span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;events&quot;</span>]</span><br><span class="line">    <span class="attr">verbs:</span> [<span class="string">&quot;create&quot;</span>, <span class="string">&quot;update&quot;</span>, <span class="string">&quot;patch&quot;</span>]</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRoleBinding</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">run-nfs-client-provisioner</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">    <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-client-provisioner-runner</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">leader-locking-nfs-client-provisioner</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span> [<span class="string">&quot;endpoints&quot;</span>]</span><br><span class="line">    <span class="attr">verbs:</span> [<span class="string">&quot;get&quot;</span>, <span class="string">&quot;list&quot;</span>, <span class="string">&quot;watch&quot;</span>, <span class="string">&quot;create&quot;</span>, <span class="string">&quot;update&quot;</span>, <span class="string">&quot;patch&quot;</span>]</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">RoleBinding</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">leader-locking-nfs-client-provisioner</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">    <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">leader-locking-nfs-client-provisioner</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>provisioner</code> 填 CSI 驱动名称，例如 <code>ebs.csi.aws.com</code>、<code>pd.csi.storage.gke.io</code>、<code>nfs.csi.k8s.io</code>；旧的 <code>kubernetes.io/*</code> 仅用于历史兼容</li>
+<li><code>volumeBindingMode: WaitForFirstConsumer</code>：等 Pod 调度后再创建 PV，避免可用区不匹配</li>
+<li><code>allowVolumeExpansion: true</code>：允许扩容 PVC</li>
+<li>默认 StorageClass 用注解标记；多个默认类时以最近创建的为准，生产应只保留一个</li>
+</ul>
+<p>PVC 指定 StorageClass：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
 
-<p>创建StorageClass</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-storage</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">storageclass.kubernetes.io/is-default-class:</span> <span class="string">&quot;false&quot;</span>  <span class="comment">## 是否设置为默认的storageclass</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">nfs-client</span>                                   <span class="comment">## 动态卷分配者名称</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">archiveOnDelete:</span> <span class="string">&quot;true&quot;</span>                                 <span class="comment">## 设置为&quot;false&quot;时删除PVC不会保留数据,&quot;true&quot;则保留数据</span></span><br><span class="line"><span class="comment">#mountOptions: </span></span><br><span class="line"><span class="comment">#  - hard                                                  ## 指定为硬挂载方式</span></span><br><span class="line"><span class="comment">#  - nfsvers=4                                             ## 指定NFS版本,这个需要根据NFS Server版本号设置</span></span><br></pre></td></tr></table></figure>
+<p>不写 <code>storageClassName</code> 时使用默认类；写 <code>storageClassName: &quot;&quot;</code> 表示不使用动态供给，走静态绑定。</p>
+<h1 id="CSI"><a href="#CSI" class="headerlink" title="CSI"></a>CSI</h1><p>生产存储统一使用 CSI（Container Storage Interface）。CSI 驱动通常由以下 sidecar 组成：</p>
+<ul>
+<li><strong>external-provisioner</strong>：创建&#x2F;删除 PV</li>
+<li><strong>external-attacher</strong>：ControllerPublish&#x2F;ControllerUnpublish</li>
+<li><strong>external-resizer</strong>：扩容</li>
+<li><strong>external-snapshotter</strong>：快照</li>
+<li><strong>node-driver-registrar</strong>：在节点注册驱动</li>
+<li><strong>livenessprobe</strong>：健康检查</li>
+</ul>
+<p>相关对象：</p>
+<ul>
+<li><code>CSIDriver</code>：描述驱动能力，例如 <code>attachRequired</code>、<code>podInfoOnMount</code>、<code>volumeLifecycleModes</code>、<code>storageCapacity</code>、<code>fsGroupPolicy</code>；快照能力由 CSI 驱动和 <code>VolumeSnapshotClass</code> 决定，不在 <code>CSIDriver</code> 中声明</li>
+<li><code>CSINode</code>：描述节点上的驱动和拓扑</li>
+<li><code>VolumeAttachment</code>：描述卷挂载到哪个节点</li>
+</ul>
+<p>in-tree 存储插件已逐步迁移到 CSI，新集群不要再用 in-tree provisioner。</p>
+<h1 id="快照与恢复"><a href="#快照与恢复" class="headerlink" title="快照与恢复"></a>快照与恢复</h1><p>快照依赖 VolumeSnapshot CRD，通常需要单独安装：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">snapshot.storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">VolumeSnapshot</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data-snapshot</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">volumeSnapshotClassName:</span> <span class="string">csi-snapclass</span></span><br><span class="line">  <span class="attr">source:</span></span><br><span class="line">    <span class="attr">persistentVolumeClaimName:</span> <span class="string">data</span></span><br></pre></td></tr></table></figure>
 
-<p>创建nfs-client-provisioner</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">strategy:</span> </span><br><span class="line">    <span class="attr">type:</span> <span class="string">Recreate</span> <span class="comment"># 设置升级策略为删除再创建(默认为滚动更新)</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">serviceAccountName:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nfs-client-provisioner</span></span><br><span class="line">        <span class="comment">#image: gcr.io/k8s-staging-sig-storage/nfs-subdir-external-provisioner:v4.0.0</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">registry.cn-beijing.aliyuncs.com/mydlq/nfs-subdir-external-provisioner:v4.0.0</span></span><br><span class="line">        <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nfs-client-root</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">/persistentvolumes</span></span><br><span class="line">        <span class="attr">env:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">PROVISIONER_NAME</span>     <span class="comment"># Provisioner的名称,对应storageclass中配置的Provisioner的名称</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">nfs-client</span> </span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">NFS_SERVER</span>           <span class="comment"># NFS服务器地址,需和volumes参数中配置的保持一致</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">xx.xx.xx.xx</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">NFS_PATH</span>             <span class="comment"># NFS服务器数据存储目录,需和valumes参数中配置的保持一致</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">/data/nfs/xxxx</span></span><br><span class="line">      <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nfs-client-root</span></span><br><span class="line">        <span class="attr">nfs:</span></span><br><span class="line">          <span class="attr">server:</span> <span class="string">xx.xx.xx.xx</span>     <span class="comment"># NFS服务器地址</span></span><br><span class="line">          <span class="attr">path:</span> <span class="string">/data/nfs/xxxx</span>    <span class="comment"># NFS服务器数据存储目录</span></span><br></pre></td></tr></table></figure>
+<p>恢复：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data-restored</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">dataSource:</span></span><br><span class="line">    <span class="attr">kind:</span> <span class="string">VolumeSnapshot</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">data-snapshot</span></span><br><span class="line">    <span class="attr">apiGroup:</span> <span class="string">snapshot.storage.k8s.io</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
 
-<blockquote>
-<p><strong>注：在创建nfs-client-provisioner之前，必须先确认nfs服务器上指定目录是否已经导出，</strong><br>否则describe pod就会看到报错</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Unable to attach or mount volumes: unmounted volumes=[nfs-client-root]</span><br><span class="line">MountVolume.SetUp failed for volume &quot;nfs-client-root&quot;</span><br></pre></td></tr></table></figure>
-</blockquote>
-<p>使用volumeClaimTemplates可以不用创建pvc和pv，会自动创建</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">volumeClaimTemplates:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">data</span>    <span class="comment"># 这里设置的就是pvc的名字</span></span><br><span class="line">      <span class="attr">annotations:</span></span><br><span class="line">        <span class="attr">volume.beta.kubernetes.io/storage-class:</span> <span class="string">&quot;nfs-storage&quot;</span>   <span class="comment"># 指定storage-class</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">accessModes:</span> [ <span class="string">&quot;ReadWriteOnce&quot;</span> ]</span><br><span class="line">      <span class="attr">resources:</span></span><br><span class="line">        <span class="attr">requests:</span></span><br><span class="line">          <span class="attr">storage:</span> <span class="string">3Gi</span></span><br></pre></td></tr></table></figure>
+<p>快照不是备份的完整替代：还需要考虑跨区域复制、应用一致性（数据库应先做一致性快照或逻辑备份）和恢复演练。</p>
+<h1 id="扩容与拓扑"><a href="#扩容与拓扑" class="headerlink" title="扩容与拓扑"></a>扩容与拓扑</h1><h2 id="扩容-PVC"><a href="#扩容-PVC" class="headerlink" title="扩容 PVC"></a>扩容 PVC</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl patch pvc data -p <span class="string">&#x27;&#123;&quot;spec&quot;:&#123;&quot;resources&quot;:&#123;&quot;requests&quot;:&#123;&quot;storage&quot;:&quot;30Gi&quot;&#125;&#125;&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
 
-<p>因此在sts的配置中直接指定volumeMounts即可</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumeMounts:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">data</span>   <span class="comment"># 直接对应volumeClaimTemplates的pvc的名字即可</span></span><br><span class="line">  <span class="attr">mountPath:</span> <span class="string">/data</span></span><br></pre></td></tr></table></figure>
+<p>前提：</p>
+<ul>
+<li>StorageClass <code>allowVolumeExpansion: true</code></li>
+<li>CSI 驱动支持扩容</li>
+<li>文件系统扩容有时需要重启 Pod 或等待 kubelet 完成</li>
+</ul>
+<h2 id="拓扑感知"><a href="#拓扑感知" class="headerlink" title="拓扑感知"></a>拓扑感知</h2><p>云盘通常绑定可用区。使用 <code>WaitForFirstConsumer</code> 可以让 PV 在 Pod 调度后创建，避免“Pod 调度到 A 区，PV 在 B 区”导致挂载失败。</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">WaitForFirstConsumer</span></span><br><span class="line"><span class="attr">allowedTopologies:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">matchLabelExpressions:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">topology.kubernetes.io/zone</span></span><br><span class="line">    <span class="attr">values:</span> [<span class="string">&quot;us-east-1a&quot;</span>, <span class="string">&quot;us-east-1b&quot;</span>]</span><br></pre></td></tr></table></figure>
 
+<h1 id="NFS-示例"><a href="#NFS-示例" class="headerlink" title="NFS 示例"></a>NFS 示例</h1><p>推荐使用 CSI NFS driver；旧版 <code>nfs-subdir-external-provisioner</code> 仍可用，但新集群优先 CSI。</p>
+<p>StorageClass：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">nfs.csi.k8s.io</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">server:</span> <span class="number">10.0</span><span class="number">.0</span><span class="number">.10</span></span><br><span class="line">  <span class="attr">share:</span> <span class="string">/data/nfs</span></span><br><span class="line"><span class="attr">reclaimPolicy:</span> <span class="string">Retain</span></span><br><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">Immediate</span></span><br></pre></td></tr></table></figure>
 
-<blockquote>
-<p>参考文章</p>
-<p><a target="_blank" rel="noopener" href="https://jimmysong.io/kubernetes-handbook/practice/using-nfs-for-persistent-storage.html">https://jimmysong.io/kubernetes-handbook/practice/using-nfs-for-persistent-storage.html</a></p>
-</blockquote>
+<p>静态 NFS PV：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolume</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-pv</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">capacity:</span></span><br><span class="line">    <span class="attr">storage:</span> <span class="string">100Gi</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteMany&quot;</span>]</span><br><span class="line">  <span class="attr">persistentVolumeReclaimPolicy:</span> <span class="string">Retain</span></span><br><span class="line">  <span class="attr">nfs:</span></span><br><span class="line">    <span class="attr">server:</span> <span class="number">10.0</span><span class="number">.0</span><span class="number">.10</span></span><br><span class="line">    <span class="attr">path:</span> <span class="string">/data/nfs</span></span><br></pre></td></tr></table></figure>
+
+<p>NFS 注意事项：</p>
+<ul>
+<li>RWX 下多客户端并发写需要应用自己处理锁和一致性</li>
+<li><code>hard</code> mount 可能导致客户端永久阻塞，<code>soft</code> mount 可能丢数据，按业务权衡</li>
+<li>NFS 版本、MTU、防火墙和 DNS 都要确认</li>
+<li>生产建议使用支持快照和扩容的 CSI NFS 驱动</li>
+</ul>
+<h1 id="排障"><a href="#排障" class="headerlink" title="排障"></a>排障</h1><h2 id="PVC-一直-Pending"><a href="#PVC-一直-Pending" class="headerlink" title="PVC 一直 Pending"></a>PVC 一直 Pending</h2><ul>
+<li>是否有默认 StorageClass</li>
+<li>provisioner 是否正常</li>
+<li>容量&#x2F;访问模式是否满足</li>
+<li><code>volumeBindingMode: WaitForFirstConsumer</code> 时是否还没有 Pod 使用</li>
+<li>拓扑&#x2F;可用区是否匹配</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl describe pvc &lt;pvc&gt;</span><br><span class="line">kubectl get storageclass</span><br><span class="line">kubectl get pods -n &lt;csi-namespace&gt;</span><br><span class="line">kubectl get events -n &lt;ns&gt; --sort-by=.lastTimestamp</span><br></pre></td></tr></table></figure>
+
+<h2 id="多节点挂载失败"><a href="#多节点挂载失败" class="headerlink" title="多节点挂载失败"></a>多节点挂载失败</h2><ul>
+<li>RWO 卷被其他节点挂载</li>
+<li>文件系统损坏或未卸载干净</li>
+<li>云盘仍挂载在旧节点</li>
+</ul>
+<p>查看 VolumeAttachment：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get volumeattachment</span><br><span class="line">kubectl describe volumeattachment &lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="权限问题"><a href="#权限问题" class="headerlink" title="权限问题"></a>权限问题</h2><ul>
+<li>容器 UID&#x2F;GID 与存储目录属主不一致</li>
+<li>NFS squash 配置</li>
+<li><code>fsGroup</code> 对某些 CSI 卷不生效</li>
+<li><code>readOnlyRootFilesystem</code> 下应用仍试图写根目录</li>
+</ul>
+<h2 id="数据丢失风险"><a href="#数据丢失风险" class="headerlink" title="数据丢失风险"></a>数据丢失风险</h2><ul>
+<li><code>reclaimPolicy: Delete</code> 时删除 PVC 会删后端存储</li>
+<li>StatefulSet 的 PVC 默认不随 Pod 删除</li>
+<li>删除 Namespace 会删除其中的 PVC；PV 是否删除取决于 <code>reclaimPolicy</code>：<code>Delete</code>（动态供给默认）会同时删除 PV 和后端存储，<code>Retain</code> 则保留 PV 并进入 <code>Released</code></li>
+<li>快照未做恢复演练</li>
+</ul>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="StorageClass-设计"><a href="#StorageClass-设计" class="headerlink" title="StorageClass 设计"></a>StorageClass 设计</h2><p>按性能和成本分层，而不是所有业务共用一个类：</p>
+<ul>
+<li><code>standard</code>：普通云盘&#x2F;HDD，成本低</li>
+<li><code>ssd</code>：通用 SSD</li>
+<li><code>high-iops</code>：数据库、消息队列等低延迟场景</li>
+<li><code>archive</code>：冷数据、备份</li>
+</ul>
+<p>设计要点：</p>
+<ul>
+<li>默认类只保留一个，多个默认类行为以最近创建者为准，容易失控</li>
+<li>关键数据 <code>reclaimPolicy: Retain</code>，临时数据可以用 <code>Delete</code></li>
+<li>默认使用 <code>volumeBindingMode: WaitForFirstConsumer</code>，避免拓扑不匹配</li>
+<li>需要扩容时设置 <code>allowVolumeExpansion: true</code></li>
+<li>用 <code>mountOptions</code> 统一文件系统参数</li>
+<li>用 ResourceQuota 限制每个 Namespace 可用的存储总量和 PVC 数量</li>
+<li>多租户场景限制可用的 StorageClass，避免越权使用高成本存储</li>
+</ul>
+<h2 id="CSI-选型"><a href="#CSI-选型" class="headerlink" title="CSI 选型"></a>CSI 选型</h2><p>选型要看业务，不只看“能挂载”：</p>
+<ul>
+<li>块存储还是文件存储，是否需要 RWX</li>
+<li>IOPS、吞吐、延迟和稳定性</li>
+<li>是否支持快照、克隆、扩容、加密</li>
+<li>是否支持拓扑感知和多可用区</li>
+<li>是否支持在线扩容和文件系统扩容</li>
+<li>多租户隔离和配额能力</li>
+<li>商业支持、升级路径和故障处理资料</li>
+<li>与 Kubernetes 版本的兼容性</li>
+</ul>
+<p>数据库优先块存储；共享文件、CI 缓存、内容目录可以用文件存储；对象存储不要把 PVC 当对象存储用。</p>
+<h2 id="数据保护"><a href="#数据保护" class="headerlink" title="数据保护"></a>数据保护</h2><ul>
+<li>遵循 3-2-1：至少 3 份、2 种介质、1 份异地</li>
+<li>快照不是备份：快照通常在同一存储系统，误删、勒索、区域故障可能一起丢失</li>
+<li>数据库使用应用一致性备份（逻辑备份或一致性快照），不要只依赖卷快照</li>
+<li>关键 PVC 配置跨区域复制或定期导出</li>
+<li>备份加密，密钥独立管理</li>
+<li>定期做恢复演练，验证 RTO&#x2F;RPO</li>
+<li>明确保留策略：小时&#x2F;日&#x2F;周&#x2F;月，避免快照无限增长</li>
+</ul>
+<h2 id="容量与配额"><a href="#容量与配额" class="headerlink" title="容量与配额"></a>容量与配额</h2><ul>
+<li>用 <code>requests.storage</code> 限制 Namespace 总量</li>
+<li>用 <code>count/persistentvolumeclaims</code> 限制 PVC 数量</li>
+<li>监控 PVC 使用率、inode、IOPS、吞吐和延迟</li>
+<li>扩容要确认 StorageClass 和 CSI 支持，文件系统扩容有时需要重启 Pod</li>
+<li>定期清理未使用 PVC、Released PV 和孤儿快照</li>
+<li>容量告警要留出扩容和迁移时间</li>
+</ul>
+<h2 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h2><ul>
+<li>块存储适合数据库和低延迟；文件存储适合共享读、内容目录</li>
+<li>关注 IOPS、吞吐、队列深度和尾延迟，不只看平均值</li>
+<li>数据库避免多个 Pod 同时写同一个 RWO&#x2F;RWX 卷</li>
+<li>文件系统、块大小、mount options 会影响性能</li>
+<li>本地 SSD 性能好但生命周期跟节点绑定，不适合持久化关键数据</li>
+<li>用 fio 等工具做基准测试，记录基线</li>
+</ul>
+<h2 id="多租户"><a href="#多租户" class="headerlink" title="多租户"></a>多租户</h2><ul>
+<li>限制可用 StorageClass</li>
+<li>用 ResourceQuota 限制容量和 PVC 数量</li>
+<li>敏感数据启用加密和独立密钥</li>
+<li>网络和访问权限隔离，避免跨 Namespace 挂载</li>
+<li>明确数据归属和删除责任</li>
+<li>强隔离场景考虑独立存储后端或独立集群</li>
+</ul>
+<h2 id="运维"><a href="#运维" class="headerlink" title="运维"></a>运维</h2><ul>
+<li>监控 CSI controller&#x2F;node 组件、VolumeAttachment 和快照任务</li>
+<li>关注多挂载、挂载超时、文件系统损坏和卸载失败</li>
+<li>CSI 升级前确认兼容性和回滚方案</li>
+<li>节点维护前确认卷是否能安全迁移</li>
+<li>定期检查卷的健康状态和后端容量</li>
+<li>把备份、恢复、扩容和故障处理写成 runbook</li>
+</ul>
+<h2 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h2><ul>
+<li>删除 PVC 时 <code>reclaimPolicy: Delete</code> 会删后端数据</li>
+<li>删除 Namespace 会删 PVC，动态 PV 可能随后被删除</li>
+<li>RWO 不是“单 Pod”，同一节点多个 Pod 仍可能同时挂载</li>
+<li>RWX 多写需要应用处理锁和一致性</li>
+<li>多默认 StorageClass 行为不可控</li>
+<li>快照没做恢复演练，关键时刻不可用</li>
+<li>忽略 inode 和文件系统限制</li>
+<li>使用未固定版本的第三方 provisioner 镜像</li>
+</ul>
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/volumes/">Volumes</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/">Persistent Volumes</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/storage-classes/">Storage Classes</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/volumes/#csi">CSI</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/volume-snapshots/">Volume Snapshots</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/">动态供给</a></li>
+</ul>
 
   </div>
   
@@ -2809,8 +3020,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AD%98%E5%82%A8/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>存储</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PV/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>PV</p></a></div>
-  <span hidden itemprop="keywords">Kubernetes 存储 PV</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AD%98%E5%82%A8/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>存储</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PV/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>PV</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/CSI/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>CSI</p></a></div>
+  <span hidden itemprop="keywords">Kubernetes 存储 PV CSI</span>
   
 
 
@@ -2837,10 +3048,12 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
         <a class='next' href='/2020/Kubernetes%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86/'>
           <p class='title'>Kubernetes集群管理<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>
-Node 管理Node 隔离与恢复将 Node 纳入或脱离调度范围
-创建 node 类型的 yaml，并设置unschedulable: true
-apiVersion: v1kind: No...</p>
+          <p class='content'>本文基于 Kubernetes v1.37 官方文档重写，覆盖节点管理、kubeadm 集群生命周期、升级、证书、etcd 备份、自动扩缩容、资源治理和可观测性。
+
+
+
+节点管理
+集群安装与高可...</p>
         </a>
       
     </div>
@@ -2884,7 +3097,7 @@ apiVersion: v1kind: No...</p>
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#PV"><span class="toc-text">PV</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PVC"><span class="toc-text">PVC</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">生命周期</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#StorageClass"><span class="toc-text">StorageClass</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NFS-%E5%8A%A8%E6%80%81%E5%AD%98%E5%82%A8"><span class="toc-text">NFS 动态存储</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">存储模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Volume"><span class="toc-text">Volume</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PV-%E4%B8%8E-PVC"><span class="toc-text">PV 与 PVC</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%A8%A1%E5%BC%8F"><span class="toc-text">访问模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">生命周期</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#StorageClass-%E4%B8%8E%E5%8A%A8%E6%80%81%E4%BE%9B%E7%BB%99"><span class="toc-text">StorageClass 与动态供给</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#CSI"><span class="toc-text">CSI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">快照与恢复</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9%E4%B8%8E%E6%8B%93%E6%89%91"><span class="toc-text">扩容与拓扑</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9-PVC"><span class="toc-text">扩容 PVC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%93%E6%89%91%E6%84%9F%E7%9F%A5"><span class="toc-text">拓扑感知</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NFS-%E7%A4%BA%E4%BE%8B"><span class="toc-text">NFS 示例</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C"><span class="toc-text">排障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PVC-%E4%B8%80%E7%9B%B4-Pending"><span class="toc-text">PVC 一直 Pending</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E8%8A%82%E7%82%B9%E6%8C%82%E8%BD%BD%E5%A4%B1%E8%B4%A5"><span class="toc-text">多节点挂载失败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98"><span class="toc-text">权限问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E9%A3%8E%E9%99%A9"><span class="toc-text">数据丢失风险</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#StorageClass-%E8%AE%BE%E8%AE%A1"><span class="toc-text">StorageClass 设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CSI-%E9%80%89%E5%9E%8B"><span class="toc-text">CSI 选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BF%9D%E6%8A%A4"><span class="toc-text">数据保护</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F%E4%B8%8E%E9%85%8D%E9%A2%9D"><span class="toc-text">容量与配额</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD"><span class="toc-text">性能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%9F%E6%88%B7"><span class="toc-text">多租户</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4"><span class="toc-text">运维</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91"><span class="toc-text">常见坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 
