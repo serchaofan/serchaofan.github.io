@@ -13,7 +13,7 @@ comments: false
 
 ## 简介
 
-Linux 提供了 6 种 Namespace 隔离。
+Linux 目前有 8 种 Namespace（本文讲解其中 7 种，time namespace 暂不展开）。
 
 | namespace | 系统调用参数  |          隔离内容          |
 | :-------: | :-----------: | :------------------------: |
@@ -23,24 +23,27 @@ Linux 提供了 6 种 Namespace 隔离。
 |  Network  | CLONE_NEWNET  |  网络设备、网络栈、端口等  |
 |   Mount   |  CLONE_NEWNS  |           挂载点           |
 |   User    | CLONE_NEWUSER |        用户与用户组        |
+|  Cgroup   | CLONE_NEWCGROUP |  cgroup 视图（/proc/[pid]/cgroup、cgroupfs）  |
 
 namespace 有以下 API：`clone()`、`setns()`、`unshare()`
 
 `clone()`是 Linux 系统调用 `fork()`的一种更通用的方式
 
 ```
-int clone(int (_child_func)(void _), void *child_stack, int flags, void *arg);
+int clone(int (*child_func)(void *), void *child_stack, int flags, void *arg);
 
-child*func 传入子进程运行的程序主函数
+child_func 传入子进程运行的程序主函数
 child_stack 传入子程序使用的栈空间
-flags 表示使用哪些 CLONE*\*标志位
-args 传入用户参数
+flags 表示使用哪些 CLONE_* 标志位
+arg 传入用户参数
 ```
 
 从 3.8 版本开始，可通过`/proc/[pid]/ns` 目录查看指向不同 namespace 号的文件，`[]`中的就是 namespace 号。
 
 ```
-ll /proc/\$\$/ns
+ll /proc/$$/ns
+# 或
+ls -l /proc/self/ns
 
 lrwxrwxrwx. 1 root root 0 1 月 9 05:31 ipc -> ipc:[4026531839]
 lrwxrwxrwx. 1 root root 0 1 月 9 05:31 mnt -> mnt:[4026531840]
@@ -48,7 +51,9 @@ lrwxrwxrwx. 1 root root 0 1 月 9 05:31 net -> net:[4026531956]
 lrwxrwxrwx. 1 root root 0 1 月 9 05:31 pid -> pid:[4026531836]
 lrwxrwxrwx. 1 root root 0 1 月 9 05:31 user -> user:[4026531837]
 lrwxrwxrwx. 1 root root 0 1 月 9 05:31 uts -> uts:[4026531838]
+lrwxrwxrwx. 1 root root 0 1 月 9 05:31 cgroup -> cgroup:[4026532xxx]
 ```
+> `cgroup` 条目只在 Linux 4.6+ 内核出现，namespace 号以实际机器为准。
 
 设置链接的作用：一旦 link 文件被打开，只要打开的文件描述符存在，则即使该 namespace 下的所有进程都结束，这个 namespace 仍会继续存在，后续的进程仍能加入进来。
 
@@ -61,7 +66,7 @@ fd 为要加入 namespace 的文件描述符
 nstype 让调用者检查 fd 指向的 namespace 类型是否符合实际要求。若为 0 表示不检查
 ```
 
-通过 `unshare()`在原先进程上进行 namespace 隔离，而不用启动新的进程。Docker 暂时还没有使用此调用。
+通过 `unshare()`在原先进程上进行 namespace 隔离，而不用启动新的进程。现代 runc/libcontainer 会同时使用 `unshare`、`clone` 和 `setns`（例如 exec 进入已有 namespace）。
 
 ```c
 int unshare(int flags);
@@ -99,9 +104,9 @@ parent process id: 33008
 child process id: 33009
 ```
 
-在使用 `fork()`函数后，父进程有义务监视子进程的运行状态，并在子进程退出后自己才能正常退出，否则子进程就会孤儿进程。对于孤儿进程，会直接由上级的父进程接管。
+父进程退出后，子进程会成为孤儿进程，由 init/subreaper 接管；若子进程先退出而父进程没有 `wait/waitpid` 回收，则子进程会变成僵尸进程。父进程调用 `wait/waitpid` 是为了回收僵尸进程，并不是“自己才能正常退出”。
 
-以下是 6 种隔离的具体实现，以下为学习顺序
+以下是 7 种隔离的具体实现，以下为学习顺序
 
 - [简介](#简介)
 - [UTS](#uts)
@@ -110,6 +115,7 @@ child process id: 33009
 - [Mount](#mount)
 - [Network](#network)
 - [User](#user)
+- [Cgroup](#cgroup)
 
 ## UTS
 
@@ -236,13 +242,13 @@ init 进程的 PID 为 1，作为所有进程的父进程，维护一张进程�
 
 内核为 PID namespace 中的 init 进程赋予了**信号屏蔽**的特权，若 init 中没有编写处理某个信号的代码，则与 init 同一个 PID namespace 的进程发送给 init 的该信号就会被屏蔽。主要用于防止 init 进程被误杀。
 
-父节点向子节点发送的除`SIGKILL`或`SIGSTOP`信号外的其他信号也会被子节点屏蔽。而对于`SIGKILL`和`SIGSTOP`信号，子节点会强制执行，因此，父节点有权终止子节点的进程。
+祖先 namespace 向子 namespace 的 **init 进程**发送信号时，若 init 没有安装对应的处理函数，除`SIGKILL`和`SIGSTOP`外的信号会被忽略；发给子 namespace 中其他进程的信号正常投递。`SIGKILL`和`SIGSTOP`无法被屏蔽，因此父节点仍有权终止子节点的进程。
 
 当子节点的 init 进程被销毁，即使`/proc/[pid]/ns/pid`处于挂载或打开状态，导致 namespace 保存下来，但该 namespace 也无法通过`setns()`或`fork()`创建进程。
 
 当一个容器中存在多个进程时，容器内的 init 进程可对信号捕获，对子进程做信息保存、资源回收等处理。
 
-在新的 PID namespace 中用`ps`查看，仍然会看到所有进程。因为与 PID 相关的`/proc`文件系统`profs`没有挂载到一个与原`/proc`不同的位置
+在新的 PID namespace 中用`ps`查看，仍然会看到所有进程。因为与 PID 相关的`/proc`文件系统（procfs）没有挂载到一个与原`/proc`不同的位置
 
 ```
 [root@newnamespace pid]# ps -a
@@ -264,7 +270,7 @@ init 进程的 PID 为 1，作为所有进程的父进程，维护一张进程�
 
 但此时并没有进行 mount namespace 的隔离，所以该操作实际上影响了 root namespace 的文件系统。因此退出后，仍要重新挂载 proc：`mount -t proc proc /proc`
 
-调用`unshare()`和`setns()`创建新的 PID namespace 时，该调用程序并不进入，而是之后创建的子进程才会进入 namespace，成为 init。因为调用`getpid()`函数得到的 PID 是根据调用者所在的 PID namespace 决定返回哪个 PID，进入新的 PID namespace 会导致 PID 变动，造成进程错误。
+调用`unshare()`创建新的 PID namespace、或`setns()`加入已有 PID namespace 时，调用者本身不会立即进入新的 PID 视图，之后创建的子进程才会进入并成为 init。因为调用`getpid()`得到的 PID 由调用者所在的 PID namespace 决定，立即切换 PID 视图会造成进程看到的 PID 变化。
 
 ## Mount
 
@@ -402,7 +408,7 @@ int child_pid = clone(child_main,
             CLONE_NEWUSER | SIGCHLD, NULL);
 ```
 
-因为添加了 capability 头文件，在编译时需要添加选项`-lcap`。`gcc -Wall -lcap userns.c -o userns`
+因为添加了 capability 头文件，在编译时需要添加选项`-lcap`，且要放在源文件之后：`gcc -Wall userns.c -o userns -lcap`
 
 ```
 root:user > ./userns
@@ -425,8 +431,9 @@ ID-inside-ns   ID-outside-ns   length
 
 注：
 
-- **这两个文件仅允许拥有该 user namespace 中 CAP_SETUID 的进程写入一次，不允许修改**
-- **写入的进程必须是 user namespace 的父 namespace 或子 namespace**
+- **这两个文件各只能写入一次，不允许修改**
+- **写入进程必须拥有目标 user namespace 中的 `CAP_SETUID`（uid_map）或 `CAP_SETGID`（gid_map），且必须位于该 namespace 或其父 namespace 中**
+- 非特权用户做单行映射时，写 `gid_map` 前通常需要先写 `setgroups=deny`；Linux 5.12+ 映射父 namespace 的 UID 0 还涉及 `CAP_SETFCAP` 规则
 - 第一个字段`ID-inside-ns`表示新建的 user namespace 中对应的 UID/GID，第二个字段`ID-outside-ns`表示外部映射的 UID/GID，`length`表示映射范围，通常就填 1，表示只映射一个。
 
 创建函数设置 UID 和 GID
@@ -504,7 +511,7 @@ int child_main(void* args){
     // sethostname("newnamespace", 12);
     // printf("------------");
     set_uid_map(getpid(), 0, 1000, 1);
-    set_gid_map(getpid(), 0, 995, 1);
+    set_gid_map(getpid(), 0, 1000, 1);
     printf("eUID=%ld, eGID=%ld\n", (long)geteuid(), (long)getegid());
     caps = cap_get_proc();
     printf("capabilities: %s\n", cap_to_text(caps, NULL));
@@ -534,6 +541,36 @@ capabilities: = cap_chown......
 root:user >
 ```
 
-> 注：执行的用户必须是`set_uid_map`和`set_gid_map`中 outside_id 对应的用户。
+> 注：非特权单行映射时，执行用户必须与 `outside_id` 对应；以 root 或带 `CAP_SETUID` 的父 namespace 运行时可映射任意 ID。
 
 Linux 内核将原来与超级用户相关的高级权限划分为不同的单元，称为 Capability。管理员可独立对特定的 Capability 进行使用或禁用。在 Docker 中同时使用了 user namespace 和 Capability，加强了容器安全性。
+
+## Cgroup
+
+cgroup namespace 隔离的是进程看到的 **cgroup 视图**，而不是资源控制本身。`/proc/self/cgroup` 的路径始终相对 namespace 根；在 namespace 内重新挂载 cgroupfs 时，挂载根也会是 namespace 根（直接 bind mount 宿主已有的 cgroupfs 挂载则不保证）。
+
+- `CLONE_NEWCGROUP` 自 Linux 4.6 引入，cgroup v1 与 v2 都适用，隔离的是 cgroup 视图而非资源限制
+- cgroup v1：`/proc/self/cgroup` 每个控制器一行（`<id>:<controllers>:<path>`），`/sys/fs/cgroup` 下是多个按控制器划分的挂载点
+- cgroup v2：unified hierarchy，`/proc/self/cgroup` 只有一行 `0::<path>`，`/sys/fs/cgroup` 是单个 cgroup2 挂载
+
+namespace 本身不决定读写：只读与否取决于 cgroupfs 的挂载选项。Docker 在 v2 下默认以 `ro` 挂载 `/sys/fs/cgroup`，因此容器内通常呈现为以自身 cgroup 为根的只读视图；若以 `rw` 挂载，子 cgroup 仍可写。
+
+cgroup namespace 的根在创建时确定（即创建进程当时所在的 cgroup），之后不能更改；容器运行时正是先进入容器 cgroup，再创建 cgroup namespace。
+
+它的主要作用是**信息隐藏**和**防误操作**：容器内执行 `cat /proc/self/cgroup` 不会暴露宿主机的完整路径，也降低了误改宿主机 cgroup 层级的风险。但它不是严格的安全边界：已打开的文件描述符、宿主的 bind mount 等方式仍可能绕过；跨 namespace 查看其它进程时，路径中还可能出现 `..`。
+
+Docker 从 20.10 起支持 `--cgroupns=host` / `--cgroupns=private`：cgroup v2 下默认 `private`，v1 下默认 `host`。检查容器内的视图：
+
+```bash
+# 以下输出以 cgroup v2 + systemd cgroup driver 的宿主机为例
+$ docker run --rm --cgroupns=private alpine cat /proc/self/cgroup
+0::/
+
+$ docker run --rm --cgroupns=host alpine cat /proc/self/cgroup
+0::/system.slice/docker-<full-id>.scope
+
+# cgroupfs driver 下 host 模式为：0::/docker/<full-id>
+# cgroup v1 下 private 模式为多行，如：12:memory:/、11:cpuset:/
+```
+
+cgroup namespace 通常与 mount namespace 搭配（挂载 cgroupfs 需要），在容器里也常和 PID namespace 一起使用：前者只重定 cgroup 视图的根，后者只重定 PID 视图；CPU/内存限制由 cgroup 控制器负责，进程数上限由 pids 控制器负责，都不是 namespace 的职责。

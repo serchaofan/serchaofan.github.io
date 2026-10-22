@@ -6,6 +6,8 @@ categories: [Docker]
 comments: false
 ---
 
+> **版本说明（2026）**：本文基于 docker 18.06.1 + docker-compose 1.22.0（Compose v1）。Compose v1 已于 2023 年 7 月停止维护，当前使用 Compose v2：命令为 `docker compose`（空格），文件默认 `compose.yaml`，不再需要顶层 `version:` 字段，安装方式也改为随 Docker CLI 插件分发。下文命令把 `docker-compose` 换成 `docker compose` 即可，配置示例仍可参考。
+
 环境：docker：18.06.1，docker-compose：1.22.0
 
 docker18.06 对应的 Compose 文件格式版本为 3.7

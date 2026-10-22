@@ -6,7 +6,7 @@ categories: [Docker]
 comments: false
 ---
 
-**主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**
+**主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**（存储驱动相关行为已按 Docker 29 更新，历史驱动会单独标注）
 本篇主要包含以下内容
 
 - [Docker 存储介绍](#docker-存储介绍)
@@ -21,44 +21,46 @@ comments: false
     - [还原一个容器](#还原一个容器)
     - [删除一个数据卷](#删除一个数据卷)
 - [存储引擎](#存储引擎)
+- [常见问题](#常见问题)
 - [参考资料](#参考资料)
   <!-- more -->
 
 ## Docker 存储介绍
 
-Docker 为容器提供了两种存放数据的资源：
+Docker 里要区分两类存储：
 
-- storage driver：管理的镜像层和容器层
-  特点：Copy-on-Write。新数据会存放在最上层容器层，修改现有数据会先从镜像层复制到容器层，修改后的数据直接保存在容器中，镜像层保持不变。若多层中有同名文件，用户只能看到最上层的文件。
-  可通过 docker info 查看到。Docker 优先使用默认的 storage driver。
-- data volume 数据卷
-  特点：是目录或文件，不是磁盘，volume 数据可以被永久的保存，即使使用它的容器已经销毁。
-  分为两种 volume：bind mount 和 docker managed volume
+- **storage driver（存储驱动）**：管理镜像层和容器可写层，负责联合文件系统与写时复制。overlay2 是经典默认；Docker 29 起全新安装默认使用 containerd image store 的 snapshotter。
+- **挂载（mount）**：把数据放在容器可写层之外，分三种：
+  - volume：由 Docker 管理，默认在 `/var/lib/docker/volumes`，适合持久化数据
+  - bind mount：直接挂载宿主机目录/文件，适合配置、代码和需要宿主机访问的数据
+  - tmpfs：只存在内存，容器停止即丢失
 
-**存储驱动：**目前 docker 支持五种存储驱动。详见[存储引擎](#存储引擎)
+容器可写层由 storage driver 管理；volume、bind mount、tmpfs 都不经过联合文件系统。
 
-1. AUFS
-2. Btrfs
-3. Device Mapper
-4. Overlay
-5. ZFS
+**存储驱动：**主流是 overlay2；btrfs、zfs 属可选方案，vfs 仅作兜底。Docker 29 起全新安装默认使用 containerd image store（snapshotter），不再走经典 graphdriver，详见[存储引擎](#存储引擎)。
 
 **原理：**
 
 1. Copy-On-Write 写时复制
-   所有驱动都是用到 Cow 写时复制（copy-on-write），只在需要写时才复制。可以让所有容器都共享一个 image 文件系统，所有数据都从 image 读取，容器需要写操作时，才将要写的文件从 image 复制到自己的文件系统，即所有写操作都是对 image 中副本的修改。有效提高了磁盘利用率。
+   大多数驱动使用 CoW：所有容器共享只读的镜像层，需要写入时才把文件复制到容器自己的可写层，修改的是副本。vfs 不使用 CoW，而是为每个容器完整复制一份，空间占用大。
 2. allocate-on-demand 用时分配
    在要写入一个文件时才按需分配空间
 
-**驱动：**
+**驱动（历史）：**
 
-1. AUFS：一种 Union FS 联合文件系统，文件级存储。支持将不同目录挂载到同一个虚拟文件系统，下层文件系统只可读，最上层可写。若要修改，AUFS 会创建一个该文件的副本，放在可写层，结果也保存在可写层。
-2. Overlay：一种 UnionFS，文件级存储。只有两层：upper 层和 lower 层
-3. Device Mapper：RHEL 下 Docker Engine 的默认存储驱动，基于同名级卷管理技术框架的存储引擎。
+1. AUFS：一种 Union FS 联合文件系统，文件级存储。Docker v24.0 已移除。
+2. Overlay：旧版 UnionFS 驱动，只有 upper/lower 两层，Docker v24.0 已移除，改用 overlay2。
+3. Device Mapper：曾用于旧内核，Docker v25.0 已移除。
 
-默认情况下，在容器内创建的所有文件都存储在可写容器层中，仅存储在主机系统的内存中，即`tmpfs`方式，永远不会写入主机系统的文件系统，因此一旦容器停止，容器内所有文件的改动都会丢失，所以需要通过一些机制将文件保存以至于在容易停止后仍不会丢失。
+默认情况下，容器内创建的所有文件都写入**容器可写层**。该层位于宿主机磁盘（由 storage driver 管理，经典 overlay2 下为 `/var/lib/docker/overlay2/<容器ID>/diff`；Docker 29 全新安装使用 containerd image store 时在 `/var/lib/containerd`），容器停止后仍然存在，但容器被删除（`docker rm`）时一并删除。因此需要 bind mount 或 volume 来持久化数据；tmpfs 则是显式指定的内存挂载，容器停止即丢失。
 
-docker 有三种存储容器数据的方式：
+三种挂载方式的对比：
+
+| 方式 | 数据位置 | 容器删除后 | 典型场景 |
+| --- | --- | --- | --- |
+| volume | `/var/lib/docker/volumes` | 保留 | 数据库、应用持久化数据 |
+| bind mount | 宿主机任意路径 | 保留 | 配置文件、代码、宿主机已有数据 |
+| tmpfs | 内存 | 丢失 | 临时文件、缓存、敏感数据 |
 
 - [`bind mount`](#BindMount)：可将容器数据存放在宿主机的任何位置。
 - [`volumes`](#Volume数据卷)：通过创建数据卷将容器数据持久化到文件系统。
@@ -74,19 +76,20 @@ docker 提供两种选项进行 bind mount。
 
 - `-v`或`--volume`：三个字段组成，冒号分隔。
 
-1. 第一个字段：卷名，若是匿名卷，则可省略
-2. 第二个字段：文件或目录在容器中安装的路径
-3. 第三个字段：可选项，例如`ro`，默认是可读可写
+1. 第一个字段：bind mount 为宿主机路径，volume 为卷名；匿名卷可省略
+2. 第二个字段：文件或目录在容器中的路径
+3. 第三个字段：可选项，例如`ro`、`z`、`Z`，默认可读可写
 
 - `--mount`：由多个键值对组成，用逗号分隔，键和值用`=`连接。以下是提供的键：
 
 1. `type`：挂载的类型，可以是 bind，volume 或 tmpfs。
-2. `source`或`src`：挂载源，即卷名。匿名卷可省略。
+2. `source`或`src`：挂载源。bind 为宿主机路径，volume 为卷名；匿名卷可省略。
 3. `destination`或`dst`或`target`：挂载到的容器中的指定目录或文件路径
-4. `readonly`：以只读方式挂载，可选。
-5. `volume-opt`：卷选项，可指定多次，也是键值对形式
-6. `bind-propagation`：绑定传播，有以下选择：`rprivate`，`private`，`rshared`，`shared`，`rslave`，`slave`
-   注：--mount 不支持设置 selinux 的`z`或`Z`选项
+4. `readonly`或`ro`：以只读方式挂载，可选。
+5. `volume-nocopy`：卷为空时不把容器目标目录的内容复制进卷（仅 volume）
+6. `volume-opt`：卷选项，可指定多次，也是键值对形式
+7. `bind-propagation`：绑定传播，有以下选择：`rprivate`，`private`，`rshared`，`shared`，`rslave`，`slave`
+   注：`--mount` 不支持设置 selinux 的`z`或`Z`选项，需要 SELinux 标签时用 `-v`
 
 **如果使用`-v`或`--volume`绑定安装 Docker 主机上尚不存在的文件或目录，则-v 会为您创建端点。它始终作为目录创建。而如果使用`--mount`，Docker 不会自动为您创建它，但会生成错误。**
 
@@ -130,14 +133,14 @@ docker run --mount type=bind,src=<源目录或文件>,dst=<容器目录或文件
 
 ## Volume 数据卷
 卷是保存 Docker 容器生成和使用的数据的首选机制，并且卷完全由 Docker 管理。
-写入容器的可写层需要存储驱动程序来管理文件系统，存储驱动程序使用 Linux 内核提供联合文件系统 UFS。而数据卷是经过特殊设计的目录，可以绕过联合文件系统，为多个容器提供访问。数据卷的目的在于数据永久化，完全独立于容器的生存周期，容器删除时挂载的数据卷不会被删除。
+写入容器的可写层需要 storage driver 管理联合文件系统，会带来额外开销；volume 是 Docker 管理的目录，直接使用宿主机文件系统，绕过联合文件系统，性能和持久化都更好。数据卷独立于容器的生命周期，容器删除时卷不会被删除。
 
 特点：
 
 - 卷比 bind mount 更容易备份或迁移。
 - 卷适用于 Linux 和 Windows 容器。
 - 可以在多个容器之间更安全地共享卷。
-- 在容器启动时初始化，若挂载点已有数据，则会被拷贝到新初始化的数据卷中
+- 在容器启动时初始化：如果卷为空，容器挂载点中已有的数据会被复制进卷（可用 `volume-nocopy` 关闭）
 - 数据卷变化不会影响镜像更新
 - 卷驱动程序允许在远程主机或云提供程序上存储卷，加密卷的内容或添加其他功能。
 
@@ -153,31 +156,59 @@ docker run --mount type=bind,src=<源目录或文件>,dst=<容器目录或文件
   rm 删除指定数据卷
 ```
 
-在创建 volume 时或启动使用为创建卷的容器时，可以指定卷的驱动。
+**使用卷**
+
+```bash
+docker volume create app-data
+
+docker run -d --name app \
+  --mount type=volume,src=app-data,dst=/data \
+  nginx
+
+# 只读挂载
+docker run --rm --mount type=volume,src=app-data,dst=/data,ro alpine ls /data
+
+# 不把镜像中目标目录的内容复制进空卷
+docker run --rm \
+  --mount type=volume,src=app-data,dst=/data,volume-nocopy alpine ls /data
+
+docker volume inspect app-data
+```
+
+- 默认情况下，如果卷是空的，容器目标目录中已有的内容会被复制进卷；`volume-nocopy` 可关闭
+- 同一个卷可以同时挂给多个容器，也可以对不同容器分别以 rw/ro 挂载
+- 默认只删除未被使用的匿名卷；加 `-a/--all` 才会连命名卷一起删除，执行前先确认
+
+在创建 volume 时，或启动使用尚未创建卷的容器时，可以指定卷的驱动。
 数据卷驱动可通过`docker plugin install [选项] 驱动名`。
 **如果卷驱动程序要求您传递选项，则必须使用`--mount`标志来装入卷**
 
 docker 提供`-v`和`--mount`选项进行挂载。使用与 bind mount 基本一致。
 如果需要指定卷驱动程序选项，则必须使用`--mount`。将卷与服务一起使用时，仅支持`--mount`。
 
-**注：挂载数据卷不支持单个文件，只能是目录。且不权限控制，均为可读写。**
+**注：挂载数据卷不支持单个文件，只能是目录。卷默认可读写，可通过 `ro` 或 `readonly` 挂载为只读。**
 因为容器配置文件里的可以指定`docker inspect`查看，发现`Mounts`中的`Source`字段，其中已指定了源，源为：`/var/lib/docker/volumes/容器长ID/_data`。
 
 以上两种方法数据源其实还是宿主机中的，并不是真正放在 volume container 中，可以在通过 dockerfile 的`ADD`将数据打包进镜像并指定`VOLUME`，将`ADD`指定的目录与`VOLUME`设为一致，此法称为`data-packed volume container`。
 
 ## Tmpfs
 
-使用`tmpfs mount`创建容器时，容器可以在容器的可写层之外创建文件。tmpfs 挂载是临时的，仅保留在主机内存中。当容器停止时，将删除 tmpfs 挂载，该数据不可被共享，Docker 默认使用 tmpfs 挂载。
-`--tmpfs`：安装 tmpfs 挂载而不允许指定任何可配置选项，并且只能与独立容器一起使用。
-也可以通过`--mount`指定`type=tmpfs`。
+使用`tmpfs mount`创建容器时，容器可以在容器的可写层之外创建文件。tmpfs 挂载是临时的，仅保留在主机内存中。当容器停止时，将删除 tmpfs 挂载，该数据不可被共享。Docker 默认使用 storage driver 的可写层，tmpfs 需要显式指定（`/dev/shm` 是默认 tmpfs 的特例）。
+`--tmpfs`：安装 tmpfs 挂载，可带选项，例如 `--tmpfs /tmp:rw,size=64m`，只能与独立容器一起使用。
+也可以通过 `--mount` 指定 `type=tmpfs`，例如 `--mount type=tmpfs,dst=/tmp,tmpfs-size=64m`。
+
+- tmpfs 只支持 Linux 容器
+- tmpfs 不能在不同容器之间共享
+- 数据只存在内存中，容器停止或宿主机重启后丢失
+- 未设置 `size` 时默认不受限，可能耗尽宿主机内存
 
 ## 数据卷容器
 
-容器挂载数据卷，其他容器通过挂载该容器实现数据共享，挂载数据卷的容器称为数据卷容器。
+容器挂载数据卷，其他容器通过挂载该容器实现数据共享，挂载数据卷的容器称为数据卷容器。现在更推荐直接用命名卷 + `--mount`；数据卷容器主要用于兼容旧方案。
 
 创建容器时`--volumes-from 数据卷容器`创建数据卷容器
 **注：由于数据卷容器仅是提供数据，所以只要 create，不用 run**
-`docker rm -v 容器` 在删除容器时一并删除数据卷。但是，只要有容器还在使用该数据卷，数据卷就不会删除。宿主机上的数据卷若删除，就真的没了。
+`docker rm -v 容器` 会删除该容器的匿名卷；命名卷仍会保留，需要 `docker volume rm` 单独删除。只要有容器还在使用该数据卷，数据卷就不会删除。宿主机上的数据卷若删除，就真的没了。
 
 ```
 > docker volume create volume_1
@@ -217,23 +248,25 @@ docker create --name backup_container\
      alpine
 ```
 
-接着运行要备份容器，挂载数据卷容器 backup_container，并将要备份的数据打包放入数据卷。
+接着运行要备份容器，挂载数据卷容器 backup_container，并将要备份的数据打包放入数据卷。下面把备份写到宿主机当前目录（把 `/usr /var` 换成实际要备份的目录）：
 
 ```
 docker run --rm \
     --volumes-from backup_container \
-    -v /backup \
+    -v "$(pwd)":/backup \
     alpine tar -cvf /backup/data.tar /usr /var
 ```
 
-在主机的`/var/lib/docker/volumes/vol_backup/_data/`中出现了打包后的`data.tar`
+若想直接写进 vol_backup，去掉 `-v "$(pwd)":/backup` 即可，文件会出现在 `/var/lib/docker/volumes/vol_backup/_data/`。
 
 #### 还原一个容器
 
+还原时目标容器必须已经把数据卷挂在 `/dbdata`，且 tar 中的路径要与目标目录对应：
+
 ```
 docker run --rm \
-    --volumes-from backup_container \
-    -v /backup \
+    --volumes-from target_container \
+    -v "$(pwd)":/backup \
     alpine \
     bash -c "cd /dbdata && tar xvf /backup/data.tar --strip 1"
 ```
@@ -243,11 +276,86 @@ docker run --rm \
 删除的数据卷有两种情况：
 
 - 命名卷在容器外部有指定源，删除了容器，数据卷并不会被删除
-- 匿名卷没有指定源，在删除容器时，该匿名卷也会被删除。也可在创建容器时，加上`--rm`参数，关闭时自动删除容器和匿名卷。
+- 匿名卷没有指定源，删除容器时默认仍会保留，只有 `docker rm -v` 或创建容器时加 `--rm` 才会一并删除。
 
 ## 存储引擎
 
+Docker 通过 storage driver 管理镜像层与容器层。经典场景下现代 Linux 发行版默认使用 **overlay2**；btrfs、zfs 仍可选，vfs 仅作兜底（无写时复制、空间浪费大），不建议生产使用。devicemapper 在 v25 移除，aufs 与旧版 overlay 在 v24 移除。
+
+Docker 29 起全新安装默认使用 **containerd image store**（snapshotter），此时镜像与快照位于 `/var/lib/containerd`，下文 overlay2 的路径与行为只适用于经典 graphdriver。`docker info` 中可看到当前使用的存储方式。
+
+只有容器可写层由 storage driver 管理，bind mount 和 volume 不经过 overlay2。
+
+选择存储驱动时优先 overlay2；btrfs、zfs 需要底层文件系统支持；vfs 只在没有 CoW 文件系统且不关心性能时使用。更换存储驱动需要先停 Docker、修改 daemon.json 的 `storage-driver`，旧镜像和容器不会自动迁移，需要重新拉取/重建。`docker info` 中可以看到当前存储驱动和 `Supports d_type` 等信息。
+
+overlay2 基于内核 OverlayFS，把多个目录叠加成单一视图：
+
+- **lowerdir**：只读的镜像层，可以有多个，按顺序叠加
+- **upperdir**：容器可写层，位于宿主机磁盘（如 `/var/lib/docker/overlay2/<id>/diff`）
+- **merged**：容器内看到的合并目录
+- **workdir**：OverlayFS 内部工作目录，必须与 upperdir 在同一文件系统且为空，内核用它完成 copy-up、rename 等需要原子性的操作；不挂入容器，也不能被多个 overlay 挂载共用
+
+读取文件时从上层往下找，命中即返回。写入时如果文件位于 lowerdir，会先**整个文件**复制到 upperdir 再修改（`chmod`/`chown` 等元数据变更也会触发，且只在首次写入时复制），这就是**写时复制**。OverlayFS 是文件级而非块级，改大文件的一小部分也要整文件拷贝。由此带来几个运维上要注意的点：
+
+- 容器内删除 lowerdir 中的文件，会在 upperdir 生成 **whiteout 文件**；删除目录同样生成 whiteout。只有需要在可写层屏蔽 lower 同名目录的全部内容（如 `rm -rf` 后重建同名目录）时，才会使用 **opaque 目录**。镜像层本身不变，所以镜像层空间不会释放（只要镜像还在、仍被引用），容器层反而会多占少量 inode
+- 大量小文件写入会让 upperdir 持续膨胀；镜像层数过多也会拖慢查找，构建时应合并 RUN 指令减少层数（overlay2 最多 128 个 lower 层，超过会构建失败）
+- `docker diff` 可查看容器自创建以来文件的变化，输出 `A` 新增、`C` 修改、`D` 删除，只列路径，不含内容差异和大小
+
+查看当前驱动与数据目录：
+
+```bash
+docker info | grep "Storage Driver"
+docker info | grep "Docker Root Dir"
+```
+
+overlay2 要求内核 ≥ 4.0（RHEL/CentOS 7 为 3.10.0-514+），且 `/var/lib/docker` 所在文件系统支持 `d_type`（xfs 需以 `ftype=1` 格式化），可用 `xfs_info "$(findmnt -no TARGET /var/lib/docker)" | grep ftype=1` 或 `docker info` 中的 `Supports d_type: true` 验证。
+
+磁盘满或 inode 耗尽时，先查 `docker system df -v`：镜像的 SIZE 会把共享层重复计入，应看 SHARED SIZE / UNIQUE SIZE；inode 用 `df -i` 检查。`/var/lib/docker` 只读查看，切勿手工删除或修改其中的文件。
+
+> **注意**：`docker system prune` 默认会删除所有已停止的容器、未使用网络、悬空镜像和构建缓存；加 `-a` 删除所有未被容器引用的镜像，加 `--volumes` 删除未使用的匿名卷。生产环境建议先用 `docker system df -v` 确认，再按需使用 `docker container prune`、`docker image prune`、`docker builder prune` 等更细粒度的命令，避免误删仍需保留的停止容器。
+
+## 常见问题
+
+**磁盘满 / inode 耗尽**
+
+```bash
+docker system df -v      # 镜像、容器、卷、构建缓存
+df -i                    # inode
+du -sh /var/lib/docker/overlay2 2>/dev/null
+du -sh /var/lib/containerd 2>/dev/null
+```
+
+- 日志占满：检查 `/var/lib/docker/containers/*/*-json.log`，配置日志轮转
+- 镜像/构建缓存占满：`docker image prune`、`docker builder prune`
+- 卷占满：`docker system df -v` 后逐个确认，不要直接 `docker volume prune`
+
+**容器内写文件很慢 / 磁盘占用异常**
+
+写容器可写层会经过 storage driver（overlay2 的 copy-up），大文件、数据库、日志应放 volume 或 bind mount。
+
+**权限问题**
+
+容器内 UID/GID 与宿主机不一致会导致 Permission denied。可用 `--user` 指定运行用户，或在镜像中固定 UID/GID；K8s 用 `fsGroup` 调整卷属组。启用 userns-remap/rootless 时，宿主机看到的 UID 会再次映射。
+
+**bind mount 覆盖了镜像里的文件**
+
+挂载到非空目录会遮住镜像原有内容，这是预期行为；需要保留镜像内容时改用 volume（空卷会先复制目标目录内容），或换挂载路径。
+
+**NFS / 远程存储**
+
+可以用 local 卷驱动的 `volume-opt` 挂 NFS，例如：
+
+```bash
+docker volume create --driver local \
+  --opt type=nfs \
+  --opt o=addr=10.0.0.10,rw,nfsvers=4 \
+  --opt device=:/data/nfs \
+  nfs-vol
+```
+
+rootless 模式对 NFS 和部分挂载选项支持有限，需先验证。
+
 ## 参考资料
 
-[Docker 官方文档-存储](#https://docs.docker.com/storage/)
+[Docker 官方文档-存储](https://docs.docker.com/storage/)
 每天 5 分钟玩转 docker 容器技术

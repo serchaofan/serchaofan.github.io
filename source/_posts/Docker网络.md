@@ -6,19 +6,30 @@ categories: [Docker]
 comments: false
 ---
 
-**主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**
+**主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记**（网络部分已按 Docker 29 官方文档校对）
 
 <!-- more -->
 
 # Docker 网络模式
 
-目前 Docker 容器共有 5 种网络模式：
+Docker 的“网络模式”和“网络驱动”是两个概念：模式决定容器怎么接入网络，驱动决定网络怎么实现。常用的网络模式有：
 
-- 桥接模式（bridge）
+- 桥接模式（bridge，默认）
 - 主机模式（host）
-- 容器模式（container）
+- 容器模式（container，共享另一个容器的网络命名空间）
 - 无网络模式（none）
-- 用户自定义模式（user-defined）
+- 自定义网络（user-defined，可选用 bridge/overlay/macvlan/ipvlan 等驱动）
+
+Linux 上的内置网络驱动：
+
+| 驱动 | 用途 |
+| --- | --- |
+| bridge | 默认驱动，单机内容器通信 |
+| host | 容器与宿主机共享网络命名空间 |
+| none | 完全隔离，仅保留 lo |
+| overlay | 多台 Docker 主机之间的分布式网络（Swarm） |
+| ipvlan | 容器直接接入外部 VLAN，共享父接口 MAC |
+| macvlan | 容器在物理网络上表现为独立设备，有独立 MAC |
 
 当安装完 docker 后，会默认创建三个网络，可通过`docker network ls`查看
 
@@ -86,12 +97,23 @@ vethab244c0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
 
 > 默认情况下，创建容器时不会将任何端口发布到外部。若通过`-p`或`--publish`发布端口，会创建一个防火墙规则，将容器端口映射到宿主机上的端口。
 
-Docker 在 bridge 网络上不支持服务自动发现。如果需要通过容器名实现容器间的互相通信，就要设置连接属性`--link=容器名:别名`（官方并不推荐，已快被淘汰，官方推荐用`user-definded`网络实现互通）。
+Docker 在默认 bridge 网络上不支持服务自动发现。如果需要通过容器名实现容器间的互相通信，就要设置连接属性`--link=容器名:别名`（官方并不推荐，已快被淘汰，官方推荐用`user-defined`网络实现互通）。
 容器内所有的环境变量都可供连接到它的容器使用，可能会造成安全隐患。
+
+### 默认 bridge 与自定义 bridge
+
+未指定 `--network` 的容器都会挂到默认的 `docker0` 上，这带来几个限制：
+
+- 默认 bridge 上的容器只能用 IP 互相访问，不能按容器名解析；自定义 bridge 由 Docker 内置 DNS（`127.0.0.11`）提供名称解析
+- 默认 bridge 上的容器默认可以互相通信，隔离性差；自定义 bridge 可以按业务划分网络
+- 默认 bridge 的配置要改 `/etc/docker/daemon.json` 并重启 Docker；自定义 bridge 可在 `docker network create` 时按网络指定子网、网关、MTU 等
+- 运行中的容器可以 `docker network connect` / `disconnect` 自定义网络，默认 bridge 不支持热插拔
+
+此外，单个 bridge 网络连接约 1000 个以上容器时，受内核限制可能出现通信不稳定，规模大时建议拆分网络或改用其他驱动。
 
 ## 主机模式 host
 
-在此模式下，容器网络与宿主机网络间的隔离将被禁止，容器共享宿主机的网络命名空间，使容器直接暴露在公共网络中。因此，需要通过端口映射（Port Mapping）进行协调。
+在此模式下，容器网络与宿主机网络间的隔离将被禁止，容器共享宿主机的网络命名空间，直接使用宿主机的 IP 和端口。也正因为共享网络栈，`-p/--publish` 在 host 模式下不生效（会提示警告），端口冲突需要自行避免。
 
 ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120057367.png)
 
@@ -118,7 +140,7 @@ ens33     Link encap:Ethernet  HWaddr 00:0C:29:58:0C:12
 
 ## 容器网络 container
 
-在该模式，新创建的容器和已经存在的一个容器共享一个网络命名空间。两个容器除了网络的命名空间，其他的如文件系统、进程列表等仍然是隔离的。两个容器可以通过环回口进行设备通信。该模式也是 Kubernetes 使用的网络模式。
+在该模式，新创建的容器和已经存在的一个容器共享一个网络命名空间。两个容器除了网络的命名空间，其他的如文件系统、进程列表等仍然是隔离的。两个容器可以通过环回口进行设备通信。Kubernetes 的 Pod 也通过 pause 容器共享网络命名空间，思路类似，但由 CNI 插件实现，并不是直接使用 Docker 的 container 模式。
 
 ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202207232051825.png)
 
@@ -178,18 +200,21 @@ eth0      Link encap:Ethernet  HWaddr 02:42:AC:11:00:05
 
 > docker 内嵌 DNS Server，但只有在用户自定义模式才能使用。
 
-docker 提供的网络驱动：**User-defined bridge**，**overlay**，**macvlan**，**host**，**Third-party network plugins**。
+docker 提供的网络驱动：**bridge**、**host**、**none**、**overlay**、**ipvlan**、**macvlan**，以及第三方网络插件。
 
-可通过`docker network create --driver=[driver] [network-name] [--subnet] [--gateway]`指定网络驱动创建网络，并指定网段和网关。
+可通过 `docker network create --driver=[driver] --subnet=[subnet] --gateway=[gateway] [network-name]` 指定驱动、网段和网关（选项要放在网络名之前）。
 
-**bridge**用于在同一主机内的通信。
-**macvlan**和**overlay**用于跨主机通信。
+**bridge**用于同一主机内的容器通信。
+**overlay**用于多台 Docker 主机之间的通信（Swarm 模式）。
+**macvlan**、**ipvlan**用于让容器直接接入物理网络，可单机也可多机。
 
 **macvlan**：当从 VM 设置迁移或需要**容器看起来像网络上的物理主机**时使用，可以使**每个容器都具有唯一的 MAC 地址**。
 
+**ipvlan**：与 macvlan 类似，但容器共享父接口的 MAC 地址，更节省交换机 CAM 表；支持 L2/L3 模式。
+
 **overlay**：当需要在**不同 Docker 主机上运行的容器**进行通信，或者当**多个应用程序使用 swarm 服务一起工作**时使用。
 
-**host**和网络模式对应的作用相同，host 驱动仅可用于 v17.06 版本以上的 docker swarm 集群。
+**host**驱动让容器共享宿主机网络栈，单机容器和 Swarm 服务都可使用（Swarm 服务使用 host 网络需 17.06+）。
 **network plugins**是第三方为 docker 制作的网络插件。
 
 - bridge 驱动: 用于创建类似 bridge 网络模式的网络，加入该网络的容器必须在同一台宿主机，仅适合一台主机上的小型网络。
@@ -271,14 +296,36 @@ eth1      Link encap:Ethernet  HWaddr 02:42:0A:01:01:03
 处理流程：1.容器发数据包，docker0 收到数据包后查看 IP 头，发现是发往外网的，交给 NAT 处理。2.NAT 将源地址转为宿主机 IP 地址，并从主机网卡发出。
 
 **外网访问容器**
-外网通过端口映射访问容器，每个映射的端口，宿主机都会启动一个 docker-proxy 进程处理访问容器的流量，可在宿主机通过`ps -ef | grep docker-proxy`查看端口映射情况
+外网通过端口映射访问容器。默认情况下 Docker 会为每个发布端口启动 `docker-proxy` 进程（可用 `ps -ef | grep docker-proxy` 查看），但外部流量主要由 iptables/nftables 的 DNAT 规则直接转发，docker-proxy 更多用于本机回环、hairpin 等场景；设置 `"userland-proxy": false` 可关闭它。
 下图为内外网的完整访问流程图
 
 ![](https://cdn.jsdelivr.net/gh/serchaofan/picBed/blog/202203120058221.png)
 
+## 端口发布
+
+bridge 网络里的容器端口默认只对宿主机和同一网络的容器可见，要对外提供访问必须发布端口：
+
+```bash
+docker run -d -p 8080:80 nginx            # 宿主机所有地址的 8080 -> 容器 80
+docker run -d -p 127.0.0.1:8080:80 nginx  # 只监听回环地址
+docker run -d -P nginx                    # 发布 Dockerfile 中 EXPOSE 的所有端口
+```
+
+- 不写宿主 IP 时默认绑定 `0.0.0.0` 和 `::`，即所有网卡；只想本机访问要显式写 `127.0.0.1`
+- `-p` 的转发由 iptables/nftables 的 DNAT 规则完成；`docker-proxy` 进程主要用于本机回环、hairpin 等场景，不是所有外部流量的必经路径
+- host 网络模式不支持端口映射，`-p` 会被忽略
+- 同一宿主机端口只能被一个容器占用
+
+## 内置 DNS
+
+- 默认 bridge 网络不使用 Docker 内置 DNS，容器间只能靠 IP 或已废弃的 `--link`
+- 自定义网络（user-defined bridge、overlay 等）使用 `127.0.0.11` 做名称解析，容器名、网络别名、Swarm 服务名都可解析
+- 内置 DNS 会把外部域名转发给宿主机 `/etc/resolv.conf` 中的 DNS；可用 `--dns`、`--dns-search`、`--dns-option` 覆盖
+- 容器使用 `container:` 模式共享网络栈时，`--dns`、`--hostname`、`--publish` 等参数不可用
+
 # 跨主机网络
 
-docker 容器有多种访问外网的方案，其中 docker 提供两个原生方案：overlay 和 macvlan。还可选择第三方方案：flannel，weave，calico。
+跨主机通信时，Docker 原生提供 overlay（Swarm）和 macvlan/ipvlan（直接接入物理网络）两类方案；也可使用 flannel、weave、calico 等第三方网络插件。
 
 众多的 docker 网络方案通过 libnetwork 与容器网络模型（Container Network Model）集成在一起，其中 libnetwork 为 docker 容器网络库，而其核心即为容器网络模型，对容器网络进行了抽象，由以下三个组件组成：
 
@@ -327,9 +374,9 @@ bdv2xdmkujbu        my_overlay          overlay             swarm
 **overlay 网络加密**
 默认 docker 对 swarm 服务在 GCM 模式下使用 AES 算法加密，集群中的 manager 节点每 12 小时就轮换用于加密 gossip（反熵算法）数据的密钥。
 
-要加密应用程序数据，需要在创建 overlay 网络时添加`--opt encrypted`。这使得 vxlan 级别的 IPSEC 加密成为可能。这种加密会带来不可忽视的性能损失，所以应该在生产中使用它之前对其进行测试。
+要加密应用程序数据，需要在创建 overlay 网络时添加`--opt encrypted`。这使得 vxlan 级别的 IPsec 加密成为可能。这种加密会带来不可忽视的性能损失，所以应该在生产中使用它之前对其进行测试。
 
-当启用 overlay 加密时，Docker 会在所有节点之间创建 IPSEC 隧道，在这些节点上调度连接到 overlay 网络服务的任务。这些通道在 GCM 模式下也使用 AES 算法，manager 节点每 12 小时自动轮换一次密钥。
+当启用 overlay 加密时，Docker 会在所有节点之间创建 IPsec 隧道，在这些节点上调度连接到 overlay 网络服务的任务。这些通道在 GCM 模式下也使用 AES 算法，manager 节点每 12 小时自动轮换一次密钥。
 
 > 不要将 Windows 节点添加到加密的 overlay 网络。
 > Windows 上不支持 overlay 网络加密。如果 Windows 节点尝试连接到加密的 overlay 网络，虽不会报告错误，但节点无法通信。
@@ -419,34 +466,49 @@ my-nginx
 网络设备需要能够处理“混杂模式”，其中一个物理接口可以分配多个 MAC 地址。网络模式最好是`bridge`或`overlay`。可以在 bridge 模式或 vlan 的 trunk 模式中创建 macvlan 网络。
 
 **在 bridge 网络模式中创建 macvlan 网络**
-在`docker network create`后添加`-d macvlan`，也可再指定流量通过的实际网卡`-o parent=ens33`。若要排除在 macvlan 中使用的 IP 地址，可添加选项`--aux-addresses="aux-addr="`，参数值为一组键值对。一张网卡仅能被一个 macvlan 网络设为`parent`。
+在`docker network create`后添加`-d macvlan`，也可再指定流量通过的实际网卡`-o parent=ens33`。若要预留某些 IP 不分配给容器，可添加 `--aux-address="name=IP"`（可重复）。同一个 parent 接口可以创建多个 macvlan 网络（不同子网/VLAN），但要提前规划好 IP 与 MAC 地址。
 
 **在 vlan trunk 模式中创建 macvlan 网络**
 通过在网卡名后加`.[数字]`创建网卡子接口，例如`-o parent=ens33.10`。
 
-**使用 IPvlan**
-可以使用三层 IPvlan 取代二层 Macvlan。通过指定`-o ipvlan_mode=l2`
+## IPvlan
+
+IPvlan 与 macvlan 类似，都是让容器直接接入物理网络，但 IPvlan 的多个容器共享父接口的 MAC 地址，更节省交换机 CAM 表。创建时用 `-d ipvlan`，默认 L2 模式：
+
+```bash
+docker network create -d ipvlan \
+  --subnet=192.168.1.0/24 --gateway=192.168.1.1 \
+  -o parent=eth0 -o ipvlan_mode=l2 db_net
+```
+
+- L2 模式：容器与父接口在同一广播域，需要使用相同子网；不同子网之间不能直接互通
+- L3 模式（`-o ipvlan_mode=l3`）：父接口相当于路由器，容器网络与父接口子网不同；L3 会丢弃广播和组播，适合大规模、可预测的网络
+- 内核要求 4.2+；L2/L3 下容器默认不能 ping 宿主机接口，这是内核的隔离行为
+- 与 macvlan 一样，Docker Desktop（Mac/Windows）不支持
 
 **macvlan 网络的注意条件**
 
 - 大多数云提供商会阻塞访问 macvlan 网络，可能需要物理访问网络设备。
+- macvlan 容器无法直接与宿主机通信，这是 Linux 内核的限制；需要时给容器再加一个 bridge 网络，或在宿主机上创建同 parent 的 macvlan 接口。
 - macvlan 网络驱动程序仅适用于 Linux 主机，而 Mac 的 Docker 桌面，Windows 的 Docker 桌面或 Windows Server 的 Docker EE 不支持。
 - 至少需要 3.9 版的 Linux 内核，建议使用 4.0 或更高版本。
+- 大量容器会带来 MAC 地址膨胀和 IP 地址耗尽问题，交换机需要能处理混杂模式。
 
 ## 补充知识点
 
 **支持 IPv6**
-只有 Linux 主机的 docker 支持 IPv6。
-修改`/etc/docker/daemon.json`，添加`{"ipv6": true}`开启 IPv6。然后重新加载配置文件`systemctl daemon-reload`或`systemctl reload docker`。在创建网络的时候可以加上`--ipv6`选项，在创建容器时加上`--ip6`选项
+原生 IPv6 网络主要面向 Linux 守护进程。daemon.json 中除 `"ipv6": true` 外，默认 bridge 还需要配置 `"fixed-cidr-v6"`；自定义网络创建时加 `--ipv6` 和 `--subnet`，容器可用 `--ip6` 指定地址。修改后重启 Docker（或 `systemctl reload docker`）。
 
 **配置 iptables**
-Docker 通过 iptables 规则来提供网络隔离，不应修改 Docker 已设置的 iptables 规则。
-所有 Docker 的 iptables 规则都被添加到`DOCKER`链中，不要手动操作此表。如果需要添加能在加载 Docker 规则之前加载的规则，应该将它们添加到`DOCKER-USER`链中，这些规则在 Docker 自动创建任何规则之前加载。
+Docker 通过 iptables/nftables 规则提供网络隔离，不应修改 Docker 自己维护的规则。主要规则位于 `DOCKER`、`DOCKER-ISOLATION-STAGE-1/2` 等链，用户自定义规则应放在 `DOCKER-USER` 链，它在 Docker 规则之前生效。
 
-默认情况下，所有外部源 IP 都被允许连接到 Docker 守护进程。若要只允许特定的 IP 或网络访问容器，可在`DOCKER`过滤器链的顶部插入否定规则。
+已发布的容器端口默认对所有来源开放。若要只允许特定网段访问，可在 `DOCKER-USER` 链中限制：
 
 例：`iptables -I DOCKER-USER -i ens33 ! --source 192.168.163.0/24 -j DROP`
-为防止 Docker 修改 iptables 策略，在`/etc/docker/daemon.json`中设置`{"iptables": false}`，官方不推荐这样设置，因为这样所有关于 docker 的 iptables 配置都要手动管理。
+
+由于 Docker 的端口转发走 nat 表，会在 ufw/firewalld 的 INPUT/OUTPUT 规则之前生效，所以**发布端口会绕过 ufw/firewalld**。需要限制来源时，用 `DOCKER-USER` 链，或只绑定 `127.0.0.1`。
+
+为防止 Docker 修改 iptables 策略，可在 `/etc/docker/daemon.json` 中设置 `{"iptables": false}`，但官方不推荐：容器将无法通过 MASQUERADE 访问外网，且已发布端口会对本地网络全开放，后续规则都要手动维护。
 
 **DNS 选项**
 
@@ -454,7 +516,7 @@ Docker 通过 iptables 规则来提供网络隔离，不应修改 Docker 已设�
     --dns 指定一个或多个DNS服务器
     --dns-search 设置dns搜索域
     --dns-opt 键值对，可参考/etc/resolv.conf
-    --hostname 设置容器的主机名，默认就是容器名
+    --hostname 设置容器的主机名，默认是容器短 ID
 ```
 
 **docker 代理**
@@ -484,6 +546,40 @@ Docker 通过 iptables 规则来提供网络隔离，不应修改 Docker 已设�
   --env NO_PROXY=""
 ```
 
-> 参考文档
-> Cloudman 《每天五分钟玩转 docker 容器技术》
-> [docker 官方文档-网络板块](https://docs.docker.com/network) > [docker 网络模式](http://dockone.io/article/1261)
+## 网络排障
+
+常用排查顺序：
+
+```bash
+# 1. 看网络定义：子网、网关、接了哪些容器
+docker network inspect <network>
+
+# 2. 看容器网络配置
+docker exec -it <container> ip addr
+docker exec -it <container> ip route
+docker exec -it <container> cat /etc/resolv.conf
+
+# 3. 进入容器网络命名空间抓包（容器内没有 tcpdump 时）
+pid=$(docker inspect -f '{{.State.Pid}}' <container>)
+nsenter -t "$pid" -n ip addr
+nsenter -t "$pid" -n tcpdump -i eth0 -nn
+
+# 4. 宿主机侧看监听、NAT 规则和网桥
+ss -lntp
+iptables -t nat -L DOCKER -n -v
+bridge link
+```
+
+排查思路：
+
+- 容器之间不通：先确认是否在同一网络、是否被 `--internal`/ICC 限制，再用 `getent hosts` 验证名称解析
+- 容器访问外网失败：检查 `ip_forward`、MASQUERADE 规则和宿主机 DNS
+- 外部访问容器失败：确认 `-p` 的绑定地址（`0.0.0.0` 还是 `127.0.0.1`）、宿主机防火墙和云安全组
+- 跨主机 overlay 不通：检查 4789/UDP（VXLAN）、7946/TCP+UDP（gossip）、Swarm 节点状态和 MTU
+
+## 参考文档
+
+- Cloudman《每天五分钟玩转 docker 容器技术》
+- [Docker 官方文档-网络](https://docs.docker.com/engine/network/)
+- [Docker 官方文档-网络驱动](https://docs.docker.com/engine/network/drivers/)
+- [Docker 网络模式](http://dockone.io/article/1261)
