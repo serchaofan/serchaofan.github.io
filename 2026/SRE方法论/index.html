@@ -1,0 +1,5147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/#6.0.2'>
+  <meta name="generator" content="Hexo 6.3.0">
+  <meta name="Volantis" content="6.0.2">
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://tianyigu.top/2026/sre方法论/"/>
+  <!-- 渲染优化 -->
+    <meta http-equiv='x-dns-prefetch-control' content='on' />
+      <link rel='dns-prefetch' href='https://unpkg.com'>
+      <link rel="preconnect" href="https://unpkg.com" crossorigin>
+      <link rel='dns-prefetch' href='https://cdn.bootcdn.net'>
+      <link rel="preconnect" href="https://cdn.bootcdn.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self' https:; block-all-mixed-content; base-uri 'self' https:; form-action 'self' https:; worker-src 'self' https:; connect-src 'self' https: *; img-src 'self' data: https: *; media-src 'self' https: *; font-src 'self' data: https: *; frame-src 'self' https: *; manifest-src 'self' https: *; child-src https:; script-src 'self' https: 'unsafe-inline' *; style-src 'self' https: 'unsafe-inline' *; ">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+  <meta content="telephone=no" name="format-detection">
+  <!-- import head_begin begin -->
+  <!-- import head_begin end -->
+  <!-- Custom Files headBegin begin-->
+  
+  <!-- Custom Files headBegin end-->
+    <link rel="shortcut icon" type='image/x-icon' href="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preload" href="https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<link rel="preload" href="https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <!-- feed -->
+  <!-- 页面元数据 -->
+  <title>SRE方法论 - Tianyi的技术随笔</title>
+  <meta name="keywords" content="SRE, 运维,DevOps,SRE,SLO,undefined">
+  <meta desc name="description" content="SRE（Site Reliability Engineering，站点可靠性工程）不是把运维换个名字，而是用软件工程的方法解决运维问题，并把「可靠性」变成可以度量、可以交易、可以持续改进的工程目标。
+本文按五个主题展开：SRE 的边界、SLI&#x2F;SLO&#x2F;SLA 与错误预算、Toil 治理、事故响... - Tianyi Gu - Tianyi的技术随笔">
+  
+<meta property="og:type" content="article">
+<meta property="og:title" content="SRE方法论">
+<meta property="og:url" content="https://tianyigu.top/2026/SRE%E6%96%B9%E6%B3%95%E8%AE%BA/index.html">
+<meta property="og:site_name" content="Tianyi的技术随笔">
+<meta property="og:description" content="SRE（Site Reliability Engineering，站点可靠性工程）不是把运维换个名字，而是用软件工程的方法解决运维问题，并把「可靠性」变成可以度量、可以交易、可以持续改进的工程目标。 本文按五个主题展开：SRE 的边界、SLI&#x2F;SLO&#x2F;SLA 与错误预算、Toil 治理、事故响应与 On-call、无指责复盘与故障档案库。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+<meta property="article:published_time" content="2026-10-23T08:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-22T16:15:17.299Z">
+<meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="运维">
+<meta property="article:tag" content="DevOps">
+<meta property="article:tag" content="SRE">
+<meta property="article:tag" content="SLO">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+  <style>
+    /* 首屏样式 */
+    #safearea {
+  display: none;
+}
+:root {
+  --color-site-body: #f4f4f4;
+  --color-site-bg: #f4f4f4;
+  --color-site-inner: #fff;
+  --color-site-footer: #666;
+  --color-card: #fff;
+  --color-text: #444;
+  --color-block: #f6f6f6;
+  --color-inlinecode: #c74f00;
+  --color-codeblock: #fff7ea;
+  --color-h1: #3a3a3a;
+  --color-h2: #3a3a3a;
+  --color-h3: #333;
+  --color-h4: #444;
+  --color-h5: #555;
+  --color-h6: #666;
+  --color-p: #444;
+  --color-list: #666;
+  --color-list-hl: #30ad91;
+  --color-meta: #888;
+  --color-read-bkg: #e0d8c8;
+  --color-read-post: #f8f1e2;
+  --color-copyright-bkg: #f5f5f5;
+}
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+*::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+html {
+  color: var(--color-text);
+  width: 100%;
+  height: 100%;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  font-size: 16px;
+}
+html >::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+html >::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+html >::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+html >::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+body {
+  background-color: var(--color-site-body);
+  text-rendering: optimizelegibility;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+body.modal-active {
+  overflow: hidden;
+}
+@media screen and (max-width: 680px) {
+  body.modal-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+a {
+  color: #2092ec;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+a:hover {
+  color: #ff5722;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+ol {
+  padding-left: 0;
+}
+ul li,
+ol li {
+  list-style: none;
+}
+header {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+img {
+  border: 0;
+  background: none;
+  max-width: 100%;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  height: 0;
+  border: 0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  border-bottom: 1px solid rgba(68,68,68,0.1);
+}
+button,
+input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+button {
+  overflow: visible;
+  text-transform: none;
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+@supports (backdrop-filter: blur(20px)) {
+  .blur {
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+.shadow {
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.shadow.floatable {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.shadow.floatable:hover {
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+}
+#l_cover {
+  min-height: 64px;
+}
+.cover-wrapper {
+  top: 0;
+  left: 0;
+  max-width: 100%;
+  height: 100vh;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+  color: var(--color-site-inner);
+  padding: 0 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -100px;
+}
+.cover-wrapper .cover-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+}
+.cover-wrapper .cover-bg.lazyload:not(.loaded) {
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+}
+.cover-wrapper .cover-bg.lazyload.loaded {
+  animation-delay: 0s;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+  animation-name: fadeIn;
+}
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cover-wrapper#full {
+  height: calc(100vh + 100px);
+  padding-bottom: 100px;
+}
+.cover-wrapper#half {
+  max-height: 640px;
+  min-height: 400px;
+  height: calc(36vh - 64px + 200px);
+}
+.cover-wrapper #scroll-down {
+  width: 100%;
+  height: 64px;
+  position: absolute;
+  bottom: 100px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover-wrapper #scroll-down .scroll-down-effects {
+  color: #fff;
+  font-size: 24px;
+  line-height: 64px;
+  position: absolute;
+  width: 24px;
+  left: calc(50% - 12px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  animation: scroll-down-effect 1.5s infinite;
+  -webkit-animation: scroll-down-effect 1.5s infinite;
+  -khtml-animation: scroll-down-effect 1.5s infinite;
+  -moz-animation: scroll-down-effect 1.5s infinite;
+  -o-animation: scroll-down-effect 1.5s infinite;
+  -ms-animation: scroll-down-effect 1.5s infinite;
+}
+@-moz-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  margin-top: 64px;
+  margin-bottom: 100px;
+}
+.cover-wrapper .cover-body,
+.cover-wrapper .cover-body .top,
+.cover-wrapper .cover-body .bottom {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  max-width: 100%;
+}
+.cover-wrapper .cover-body .bottom {
+  margin-top: 32px;
+}
+.cover-wrapper .cover-body .title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+  font-size: 3.125rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.cover-wrapper .cover-body .subtitle {
+  font-size: 20px;
+}
+.cover-wrapper .cover-body .logo {
+  max-height: 120px;
+  max-width: calc(100% - 4 * 16px);
+}
+@media screen and (min-height: 1024px) {
+  .cover-wrapper .cover-body .title {
+    font-size: 3rem;
+  }
+  .cover-wrapper .cover-body .subtitle {
+    font-size: 1.05rem;
+  }
+  .cover-wrapper .cover-body .logo {
+    max-height: 150px;
+  }
+}
+.cover-wrapper .cover-body .m_search {
+  position: relative;
+  max-width: calc(100% - 16px);
+  width: 320px;
+  vertical-align: middle;
+}
+.cover-wrapper .cover-body .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  width: 100%;
+}
+.cover-wrapper .cover-body .m_search .icon,
+.cover-wrapper .cover-body .m_search .input {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.cover-wrapper .cover-body .m_search .icon {
+  position: absolute;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  line-height: 2.5rem;
+  width: 32px;
+  top: 0;
+  left: 5px;
+  color: rgba(68,68,68,0.75);
+}
+.cover-wrapper .cover-body .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  padding-left: 36px;
+  border-radius: 1.4rem;
+  -webkit-border-radius: 1.4rem;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: var(--color-text);
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .cover-body .m_search .input {
+    padding-left: 36px;
+  }
+}
+.cover-wrapper .cover-body .m_search .input:hover {
+  background: rgba(255,255,255,0.8);
+}
+.cover-wrapper .cover-body .m_search .input:focus {
+  background: #fff;
+}
+.cover-wrapper .list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -khtml-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -o-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  align-items: stretch;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.cover-wrapper .list-h a {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  font-weight: 600;
+}
+.cover-wrapper .list-h a img {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  margin: 4px;
+  min-width: 40px;
+  max-width: 44px;
+}
+@media screen and (max-width: 768px) {
+  .cover-wrapper .list-h a img {
+    min-width: 36px;
+    max-width: 40px;
+  }
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .list-h a img {
+    margin: 2px 4px;
+    min-width: 32px;
+    max-width: 36px;
+  }
+}
+@media screen and (max-width: 375px) {
+  .cover-wrapper .list-h a img {
+    min-width: 28px;
+    max-width: 32px;
+  }
+}
+.cover-wrapper {
+  max-width: 100%;
+}
+.cover-wrapper.search .bottom .menu {
+  margin-top: 16px;
+}
+.cover-wrapper.search .bottom .menu .list-h a {
+  white-space: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2px;
+  margin: 4px;
+  color: var(--color-site-inner);
+  opacity: 0.75;
+  -webkit-opacity: 0.75;
+  -moz-opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 2px solid transparent;
+}
+.cover-wrapper.search .bottom .menu .list-h a i {
+  margin-right: 4px;
+}
+.cover-wrapper.search .bottom .menu .list-h a p {
+  font-size: 0.9375rem;
+}
+.cover-wrapper.search .bottom .menu .list-h a:hover,
+.cover-wrapper.search .bottom .menu .list-h a.active,
+.cover-wrapper.search .bottom .menu .list-h a:active {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  border-bottom: 2px solid var(--color-site-inner);
+}
+.cover-wrapper.dock .menu,
+.cover-wrapper.featured .menu,
+.cover-wrapper.focus .menu {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+.cover-wrapper.dock .menu .list-h a,
+.cover-wrapper.featured .menu .list-h a,
+.cover-wrapper.focus .menu .list-h a {
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  line-height: 24px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-bottom: none;
+  text-align: center;
+  align-content: flex-end;
+  color: rgba(68,68,68,0.7);
+  font-size: 1.5rem;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h a,
+  .cover-wrapper.featured .menu .list-h a,
+  .cover-wrapper.focus .menu .list-h a {
+    padding: 12px 8px;
+  }
+}
+.cover-wrapper.dock .menu .list-h a i,
+.cover-wrapper.featured .menu .list-h a i,
+.cover-wrapper.focus .menu .list-h a i {
+  margin: 8px;
+}
+.cover-wrapper.dock .menu .list-h a p,
+.cover-wrapper.featured .menu .list-h a p,
+.cover-wrapper.focus .menu .list-h a p {
+  font-size: 0.875rem;
+}
+.cover-wrapper.dock .menu .list-h a.active,
+.cover-wrapper.featured .menu .list-h a.active,
+.cover-wrapper.focus .menu .list-h a.active {
+  background: var(--color-card);
+  backdrop-filter: none;
+}
+.cover-wrapper.dock .menu .list-h a.active i,
+.cover-wrapper.featured .menu .list-h a.active i,
+.cover-wrapper.focus .menu .list-h a.active i,
+.cover-wrapper.dock .menu .list-h a.active i+p,
+.cover-wrapper.featured .menu .list-h a.active i+p,
+.cover-wrapper.focus .menu .list-h a.active i+p {
+  color: #3dd9b6;
+}
+.cover-wrapper.dock .menu .list-h a.active img+p,
+.cover-wrapper.featured .menu .list-h a.active img+p,
+.cover-wrapper.focus .menu .list-h a.active img+p {
+  color: var(--color-text);
+}
+.cover-wrapper.dock .menu .list-h a:hover,
+.cover-wrapper.featured .menu .list-h a:hover,
+.cover-wrapper.focus .menu .list-h a:hover {
+  background: var(--color-card);
+}
+.cover-wrapper.dock .top {
+  margin-bottom: 48px;
+}
+.cover-wrapper.dock .menu {
+  background: rgba(255,255,255,0.5);
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+}
+.cover-wrapper.dock .menu .list-h {
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  margin: 4px;
+}
+.cover-wrapper.dock .menu .list-h a+a {
+  margin-left: 4px;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h {
+    overflow-x: scroll;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb {
+    background: #3dd9b6;
+    cursor: pointer;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb:hover {
+    background: #ff5722;
+  }
+}
+@supports (backdrop-filter: blur(20px)) {
+  .cover-wrapper.dock .menu {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url("https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Varela Round';
+  src: url("https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/VarelaRound/VarelaRound-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+.l_header {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--color-card);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.l_header.auto {
+  transition: opacity 0.4s ease;
+  -webkit-transition: opacity 0.4s ease;
+  -khtml-transition: opacity 0.4s ease;
+  -moz-transition: opacity 0.4s ease;
+  -o-transition: opacity 0.4s ease;
+  -ms-transition: opacity 0.4s ease;
+  visibility: hidden;
+}
+.l_header.auto.show {
+  opacity: 1 !important;
+  -webkit-opacity: 1 !important;
+  -moz-opacity: 1 !important;
+  visibility: visible;
+}
+.l_header .container {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.l_header #wrapper {
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.l_header #wrapper .nav-main,
+.l_header #wrapper .nav-sub {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -khtml-justify-content: space-between;
+  -moz-justify-content: space-between;
+  -o-justify-content: space-between;
+  -ms-justify-content: space-between;
+  align-items: center;
+}
+.l_header #wrapper .nav-main {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.l_header #wrapper.sub .nav-main {
+  transform: translateY(-64px);
+  -webkit-transform: translateY(-64px);
+  -khtml-transform: translateY(-64px);
+  -moz-transform: translateY(-64px);
+  -o-transform: translateY(-64px);
+  -ms-transform: translateY(-64px);
+}
+.l_header #wrapper .nav-sub {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+  height: 64px;
+  width: calc(100% - 2 * 16px);
+  position: absolute;
+}
+.l_header #wrapper .nav-sub ::-webkit-scrollbar {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (min-width: 2048px) {
+  .l_header #wrapper .nav-sub {
+    max-width: 55vw;
+    margin: auto;
+  }
+}
+.l_header #wrapper.sub .nav-sub {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+}
+.l_header #wrapper .title {
+  position: relative;
+  color: var(--color-text);
+  padding-left: 24px;
+  max-height: 64px;
+}
+.l_header #wrapper .nav-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  line-height: 64px;
+  padding: 0 24px;
+  font-size: 1.25rem;
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+}
+.l_header #wrapper .nav-main .title img {
+  height: 64px;
+}
+.l_header .nav-sub {
+  max-width: 1580px;
+  margin: auto;
+}
+.l_header .nav-sub .title {
+  font-weight: bold;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  line-height: 1.2;
+  max-height: 64px;
+  white-space: normal;
+  flex-shrink: 1;
+}
+.l_header .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  line-height: 64px;
+  align-items: center;
+}
+.l_header .switcher .s-toc {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  .l_header .switcher .s-toc {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+  }
+}
+.l_header .switcher >li {
+  height: 48px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  margin: 2px;
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li {
+    margin: 0 1px;
+    height: 48px;
+  }
+}
+.l_header .switcher >li >a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0.85em 1.1em;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  color: #3dd9b6;
+}
+.l_header .switcher >li >a:hover {
+  border: none;
+}
+.l_header .switcher >li >a.active,
+.l_header .switcher >li >a:active {
+  border: none;
+  background: var(--color-site-bg);
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li >a {
+    width: 36px;
+    height: 48px;
+  }
+}
+.l_header .nav-sub .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+}
+.l_header .m_search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  height: 64px;
+  width: 240px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (max-width: 1024px) {
+  .l_header .m_search {
+    width: 44px;
+    min-width: 44px;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+  }
+  .l_header .m_search:hover {
+    width: 240px;
+  }
+  .l_header .m_search:hover input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search:hover .input {
+    width: 100%;
+  }
+  .l_header .m_search:hover .input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search {
+    min-width: 0;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.l_header .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.l_header .m_search .icon {
+  position: absolute;
+  width: 36px;
+  left: 5px;
+  color: var(--color-meta);
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .icon {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+.l_header .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
+  width: 100%;
+  color: var(--color-text);
+  background: #fafafa;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 40px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search .input:focus {
+    box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .input {
+    background: var(--color-block);
+    padding-left: 8px;
+    border: none;
+  }
+  .l_header .m_search .input:hover,
+  .l_header .m_search .input:focus {
+    border: none;
+  }
+}
+@media (max-width: 500px) {
+  .l_header .m_search {
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    transition: all 0.28s ease;
+    -webkit-transition: all 0.28s ease;
+    -khtml-transition: all 0.28s ease;
+    -moz-transition: all 0.28s ease;
+    -o-transition: all 0.28s ease;
+    -ms-transition: all 0.28s ease;
+  }
+  .l_header .m_search .input {
+    border-radius: 32px;
+    -webkit-border-radius: 32px;
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  .l_header.z_search-open .m_search {
+    width: 100%;
+  }
+  .l_header.z_search-open .m_search .input {
+    width: calc(100% - 120px);
+  }
+}
+ul.m-pc >li>a {
+  color: inherit;
+  border-bottom: 2px solid transparent;
+}
+ul.m-pc >li>a:active,
+ul.m-pc >li>a.active {
+  border-bottom: 2px solid #3dd9b6;
+}
+ul.m-pc li:hover >ul.list-v,
+ul.list-v li:hover >ul.list-v {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.nav-list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  align-items: stretch;
+}
+ul.nav-list-h>li {
+  position: relative;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  height: 100%;
+  line-height: 2.4;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+ul.nav-list-h>li >a {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+ul.list-v {
+  z-index: 1;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: absolute;
+  background: var(--color-card);
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  margin-top: -6px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  padding: 8px 0;
+}
+ul.list-v.show {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.list-v hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+ul.list-v >li {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+ul.list-v >li.header {
+  font-size: 0.78125rem;
+  font-weight: bold;
+  line-height: 2em;
+  color: var(--color-meta);
+  margin: 8px 16px 4px;
+}
+ul.list-v >li.header i {
+  margin-right: 8px;
+}
+ul.list-v >li ul {
+  margin-left: 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: -40px;
+}
+ul.list-v .aplayer-container {
+  min-height: 64px;
+  padding: 6px 16px;
+}
+ul.list-v >li>a {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  color: var(--color-list);
+  font-size: 0.875rem;
+  font-weight: bold;
+  line-height: 36px;
+  padding: 0 20px 0 16px;
+  text-overflow: ellipsis;
+  margin: 0 4px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+@media screen and (max-width: 1024px) {
+  ul.list-v >li>a {
+    line-height: 40px;
+  }
+}
+ul.list-v >li>a >i {
+  margin-right: 8px;
+}
+ul.list-v >li>a:active,
+ul.list-v >li>a.active {
+  color: var(--color-list-hl);
+}
+ul.list-v >li>a:hover {
+  color: var(--color-list-hl);
+  background: var(--color-site-bg);
+}
+.l_header .menu >ul>li>a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding: 0 8px;
+}
+.l_header .menu >ul>li>a >i {
+  margin-right: 4px;
+}
+.l_header ul.nav-list-h>li {
+  color: var(--color-list);
+  line-height: 64px;
+}
+.l_header ul.nav-list-h>li >a {
+  max-height: 64px;
+  overflow: hidden;
+  color: inherit;
+}
+.l_header ul.nav-list-h>li >a:active,
+.l_header ul.nav-list-h>li >a.active {
+  color: #3dd9b6;
+}
+.l_header ul.nav-list-h>li:hover>a {
+  color: var(--color-list-hl);
+}
+.l_header ul.nav-list-h>li i.music {
+  animation: rotate-effect 1.5s linear infinite;
+  -webkit-animation: rotate-effect 1.5s linear infinite;
+  -khtml-animation: rotate-effect 1.5s linear infinite;
+  -moz-animation: rotate-effect 1.5s linear infinite;
+  -o-animation: rotate-effect 1.5s linear infinite;
+  -ms-animation: rotate-effect 1.5s linear infinite;
+}
+@-moz-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-o-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+.menu-phone li ul.list-v {
+  right: calc(100% - 0.5 * 16px);
+}
+.menu-phone li ul.list-v ul {
+  right: calc(100% - 0.5 * 16px);
+}
+#wrapper {
+  max-width: 1580px;
+  margin: auto;
+}
+@media screen and (min-width: 2048px) {
+  #wrapper {
+    max-width: 55vw;
+  }
+}
+#wrapper .menu {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 1;
+  -ms-flex: 1 1;
+  flex: 1 1;
+  margin: 0 16px 0 0;
+}
+#wrapper .menu .list-v ul {
+  left: calc(100% - 0.5 * 16px);
+}
+.menu-phone {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: 16px;
+  right: 8px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.menu-phone ul {
+  right: calc(100% - 0.5 * 16px);
+}
+@media screen and (max-width: 500px) {
+  .menu-phone {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: block;
+  }
+}
+.l_header {
+  max-width: 65vw;
+  left: calc((100% - 65vw) * 0.5);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media screen and (max-width: 2048px) {
+  .l_header {
+    max-width: 1612px;
+    left: calc((100% - 1612px) * 0.5);
+  }
+}
+@media screen and (max-width: 1612px) {
+  .l_header {
+    left: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    max-width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .l_header #wrapper .nav-main .title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .l_header #wrapper .nav-sub {
+    width: 100%;
+  }
+  .l_header #wrapper .nav-sub .title {
+    overflow-y: scroll;
+    margin-top: 2px;
+    padding: 8px 16px;
+  }
+  .l_header #wrapper .switcher {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+    margin-right: 8px;
+  }
+  .l_header .menu {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+@media screen and (max-width: 500px) {
+  .list-v li {
+    max-width: 270px;
+  }
+}
+#u-search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 60px 20px;
+  z-index: 1001;
+}
+@media screen and (max-width: 680px) {
+  #u-search {
+    padding: 0px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+    '.kill-t{'+
+      'font-size: 2rem;'+
+    '}'+
+    '.kill-c{'+
+      'font-size: 1.2rem;'+
+    '}'+
+		'#l_header,#l_body{'+
+			'display: none;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        `<span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>`+
+        `<span class="kill-c">微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</span><br/>`+
+        `<a target="_blank" rel="noopener" href="https://blogs.windows.com/windowsexperience/2021/05/19/the-future-of-internet-explorer-on-windows-10-is-in-microsoft-edge/"><strong>了解详情 ></strong></a>`+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+    .kill-t{
+      font-size: 2rem;
+    }
+    .kill-c{
+      font-size: 1.2rem;
+    }
+		#l_header,#l_body{
+			display: none;
+		}
+	</style>
+    <div class="kill-noscript">
+        <span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>
+        <span class="kill-c">本页面需要浏览器支持（启用）JavaScript</span><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+
+  <script>
+  /************这个文件存放不需要重载的全局变量和全局函数*********/
+  // window.volantis = {}; // volantis 全局变量
+/**
+ * 内存安全的全局 volantis 对象实现
+ * 特性：
+ * 1. 支持 window.volantis.xxx = yyy 直观赋值语法
+ * 2. 基于 WeakMap 存储数据，自动回收内存
+ * 3. 支持属性枚举（如 Object.keys(window.volantis)）
+ * 4. 支持删除属性（delete window.volantis.xxx）
+ */
+(function initializeVolantis() {
+  // 1. 初始化 WeakMap 存储实际数据（键：volantisProxy 实例，值：属性键值对）
+  const volantisDataStore = new WeakMap();
+
+  // 2. 创建 Proxy 代理处理属性访问
+  const volantisProxy = new Proxy({}, {
+    /**
+     * 拦截属性读取（如 window.volantis.dom）
+     * @param {Object} target - 代理目标对象（仅作为占位符，不存储数据）
+     * @param {string} prop - 访问的属性名
+     * @returns {any} 属性值或 undefined
+     */
+    get(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      return data?.[prop]; // 使用可选链避免数据未初始化时的错误
+    },
+
+    /**
+     * 拦截属性赋值（如 window.volantis.dom = "a"）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 赋值的属性名
+     * @param {any} value - 赋值的属性值
+     * @returns {boolean} 赋值是否成功
+     */
+    set(target, prop, value) {
+      // 初始化数据容器（若不存在）
+      if (!volantisDataStore.has(volantisProxy)) {
+        volantisDataStore.set(volantisProxy, Object.create(null)); // 使用无原型对象避免原型污染
+      }
+      // 存储属性值
+      const data = volantisDataStore.get(volantisProxy);
+      data[prop] = value;
+      return true; // 符合 Proxy 规范，返回成功标志
+    },
+
+    /**
+     * 拦截属性删除（如 delete window.volantis.dom）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 要删除的属性名
+     * @returns {boolean} 删除是否成功
+     */
+    deleteProperty(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, prop)) {
+        return false; // 属性不存在，删除失败
+      }
+      delete data[prop];
+      // 若数据为空，清理 WeakMap 条目（优化内存回收）
+      if (Object.keys(data).length === 0) {
+        volantisDataStore.delete(volantisProxy);
+      }
+      return true;
+    },
+
+    /**
+     * 拦截属性枚举（如 Object.keys(window.volantis)）
+     * @param {Object} target - 代理目标对象
+     * @returns {string[]} 可枚举的属性名数组
+     */
+    ownKeys(target) {
+      const data = volantisDataStore.get(volantisProxy);
+      return data ? Object.keys(data) : [];
+    },
+
+    /**
+     * 拦截属性描述符查询（如 Object.getOwnPropertyDescriptor）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 属性名
+     * @returns {PropertyDescriptor|undefined} 属性描述符
+     */
+    getOwnPropertyDescriptor(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, prop)) {
+        return undefined;
+      }
+      return {
+        value: data[prop],
+        writable: true,
+        enumerable: true,
+        configurable: true
+      };
+    }
+  });
+
+  // 3. 挂载到 window 对象，暴露全局访问入口
+  Object.defineProperty(window, 'volantis', {
+    value: volantisProxy,
+    writable: true, // 允许后续手动设置为 null 触发清理
+    configurable: true,
+    enumerable: true
+  });
+
+})();
+  volantis.debug = "env"; // 调试模式
+  volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
+  /******************** volantis.EventListener ********************************/
+  // 事件监听器 see: /source/js/app.js
+  volantis.EventListener = {}
+  // 这里存放pjax切换页面时将被移除的事件监听器
+  volantis.EventListener.list = []
+  //构造方法
+  function volantisEventListener(type, f, ele) {
+    this.type = type
+    this.f = f
+    this.ele = ele
+  }
+  // 移除事件监听器
+  volantis.EventListener.remove = () => {
+    volantis.EventListener.list.forEach(function (i) {
+      i.ele.removeEventListener(i.type, i.f, false)
+    })
+    volantis.EventListener.list = [];
+  }
+  /******************** volantis.dom.$ ********************************/
+  // 注：这里没有选择器，也没有forEach一次只处理一个dom，这里重新封装主题常用的dom方法，返回的是dom对象，对象包含了以下方法，同时保留dom的原生API
+  function volantisDom(ele) {
+    if (!ele) ele = document.createElement("div")
+    this.ele = ele;
+    // ==============================================================
+    this.ele.find = (c) => {
+      let q = this.ele.querySelector(c)
+      if (q)
+        return new volantisDom(q)
+    }
+    // ==============================================================
+    this.ele.hasClass = (c) => {
+      return this.ele.className.match(new RegExp('(\\s|^)' + c + '(\\s|$)'));
+    }
+    this.ele.addClass = (c) => {
+      this.ele.classList.add(c);
+      return this.ele
+    }
+    this.ele.removeClass = (c) => {
+      this.ele.classList.remove(c);
+      return this.ele
+    }
+    this.ele.toggleClass = (c) => {
+      if (this.ele.hasClass(c)) {
+        this.ele.removeClass(c)
+      } else {
+        this.ele.addClass(c)
+      }
+      return this.ele
+    }
+    // ==============================================================
+    // 参数 r 为 true 表示pjax切换页面时事件监听器将被移除，false不移除
+    this.ele.on = (c, f, r = 1) => {
+      this.ele.addEventListener(c, f, false)
+      if (r) {
+        volantis.EventListener.list.push(new volantisEventListener(c, f, this.ele))
+      }
+      return this.ele
+    }
+    this.ele.click = (f, r) => {
+      this.ele.on("click", f, r)
+      return this.ele
+    }
+    this.ele.scroll = (f, r) => {
+      this.ele.on("scroll", f, r)
+      return this.ele
+    }
+    // ==============================================================
+    this.ele.html = (c) => {
+      // if(c=== undefined){
+      //   return this.ele.innerHTML
+      // }else{
+      this.ele.innerHTML = c
+      return this.ele
+      // }
+    }
+    // ==============================================================
+    this.ele.hide = (c) => {
+      this.ele.style.display = "none"
+      return this.ele
+    }
+    this.ele.show = (c) => {
+      this.ele.style.display = "block"
+      return this.ele
+    }
+    // ==============================================================
+    return this.ele
+  }
+  volantis.dom.$ = (ele) => {
+    return !!ele ? new volantisDom(ele) : null;
+  }
+  /******************** RunItem ********************************/
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = () => {
+          volantis.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) => {
+      for (let index = 0; index < this.list.length; index++) {
+        const e = this.list[index];
+        if (e.name == name) {
+          this.list.splice(index, 1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }
+  }
+  /******************** Pjax ********************************/
+  // /layout/_plugins/pjax/index.ejs
+  // volantis.pjax.send(callBack[,"callBackName"]) 传入pjax:send回调函数
+  // volantis.pjax.push(callBack[,"callBackName"]) 传入pjax:complete回调函数
+  // volantis.pjax.error(callBack[,"callBackName"]) 传入pjax:error回调函数
+  volantis.pjax = {};
+  volantis.pjax.method = {
+    complete: new RunItem(),
+    error: new RunItem(),
+    send: new RunItem(),
+  };
+  volantis.pjax = Object.assign(volantis.pjax, {
+    push: volantis.pjax.method.complete.push,
+    error: volantis.pjax.method.error.push,
+    send: volantis.pjax.method.send.push,
+  });
+  /******************** RightMenu ********************************/
+  // volantis.rightmenu.handle(callBack[,"callBackName"]) 外部菜单项控制
+  // 可在 volantis.mouseEvent 处获取右键事件
+  volantis.rightmenu = {};
+  volantis.rightmenu.method = {
+    handle: new RunItem(),
+  }
+  volantis.rightmenu = Object.assign(volantis.rightmenu, {
+    handle: volantis.rightmenu.method.handle.push,
+  });
+  /********************  Dark Mode  ********************************/
+  // /layout/_partial/scripts/darkmode.ejs
+  // volantis.dark.mode 当前模式 dark or light
+  // volantis.dark.toggle() 暗黑模式触发器
+  // volantis.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  volantis.dark = {};
+  volantis.dark.method = {
+    toggle: new RunItem(),
+  };
+  volantis.dark = Object.assign(volantis.dark, {
+    push: volantis.dark.method.toggle.push,
+  });
+  /********************  Message  ********************************/
+  // VolantisApp.message
+  /********************  isMobile  ********************************/
+  // /source/js/app.js
+  // volantis.isMobile
+  // volantis.isMobileOld
+  /********************脚本动态加载函数********************************/
+  // volantis.js(src, cb)  cb 可以传入onload回调函数 或者 JSON对象 例如: volantis.js("src", ()=>{}) 或 volantis.js("src", {defer:true,onload:()=>{}})
+  // volantis.css(src)
+
+  // 返回Promise对象，如下方法同步加载资源，这利于处理文件资源之间的依赖关系，例如：APlayer 需要在 MetingJS 之前加载
+  // (async () => {
+  //     await volantis.js("...theme.plugins.aplayer.js.aplayer...")
+  //     await volantis.js("...theme.plugins.aplayer.js.meting...")
+  // })();
+
+  // 已经加入了setTimeout
+  volantis.js = (src, cb) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var HEAD = document.getElementsByTagName("head")[0] || document.documentElement;
+        var script = document.createElement("script");
+        script.setAttribute("type", "text/javascript");
+        if (cb) {
+          if (JSON.stringify(cb)) {
+            for (let p in cb) {
+              if (p == "onload") {
+                script[p] = () => {
+                  cb[p]()
+                  resolve()
+                }
+              } else {
+                script[p] = cb[p]
+                script.onload = resolve
+              }
+            }
+          } else {
+            script.onload = () => {
+              cb()
+              resolve()
+            };
+          }
+        } else {
+          script.onload = resolve
+        }
+        script.setAttribute("src", src);
+        HEAD.appendChild(script);
+      });
+    });
+  }
+  volantis.css = (src) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var link = document.createElement('link');
+        link.rel = "stylesheet";
+        link.href = src;
+        link.onload = resolve;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      });
+    });
+  }
+  /********************按需加载的插件********************************/
+  // volantis.import.jQuery().then(()=>{})
+  volantis.import = {
+    jQuery: () => {
+      if (typeof jQuery == "undefined") {
+        return volantis.js("https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js")
+      } else {
+        return new Promise(resolve => {
+          resolve()
+        });
+      }
+    }
+  }
+  /********************** requestAnimationFrame ********************************/
+  // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+  // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+  volantis.requestAnimationFrame = (fn) => {
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+    }
+    window.requestAnimationFrame(fn)
+  }
+  /************************ layoutHelper *****************************************/
+  volantis.layoutHelper = (helper, html, opt) => {
+    opt = Object.assign({ clean: false, pjax: true }, opt)
+    function myhelper(helper, html, clean) {
+      volantis.tempDiv = document.createElement("div");
+      volantis.tempDiv.innerHTML = html;
+      let layoutHelper = document.querySelector("#layoutHelper-" + helper)
+      if (layoutHelper) {
+        if (clean) {
+          layoutHelper.innerHTML = ""
+        }
+        layoutHelper.append(volantis.tempDiv);
+      }
+    }
+    myhelper(helper, html, opt.clean)
+    if (opt.pjax) {
+      volantis.pjax.push(() => {
+        myhelper(helper, html, opt.clean)
+      }, "layoutHelper-" + helper)
+    }
+  }
+  /****************************** 滚动事件处理 ****************************************/
+  volantis.scroll = {
+    engine: new RunItem(),
+    unengine: new RunItem(),
+  };
+  volantis.scroll = Object.assign(volantis.scroll, {
+    push: volantis.scroll.engine.push,
+  });
+  // 滚动条距离顶部的距离
+  volantis.scroll.getScrollTop = () => {
+    let scrollPos;
+    if (window.pageYOffset) {
+      scrollPos = window.pageYOffset;
+    } else if (document.compatMode && document.compatMode != 'BackCompat') {
+      scrollPos = document.documentElement.scrollTop;
+    } else if (document.body) {
+      scrollPos = document.body.scrollTop;
+    }
+    return scrollPos;
+  }
+  volantis.scroll.scrollHeight = function () {
+    return Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+    )
+  }
+  volantis.scroll.offsetHeight = function () {
+    return Math.min(
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight,
+      document.body.clientHeight,
+      document.documentElement.clientHeight
+    )
+  }
+  volantis.scroll.progress = function () {
+    return volantis.scroll.getScrollTop() / (volantis.scroll.scrollHeight() - volantis.scroll.offsetHeight())
+  }
+  // 使用 requestAnimationFrame 处理滚动事件
+  // `volantis.scroll.del` 中存储了一个数值, 该数值检测一定时间间隔内滚动条滚动的位移, 数值的检测频率是浏览器的刷新频率. 数值为正数时, 表示向下滚动. 数值为负数时, 表示向上滚动.
+  volantis.scroll.handleScrollEvents = () => {
+    volantis.scroll.lastScrollTop = volantis.scroll.getScrollTop()
+    function loop() {
+      const scrollTop = volantis.scroll.getScrollTop();
+      if (volantis.scroll.lastScrollTop !== scrollTop) {
+        volantis.scroll.del = scrollTop - volantis.scroll.lastScrollTop;
+        volantis.scroll.lastScrollTop = scrollTop;
+        // if (volantis.scroll.del > 0) {
+        //   console.log("向下滚动");
+        // } else {
+        //   console.log("向上滚动");
+        // }
+        // 注销过期的unengine未滚动事件
+        volantis.scroll.unengine.list = []
+        volantis.scroll.engine.start();
+      } else {
+        volantis.scroll.unengine.start();
+      }
+      volantis.requestAnimationFrame(loop)
+    }
+    volantis.requestAnimationFrame(loop)
+  }
+  volantis.scroll.handleScrollEvents()
+  volantis.scroll.ele = null;
+  // 触发页面滚动至目标元素位置
+  volantis.scroll.to = (ele, option = {}) => {
+    if (!ele) return;
+    volantis.scroll.ele = ele;
+    // 默认配置
+    opt = {
+      top: ele.getBoundingClientRect().top + document.documentElement.scrollTop,
+      behavior: "smooth"
+    }
+    // 定义配置
+    if ("top" in option) {
+      opt.top = option.top
+    }
+    if ("behavior" in option) {
+      opt.behavior = option.behavior
+    }
+    if ("addTop" in option) {
+      opt.top += option.addTop
+    }
+    if (!("observerDic" in option)) {
+      option.observerDic = 100
+    }
+    // 滚动
+    window.scrollTo(opt);
+    // 监视器
+    // 监视并矫正元素滚动到指定位置
+    // 用于处理 lazyload 引起的 cls 导致的定位失败问题
+    // option.observer = false
+    if (option.observer) {
+      setTimeout(() => {
+        if (volantis.scroll.ele != ele) {
+          return
+        }
+        volantis.scroll.unengine.push(() => {
+          let me = ele.getBoundingClientRect().top
+          if (!(me >= -option.observerDic && me <= option.observerDic)) {
+            volantis.scroll.to(ele, option)
+          }
+          volantis.scroll.unengine.remove("unengineObserver")
+        }, "unengineObserver")
+      }, 1000)
+    }
+  }
+  /********************** Content Visibility ********************************/
+  // 见 source/css/first.styl 如果遇到任何问题 删除 .post-story 即可
+  // 一个元素被声明 content-visibility 属性后 如果元素不在 viewport 中 浏览器不会计算其后代元素样式和属性 从而节省 Style & Layout 耗时
+  // content-visibility 的副作用: 锚点失效 等等(实验初期 暂不明确), 使用此方法清除样式
+  volantis.cleanContentVisibility = () => {
+    if (document.querySelector(".post-story")) {
+      console.log("cleanContentVisibility");
+      document.querySelectorAll(".post-story").forEach(e => {
+        e.classList.remove("post-story")
+      })
+    }
+  }
+  /******************************************************************************/
+  /******************************************************************************/
+  /******************************************************************************/
+  //图像加载出错时的处理
+  function errorImgAvatar(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg";
+    img.onerror = null;
+  }
+  function errorImgCover(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg";
+    img.onerror = null;
+  }
+  /******************************************************************************/
+</script>
+<script>
+  volantis.GLOBAL_CONFIG ={
+    root: '/',
+    debug: "env",
+    default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
+    lastupdate: new Date(1792685759497),
+    cdn: {
+      izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
+      izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
+      fancybox_css: 'https://cdn.bootcdn.net/ajax/libs/fancyapps-ui/4.0.31/fancybox.min.css',
+      fancybox_js: 'https://cdn.bootcdn.net/ajax/libs/fancyapps-ui/4.0.31/fancybox.umd.min.js'
+    },
+    sidebar: {
+      for_page: ["blogger","category","tagcloud"],
+      for_post: ["toc"],
+      webinfo: {
+        lastupd: {
+          enable: true,
+          friendlyShow: true
+        },
+        runtime: {
+          data: "2020/01/01",
+          unit: "天"
+        }
+      }
+    },
+    plugins: {
+      message: {"enable":true,"icon":{"default":"fa-solid fa-info-circle light-blue","quection":"fa-solid fa-question-circle light-blue"},"time":{"default":5000,"quection":20000},"position":"topRight","transitionIn":"bounceInLeft","transitionOut":"fadeOutRight","titleColor":"var(--color-text)","messageColor":"var(--color-text)","backgroundColor":"var(--color-card)","zindex":2147483647,"copyright":{"enable":true,"title":"知识共享许可协议","message":"请遵守 CC BY-NC-SA 4.0 协议。","icon":"far fa-copyright light-blue"},"aplayer":{"enable":true,"play":"fa-solid fa-play","pause":"fa-solid fa-pause"},"rightmenu":{"enable":true,"notice":true}},
+      
+      
+    },
+    search: {
+      
+
+      
+        dataPath: (("/" || "/").endsWith("/") ? "/" || "/" : "//" || "/") + "content.json",
+      
+
+      
+    },
+    languages: {
+      
+        search: {
+          hits_empty: "找不到您查询的内容：${query}",
+          hits_stats: "找到 ${hits} 条结果，用时 ${time} 毫秒",
+        }
+      
+    }
+  }
+</script>
+
+  
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/SRE/","name":"SRE"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2026/SRE方法论/","name":"SRE方法论"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"SRE方法论","description":"SRE（Site Reliability Engineering，站点可靠性工程）不是把运维换个名字，而是用软件工程的方法解决运维问题，并把「可靠性」变成可以度量、可以交易、可以持续改进的工程目标。\n本文按五个主题展开：SRE 的边界、SLI&#x2F;SLO&#x2F;SLA 与错误预算、Toil 治理、事故响应与 On-call、无指责复盘与故障档案库。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2026/SRE%E6%96%B9%E6%B3%95%E8%AE%BA/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2026/SRE%E6%96%B9%E6%B3%95%E8%AE%BA/","wordCount":180,"datePublished":"2026-10-23T08:00:00.000Z","dateModified":"2026-10-22T16:15:17.299Z","articleSection":"SRE","keywords":"运维,DevOps,SRE,SLO","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  
+  <!-- import head_end begin -->
+  <!-- import head_end end -->
+  <!-- Custom Files headEnd begin-->
+  
+  <!-- Custom Files headEnd end-->
+</head>
+  <body itemscope itemtype="http://schema.org/WebPage">
+    <!-- import body_begin begin-->
+    <!-- import body_begin end-->
+    <!-- Custom Files bodyBegin begin-->
+    
+    <!-- Custom Files bodyBegin end-->
+    <header itemscope itemtype="http://schema.org/WPHeader" id="l_header" class="l_header auto shadow floatable blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fa-solid fa-comments fa-fw" target="_self" title="comment"></a></li>
+        
+          <li><a id="s-toc" class="s-toc fa-solid fa-list fa-fw" target="_self" title="toc"></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+      
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fa-solid fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+      
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fa-solid fa-search fa-fw" target="_self" title="search"></a></li>
+				
+				<li>
+          <a class="s-menu fa-solid fa-bars fa-fw" target="_self" title="menu"></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+
+      <!-- Custom Files header begin -->
+      
+      <!-- Custom Files header end -->
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+      <!-- see: /layout/_partial/scripts/_ctrl.ejs -->
+      <div id="none" class='cover-wrapper post dock' style="display: none;">
+        
+  <div class='cover-bg lazyload placeholder' data-bg="https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg"></div>
+
+<div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              active-action="action-v4getting-started">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              active-action="action-faqs">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              active-action="action-examples">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              active-action="action-contributors">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              active-action="action-archives">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              active-action="action-https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+      </div>
+    
+  
+</div>
+
+      <div id="safearea">
+        <div class="body-wrapper">
+          
+<div id="l_main" class=''>
+  <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow floatable blur article-type-post" id="post" itemscope itemprop="blogPost">
+  <link itemprop="mainEntityOfPage" href="https://tianyigu.top/2026/SRE方法论/">
+  <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+  </span>
+  <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+    <meta itemprop="name" content="SRE方法论">
+    <meta itemprop="description" content="Tianyi的技术随笔">
+  </span>
+  
+
+
+  
+    <span hidden>
+      <meta itemprop="image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+    </span>
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title" itemprop="name headline">
+        SRE方法论
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  
+  
+  
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/SRE/">SRE</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/SRE/" itemprop="url"><span itemprop="name">SRE</span></a>
+      </span>
+    
+  </div>
+  
+
+
+
+          
+        
+          
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2026-10-23T17:00:00+09:00">
+  <a class='notlink'>
+    <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2026年10月23日</p>
+  </a>
+</div>
+
+          
+        
+        <!-- Custom Files topMeta begin-->
+        
+        <!-- Custom Files topMeta end-->
+      </div>
+    
+  </div>
+
+
+  <div id="layoutHelper-page-plugins"></div>
+  <div id="post-body" itemprop="articleBody">
+    <p>SRE（Site Reliability Engineering，站点可靠性工程）不是把运维换个名字，而是用软件工程的方法解决运维问题，并把「可靠性」变成可以度量、可以交易、可以持续改进的工程目标。</p>
+<p>本文按五个主题展开：SRE 的边界、SLI&#x2F;SLO&#x2F;SLA 与错误预算、Toil 治理、事故响应与 On-call、无指责复盘与故障档案库。</p>
+<span id="more"></span>
+
+<ul>
+<li><a href="#%E4%BB%80%E4%B9%88%E6%98%AF-SRE%EF%BC%9A%E4%B8%8E-DevOps%E3%80%81%E4%BC%A0%E7%BB%9F%E8%BF%90%E7%BB%B4%E7%9A%84%E8%BE%B9%E7%95%8C">什么是 SRE：与 DevOps、传统运维的边界</a></li>
+<li><a href="#SLI-x2F-SLO-x2F-SLA-%E4%B8%8E%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97">SLI &#x2F; SLO &#x2F; SLA 与错误预算</a></li>
+<li><a href="#Toil-%E8%AF%86%E5%88%AB%E4%B8%8E%E6%B6%88%E9%99%A4">Toil 识别与消除</a></li>
+<li><a href="#%E4%BA%8B%E6%95%85%E5%93%8D%E5%BA%94%E6%B5%81%E7%A8%8B%E4%B8%8E-On-call-%E5%80%BC%E7%8F%AD">事故响应流程与 On-call 值班</a></li>
+<li><a href="#%E6%97%A0%E6%8C%87%E8%B4%A3%E5%A4%8D%E7%9B%98%E4%B8%8E%E6%95%85%E9%9A%9C%E6%A1%A3%E6%A1%88%E5%BA%93">无指责复盘与故障档案库</a></li>
+<li><a href="#%E5%BF%AB%E9%80%9F%E8%90%BD%E5%9C%B0%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95">快速落地检查清单</a></li>
+</ul>
+<h1 id="什么是-SRE：与-DevOps、传统运维的边界"><a href="#什么是-SRE：与-DevOps、传统运维的边界" class="headerlink" title="什么是 SRE：与 DevOps、传统运维的边界"></a>什么是 SRE：与 DevOps、传统运维的边界</h1><h2 id="一句话定义"><a href="#一句话定义" class="headerlink" title="一句话定义"></a>一句话定义</h2><p>Google 对 SRE 的经典定义是：</p>
+<blockquote>
+<p>SRE is what happens when you ask a software engineer to design an operations team.</p>
+</blockquote>
+<p>也就是：<strong>让软件工程师来设计并运行运维体系</strong>。SRE 把运维问题当成软件问题来处理，用代码、自动化、度量和工程决策替代长期的人肉操作。</p>
+<p>SRE 的核心不是「更辛苦地值班」，而是：</p>
+<ul>
+<li>用 <strong>SLI&#x2F;SLO</strong> 定义什么叫「可靠」。</li>
+<li>用 <strong>错误预算</strong> 在「发布速度」和「稳定性」之间做理性取舍。</li>
+<li>用 <strong>Toil 治理</strong> 把重复劳动转化为自动化。</li>
+<li>用 <strong>事故响应和复盘</strong> 把故障转化为组织能力。</li>
+<li>用 <strong>容量规划、变更管理、可观测性</strong> 提前降低风险。</li>
+</ul>
+<h2 id="SRE-关注什么"><a href="#SRE-关注什么" class="headerlink" title="SRE 关注什么"></a>SRE 关注什么</h2><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>SRE 的关注点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>服务目标</td>
+<td>用户感知的可用性、延迟、正确性、新鲜度</td>
+</tr>
+<tr>
+<td>度量</td>
+<td>SLI、SLO、错误预算、燃尽率</td>
+</tr>
+<tr>
+<td>工程</td>
+<td>自动化、平台化、自愈、容量规划</td>
+</tr>
+<tr>
+<td>变更</td>
+<td>灰度、回滚、发布工程、变更风险控制</td>
+</tr>
+<tr>
+<td>事故</td>
+<td>检测、响应、缓解、沟通、复盘</td>
+</tr>
+<tr>
+<td>组织</td>
+<td>On-call 可持续、无指责文化、职责边界</td>
+</tr>
+<tr>
+<td>成本</td>
+<td>可靠性投入与业务收益的平衡</td>
+</tr>
+</tbody></table>
+<h2 id="与传统运维的边界"><a href="#与传统运维的边界" class="headerlink" title="与传统运维的边界"></a>与传统运维的边界</h2><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>传统运维</th>
+<th>SRE</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>核心对象</td>
+<td>机器、网络、中间件、工单</td>
+<td>服务、用户旅程、SLO</td>
+</tr>
+<tr>
+<td>工作方式</td>
+<td>手工操作、经验驱动</td>
+<td>软件工程、自动化、数据驱动</td>
+</tr>
+<tr>
+<td>变更态度</td>
+<td>尽量不变更，变更即风险</td>
+<td>用错误预算管理变更风险</td>
+</tr>
+<tr>
+<td>可靠性目标</td>
+<td>追求「不出故障」</td>
+<td>明确可接受的故障水平</td>
+</tr>
+<tr>
+<td>故障处理</td>
+<td>救火、英雄主义</td>
+<td>流程化响应、复盘、系统性改进</td>
+</tr>
+<tr>
+<td>成功标准</td>
+<td>系统没挂、工单关闭</td>
+<td>SLO 达成、Toil 下降、MTTR 改善</td>
+</tr>
+<tr>
+<td>组织关系</td>
+<td>运维是独立的下游</td>
+<td>与研发共担服务可靠性</td>
+</tr>
+<tr>
+<td>知识沉淀</td>
+<td>个人经验、口口相传</td>
+<td>运行手册、故障档案、自动化</td>
+</tr>
+</tbody></table>
+<p>传统运维并非「落后」，它在稳定、可控、强审计的环境中仍然有价值。SRE 的改变在于：<strong>把可靠性从「感觉」变成「指标」，把运维从「人力」变成「工程」。</strong></p>
+<h2 id="与-DevOps-的边界"><a href="#与-DevOps-的边界" class="headerlink" title="与 DevOps 的边界"></a>与 DevOps 的边界</h2><p>DevOps 是一场文化和组织运动，强调开发与运维协作、持续交付、自动化和反馈闭环。SRE 是 DevOps 原则的一种具体实现方式。</p>
+<p>可以这样理解：</p>
+<ul>
+<li><strong>DevOps 是理念</strong>：打破开发与运维的墙，谁构建谁运行，快速反馈，持续改进。</li>
+<li><strong>SRE 是实践</strong>：用 SLO、错误预算、Toil 预算、On-call、无指责复盘等具体机制落地这些理念。</li>
+<li>Google 的说法是：<strong>class SRE implements DevOps</strong>。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>DevOps</th>
+<th>SRE</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>性质</td>
+<td>文化、组织、实践集合</td>
+<td>工程角色与方法体系</td>
+</tr>
+<tr>
+<td>关注点</td>
+<td>交付速度、协作、自动化</td>
+<td>可靠性目标、错误预算、运维工程</td>
+</tr>
+<tr>
+<td>度量</td>
+<td>部署频率、变更前置时间、变更失败率、MTTR</td>
+<td>SLI&#x2F;SLO、错误预算、Toil 比例、燃尽率</td>
+</tr>
+<tr>
+<td>典型机制</td>
+<td>CI&#x2F;CD、基础设施即代码、监控反馈</td>
+<td>SLO 评审、On-call、复盘、容量规划</td>
+</tr>
+<tr>
+<td>关系</td>
+<td>更宽泛</td>
+<td>更具体、更可操作</td>
+</tr>
+</tbody></table>
+<p>两者不是二选一。一个组织可以实践 DevOps 但没有 SRE 团队；也可以有 SRE 团队但 DevOps 文化不成熟。最理想的状态是：<strong>DevOps 提供文化和交付基础，SRE 提供可靠性治理机制。</strong></p>
+<h2 id="SRE-不是什么"><a href="#SRE-不是什么" class="headerlink" title="SRE 不是什么"></a>SRE 不是什么</h2><ul>
+<li><strong>不是「运维团队改名」</strong>：如果工作内容还是手工工单、重启服务、盯监控，那只是换了名片。</li>
+<li><strong>不是追求 100% 可用性</strong>：100% 既做不到，也不经济；SRE 追求「在成本约束下满足业务目标的可靠性」。</li>
+<li><strong>不是只负责 Kubernetes</strong>：容器编排只是基础设施之一，SRE 关注的是端到端服务可靠性。</li>
+<li><strong>不是消防队</strong>：长期救火说明系统设计和流程有问题，SRE 要把救火变成工程改进。</li>
+<li><strong>不是研发的「背锅侠」</strong>：可靠性是研发、运维、产品、业务共同的责任。</li>
+<li><strong>不是所有团队都必须一样</strong>：SRE 的落地形态取决于组织规模、业务阶段和风险承受能力。</li>
+</ul>
+<h2 id="SRE-的组织形态"><a href="#SRE-的组织形态" class="headerlink" title="SRE 的组织形态"></a>SRE 的组织形态</h2><table>
+<thead>
+<tr>
+<th>形态</th>
+<th>特点</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>嵌入式 SRE</td>
+<td>SRE 嵌入业务团队，直接负责服务可靠性</td>
+<td>业务复杂、服务多</td>
+</tr>
+<tr>
+<td>集中式 SRE</td>
+<td>统一 SRE 团队服务多个业务</td>
+<td>中小规模、平台化初期</td>
+</tr>
+<tr>
+<td>赋能型 SRE</td>
+<td>提供工具、规范、咨询，业务团队自运维</td>
+<td>研发能力强、追求规模化</td>
+</tr>
+<tr>
+<td>平台 SRE</td>
+<td>建设内部平台，把可靠性能力产品化</td>
+<td>云原生、多租户平台</td>
+</tr>
+</tbody></table>
+<p>无论哪种形态，都要避免两个极端：</p>
+<ul>
+<li>SRE 变成「高级运维」，只接工单不写代码。</li>
+<li>SRE 变成「纯咨询」，没有权限、没有责任、没有落地能力。</li>
+</ul>
+<h2 id="SRE-成熟度参考模型"><a href="#SRE-成熟度参考模型" class="headerlink" title="SRE 成熟度参考模型"></a>SRE 成熟度参考模型</h2><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>特征</th>
+<th>重点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>L0 救火型</td>
+<td>无 SLO、告警噪音大、手工操作</td>
+<td>建立监控、值班、复盘模板</td>
+</tr>
+<tr>
+<td>L1 可观测</td>
+<td>有核心指标、有基础告警、有 runbook</td>
+<td>定义 SLI&#x2F;SLO、降低告警噪音</td>
+</tr>
+<tr>
+<td>L2 目标驱动</td>
+<td>SLO 进入决策、错误预算有政策</td>
+<td>错误预算、变更治理、Toil 统计</td>
+</tr>
+<tr>
+<td>L3 工程化</td>
+<td>自动化、平台化、自愈</td>
+<td>Toil 消除、容量规划、混沌演练</td>
+</tr>
+<tr>
+<td>L4 持续优化</td>
+<td>数据驱动、组织级可靠性文化</td>
+<td>成本&#x2F;可靠性优化、跨团队治理</td>
+</tr>
+</tbody></table>
+<h2 id="SRE-的十条工作原则"><a href="#SRE-的十条工作原则" class="headerlink" title="SRE 的十条工作原则"></a>SRE 的十条工作原则</h2><ol>
+<li><strong>可靠性是功能</strong>：像做产品一样做可靠性，有目标、有优先级、有投入。</li>
+<li><strong>用 SLO 说话</strong>：没有度量就没有改进，没有目标就没有取舍。</li>
+<li><strong>错误预算是决策工具</strong>：不是惩罚工具，而是发布与稳定之间的调节器。</li>
+<li><strong>自动化优先</strong>：能自动化的重复劳动，不要长期占用人。</li>
+<li><strong>减少 Toil</strong>：Toil 超过一定比例，SRE 就没有时间做工程。</li>
+<li><strong>变更可控</strong>：灰度、回滚、特性开关、发布检查清单。</li>
+<li><strong>故障是学习机会</strong>：无指责复盘，关注系统和流程，而不是找替罪羊。</li>
+<li><strong>可观测性先行</strong>：指标、日志、追踪、事件、部署标记要能关联。</li>
+<li><strong>容量与成本并重</strong>：可靠性不是无限堆资源，要考虑单位成本。</li>
+<li><strong>可持续 On-call</strong>：值班不能靠英雄主义，要靠流程、工具和轮换。</li>
+</ol>
+<h2 id="SRE-落地路线图"><a href="#SRE-落地路线图" class="headerlink" title="SRE 落地路线图"></a>SRE 落地路线图</h2><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>时间</th>
+<th>关键动作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>起步</td>
+<td>0-3 个月</td>
+<td>选 1-2 个核心服务，定义 SLI&#x2F;SLO；建立 On-call 和事故流程；统一复盘模板</td>
+</tr>
+<tr>
+<td>规范</td>
+<td>3-6 个月</td>
+<td>错误预算政策；Toil 盘点；告警治理；runbook 覆盖核心故障</td>
+</tr>
+<tr>
+<td>工程化</td>
+<td>6-12 个月</td>
+<td>自动化高频操作；建设可观测性平台；容量规划；游戏日</td>
+</tr>
+<tr>
+<td>规模化</td>
+<td>12 个月以上</td>
+<td>多服务 SLO 体系；平台化；跨团队可靠性评审；成本优化</td>
+</tr>
+</tbody></table>
+<h1 id="SLI-x2F-SLO-x2F-SLA-与错误预算"><a href="#SLI-x2F-SLO-x2F-SLA-与错误预算" class="headerlink" title="SLI &#x2F; SLO &#x2F; SLA 与错误预算"></a>SLI &#x2F; SLO &#x2F; SLA 与错误预算</h1><h2 id="三个概念的关系"><a href="#三个概念的关系" class="headerlink" title="三个概念的关系"></a>三个概念的关系</h2><table>
+<thead>
+<tr>
+<th>概念</th>
+<th>全称</th>
+<th>回答的问题</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SLI</td>
+<td>Service Level Indicator</td>
+<td>现在服务表现如何？</td>
+<td>过去 5 分钟 5xx 比例 0.02%</td>
+</tr>
+<tr>
+<td>SLO</td>
+<td>Service Level Objective</td>
+<td>我们希望达到什么水平？</td>
+<td>28 天内 99.9% 的请求成功</td>
+</tr>
+<tr>
+<td>SLA</td>
+<td>Service Level Agreement</td>
+<td>对外承诺什么，违约怎么办？</td>
+<td>月度可用性低于 99.9% 赔付 10%</td>
+</tr>
+</tbody></table>
+<p>关系可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">SLI 是测量值</span><br><span class="line">SLO 是内部目标</span><br><span class="line">SLA 是对外合同</span><br><span class="line">错误预算 = 1 - SLO</span><br></pre></td></tr></table></figure>
+
+<p>关键原则：</p>
+<ul>
+<li><strong>SLO 通常比 SLA 更严格</strong>，这样在触达合同红线前，内部已经有预警和缓冲。</li>
+<li><strong>SLA 是法律&#x2F;商务承诺</strong>，不是越严越好；要结合架构、依赖和成本。</li>
+<li><strong>SLI 必须是用户视角的</strong>，不能只看服务器 CPU 这种「自我感觉良好」的指标。</li>
+</ul>
+<h2 id="什么是好的-SLI"><a href="#什么是好的-SLI" class="headerlink" title="什么是好的 SLI"></a>什么是好的 SLI</h2><p>好的 SLI 应满足：</p>
+<ul>
+<li><strong>用户可感知</strong>：反映用户真正关心的成功、延迟、正确性。</li>
+<li><strong>可测量</strong>：有稳定的数据源，采样和聚合方式明确。</li>
+<li><strong>可行动</strong>：指标恶化时，团队知道如何排查和改进。</li>
+<li><strong>成比例</strong>：指标变化与用户体验变化大致对应。</li>
+<li><strong>定义清晰</strong>：明确分母、分子、时间窗口、排除项。</li>
+</ul>
+<p>一个完整的 SLI 定义至少包含：</p>
+<table>
+<thead>
+<tr>
+<th>要素</th>
+<th>说明</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户旅程</td>
+<td>哪个关键路径</td>
+<td>下单 API</td>
+</tr>
+<tr>
+<td>测量点</td>
+<td>在哪里采集</td>
+<td>负载均衡访问日志</td>
+</tr>
+<tr>
+<td>有效事件</td>
+<td>哪些请求算分母</td>
+<td>非健康检查、非爬虫</td>
+</tr>
+<tr>
+<td>好事件</td>
+<td>哪些算成功</td>
+<td>HTTP 2xx&#x2F;3xx 且延迟 &lt; 300ms</td>
+</tr>
+<tr>
+<td>聚合方式</td>
+<td>比例、分位数、计数</td>
+<td>比例</td>
+</tr>
+<tr>
+<td>时间窗口</td>
+<td>滚动窗口或自然月</td>
+<td>28 天滚动</td>
+</tr>
+</tbody></table>
+<h2 id="常见-SLI-类型"><a href="#常见-SLI-类型" class="headerlink" title="常见 SLI 类型"></a>常见 SLI 类型</h2><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>定义</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>可用性</td>
+<td>好请求 &#x2F; 有效请求</td>
+<td>HTTP API、RPC</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>低于阈值的请求比例，或 p95&#x2F;p99</td>
+<td>在线服务</td>
+</tr>
+<tr>
+<td>错误率</td>
+<td>错误请求 &#x2F; 总请求</td>
+<td>API、消息处理</td>
+</tr>
+<tr>
+<td>吞吐量</td>
+<td>单位时间成功处理量</td>
+<td>队列、批处理</td>
+</tr>
+<tr>
+<td>新鲜度</td>
+<td>数据最新时间与当前时间差</td>
+<td>数仓、缓存、搜索索引</td>
+</tr>
+<tr>
+<td>正确性</td>
+<td>正确结果 &#x2F; 总结果</td>
+<td>计费、推荐、搜索</td>
+</tr>
+<tr>
+<td>持久性</td>
+<td>未丢失数据 &#x2F; 总数据</td>
+<td>存储系统</td>
+</tr>
+<tr>
+<td>饱和度</td>
+<td>资源使用率</td>
+<td>容量规划辅助，不宜单独做 SLO</td>
+</tr>
+</tbody></table>
+<p>注意：</p>
+<ul>
+<li><strong>不要用平均值做延迟 SLO</strong>，平均值会掩盖长尾。</li>
+<li><strong>不要只看服务端</strong>，客户端感知的延迟可能包含网络、DNS、CDN。</li>
+<li><strong>不要把 4xx 一律算失败</strong>，要区分客户端错误和服务端错误；但某些 4xx 也可能是业务缺陷。</li>
+<li><strong>不要忽略采样偏差</strong>，日志采样、指标聚合都可能让 SLI 失真。</li>
+</ul>
+<h2 id="SLI-示例"><a href="#SLI-示例" class="headerlink" title="SLI 示例"></a>SLI 示例</h2><h3 id="HTTP-API"><a href="#HTTP-API" class="headerlink" title="HTTP API"></a>HTTP API</h3><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">可用性 SLI = 非 5xx 请求数 / 有效请求数</span><br><span class="line">延迟 SLI = 延迟 &lt;= 300ms 的请求数 / 有效请求数</span><br></pre></td></tr></table></figure>
+
+<p>有效请求可以排除：</p>
+<ul>
+<li>健康检查</li>
+<li>监控探针</li>
+<li>已知爬虫（需谨慎）</li>
+<li>客户端主动取消（需单独分析）</li>
+</ul>
+<h3 id="批处理任务"><a href="#批处理任务" class="headerlink" title="批处理任务"></a>批处理任务</h3><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">新鲜度 SLI = 数据产出时间 &lt;= 承诺时间的批次 / 总批次</span><br><span class="line">完成率 SLI = 成功完成的批次 / 应完成批次</span><br><span class="line">正确性 SLI = 校验通过的记录数 / 总记录数</span><br></pre></td></tr></table></figure>
+
+<h3 id="存储系统"><a href="#存储系统" class="headerlink" title="存储系统"></a>存储系统</h3><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">可用性 SLI = 成功读写请求 / 有效读写请求</span><br><span class="line">持久性 SLI = 1 - 丢失对象数 / 总对象数</span><br><span class="line">延迟 SLI = 读写延迟 &lt;= 阈值的请求比例</span><br></pre></td></tr></table></figure>
+
+<h2 id="SLO-怎么定"><a href="#SLO-怎么定" class="headerlink" title="SLO 怎么定"></a>SLO 怎么定</h2><p>定 SLO 的基本步骤：</p>
+<ol>
+<li><strong>选关键用户旅程</strong>：不要一开始给所有服务定 SLO。</li>
+<li><strong>定义 SLI 公式</strong>：分子、分母、窗口、排除项写清楚。</li>
+<li><strong>测量基线</strong>：先观察 4-8 周真实表现。</li>
+<li><strong>设定目标</strong>：从略低于当前水平开始，逐步收紧。</li>
+<li><strong>定义错误预算政策</strong>：预算消耗后怎么办。</li>
+<li><strong>配置燃尽率告警</strong>：不要只配静态阈值。</li>
+<li><strong>定期评审</strong>：业务变化、架构变化、依赖变化都要重评。</li>
+</ol>
+<p>SLO 目标不是越高越好：</p>
+<ul>
+<li>99.9% 与 99.99% 的成本可能差一个数量级。</li>
+<li>目标过高会导致过度保守、发布停滞、团队疲惫。</li>
+<li>目标过低会失去用户信任和内部约束力。</li>
+</ul>
+<h3 id="SLO-的计量口径"><a href="#SLO-的计量口径" class="headerlink" title="SLO 的计量口径"></a>SLO 的计量口径</h3><table>
+<thead>
+<tr>
+<th>口径</th>
+<th>定义</th>
+<th>适用</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>请求型</td>
+<td>好请求 &#x2F; 有效请求</td>
+<td>API、RPC</td>
+<td>明确 4xx&#x2F;5xx、健康检查、取消请求的归属</td>
+</tr>
+<tr>
+<td>时间型</td>
+<td>可用时间 &#x2F; 总时间</td>
+<td>基础设施、批处理</td>
+<td>需要定义「不可用」的判定粒度和部分故障</td>
+</tr>
+<tr>
+<td>事件型</td>
+<td>好事件 &#x2F; 总事件</td>
+<td>队列、任务、数据管道</td>
+<td>事件定义要稳定，避免口径漂移</td>
+</tr>
+</tbody></table>
+<p>实践建议：</p>
+<ul>
+<li>同一服务不要混用多种口径，否则预算无法解释。</li>
+<li>延迟 SLO 用「低于阈值的请求比例」或分位数，不要用平均延迟。</li>
+<li>客户端测量更贴近用户体验，但受网络和端侧影响；服务端测量更稳定，但可能漏掉边缘问题。关键服务最好两者都有。</li>
+<li>指标缺失、采集失败要单独处理，不能当成「没有错误」。</li>
+</ul>
+<h3 id="依赖链与-SLO"><a href="#依赖链与-SLO" class="headerlink" title="依赖链与 SLO"></a>依赖链与 SLO</h3><ul>
+<li><strong>端到端 SLO</strong> 面向用户旅程，<strong>组件 SLO</strong> 面向内部服务，两者不能互相替代。</li>
+<li>不要简单把依赖 SLO 相乘当作端到端 SLO；冗余、重试、降级、缓存都会改变实际影响。</li>
+<li>关键依赖要有自己的 SLO，并纳入容量规划和故障演练。</li>
+<li>依赖故障时，要明确降级策略和用户可见影响。</li>
+<li>错误预算按用户旅程聚合，避免「每个组件都达标，但端到端体验很差」。</li>
+</ul>
+<h2 id="错误预算"><a href="#错误预算" class="headerlink" title="错误预算"></a>错误预算</h2><p>错误预算 &#x3D; 1 - SLO。</p>
+<p>例如 SLO 99.9%，错误预算就是 0.1%。</p>
+<table>
+<thead>
+<tr>
+<th>SLO</th>
+<th>30 天错误预算</th>
+<th>28 天错误预算</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>99%</td>
+<td>7 小时 12 分</td>
+<td>6 小时 43 分</td>
+</tr>
+<tr>
+<td>99.5%</td>
+<td>3 小时 36 分</td>
+<td>3 小时 21 分</td>
+</tr>
+<tr>
+<td>99.9%</td>
+<td>43 分 12 秒</td>
+<td>40 分 19 秒</td>
+</tr>
+<tr>
+<td>99.95%</td>
+<td>21 分 36 秒</td>
+<td>20 分 10 秒</td>
+</tr>
+<tr>
+<td>99.99%</td>
+<td>4 分 19 秒</td>
+<td>4 分 2 秒</td>
+</tr>
+</tbody></table>
+<p>错误预算的意义：</p>
+<ul>
+<li>它不是「允许故障」的借口，而是「用多大代价换多少速度」的量化工具。</li>
+<li>预算充足时，可以加快发布、做实验、承担可控风险。</li>
+<li>预算耗尽时，应冻结高风险变更，优先修复可靠性，直到预算恢复或有明确例外。</li>
+</ul>
+<h2 id="错误预算政策"><a href="#错误预算政策" class="headerlink" title="错误预算政策"></a>错误预算政策</h2><p>一个可执行的政策示例：</p>
+<table>
+<thead>
+<tr>
+<th>预算消耗</th>
+<th>行动</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>&lt; 50%</td>
+<td>正常发布，鼓励小步快跑</td>
+</tr>
+<tr>
+<td>50%-75%</td>
+<td>发布需评估风险，优先修复 Top 可靠性问题</td>
+</tr>
+<tr>
+<td>75%-100%</td>
+<td>高风险变更需 SRE&#x2F;架构评审，准备回滚方案</td>
+</tr>
+<tr>
+<td>&gt;&#x3D; 100%</td>
+<td>冻结高风险变更；只允许修复、回滚、降级；例外需负责人批准</td>
+</tr>
+</tbody></table>
+<p>政策要点：</p>
+<ul>
+<li><strong>冻结的是高风险变更，不是所有变更</strong>；修复类、回滚类、降级类变更应放行。</li>
+<li><strong>例外要有记录</strong>：谁批准、为什么、风险是什么、何时复核。</li>
+<li><strong>不要把预算当 KPI 惩罚人</strong>，否则团队会隐藏故障、篡改指标。</li>
+<li><strong>预算按服务&#x2F;用户旅程分别计算</strong>，不要用一个总预算掩盖局部问题。</li>
+</ul>
+<h2 id="燃尽率与告警"><a href="#燃尽率与告警" class="headerlink" title="燃尽率与告警"></a>燃尽率与告警</h2><p>燃尽率（Burn Rate）表示错误预算消耗速度：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Burn Rate = 当前错误率 / (1 - SLO)</span><br></pre></td></tr></table></figure>
+
+<p>例如 SLO 99.9%，当前错误率 1%，则燃尽率 &#x3D; 1% &#x2F; 0.1% &#x3D; 10 倍。意味着按当前速度，30 天预算大约 3 天就会烧完。</p>
+<p>多窗口多燃尽率告警（示例）：</p>
+<table>
+<thead>
+<tr>
+<th>窗口</th>
+<th>燃尽率阈值</th>
+<th>动作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1 小时 + 5 分钟</td>
+<td>14.4x</td>
+<td>立即 page</td>
+</tr>
+<tr>
+<td>6 小时 + 30 分钟</td>
+<td>6x</td>
+<td>创建工单&#x2F;通知</td>
+</tr>
+<tr>
+<td>3 天 + 6 小时</td>
+<td>1x</td>
+<td>趋势观察</td>
+</tr>
+</tbody></table>
+<p>这类告警比「5xx &gt; 1%」更贴近用户体验，也更少噪音。</p>
+<h2 id="PromQL-示例"><a href="#PromQL-示例" class="headerlink" title="PromQL 示例"></a>PromQL 示例</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 5xx 比例</span><br><span class="line">sum(rate(http_requests_total&#123;job=&quot;api&quot;,code=~&quot;5..&quot;&#125;[5m]))</span><br><span class="line">/</span><br><span class="line">sum(rate(http_requests_total&#123;job=&quot;api&quot;&#125;[5m]))</span><br><span class="line"></span><br><span class="line"># p99 延迟</span><br><span class="line">histogram_quantile(</span><br><span class="line">  0.99,</span><br><span class="line">  sum by (le) (rate(http_request_duration_seconds_bucket&#123;job=&quot;api&quot;&#125;[5m]))</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"># 99.9% SLO 的 1 小时燃尽率</span><br><span class="line">(</span><br><span class="line">  sum(rate(http_requests_total&#123;job=&quot;api&quot;,code=~&quot;5..&quot;&#125;[1h]))</span><br><span class="line">  /</span><br><span class="line">  sum(rate(http_requests_total&#123;job=&quot;api&quot;&#125;[1h]))</span><br><span class="line">) / 0.001</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>分母要排除健康检查等无效请求。</li>
+<li>延迟桶的边界要和 SLO 阈值对齐。</li>
+<li>指标缺失、采集失败也要纳入可靠性分析，不能当成「0 错误」。</li>
+</ul>
+<h2 id="SLO-文档模板"><a href="#SLO-文档模板" class="headerlink" title="SLO 文档模板"></a>SLO 文档模板</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">服务名称：</span><br><span class="line">用户旅程：</span><br><span class="line">负责人：</span><br><span class="line">SLI：</span><br><span class="line">  - 名称：</span><br><span class="line">  - 好事件：</span><br><span class="line">  - 有效事件：</span><br><span class="line">  - 公式：</span><br><span class="line">  - 数据源：</span><br><span class="line">SLO：</span><br><span class="line">  - 目标：</span><br><span class="line">  - 窗口：28 天滚动</span><br><span class="line">  - 当前基线：</span><br><span class="line">错误预算：</span><br><span class="line">  - 计算方式：</span><br><span class="line">  - 政策：</span><br><span class="line">告警：</span><br><span class="line">  - 快烧：</span><br><span class="line">  - 慢烧：</span><br><span class="line">  - 通知渠道：</span><br><span class="line">依赖：</span><br><span class="line">  - 上游服务及其 SLO：</span><br><span class="line">复核周期：每季度</span><br></pre></td></tr></table></figure>
+
+<h2 id="SLA-怎么定"><a href="#SLA-怎么定" class="headerlink" title="SLA 怎么定"></a>SLA 怎么定</h2><p>SLA 是对外合同，通常包含：</p>
+<ul>
+<li>服务范围与排除项。</li>
+<li>可用性&#x2F;延迟等指标定义。</li>
+<li>测量方法与数据来源。</li>
+<li>统计周期（月&#x2F;季）。</li>
+<li>未达标的补偿（服务 credits、退款等）。</li>
+<li>客户责任与免责条款。</li>
+<li>报告与争议处理流程。</li>
+</ul>
+<p>SLA 设计原则：</p>
+<ul>
+<li>**不要承诺 100%**：架构、上游依赖、客户网络都可能出问题。</li>
+<li><strong>SLO 要严于 SLA</strong>：给自己留缓冲。</li>
+<li><strong>指标要可测量、可审计</strong>：否则争议不断。</li>
+<li><strong>排除项要写清楚</strong>：计划维护、客户误用、不可抗力、上游故障等。</li>
+<li><strong>补偿要可执行</strong>：别写无法兑现的承诺。</li>
+<li><strong>与业务&#x2F;法务一起定</strong>：SRE 提供技术可行性，业务决定商业条款。</li>
+</ul>
+<h2 id="常见误区"><a href="#常见误区" class="headerlink" title="常见误区"></a>常见误区</h2><table>
+<thead>
+<tr>
+<th>误区</th>
+<th>问题</th>
+<th>正确做法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SLO &#x3D; SLA</td>
+<td>内部目标与合同混淆</td>
+<td>SLO 更严，SLA 对外</td>
+</tr>
+<tr>
+<td>追求 100%</td>
+<td>成本无限、发布停滞</td>
+<td>按业务定可接受目标</td>
+</tr>
+<tr>
+<td>只看平均值</td>
+<td>掩盖长尾</td>
+<td>用比例&#x2F;分位数</td>
+</tr>
+<tr>
+<td>SLO 太多</td>
+<td>无法聚焦</td>
+<td>先做核心用户旅程</td>
+</tr>
+<tr>
+<td>没有负责人</td>
+<td>指标没人维护</td>
+<td>每个 SLO 有 owner</td>
+</tr>
+<tr>
+<td>没有错误预算政策</td>
+<td>预算只是数字</td>
+<td>明确消耗后的行动</td>
+</tr>
+<tr>
+<td>告警只看静态阈值</td>
+<td>噪音大、漏报</td>
+<td>燃尽率 + 多窗口</td>
+</tr>
+<tr>
+<td>指标造假&#x2F;挑数据</td>
+<td>失去信任</td>
+<td>固定口径、审计数据源</td>
+</tr>
+</tbody></table>
+<h1 id="Toil-识别与消除"><a href="#Toil-识别与消除" class="headerlink" title="Toil 识别与消除"></a>Toil 识别与消除</h1><h2 id="什么是-Toil"><a href="#什么是-Toil" class="headerlink" title="什么是 Toil"></a>什么是 Toil</h2><p>Toil 是<strong>手动、重复、可自动化、战术性、不产生持久价值、随服务规模线性增长</strong>的工作。</p>
+<p>六个判定条件：</p>
+<ol>
+<li><strong>手动</strong>：需要人执行。</li>
+<li><strong>重复</strong>：反复发生。</li>
+<li><strong>可自动化</strong>：理论上可以由机器完成。</li>
+<li><strong>战术性</strong>：打断当前工作，处理眼前问题。</li>
+<li><strong>无持久价值</strong>：做完后不会留下长期能力。</li>
+<li><strong>线性增长</strong>：服务规模翻倍，工作量也翻倍。</li>
+</ol>
+<p>Toil 不等于所有运维工作。事故响应、容量规划、架构设计、自动化建设、知识沉淀都不属于 Toil。</p>
+<h2 id="常见-Toil"><a href="#常见-Toil" class="headerlink" title="常见 Toil"></a>常见 Toil</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>典型表现</th>
+<th>自动化方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>发布部署</td>
+<td>手工打包、传文件、重启</td>
+<td>CI&#x2F;CD、GitOps、灰度发布</td>
+</tr>
+<tr>
+<td>证书管理</td>
+<td>手工申请、续期、替换</td>
+<td>ACME、cert-manager、CLM</td>
+</tr>
+<tr>
+<td>告警处理</td>
+<td>重复确认、手动重启</td>
+<td>告警收敛、自愈、runbook</td>
+</tr>
+<tr>
+<td>权限申请</td>
+<td>工单、人工审批、手工加权限</td>
+<td>自助门户、RBAC、审批自动化</td>
+</tr>
+<tr>
+<td>容量扩缩</td>
+<td>手工加机器、调副本</td>
+<td>HPA&#x2F;VPA、集群自动扩缩</td>
+</tr>
+<tr>
+<td>日志清理</td>
+<td>手工删日志、转储</td>
+<td>生命周期策略、对象存储归档</td>
+</tr>
+<tr>
+<td>数据修复</td>
+<td>手工跑 SQL、改配置</td>
+<td>一次性脚本工具化、审批后执行</td>
+</tr>
+<tr>
+<td>巡检</td>
+<td>手工看面板、截图</td>
+<td>自动巡检、健康报告</td>
+</tr>
+<tr>
+<td>值班交接</td>
+<td>手工整理上下文</td>
+<td>自动生成交接摘要</td>
+</tr>
+<tr>
+<td>环境搭建</td>
+<td>手工装中间件、配网络</td>
+<td>IaC、模板、平台自助</td>
+</tr>
+</tbody></table>
+<h2 id="如何识别-Toil"><a href="#如何识别-Toil" class="headerlink" title="如何识别 Toil"></a>如何识别 Toil</h2><h3 id="方法一：时间采样"><a href="#方法一：时间采样" class="headerlink" title="方法一：时间采样"></a>方法一：时间采样</h3><p>让 SRE&#x2F;运维按小时或半天记录工作类型：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>项目工作</td>
+<td>自动化、平台、架构、容量</td>
+</tr>
+<tr>
+<td>事故响应</td>
+<td>真实故障处理</td>
+</tr>
+<tr>
+<td>Toil</td>
+<td>重复、手动、可自动化</td>
+</tr>
+<tr>
+<td>会议&#x2F;行政</td>
+<td>会议、汇报、培训</td>
+</tr>
+<tr>
+<td>干扰</td>
+<td>临时请求、打断</td>
+</tr>
+</tbody></table>
+<p>连续记录 2-4 周，就能看出 Toil 占比和主要来源。</p>
+<h3 id="方法二：工单分析"><a href="#方法二：工单分析" class="headerlink" title="方法二：工单分析"></a>方法二：工单分析</h3><p>对工单按「频率、耗时、重复性、可自动化」分类：</p>
+<table>
+<thead>
+<tr>
+<th>工单类型</th>
+<th>月频次</th>
+<th>单次耗时</th>
+<th>月耗时</th>
+<th>可自动化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>证书续期</td>
+<td>30</td>
+<td>20 分钟</td>
+<td>10 小时</td>
+<td>高</td>
+</tr>
+<tr>
+<td>权限开通</td>
+<td>80</td>
+<td>15 分钟</td>
+<td>20 小时</td>
+<td>高</td>
+</tr>
+<tr>
+<td>服务重启</td>
+<td>20</td>
+<td>10 分钟</td>
+<td>3.3 小时</td>
+<td>高</td>
+</tr>
+<tr>
+<td>数据修复</td>
+<td>5</td>
+<td>2 小时</td>
+<td>10 小时</td>
+<td>中</td>
+</tr>
+<tr>
+<td>架构咨询</td>
+<td>10</td>
+<td>1 小时</td>
+<td>10 小时</td>
+<td>低</td>
+</tr>
+</tbody></table>
+<h3 id="方法三：On-call-中断日志"><a href="#方法三：On-call-中断日志" class="headerlink" title="方法三：On-call 中断日志"></a>方法三：On-call 中断日志</h3><p>记录每次 page 的原因、处理动作、是否重复、是否有 runbook。重复出现的 page 往往对应可消除的 Toil 或可改进的告警。</p>
+<h3 id="方法四：价值流分析"><a href="#方法四：价值流分析" class="headerlink" title="方法四：价值流分析"></a>方法四：价值流分析</h3><p>画出从「用户请求」到「价值交付」的流程，标记每个等待、审批、手工步骤。手工步骤越多，Toil 和错误风险越高。</p>
+<h2 id="Toil-预算"><a href="#Toil-预算" class="headerlink" title="Toil 预算"></a>Toil 预算</h2><p>Google SRE 的经验是：<strong>每个 SRE 的 Toil 不应超过 50% 工作时间</strong>。超过这个比例，SRE 就没有足够时间做工程改进，长期会陷入「越忙越没空优化，越不优化越忙」的循环。</p>
+<p>企业可以根据规模设定：</p>
+<ul>
+<li>初创团队：Toil 可能暂时偏高，但要有下降趋势。</li>
+<li>成熟团队：Toil 控制在 30%-50%。</li>
+<li>平台团队：Toil 应持续低于 30%，把能力产品化。</li>
+</ul>
+<p>Toil 预算要作为团队指标，而不是个人考核指标，避免「谁做得快就被分配更多 Toil」。</p>
+<h2 id="消除-Toil-的策略"><a href="#消除-Toil-的策略" class="headerlink" title="消除 Toil 的策略"></a>消除 Toil 的策略</h2><h3 id="1-先消除，再简化，最后自动化"><a href="#1-先消除，再简化，最后自动化" class="headerlink" title="1. 先消除，再简化，最后自动化"></a>1. 先消除，再简化，最后自动化</h3><p>很多团队一上来就自动化，结果把错误流程固化。正确顺序是：</p>
+<ol>
+<li><strong>Eliminate</strong>：这个步骤真的需要吗？能否取消审批、合并流程、删除无效检查？</li>
+<li><strong>Simplify</strong>：能否标准化、减少选项、统一工具？</li>
+<li><strong>Automate</strong>：把稳定、重复的流程自动化。</li>
+<li><strong>Delegate</strong>：交给平台、CI&#x2F;CD、自助门户。</li>
+<li><strong>Outsource</strong>：非核心能力考虑托管服务。</li>
+</ol>
+<h3 id="2-自动化分级"><a href="#2-自动化分级" class="headerlink" title="2. 自动化分级"></a>2. 自动化分级</h3><table>
+<thead>
+<tr>
+<th>级别</th>
+<th>特征</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>L0 手工</td>
+<td>人一步步操作</td>
+<td>手工改配置</td>
+</tr>
+<tr>
+<td>L1 脚本</td>
+<td>有脚本但需人触发</td>
+<td>部署脚本</td>
+</tr>
+<tr>
+<td>L2 定时</td>
+<td>定时任务自动执行</td>
+<td>每日备份</td>
+</tr>
+<tr>
+<td>L3 事件驱动</td>
+<td>由事件触发</td>
+<td>告警触发自愈</td>
+</tr>
+<tr>
+<td>L4 自治</td>
+<td>系统自动决策、闭环</td>
+<td>自动扩缩、自动回滚</td>
+</tr>
+</tbody></table>
+<p>大多数团队应先从 L1&#x2F;L2 做起，再逐步走向 L3&#x2F;L4。不要为了「智能」而跳过可靠性基础。</p>
+<h3 id="3-自动化的工程要求"><a href="#3-自动化的工程要求" class="headerlink" title="3. 自动化的工程要求"></a>3. 自动化的工程要求</h3><p>自动化不是「写个脚本」就完了，至少要满足：</p>
+<ul>
+<li><strong>幂等</strong>：重复执行结果一致。</li>
+<li><strong>可观测</strong>：有日志、指标、告警。</li>
+<li><strong>可回滚</strong>：失败能恢复。</li>
+<li><strong>可测试</strong>：有单元测试&#x2F;集成测试&#x2F;演练。</li>
+<li><strong>最小权限</strong>：只授予必要权限。</li>
+<li><strong>审计</strong>：谁触发、改了什么、结果如何。</li>
+<li><strong>失败处理</strong>：超时、重试、熔断、人工接管。</li>
+<li><strong>文档</strong>：谁维护、如何排错。</li>
+</ul>
+<h3 id="4-自助化与平台化"><a href="#4-自助化与平台化" class="headerlink" title="4. 自助化与平台化"></a>4. 自助化与平台化</h3><p>把高频请求变成自助能力：</p>
+<ul>
+<li>证书申请&#x2F;续期：ACME + CLM。</li>
+<li>环境创建：IaC 模板 + 自助门户。</li>
+<li>权限申请：RBAC + 审批自动化。</li>
+<li>发布：CI&#x2F;CD + GitOps + 灰度。</li>
+<li>扩缩容：HPA&#x2F;VPA + 集群自动扩缩。</li>
+<li>诊断：统一 dashboard + runbook + 查询模板。</li>
+</ul>
+<p>平台化的关键是<strong>黄金路径</strong>：让正确做法成为最容易的做法，而不是靠文档和审批强迫。</p>
+<h3 id="5-Toil-项目排序"><a href="#5-Toil-项目排序" class="headerlink" title="5. Toil 项目排序"></a>5. Toil 项目排序</h3><p>用 ROI 排序：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">优先级 = 月节省小时 × 影响人数 × 错误减少收益 / 建设与维护成本</span><br></pre></td></tr></table></figure>
+
+<p>优先做：</p>
+<ul>
+<li>高频、耗时、规则明确、风险可控。</li>
+<li>重复出错、影响面大的。</li>
+<li>有明确 owner 和维护能力的。</li>
+<li>能复用到多个团队的。</li>
+</ul>
+<p>不要做：</p>
+<ul>
+<li>只发生一次的。</li>
+<li>流程本身还没稳定的。</li>
+<li>自动化成本高于收益的。</li>
+<li>没有监控和回滚能力的。</li>
+</ul>
+<h2 id="Toil-治理机制"><a href="#Toil-治理机制" class="headerlink" title="Toil 治理机制"></a>Toil 治理机制</h2><ul>
+<li><strong>每月 Toil 盘点</strong>：列出 Top 10 Toil，估算月耗时。</li>
+<li><strong>设定 Toil 预算</strong>：团队&#x2F;个人不超过 50%，并跟踪趋势。</li>
+<li><strong>纳入迭代</strong>：每季度至少安排一个 Toil 消除项目。</li>
+<li><strong>奖励自动化</strong>：把「减少多少人工」纳入团队复盘，而不是奖励救火英雄。</li>
+<li><strong>记录节省</strong>：自动化上线后，统计节省时间、错误率变化、MTTR 变化。</li>
+<li><strong>防止反弹</strong>：新流程上线时评估是否引入新的 Toil。</li>
+</ul>
+<h2 id="Toil-指标"><a href="#Toil-指标" class="headerlink" title="Toil 指标"></a>Toil 指标</h2><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Toil 占比</td>
+<td>Toil 小时 &#x2F; 总工时</td>
+</tr>
+<tr>
+<td>月节省小时</td>
+<td>自动化后减少的人工时间</td>
+</tr>
+<tr>
+<td>自动化覆盖率</td>
+<td>关键流程中自动化步骤占比</td>
+</tr>
+<tr>
+<td>手工步骤数</td>
+<td>一次发布&#x2F;交付需要的人工步骤</td>
+</tr>
+<tr>
+<td>重复工单率</td>
+<td>同类工单重复出现比例</td>
+</tr>
+<tr>
+<td>On-call page 量</td>
+<td>每班&#x2F;每周 page 数</td>
+</tr>
+<tr>
+<td>人为错误率</td>
+<td>由手工操作导致的故障比例</td>
+</tr>
+</tbody></table>
+<h2 id="常见反模式"><a href="#常见反模式" class="headerlink" title="常见反模式"></a>常见反模式</h2><ul>
+<li><strong>为了自动化而自动化</strong>：流程本身有问题，自动化只是加速错误。</li>
+<li><strong>一次性脚本入库</strong>：没有测试、没有 owner、没有文档，半年后没人敢动。</li>
+<li><strong>自动化后仍需人工确认</strong>：名义上自动，实际还是人肉。</li>
+<li><strong>隐藏 Toil</strong>：为了指标好看，把 Toil 记成项目工作。</li>
+<li><strong>只优化个人效率</strong>：没有平台化，换个团队又要重做。</li>
+<li><strong>忽视维护成本</strong>：自动化系统本身也需要 owner 和监控。</li>
+</ul>
+<h1 id="事故响应流程与-On-call-值班"><a href="#事故响应流程与-On-call-值班" class="headerlink" title="事故响应流程与 On-call 值班"></a>事故响应流程与 On-call 值班</h1><h2 id="事故分级"><a href="#事故分级" class="headerlink" title="事故分级"></a>事故分级</h2><p>先定义严重级别，避免每次都要争论「这算不算事故」。</p>
+<table>
+<thead>
+<tr>
+<th>级别</th>
+<th>定义</th>
+<th>例子</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SEV1</td>
+<td>核心服务大面积不可用、数据丢失、严重安全事件</td>
+<td>支付全挂、用户数据泄露</td>
+<td>立即全员响应，IC 到位，15-30 分钟更新</td>
+</tr>
+<tr>
+<td>SEV2</td>
+<td>核心功能显著降级，有临时绕过方案</td>
+<td>下单失败率 20%、区域延迟翻倍</td>
+<td>立即响应，1 小时更新</td>
+</tr>
+<tr>
+<td>SEV3</td>
+<td>局部影响、非核心功能、可工作时间处理</td>
+<td>报表延迟、非核心 API 错误</td>
+<td>工作时间处理，按需升级</td>
+</tr>
+<tr>
+<td>SEV4</td>
+<td>轻微问题、潜在风险、近失事件</td>
+<td>单实例重启、容量预警</td>
+<td>工单跟踪，不触发 page</td>
+</tr>
+</tbody></table>
+<p>分级要点：</p>
+<ul>
+<li><strong>就高不就低</strong>：不确定时先按更高级别响应，后续可降级。</li>
+<li><strong>早期宣告</strong>：不要等到确认根因才 declare，先拉人、先止损。</li>
+<li><strong>级别可调整</strong>：影响扩大则升级，影响缩小则降级并记录。</li>
+</ul>
+<h2 id="事故角色"><a href="#事故角色" class="headerlink" title="事故角色"></a>事故角色</h2><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>职责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Incident Commander（IC）</td>
+<td>统一决策、分配任务、控制节奏，不亲自排查</td>
+</tr>
+<tr>
+<td>Operations Lead</td>
+<td>技术排查与操作协调</td>
+</tr>
+<tr>
+<td>Communications Lead</td>
+<td>对内对外沟通、状态页、客户通知</td>
+</tr>
+<tr>
+<td>Scribe</td>
+<td>记录时间线、决策、行动和证据</td>
+</tr>
+<tr>
+<td>Subject Matter Experts</td>
+<td>数据库、网络、应用等专家</td>
+</tr>
+<tr>
+<td>Executive Sponsor</td>
+<td>重大事故的资源协调和高层沟通</td>
+</tr>
+</tbody></table>
+<p>小团队可以一人多角，但<strong>IC 和排查者尽量分离</strong>。IC 如果埋头 debug，就没人管全局、沟通和决策。</p>
+<h2 id="事故生命周期"><a href="#事故生命周期" class="headerlink" title="事故生命周期"></a>事故生命周期</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">检测 → 宣告 → 集结 → 缓解 → 沟通 → 解决 → 复盘</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-检测"><a href="#1-检测" class="headerlink" title="1. 检测"></a>1. 检测</h3><p>来源：</p>
+<ul>
+<li>SLO 燃尽率告警</li>
+<li>业务指标异常</li>
+<li>用户反馈&#x2F;客服工单</li>
+<li>依赖方通知</li>
+<li>安全告警</li>
+<li>巡检&#x2F;游戏日发现</li>
+</ul>
+<p>要求：</p>
+<ul>
+<li>告警必须可行动、有 owner、有 runbook。</li>
+<li>避免「告警风暴」，要分组、抑制、去重。</li>
+<li>监控本身也要有冗余，避免监控先挂。</li>
+</ul>
+<h3 id="2-宣告"><a href="#2-宣告" class="headerlink" title="2. 宣告"></a>2. 宣告</h3><p>一旦确认影响用户，立即：</p>
+<ul>
+<li>创建事故频道&#x2F;会议。</li>
+<li>指定 IC。</li>
+<li>确定初始级别。</li>
+<li>通知相关团队。</li>
+<li>开始时间线记录。</li>
+</ul>
+<p>宣告话术示例：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">【事故宣告】SEV2</span><br><span class="line">现象：下单 API 5xx 比例 18%，持续 5 分钟</span><br><span class="line">影响：部分用户无法下单</span><br><span class="line">IC：张三</span><br><span class="line">频道：#inc-20261023-001</span><br><span class="line">下次更新：15 分钟后</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-集结"><a href="#3-集结" class="headerlink" title="3. 集结"></a>3. 集结</h3><ul>
+<li>拉齐研发、SRE、DBA、网络、客服、业务。</li>
+<li>明确谁负责排查、谁负责沟通、谁记录。</li>
+<li>建立单一信息源，避免多个群各说各话。</li>
+</ul>
+<h3 id="4-缓解优先"><a href="#4-缓解优先" class="headerlink" title="4. 缓解优先"></a>4. 缓解优先</h3><p>事故响应的第一目标是<strong>止损</strong>，不是找根因：</p>
+<ul>
+<li>回滚最近变更。</li>
+<li>关闭特性开关。</li>
+<li>切流&#x2F;降级&#x2F;限流。</li>
+<li>扩容&#x2F;重启&#x2F;故障转移。</li>
+<li>恢复备份。</li>
+<li>绕过故障依赖。</li>
+</ul>
+<p>原则：</p>
+<ul>
+<li><strong>先止血，再诊断</strong>。</li>
+<li><strong>小步操作，及时验证</strong>。</li>
+<li><strong>保留现场</strong>：日志、指标、配置、部署版本。</li>
+<li><strong>避免多人同时改生产</strong>，由 Ops Lead 统一指挥。</li>
+</ul>
+<h3 id="5-沟通"><a href="#5-沟通" class="headerlink" title="5. 沟通"></a>5. 沟通</h3><p>沟通节奏按级别：</p>
+<ul>
+<li>SEV1：每 15-30 分钟更新。</li>
+<li>SEV2：每 30-60 分钟更新。</li>
+<li>SEV3：按需或每 2-4 小时。</li>
+</ul>
+<p>沟通内容：</p>
+<ul>
+<li>当前状态（investigating&#x2F;identified&#x2F;monitoring&#x2F;resolved）。</li>
+<li>用户影响。</li>
+<li>已采取动作。</li>
+<li>下一步计划。</li>
+<li>下次更新时间。</li>
+<li>不要给不可靠的 ETA。</li>
+</ul>
+<p>状态页模板：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">[Investigating] 我们正在调查部分用户无法下单的问题。</span><br><span class="line">[Identified] 已定位到数据库连接池耗尽，正在扩容并重启异常实例。</span><br><span class="line">[Monitoring] 服务已恢复，5xx 比例回到正常水平，持续观察 30 分钟。</span><br><span class="line">[Resolved] 问题已解决，根因分析和改进项将在复盘后同步。</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-解决"><a href="#6-解决" class="headerlink" title="6. 解决"></a>6. 解决</h3><ul>
+<li>确认核心指标恢复。</li>
+<li>观察足够长的稳定期。</li>
+<li>关闭事故频道，保留记录。</li>
+<li>通知客服&#x2F;业务&#x2F;客户。</li>
+<li>安排复盘。</li>
+</ul>
+<h3 id="7-复盘"><a href="#7-复盘" class="headerlink" title="7. 复盘"></a>7. 复盘</h3><p>所有 SEV1&#x2F;SEV2、重复事故、SLO 严重违约都应复盘；SEV3&#x2F;4 可做轻量复盘。详见下一节。</p>
+<h2 id="On-call-值班设计"><a href="#On-call-值班设计" class="headerlink" title="On-call 值班设计"></a>On-call 值班设计</h2><h3 id="轮值模式"><a href="#轮值模式" class="headerlink" title="轮值模式"></a>轮值模式</h3><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>特点</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>周轮换</td>
+<td>一周 primary，一周 secondary</td>
+<td>大多数团队</td>
+</tr>
+<tr>
+<td>日轮换</td>
+<td>每天换人</td>
+<td>高压&#x2F;多事故团队</td>
+</tr>
+<tr>
+<td>Follow-the-sun</td>
+<td>跨时区接力</td>
+<td>全球化团队</td>
+</tr>
+<tr>
+<td>双人值班</td>
+<td>primary + secondary</td>
+<td>核心服务</td>
+</tr>
+</tbody></table>
+<p>基本要求：</p>
+<ul>
+<li><strong>Primary</strong> 第一响应，<strong>Secondary</strong> 超时升级。</li>
+<li>明确响应时间，如 5 分钟内确认，15 分钟内升级。</li>
+<li>交接要有书面记录。</li>
+<li>值班期间保证可访问网络、电脑、VPN、生产权限。</li>
+<li>值班后安排恢复时间，避免长期疲劳。</li>
+</ul>
+<h3 id="值班职责"><a href="#值班职责" class="headerlink" title="值班职责"></a>值班职责</h3><ul>
+<li>及时确认 page。</li>
+<li>判断严重级别，决定是否宣告事故。</li>
+<li>按 runbook 执行初步缓解。</li>
+<li>需要时升级给 secondary&#x2F;专家&#x2F;IC。</li>
+<li>记录时间线和操作。</li>
+<li>交接未完成事项。</li>
+</ul>
+<h3 id="可持续-On-call"><a href="#可持续-On-call" class="headerlink" title="可持续 On-call"></a>可持续 On-call</h3><p>不可持续的信号：</p>
+<ul>
+<li>每班大量噪音 page。</li>
+<li>长期睡眠不足。</li>
+<li>只有个别人能处理。</li>
+<li>事故全靠英雄主义。</li>
+<li>值班没有补偿或恢复时间。</li>
+<li>告警没有 runbook。</li>
+</ul>
+<p>改进方向：</p>
+<ul>
+<li>设定 page 量目标，如每 12 小时不超过 2 个可行动 page。</li>
+<li>清理不可行动告警。</li>
+<li>自动化和自愈。</li>
+<li>轮换和培训，扩大值班人员池。</li>
+<li>游戏日和演练。</li>
+<li>值班反馈机制，每次噪音 page 都要有改进项。</li>
+</ul>
+<h3 id="交接模板"><a href="#交接模板" class="headerlink" title="交接模板"></a>交接模板</h3><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">交班人：</span><br><span class="line">接班人：</span><br><span class="line">时间：</span><br><span class="line">当前事故：</span><br><span class="line">  - 编号/级别/状态/IC</span><br><span class="line">  - 已采取动作</span><br><span class="line">  - 待办与风险</span><br><span class="line">计划变更：</span><br><span class="line">  - 时间/内容/负责人/回滚方案</span><br><span class="line">告警与容量：</span><br><span class="line">  - 异常指标</span><br><span class="line">  - 容量风险</span><br><span class="line">其他：</span><br><span class="line">  - 需要关注的事项</span><br></pre></td></tr></table></figure>
+
+<h2 id="Runbook、Playbook-与-Game-Day"><a href="#Runbook、Playbook-与-Game-Day" class="headerlink" title="Runbook、Playbook 与 Game Day"></a>Runbook、Playbook 与 Game Day</h2><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>用途</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Runbook</td>
+<td>已知故障的逐步操作</td>
+<td>重启实例、切换主从、清理队列</td>
+</tr>
+<tr>
+<td>Playbook</td>
+<td>一类场景的决策与流程</td>
+<td>区域故障、数据库故障、依赖不可用</td>
+</tr>
+<tr>
+<td>Checklist</td>
+<td>变更&#x2F;发布前检查</td>
+<td>发布前检查、容量评估、回滚准备</td>
+</tr>
+</tbody></table>
+<p>Runbook 至少包含：</p>
+<ul>
+<li>触发条件和影响判断。</li>
+<li>前置检查（权限、环境、影响范围）。</li>
+<li>操作步骤（可直接复制执行的命令）。</li>
+<li>验证方式（指标、日志、业务探测）。</li>
+<li>回滚步骤。</li>
+<li>升级联系人和升级条件。</li>
+<li>最后更新时间。</li>
+</ul>
+<p>Game Day：</p>
+<ul>
+<li>定期模拟真实故障，验证告警、runbook、权限、沟通和降级是否有效。</li>
+<li>设定明确的爆炸半径和终止条件。</li>
+<li>从低风险场景开始，如单实例故障、依赖超时、证书过期演练。</li>
+<li>结束后必须复盘，把发现转成行动项，而不是「演完就结束」。</li>
+</ul>
+<h2 id="告警治理"><a href="#告警治理" class="headerlink" title="告警治理"></a>告警治理</h2><p>好的告警：</p>
+<ul>
+<li>基于症状（用户受影响），而不是单纯原因（CPU 高）。</li>
+<li>有明确 owner、severity、runbook、dashboard。</li>
+<li>可行动：收到后知道做什么。</li>
+<li>去重、分组、抑制：避免一个故障触发几百条告警。</li>
+<li>有升级路径。</li>
+<li>定期评审，删除无效告警。</li>
+</ul>
+<p>告警分层：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>去向</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Page</td>
+<td>立即叫人</td>
+<td>SLO 快烧、核心服务不可用</td>
+</tr>
+<tr>
+<td>Ticket</td>
+<td>工作时间处理</td>
+<td>磁盘 70%、证书 30 天到期</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>仅展示</td>
+<td>容量趋势、长尾指标</td>
+</tr>
+</tbody></table>
+<h2 id="事故指标"><a href="#事故指标" class="headerlink" title="事故指标"></a>事故指标</h2><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+<th>改进方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MTTD</td>
+<td>平均检测时间</td>
+<td>更好的监控、SLO 告警</td>
+</tr>
+<tr>
+<td>MTTA</td>
+<td>平均确认时间</td>
+<td>值班体验、告警路由</td>
+</tr>
+<tr>
+<td>MTTR</td>
+<td>平均恢复时间</td>
+<td>runbook、自动化、回滚</td>
+</tr>
+<tr>
+<td>MTBF</td>
+<td>平均故障间隔</td>
+<td>架构、测试、容量</td>
+</tr>
+<tr>
+<td>Page 量</td>
+<td>每班告警数</td>
+<td>告警治理、自愈</td>
+</tr>
+<tr>
+<td>复盘完成率</td>
+<td>应复盘&#x2F;已复盘</td>
+<td>流程约束</td>
+</tr>
+<tr>
+<td>行动项关闭率</td>
+<td>已完成&#x2F;总行动项</td>
+<td>跟踪机制</td>
+</tr>
+<tr>
+<td>重复事故率</td>
+<td>同类事故再次发生</td>
+<td>根因治理</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>MTBF 在复杂分布式系统中受多因素影响，适合做趋势参考，不宜作为单一 KPI。</p>
+</blockquote>
+<h2 id="常见事故响应反模式"><a href="#常见事故响应反模式" class="headerlink" title="常见事故响应反模式"></a>常见事故响应反模式</h2><ul>
+<li>没有 IC，所有人各干各的。</li>
+<li>先找根因，不止血。</li>
+<li>不及时沟通，客服&#x2F;业务靠猜。</li>
+<li>多人同时改生产，互相覆盖。</li>
+<li>事故频道信息碎片化。</li>
+<li>不敢宣告事故，怕担责。</li>
+<li>值班没有权限，处处等人审批。</li>
+<li>告警太多，真正的故障被淹没。</li>
+<li>事故结束后不复盘，或复盘后不跟踪行动项。</li>
+</ul>
+<h1 id="无指责复盘与故障档案库"><a href="#无指责复盘与故障档案库" class="headerlink" title="无指责复盘与故障档案库"></a>无指责复盘与故障档案库</h1><h2 id="什么是无指责复盘"><a href="#什么是无指责复盘" class="headerlink" title="什么是无指责复盘"></a>什么是无指责复盘</h2><p>无指责复盘（Blameless Postmortem）不是「不追究责任」，而是：</p>
+<ul>
+<li>假设当事人在当时的信息、工具、压力下做出了合理决策。</li>
+<li>关注<strong>系统和流程为什么允许错误发生</strong>，而不是找「谁干的」。</li>
+<li>通过改进系统、工具、流程、培训，降低同类问题再次发生的概率。</li>
+<li>对行动项和整改结果保持问责。</li>
+</ul>
+<p>核心理念：</p>
+<ul>
+<li><strong>人不是故障的根因，系统才是</strong>。</li>
+<li><strong>「人为错误」是结论的起点，不是终点</strong>。要问：为什么这个操作容易出错？为什么没有拦截？为什么没有检测？</li>
+<li><strong>心理安全</strong>：说真话不会被惩罚，才能拿到真实信息。</li>
+<li><strong>学习优先</strong>：复盘的目标是学习，不是审判。</li>
+</ul>
+<h2 id="什么时候做复盘"><a href="#什么时候做复盘" class="headerlink" title="什么时候做复盘"></a>什么时候做复盘</h2><p>建议：</p>
+<ul>
+<li>所有 SEV1&#x2F;SEV2 事故。</li>
+<li>SLO 严重违约或错误预算快速耗尽。</li>
+<li>重复发生的 SEV3。</li>
+<li>近失事件（差点出事）。</li>
+<li>重大变更失败。</li>
+<li>安全&#x2F;数据相关事件。</li>
+</ul>
+<p>轻量复盘适用于低级别事件，可以只记录时间线、原因和 1-2 个行动项。</p>
+<h2 id="复盘时间线"><a href="#复盘时间线" class="headerlink" title="复盘时间线"></a>复盘时间线</h2><table>
+<thead>
+<tr>
+<th>时间</th>
+<th>动作</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>事故解决后 24 小时内</td>
+<td>指定复盘负责人，收集证据</td>
+</tr>
+<tr>
+<td>48-72 小时内</td>
+<td>完成初稿，相关人评审</td>
+</tr>
+<tr>
+<td>5 个工作日内</td>
+<td>复盘会议，确认行动项</td>
+</tr>
+<tr>
+<td>2 周内</td>
+<td>行动项进入跟踪系统</td>
+</tr>
+<tr>
+<td>每月&#x2F;每季度</td>
+<td>回顾行动项完成率和趋势</td>
+</tr>
+</tbody></table>
+<h2 id="复盘模板"><a href="#复盘模板" class="headerlink" title="复盘模板"></a>复盘模板</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line"># 事故复盘：&lt;标题&gt;</span><br><span class="line"></span><br><span class="line">## 基本信息</span><br><span class="line">- 事故编号：</span><br><span class="line">- 日期：</span><br><span class="line">- 级别：</span><br><span class="line">- 服务：</span><br><span class="line">- 负责人：</span><br><span class="line">- 状态：草稿/评审中/已发布/已关闭</span><br><span class="line"></span><br><span class="line">## 摘要</span><br><span class="line">用 3-5 句话说明发生了什么、影响是什么、如何恢复。</span><br><span class="line"></span><br><span class="line">## 影响</span><br><span class="line">- 用户影响：</span><br><span class="line">- 业务影响：</span><br><span class="line">- SLO/错误预算影响：</span><br><span class="line">- 持续时间：</span><br><span class="line">- 受影响范围：</span><br><span class="line"></span><br><span class="line">## 时间线（UTC）</span><br><span class="line">| 时间 | 事件 | 来源 |</span><br><span class="line">| ---- | ---- | ---- |</span><br><span class="line"></span><br><span class="line">## 根因与 Contributing Factors</span><br><span class="line">- 直接触发因素：</span><br><span class="line">- 技术原因：</span><br><span class="line">- 流程原因：</span><br><span class="line">- 组织/人为因素：</span><br><span class="line">- 为什么没有更早发现？</span><br><span class="line">- 为什么没有自动拦截？</span><br><span class="line"></span><br><span class="line">## 检测与响应</span><br><span class="line">- 如何发现：</span><br><span class="line">- 检测耗时：</span><br><span class="line">- 响应是否及时：</span><br><span class="line">- 哪些做得好：</span><br><span class="line">- 哪些需要改进：</span><br><span class="line"></span><br><span class="line">## 行动项</span><br><span class="line">| 编号 | 行动 | 类型 | 负责人 | 优先级 | 截止时间 | 状态 |</span><br><span class="line">| ---- | ---- | ---- | ------ | ------ | -------- | ---- |</span><br><span class="line"></span><br><span class="line">## 经验与附录</span><br><span class="line">- 关键日志/指标/图表：</span><br><span class="line">- 相关 runbook：</span><br><span class="line">- 相关变更：</span><br><span class="line">- 参考文档：</span><br></pre></td></tr></table></figure>
+
+<h2 id="根因分析的正确姿势"><a href="#根因分析的正确姿势" class="headerlink" title="根因分析的正确姿势"></a>根因分析的正确姿势</h2><h3 id="不要只写「人为错误」"><a href="#不要只写「人为错误」" class="headerlink" title="不要只写「人为错误」"></a>不要只写「人为错误」</h3><p>「人为错误」几乎总是真的，但它不是可行动的结论。要继续追问：</p>
+<ul>
+<li>为什么这个操作容易出错？</li>
+<li>为什么没有校验&#x2F;审批&#x2F;自动化拦截？</li>
+<li>为什么监控没有发现？</li>
+<li>为什么 runbook 没有覆盖？</li>
+<li>为什么当时的信息不清晰？</li>
+<li>为什么时间压力这么大？</li>
+</ul>
+<h3 id="使用-Contributing-Factors"><a href="#使用-Contributing-Factors" class="headerlink" title="使用 Contributing Factors"></a>使用 Contributing Factors</h3><p>事故通常是多因素叠加：</p>
+<ul>
+<li>触发因素：直接引发故障的变更&#x2F;事件。</li>
+<li>技术因素：代码缺陷、配置错误、容量不足、依赖故障。</li>
+<li>检测因素：监控缺失、阈值不合理、告警被淹没。</li>
+<li>响应因素：runbook 缺失、权限不足、沟通不畅。</li>
+<li>组织因素：排期压力、职责不清、培训不足、技术债。</li>
+</ul>
+<h3 id="5-Whys-的局限"><a href="#5-Whys-的局限" class="headerlink" title="5 Whys 的局限"></a>5 Whys 的局限</h3><p>5 Whys 适合简单问题，但容易：</p>
+<ul>
+<li>只沿一条因果链，忽略并行因素。</li>
+<li>把复杂系统问题简化成单点。</li>
+<li>导向「找个人」而不是「改系统」。</li>
+</ul>
+<p>更推荐结合：</p>
+<ul>
+<li>时间线重建</li>
+<li>因果树&#x2F;鱼骨图</li>
+<li>变更与故障相关性分析</li>
+<li>反事实分析：「如果当时有 X，是否能避免&#x2F;缩短？」</li>
+<li>Swiss Cheese 模型：多个防线同时失效</li>
+</ul>
+<h2 id="行动项质量"><a href="#行动项质量" class="headerlink" title="行动项质量"></a>行动项质量</h2><p>差的行动项：</p>
+<ul>
+<li>「加强监控」</li>
+<li>「提高意识」</li>
+<li>「注意操作」</li>
+<li>「以后小心」</li>
+</ul>
+<p>好的行动项：</p>
+<ul>
+<li>具体：增加数据库连接池使用率 &gt; 80% 的告警，阈值持续 5 分钟。</li>
+<li>可衡量：告警上线后，连接池耗尽类事故检测时间 &lt; 5 分钟。</li>
+<li>有 owner：DBA 团队张三。</li>
+<li>有截止时间：2026-11-15。</li>
+<li>有验证方式：演练一次连接池耗尽场景。</li>
+<li>有优先级：P1。</li>
+</ul>
+<p>行动项类型：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>目的</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Prevent</td>
+<td>防止再次发生</td>
+<td>修复代码、增加校验、容量扩容</td>
+</tr>
+<tr>
+<td>Detect</td>
+<td>更早发现</td>
+<td>增加指标、SLO 告警、合成监控</td>
+</tr>
+<tr>
+<td>Mitigate</td>
+<td>缩短恢复</td>
+<td>runbook、自动回滚、降级开关</td>
+</tr>
+<tr>
+<td>Process</td>
+<td>改善流程</td>
+<td>变更审批、交接模板、培训</td>
+</tr>
+</tbody></table>
+<p>行动项不要太多。一次复盘聚焦 3-5 个高价值改进，比列 30 个没人做的任务更有效。</p>
+<h2 id="复盘会议怎么开"><a href="#复盘会议怎么开" class="headerlink" title="复盘会议怎么开"></a>复盘会议怎么开</h2><ul>
+<li>由中立的人主持，避免管理者主导定责。</li>
+<li>先讲时间线，再讨论原因和改进。</li>
+<li>鼓励当事人还原「当时看到什么、怎么想、为什么这么做」。</li>
+<li>使用无指责语言：<ul>
+<li>不说「你为什么没检查？」，说「当时有哪些检查手段？为什么没有触发？」</li>
+<li>不说「这是某某的失误」，说「这个操作缺少防呆设计」。</li>
+</ul>
+</li>
+<li>时间盒 60-90 分钟。</li>
+<li>会议结束前确认行动项 owner 和截止时间。</li>
+<li>会后发布复盘，向相关团队共享。</li>
+</ul>
+<h2 id="故障档案库"><a href="#故障档案库" class="headerlink" title="故障档案库"></a>故障档案库</h2><p>复盘写完不能躺在文档库里。要建立可检索、可复用、可维护的故障档案库。</p>
+<h3 id="档案字段"><a href="#档案字段" class="headerlink" title="档案字段"></a>档案字段</h3><table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>事故编号</td>
+<td>唯一标识，如 INC-2026-1023-001</td>
+</tr>
+<tr>
+<td>日期&#x2F;级别</td>
+<td>发生时间和严重级别</td>
+</tr>
+<tr>
+<td>服务&#x2F;组件</td>
+<td>受影响的服务、依赖、区域</td>
+</tr>
+<tr>
+<td>用户影响</td>
+<td>影响范围、持续时间、SLO 影响</td>
+</tr>
+<tr>
+<td>症状</td>
+<td>5xx、延迟、超时、数据错误等</td>
+</tr>
+<tr>
+<td>触发因素</td>
+<td>变更、流量、依赖、配置等</td>
+</tr>
+<tr>
+<td>根因分类</td>
+<td>代码、配置、容量、依赖、流程、安全</td>
+</tr>
+<tr>
+<td>检测方式</td>
+<td>告警、用户反馈、巡检</td>
+</tr>
+<tr>
+<td>缓解动作</td>
+<td>回滚、切流、扩容、降级</td>
+</tr>
+<tr>
+<td>行动项</td>
+<td>链接到工单</td>
+</tr>
+<tr>
+<td>相关链接</td>
+<td>复盘、runbook、dashboard、日志查询、变更记录</td>
+</tr>
+</tbody></table>
+<h3 id="标签体系"><a href="#标签体系" class="headerlink" title="标签体系"></a>标签体系</h3><p>建议至少按以下维度打标签：</p>
+<ul>
+<li>服务&#x2F;团队</li>
+<li>症状（5xx、延迟、超时、数据丢失）</li>
+<li>根因（代码、配置、容量、依赖、变更、安全）</li>
+<li>触发（发布、流量、证书、DNS、数据库）</li>
+<li>级别（SEV1-4）</li>
+<li>状态（open&#x2F;mitigated&#x2F;closed）</li>
+</ul>
+<h3 id="档案库的用法"><a href="#档案库的用法" class="headerlink" title="档案库的用法"></a>档案库的用法</h3><ul>
+<li><strong>事故发生时</strong>：先搜历史相似故障，快速找到缓解方案。</li>
+<li><strong>复盘时</strong>：引用同类事故，判断是否重复问题。</li>
+<li><strong>季度评审</strong>：统计 Top 根因、重复事故、行动项完成率。</li>
+<li>** onboarding**：新成员通过真实故障学习系统。</li>
+<li><strong>自动化</strong>：把高频故障的缓解步骤转成 runbook 和自愈脚本。</li>
+<li><strong>风险治理</strong>：识别高影响、低检测、重复发生的系统性风险。</li>
+</ul>
+<h3 id="维护机制"><a href="#维护机制" class="headerlink" title="维护机制"></a>维护机制</h3><ul>
+<li>每篇复盘有 owner。</li>
+<li>行动项进入工单系统，定期跟踪。</li>
+<li>每季度清理过期&#x2F;失效的 runbook。</li>
+<li>复盘发布后同步到档案库和团队知识库。</li>
+<li>事故频发的服务进入可靠性专项。</li>
+<li>将档案库与监控、发布、CMDB 关联，形成可追溯链路。</li>
+</ul>
+<h2 id="复盘指标"><a href="#复盘指标" class="headerlink" title="复盘指标"></a>复盘指标</h2><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>复盘完成率</td>
+<td>应复盘事故中已完成比例</td>
+</tr>
+<tr>
+<td>按时完成率</td>
+<td>5 个工作日内完成比例</td>
+</tr>
+<tr>
+<td>行动项关闭率</td>
+<td>已完成&#x2F;总数</td>
+</tr>
+<tr>
+<td>行动项逾期率</td>
+<td>超期未完成比例</td>
+</tr>
+<tr>
+<td>重复事故率</td>
+<td>同类原因再次发生比例</td>
+</tr>
+<tr>
+<td>平均检测时间</td>
+<td>从故障发生到发现</td>
+</tr>
+<tr>
+<td>平均恢复时间</td>
+<td>从发现到恢复</td>
+</tr>
+<tr>
+<td>知识复用率</td>
+<td>事故处理中引用历史档案的比例</td>
+</tr>
+</tbody></table>
+<h2 id="无指责文化怎么建立"><a href="#无指责文化怎么建立" class="headerlink" title="无指责文化怎么建立"></a>无指责文化怎么建立</h2><ul>
+<li><strong>领导示范</strong>：管理者先承认系统问题，不急着找人背锅。</li>
+<li><strong>区分学习与绩效</strong>：复盘信息不用于惩罚，除非涉及故意违规&#x2F;重大过失。</li>
+<li><strong>奖励发现和修复</strong>：奖励主动报告近失事件、改进系统的人。</li>
+<li><strong>语言规范</strong>：培训无指责表达，避免「谁的责任」。</li>
+<li><strong>透明共享</strong>：复盘对相关团队开放，而不是藏在少数人手里。</li>
+<li><strong>闭环</strong>：行动项必须有人做、有人验收，否则文化会变成「复盘表演」。</li>
+<li><strong>持续</strong>：文化不是一次培训，而是长期制度设计。</li>
+</ul>
+<h2 id="常见反模式-1"><a href="#常见反模式-1" class="headerlink" title="常见反模式"></a>常见反模式</h2><table>
+<thead>
+<tr>
+<th>反模式</th>
+<th>后果</th>
+<th>正确做法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>找替罪羊</td>
+<td>隐瞒信息、重复故障</td>
+<td>关注系统和流程</td>
+</tr>
+<tr>
+<td>「人为错误」结案</td>
+<td>没有可行动改进</td>
+<td>追问防呆、检测、流程</td>
+</tr>
+<tr>
+<td>行动项无 owner</td>
+<td>没人执行</td>
+<td>每项有负责人和截止时间</td>
+</tr>
+<tr>
+<td>行动项太多</td>
+<td>无法聚焦</td>
+<td>3-5 个高价值改进</td>
+</tr>
+<tr>
+<td>复盘后不跟踪</td>
+<td>同样问题再发生</td>
+<td>纳入工单和季度评审</td>
+</tr>
+<tr>
+<td>复盘文档写得很长但没数据</td>
+<td>无法验证</td>
+<td>时间线、指标、日志、变更记录</td>
+</tr>
+<tr>
+<td>只复盘 SEV1</td>
+<td>错过近失和弱信号</td>
+<td>分级复盘，覆盖近失事件</td>
+</tr>
+<tr>
+<td>复盘内容不共享</td>
+<td>组织不学习</td>
+<td>建立档案库和检索机制</td>
+</tr>
+</tbody></table>
+<h2 id="一个简化的复盘示例"><a href="#一个简化的复盘示例" class="headerlink" title="一个简化的复盘示例"></a>一个简化的复盘示例</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">事故：支付 API 证书过期导致 5xx</span><br><span class="line">级别：SEV2</span><br><span class="line">影响：12 分钟内约 8% 支付请求失败</span><br><span class="line">时间线：</span><br><span class="line">  10:00 证书过期</span><br><span class="line">  10:03 SLO 快烧告警触发</span><br><span class="line">  10:05 On-call 确认，宣告 SEV2</span><br><span class="line">  10:08 定位到证书过期</span><br><span class="line">  10:12 替换证书并 reload</span><br><span class="line">  10:15 指标恢复，持续观察</span><br><span class="line">根因/因素：</span><br><span class="line">  - 自动续期任务失败，但没有告警</span><br><span class="line">  - 只监控了证书剩余 7 天，没有监控续期任务本身</span><br><span class="line">  - 证书 owner 离职，清单未更新</span><br><span class="line">行动项：</span><br><span class="line">  - P1：为续期任务增加成功/失败告警（owner：SRE，2 周）</span><br><span class="line">  - P1：证书纳入 CLM 清单，明确 owner（owner：平台，1 个月）</span><br><span class="line">  - P2：增加证书过期演练（owner：SRE，1 个季度）</span><br></pre></td></tr></table></figure>
+
+<p>这个例子的重点不是「谁忘了续期」，而是：<strong>为什么续期失败没有告警？为什么证书没有 owner？为什么监控只覆盖了结果没有覆盖过程？</strong></p>
+<h2 id="快速落地检查清单"><a href="#快速落地检查清单" class="headerlink" title="快速落地检查清单"></a>快速落地检查清单</h2><ul>
+<li><input disabled="" type="checkbox"> 已选定 1-2 个核心用户旅程，而不是给所有服务同时定 SLO</li>
+<li><input disabled="" type="checkbox"> 每个 SLO 有 owner、SLI 公式、数据源、窗口和排除项</li>
+<li><input disabled="" type="checkbox"> SLO 严于 SLA，并经过业务&#x2F;法务确认</li>
+<li><input disabled="" type="checkbox"> 错误预算政策明确，例外有记录和复核机制</li>
+<li><input disabled="" type="checkbox"> 告警基于燃尽率和用户症状，而不是纯资源阈值</li>
+<li><input disabled="" type="checkbox"> 每条 page 告警都有 owner、runbook 和升级路径</li>
+<li><input disabled="" type="checkbox"> On-call 轮换、交接模板、响应时间和补偿机制已落地</li>
+<li><input disabled="" type="checkbox"> Top 10 高频故障有 runbook，且定期演练</li>
+<li><input disabled="" type="checkbox"> 事故分级、IC 角色、沟通模板和状态页已就绪</li>
+<li><input disabled="" type="checkbox"> SEV1&#x2F;SEV2 在 5 个工作日内完成复盘</li>
+<li><input disabled="" type="checkbox"> 复盘行动项有 owner、优先级、截止时间，并进入工单跟踪</li>
+<li><input disabled="" type="checkbox"> 故障档案可检索，标签统一，能关联监控和变更记录</li>
+<li><input disabled="" type="checkbox"> 每月盘点 Toil，每季度至少完成一个 Toil 消除项目</li>
+<li><input disabled="" type="checkbox"> 关键依赖有 SLO、降级方案和容量评估</li>
+<li><input disabled="" type="checkbox"> 定期 Game Day&#x2F;演练，验证检测、响应和恢复能力</li>
+<li><input disabled="" type="checkbox"> 跟踪 MTTD、MTTA、MTTR、page 量、复盘完成率和行动项关闭率</li>
+</ul>
+<h1 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h1><p>SRE 方法论的价值不在于术语，而在于把可靠性变成一套可执行的闭环：</p>
+<ul>
+<li>用 <strong>SLI&#x2F;SLO</strong> 定义目标。</li>
+<li>用 <strong>错误预算</strong> 做取舍。</li>
+<li>用 <strong>Toil 治理</strong> 释放工程时间。</li>
+<li>用 <strong>事故响应</strong> 控制损失。</li>
+<li>用 <strong>无指责复盘和故障档案</strong> 把经验变成组织能力。</li>
+</ul>
+<p>落地时不要追求一步到位。先选一个核心服务，把 SLO、On-call、复盘和 runbook 跑通，再逐步扩展到更多服务和团队。</p>
+
+  </div>
+  
+  
+    
+    <div class='footer'>
+       <!-- 参考资料、相关资料等 -->
+      
+       <!-- 相关文章 -->
+      
+      <!-- 版权声明组件 -->
+      
+      <!-- 打赏组件 -->
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E8%BF%90%E7%BB%B4/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>运维</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/DevOps/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>DevOps</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/SRE/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>SRE</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/SLO/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>SLO</p></a></div>
+  <span hidden itemprop="keywords">运维 DevOps SRE SLO</span>
+  
+
+
+        
+      
+    </div>
+    <!-- Custom Files bottomMeta begin -->
+    
+    <!-- Custom Files bottomMeta end -->
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+      
+        <a class='next' href='/2026/SSL%E8%AF%81%E4%B9%A6%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>SSL证书笔记<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>本文按「信任体系 → 签发流程 → 客户端验证 → 企业落地」的顺序，讲清楚一张证书从生成密钥到被浏览器信任的完整链路。重点回答三个问题：
+
+谁有权签发证书，信任是怎么一层层传下来的？
+一张证书...</p>
+        </a>
+      
+    </div>
+  
+  <!-- 文章推荐 -->
+  
+  
+  <!-- Custom Files postEnd begin-->
+  
+  <!-- Custom Files postEnd end-->
+</article>
+
+
+
+
+</div>
+<aside id='l_side' itemscope itemtype="http://schema.org/WPSideBar">
+  
+
+  
+    
+    
+      
+    
+  
+
+
+<div class="widget-sticky pjax">
+
+  
+  
+
+
+  <section class="widget toc-wrapper desktop mobile " id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-SRE%EF%BC%9A%E4%B8%8E-DevOps%E3%80%81%E4%BC%A0%E7%BB%9F%E8%BF%90%E7%BB%B4%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-text">什么是 SRE：与 DevOps、传统运维的边界</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E5%AE%9A%E4%B9%89"><span class="toc-text">一句话定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E5%85%B3%E6%B3%A8%E4%BB%80%E4%B9%88"><span class="toc-text">SRE 关注什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E4%BC%A0%E7%BB%9F%E8%BF%90%E7%BB%B4%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-text">与传统运维的边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E-DevOps-%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-text">与 DevOps 的边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E4%B8%8D%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">SRE 不是什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E7%9A%84%E7%BB%84%E7%BB%87%E5%BD%A2%E6%80%81"><span class="toc-text">SRE 的组织形态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E6%88%90%E7%86%9F%E5%BA%A6%E5%8F%82%E8%80%83%E6%A8%A1%E5%9E%8B"><span class="toc-text">SRE 成熟度参考模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E7%9A%84%E5%8D%81%E6%9D%A1%E5%B7%A5%E4%BD%9C%E5%8E%9F%E5%88%99"><span class="toc-text">SRE 的十条工作原则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E8%90%BD%E5%9C%B0%E8%B7%AF%E7%BA%BF%E5%9B%BE"><span class="toc-text">SRE 落地路线图</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SLI-x2F-SLO-x2F-SLA-%E4%B8%8E%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97"><span class="toc-text">SLI &#x2F; SLO &#x2F; SLA 与错误预算</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E4%B8%AA%E6%A6%82%E5%BF%B5%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">三个概念的关系</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%A5%BD%E7%9A%84-SLI"><span class="toc-text">什么是好的 SLI</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81-SLI-%E7%B1%BB%E5%9E%8B"><span class="toc-text">常见 SLI 类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLI-%E7%A4%BA%E4%BE%8B"><span class="toc-text">SLI 示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP-API"><span class="toc-text">HTTP API</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%B9%E5%A4%84%E7%90%86%E4%BB%BB%E5%8A%A1"><span class="toc-text">批处理任务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F"><span class="toc-text">存储系统</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLO-%E6%80%8E%E4%B9%88%E5%AE%9A"><span class="toc-text">SLO 怎么定</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SLO-%E7%9A%84%E8%AE%A1%E9%87%8F%E5%8F%A3%E5%BE%84"><span class="toc-text">SLO 的计量口径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BE%9D%E8%B5%96%E9%93%BE%E4%B8%8E-SLO"><span class="toc-text">依赖链与 SLO</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97"><span class="toc-text">错误预算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E9%A2%84%E7%AE%97%E6%94%BF%E7%AD%96"><span class="toc-text">错误预算政策</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%87%83%E5%B0%BD%E7%8E%87%E4%B8%8E%E5%91%8A%E8%AD%A6"><span class="toc-text">燃尽率与告警</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PromQL-%E7%A4%BA%E4%BE%8B"><span class="toc-text">PromQL 示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLO-%E6%96%87%E6%A1%A3%E6%A8%A1%E6%9D%BF"><span class="toc-text">SLO 文档模板</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLA-%E6%80%8E%E4%B9%88%E5%AE%9A"><span class="toc-text">SLA 怎么定</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E8%AF%AF%E5%8C%BA"><span class="toc-text">常见误区</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Toil-%E8%AF%86%E5%88%AB%E4%B8%8E%E6%B6%88%E9%99%A4"><span class="toc-text">Toil 识别与消除</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-Toil"><span class="toc-text">什么是 Toil</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81-Toil"><span class="toc-text">常见 Toil</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%AF%86%E5%88%AB-Toil"><span class="toc-text">如何识别 Toil</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9A%E6%97%B6%E9%97%B4%E9%87%87%E6%A0%B7"><span class="toc-text">方法一：时间采样</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C%EF%BC%9A%E5%B7%A5%E5%8D%95%E5%88%86%E6%9E%90"><span class="toc-text">方法二：工单分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E4%B8%89%EF%BC%9AOn-call-%E4%B8%AD%E6%96%AD%E6%97%A5%E5%BF%97"><span class="toc-text">方法三：On-call 中断日志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E5%9B%9B%EF%BC%9A%E4%BB%B7%E5%80%BC%E6%B5%81%E5%88%86%E6%9E%90"><span class="toc-text">方法四：价值流分析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Toil-%E9%A2%84%E7%AE%97"><span class="toc-text">Toil 预算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E9%99%A4-Toil-%E7%9A%84%E7%AD%96%E7%95%A5"><span class="toc-text">消除 Toil 的策略</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%85%88%E6%B6%88%E9%99%A4%EF%BC%8C%E5%86%8D%E7%AE%80%E5%8C%96%EF%BC%8C%E6%9C%80%E5%90%8E%E8%87%AA%E5%8A%A8%E5%8C%96"><span class="toc-text">1. 先消除，再简化，最后自动化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%87%AA%E5%8A%A8%E5%8C%96%E5%88%86%E7%BA%A7"><span class="toc-text">2. 自动化分级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%87%AA%E5%8A%A8%E5%8C%96%E7%9A%84%E5%B7%A5%E7%A8%8B%E8%A6%81%E6%B1%82"><span class="toc-text">3. 自动化的工程要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E8%87%AA%E5%8A%A9%E5%8C%96%E4%B8%8E%E5%B9%B3%E5%8F%B0%E5%8C%96"><span class="toc-text">4. 自助化与平台化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Toil-%E9%A1%B9%E7%9B%AE%E6%8E%92%E5%BA%8F"><span class="toc-text">5. Toil 项目排序</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Toil-%E6%B2%BB%E7%90%86%E6%9C%BA%E5%88%B6"><span class="toc-text">Toil 治理机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Toil-%E6%8C%87%E6%A0%87"><span class="toc-text">Toil 指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">常见反模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8B%E6%95%85%E5%93%8D%E5%BA%94%E6%B5%81%E7%A8%8B%E4%B8%8E-On-call-%E5%80%BC%E7%8F%AD"><span class="toc-text">事故响应流程与 On-call 值班</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E6%95%85%E5%88%86%E7%BA%A7"><span class="toc-text">事故分级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E6%95%85%E8%A7%92%E8%89%B2"><span class="toc-text">事故角色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E6%95%85%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">事故生命周期</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A3%80%E6%B5%8B"><span class="toc-text">1. 检测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%AE%A3%E5%91%8A"><span class="toc-text">2. 宣告</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%9B%86%E7%BB%93"><span class="toc-text">3. 集结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E7%BC%93%E8%A7%A3%E4%BC%98%E5%85%88"><span class="toc-text">4. 缓解优先</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%B2%9F%E9%80%9A"><span class="toc-text">5. 沟通</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E8%A7%A3%E5%86%B3"><span class="toc-text">6. 解决</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E5%A4%8D%E7%9B%98"><span class="toc-text">7. 复盘</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#On-call-%E5%80%BC%E7%8F%AD%E8%AE%BE%E8%AE%A1"><span class="toc-text">On-call 值班设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BD%AE%E5%80%BC%E6%A8%A1%E5%BC%8F"><span class="toc-text">轮值模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%80%BC%E7%8F%AD%E8%81%8C%E8%B4%A3"><span class="toc-text">值班职责</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E6%8C%81%E7%BB%AD-On-call"><span class="toc-text">可持续 On-call</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%A4%E6%8E%A5%E6%A8%A1%E6%9D%BF"><span class="toc-text">交接模板</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Runbook%E3%80%81Playbook-%E4%B8%8E-Game-Day"><span class="toc-text">Runbook、Playbook 与 Game Day</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6%E6%B2%BB%E7%90%86"><span class="toc-text">告警治理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E6%95%85%E6%8C%87%E6%A0%87"><span class="toc-text">事故指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E4%BA%8B%E6%95%85%E5%93%8D%E5%BA%94%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">常见事故响应反模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%97%A0%E6%8C%87%E8%B4%A3%E5%A4%8D%E7%9B%98%E4%B8%8E%E6%95%85%E9%9A%9C%E6%A1%A3%E6%A1%88%E5%BA%93"><span class="toc-text">无指责复盘与故障档案库</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%97%A0%E6%8C%87%E8%B4%A3%E5%A4%8D%E7%9B%98"><span class="toc-text">什么是无指责复盘</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E5%81%9A%E5%A4%8D%E7%9B%98"><span class="toc-text">什么时候做复盘</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98%E6%97%B6%E9%97%B4%E7%BA%BF"><span class="toc-text">复盘时间线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98%E6%A8%A1%E6%9D%BF"><span class="toc-text">复盘模板</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E5%9B%A0%E5%88%86%E6%9E%90%E7%9A%84%E6%AD%A3%E7%A1%AE%E5%A7%BF%E5%8A%BF"><span class="toc-text">根因分析的正确姿势</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E8%A6%81%E5%8F%AA%E5%86%99%E3%80%8C%E4%BA%BA%E4%B8%BA%E9%94%99%E8%AF%AF%E3%80%8D"><span class="toc-text">不要只写「人为错误」</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8-Contributing-Factors"><span class="toc-text">使用 Contributing Factors</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Whys-%E7%9A%84%E5%B1%80%E9%99%90"><span class="toc-text">5 Whys 的局限</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%8C%E5%8A%A8%E9%A1%B9%E8%B4%A8%E9%87%8F"><span class="toc-text">行动项质量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98%E4%BC%9A%E8%AE%AE%E6%80%8E%E4%B9%88%E5%BC%80"><span class="toc-text">复盘会议怎么开</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%A1%A3%E6%A1%88%E5%BA%93"><span class="toc-text">故障档案库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%A3%E6%A1%88%E5%AD%97%E6%AE%B5"><span class="toc-text">档案字段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E7%AD%BE%E4%BD%93%E7%B3%BB"><span class="toc-text">标签体系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A1%A3%E6%A1%88%E5%BA%93%E7%9A%84%E7%94%A8%E6%B3%95"><span class="toc-text">档案库的用法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%B4%E6%8A%A4%E6%9C%BA%E5%88%B6"><span class="toc-text">维护机制</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98%E6%8C%87%E6%A0%87"><span class="toc-text">复盘指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E6%8C%87%E8%B4%A3%E6%96%87%E5%8C%96%E6%80%8E%E4%B9%88%E5%BB%BA%E7%AB%8B"><span class="toc-text">无指责文化怎么建立</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%8F%8D%E6%A8%A1%E5%BC%8F-1"><span class="toc-text">常见反模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8C%96%E7%9A%84%E5%A4%8D%E7%9B%98%E7%A4%BA%E4%BE%8B"><span class="toc-text">一个简化的复盘示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E8%90%BD%E5%9C%B0%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-text">快速落地检查清单</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li></ol>
+    </div>
+  </section>
+
+  
+
+</div>
+
+
+<!-- 没有 pjax 占位会报错 万恶的 pjax -->
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <!-- Custom Files side begin -->
+  
+  <!-- Custom Files side end -->
+</aside>
+
+
+
+          <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<pjax>
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  pdata.commentConfig={};
+  //  see: /layout/_partial/scripts/_ctrl.ejs
+  
+    // header
+    var l_header=document.getElementById("l_header");
+    
+    l_header.classList.add("show");
+    
+    
+      // cover
+      var cover_wrapper=document.querySelector('#l_cover .cover-wrapper');
+      var scroll_down=document.getElementById('scroll-down');
+      cover_wrapper.id="none";
+      cover_wrapper.style.display="none";
+      scroll_down.style.display="none";
+    
+  
+</script>
+</pjax>
+        </div>
+        
+  
+  <footer class="footer clearfix"  itemscope itemtype="http://schema.org/WPFooter">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper" itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer" itemprop="url">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+    <!-- Custom Files footer begin-->
+    
+    <!-- Custom Files footer end-->
+  </footer>
+
+
+        <a id="s-top" class="fa-solid fa-arrow-up fa-fw" title="top"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+  /******************** volantis.dom ********************************/
+  // 页面选择器 将dom对象缓存起来 see: /source/js/app.js etc.
+  volantis.dom.bodyAnchor = volantis.dom.$(document.getElementById("safearea")); // 页面主体
+  volantis.dom.topBtn = volantis.dom.$(document.getElementById('s-top')); // 向上
+  volantis.dom.wrapper = volantis.dom.$(document.getElementById('wrapper')); // 整个导航栏
+  volantis.dom.coverAnchor = volantis.dom.$(document.querySelector('#l_cover .cover-wrapper')); // 1个
+  volantis.dom.switcher = volantis.dom.$(document.querySelector('#l_header .switcher .s-search')); // 搜索按钮   移动端 1个
+  volantis.dom.header = volantis.dom.$(document.getElementById('l_header')); // 移动端导航栏
+  volantis.dom.search = volantis.dom.$(document.querySelector('#l_header .m_search')); // 搜索框 桌面端 移动端 1个
+  volantis.dom.mPhoneList = volantis.dom.$(document.querySelectorAll('#l_header .m-phone .list-v')); //  手机端 子菜单 多个
+</script>
+
+<script>
+  
+  volantis.css("https://cdn.bootcdn.net/ajax/libs/font-awesome/6.1.1/css/all.min.css");
+  
+  
+  
+</script>
+
+<!-- required -->
+
+
+<!-- internal -->
+<script src="/js/app.js"></script>
+
+
+
+<!-- rightmenu要在darkmode之前（ToggleButton） darkmode要在comments之前（volantis.dark.push）-->
+
+
+
+<script>
+  function loadIssuesJS() {
+    
+      const sites_api = document.getElementById('sites-api');
+      if (sites_api != undefined && typeof SitesJS === 'undefined') {
+        volantis.js("/js/plugins/tags/sites.js")
+      }
+    
+    
+      const friends_api = document.getElementById('friends-api');
+      if (friends_api != undefined && typeof FriendsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/friends.js")
+      }
+    
+    
+      const contributors_api = document.getElementById('contributors-api');
+      if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/contributors.js")
+      }
+    
+  };
+  loadIssuesJS()
+  volantis.pjax.push(()=>{
+    loadIssuesJS();
+  })
+
+</script>
+
+
+
+
+  <script defer src="https://cdn.bootcdn.net/ajax/libs/vanilla-lazyload/17.1.0/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: ["#"],
+	maxRPS: 6,
+	hoverDelay: 0
+  };
+</script>
+<script defer src="https://unpkg.com/volantis-static@0.0.1660614606622/libs/flying-pages/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+      <script>
+  volantis.layoutHelper("comments",`<div id="giscus_container"></div>`)
+
+  volantis.giscus = {};
+
+  function check_giscus() {
+    if (volantis.dark.mode === "dark") {
+      volantis.giscus.Theme = 'dark';
+    } else {
+      volantis.giscus.Theme = 'light';
+    }
+
+    return document.getElementById("giscus_container");
+  }
+
+  function pjax_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+    let cfg = Object.assign({"theme":{"light":"light","dark":"dark"}},pdata.commentConfig)
+    const script = document.createElement('script');
+    script.setAttribute('src', 'https://giscus.app/client.js');
+    Object.keys(cfg).forEach(k=>{
+      if (k != "theme") {
+        script.setAttribute('data-'+k, cfg[k]);
+      }
+    })
+    script.setAttribute('data-theme', volantis.giscus.Theme);
+    script.setAttribute('crossorigin', "anonymous");
+    HEAD.appendChild(script);
+  }
+
+  function dark_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+
+    const message = {
+      setConfig: {
+        theme: volantis.giscus.Theme
+      }
+    };
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    giscusIframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+  }
+  pjax_giscus();
+  volantis.pjax.push(pjax_giscus);
+  volantis.dark.push(dark_giscus);
+</script>
+
+    
+
+
+
+
+
+<!-- optional -->
+
+  <script>
+  async function loadSearchScript() {
+    
+        
+    
+    return volantis.js("/js/search/hexo.js");
+  }
+
+  function loadSearchService() {
+    loadSearchScript();
+    document.querySelectorAll(".input.u-search-input").forEach((e) => {
+      e.removeEventListener("focus", loadSearchService, false);
+    });
+
+    document.querySelectorAll(".u-search-form").forEach((e) => {
+      e.addEventListener("submit", (event) => {
+        event.preventDefault();
+      }, false);
+    });
+  }
+
+  // 打开并搜索 字符串 s
+  function OpenSearch(s) {
+    if (typeof SearchService === 'undefined')
+      loadSearchScript().then(() => {
+        SearchService.setQueryText(s);
+        SearchService.search();
+      });
+    else {
+      SearchService.setQueryText(s);
+      SearchService.search();
+    }
+  }
+
+  // 访问含有 ?s=xxx  的链接时打开搜索 // 与搜索引擎 structured data 相关: /scripts/helpers/structured-data/lib/config.js
+  if (window.location.search && /^\?s=/g.test(window.location.search)) {
+    let queryText = decodeURI(window.location.search)
+      .replace(/\ /g, "-")
+      .replace(/^\?s=/g, "");
+    OpenSearch(queryText);
+  }
+
+  // 搜索输入框获取焦点时加载搜索
+  document.querySelectorAll(".input.u-search-input").forEach((e) => {
+    e.addEventListener("focus", loadSearchService, false);
+  });
+</script>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  function pjax_highlightjs_copyCode(){
+    if (!(document.querySelector(".highlight .code pre") ||
+      document.querySelector(".article pre code"))) {
+      return;
+    }
+    VolantisApp.utilCopyCode(".highlight .code pre, .article pre code")
+  }
+  volantis.requestAnimationFrame(pjax_highlightjs_copyCode)
+  volantis.pjax.push(pjax_highlightjs_copyCode)
+
+</script>
+
+
+
+
+
+
+
+
+
+
+  <script>
+  function load_swiper() {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    volantis.css("https://cdn.bootcdn.net/ajax/libs/Swiper/8.3.2/swiper-bundle.min.css");
+    volantis.js("https://cdn.bootcdn.net/ajax/libs/Swiper/8.3.2/swiper-bundle.min.js").then(() => {
+      pjax_swiper();
+    });
+  }
+
+  load_swiper();
+
+  function pjax_swiper() {
+    volantis.swiper = new Swiper('.swiper-container', {
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      centeredSlides: true,
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+
+  volantis.pjax.push(() => {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    if (typeof volantis.swiper === "undefined") {
+      load_swiper();
+    } else {
+      pjax_swiper();
+    }
+  });
+</script>
+
+
+
+  <script>
+  volantis.css("https://cdn.bootcdn.net/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.min.css");
+  volantis.js("https://cdn.bootcdn.net/ajax/libs/pace/1.2.4/pace.min.js").then(() => {
+    Pace.options.restartOnPushState = false;
+    volantis.pjax.send(Pace.restart);
+    // 阅读进度
+    volantis.scroll.push(() => {
+      Pace.stop();
+      Pace.trigger('start');
+      Pace.bar.update(volantis.scroll.progress() * 100);
+      document.body.className = document.body.className.replaceAll("pace-running ","");
+    },"阅读进度")
+    // todo：配置项开关, 哪些页面添加阅读进度
+  })
+</script>
+
+
+<!-- pjax 标签必须存在于所有页面 否则 pjax error -->
+<pjax>
+
+</pjax>
+
+<script>
+  function listenSidebarTOC() {
+    const navItems = document.querySelectorAll(".toc li");
+    if (!navItems.length) return;
+    const targets = []
+    const sections = Array.from(navItems).forEach((element) => {
+      const link = element.querySelector(".toc-link");
+      const target = document.getElementById(
+        link.getAttribute("href") ? decodeURI(link.getAttribute("href")).replace("#", "") : link.getAttribute("toc-action").split("toc-")[1] // 兼容 hexo-blog-encrypt
+      );
+      targets.push(target)
+      // 解除 a 标签 href 的 锚点定位, a 标签 href 的 锚点定位 会随机启用?? 产生错位???
+      if (link.getAttribute("href")) {
+        link.setAttribute("toc-action", "toc-" + decodeURI(link.getAttribute("href")).replace("#", ""))
+        link.removeAttribute("href")
+      }
+      // 配置 点击 触发新的锚点定位
+      if (target && target.id) {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          // 这里的 addTop 是通过错位使得 toc 自动展开.
+          volantis.scroll.to(target, { addTop: 5, observer: true })
+          // Anchor id
+          history.pushState(null, document.title, "#" + target.id);
+        });
+      }
+      return target;
+    });
+
+    function activateNavByIndex(target) {
+      if (target.classList.contains("active-current")) return;
+
+      document.querySelectorAll(".toc .active").forEach((element) => {
+        element.classList.remove("active", "active-current");
+      });
+      target.classList.add("active", "active-current");
+      let parent = target.parentNode;
+      while (!parent.matches(".toc")) {
+        if (parent.matches("li")) parent.classList.add("active");
+        parent = parent.parentNode;
+      }
+    }
+
+    // 方案一：
+    volantis.activateNavIndex = 0
+    activateNavByIndex(navItems[volantis.activateNavIndex])
+    if (targets[0]) {
+      volantis.scroll.push(() => {
+        if (targets[0].getBoundingClientRect().top >= 0) {
+          volantis.activateNavIndex = 0
+        } else if (targets[targets.length - 1].getBoundingClientRect().top < 0) {
+          volantis.activateNavIndex = targets.length - 1
+        } else {
+          for (let index = 0; index < targets.length; index++) {
+            const target0 = targets[index];
+            const target1 = targets[(index + 1) % targets.length];
+            if (target0.getBoundingClientRect().top < 0 && target1.getBoundingClientRect().top >= 0) {
+              volantis.activateNavIndex = index
+              break;
+            }
+          }
+        }
+        activateNavByIndex(navItems[volantis.activateNavIndex])
+      })
+    }
+
+    // 方案二：
+    // IntersectionObserver 不是完美精确到像素级别 也不是低延时性的
+    // function findIndex(entries) {
+    //   let index = 0;
+    //   let entry = entries[index];
+    //   if (entry.boundingClientRect.top > 0) {
+    //     index = sections.indexOf(entry.target);
+    //     return index === 0 ? 0 : index - 1;
+    //   }
+    //   for (; index < entries.length; index++) {
+    //     if (entries[index].boundingClientRect.top <= 0) {
+    //       entry = entries[index];
+    //     } else {
+    //       return sections.indexOf(entry.target);
+    //     }
+    //   }
+    //   return sections.indexOf(entry.target);
+    // }
+    // function createIntersectionObserver(marginTop) {
+    //   marginTop = Math.floor(marginTop + 10000);
+    //   let intersectionObserver = new IntersectionObserver(
+    //     (entries, observe) => {
+    //       let scrollHeight = document.documentElement.scrollHeight;
+    //       if (scrollHeight > marginTop) {
+    //         observe.disconnect();
+    //         createIntersectionObserver(scrollHeight);
+    //         return;
+    //       }
+    //       let index = findIndex(entries);
+    //       activateNavByIndex(navItems[index]);
+    //     }, {
+    //       rootMargin: marginTop + "px 0px -100% 0px",
+    //       threshold: 0,
+    //     }
+    //   );
+    //   sections.forEach((element) => {
+    //     element && intersectionObserver.observe(element);
+    //   });
+    // }
+    // createIntersectionObserver(document.documentElement.scrollHeight);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    volantis.requestAnimationFrame(listenSidebarTOC)
+  });
+  volantis.pjax.push(listenSidebarTOC);
+</script>
+
+
+
+
+
+<script>
+  document.onreadystatechange = function () {
+    if (document.readyState == 'complete') {
+      // 页面加载完毕 样式加载失败，或是当前网速慢，或是开启了省流模式
+      const { saveData, effectiveType } = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {}
+      if (getComputedStyle(document.querySelector("#safearea"), null)["display"] == "none" || saveData || /2g/.test(effectiveType)) {
+        document.querySelectorAll(".reveal").forEach(function (e) {
+          e.style["opacity"] = "1";
+        });
+        document.querySelector("#safearea").style["display"] = "block";
+      }
+    }
+  }
+</script>
+
+
+
+      
+        <!--
+  pjax重载区域接口：
+  1.  <pjax></pjax> 标签 pjax 标签必须存在于所有页面 否则 pjax error
+  2.  script[data-pjax]
+  3.  .pjax-reload script
+  4.  .pjax
+-->
+
+
+
+<script src="https://cdn.bootcdn.net/ajax/libs/pjax/0.2.8/pjax.min.js"></script>
+
+<script>
+// 性能监控与降级控制
+const performanceMonitor = {
+  slowThreshold: 800,     // 慢请求阈值(毫秒)
+  slowCount: 0,           // 连续慢请求计数
+  maxSlowAllowed: 2,      // 允许的最大连续慢请求数
+  requestStartTime: 0,    // 请求开始时间戳
+
+  // 记录请求开始时间
+  start() {
+    this.requestStartTime = Date.now();
+  },
+
+  // 计算请求耗时并判断
+  check() {
+    const duration = Date.now() - this.requestStartTime;
+    
+    if (duration > this.slowThreshold) {
+      this.slowCount++;
+    } else {
+      this.slowCount = 0;    // 耗时正常，重置计数
+    }
+  },
+  // 测试结果
+  res(){
+    // 连续慢请求达到阈值，强制刷新
+    if (this.slowCount >= this.maxSlowAllowed) {         
+      return true;    // 需要降级
+    }
+    return false;     // 无需降级
+  }
+};
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox]):not([onclick="return false;"]):not([onclick="return!1"]):not([target="_blank"]):not([target="view_window"]):not([href$=".xml"])',
+        // 这里的 selectors 需要保证每个页面都含有相同的数目
+        selectors: [
+          "head title",
+          "head meta[name=keywords]",
+          "head meta[name=description]",
+          
+          "#l_main",
+          "#pjax-header-nav-list",
+          ".pjax",
+          "pjax", // <pjax></pjax> 标签
+          // 临时测试
+          "meta[name=robots]",
+          "link[rel=canonical]",
+          "meta[property='og:title']",
+          "meta[property='og:description']",
+          "meta[property='og:url']",
+          "meta[property='og:image']",
+          "script[type='application/ld+json']",
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000,
+        
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+      performanceMonitor.start();  // 请求开始计时
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var excludeList = [""];
+        if (excludeList[0] != "") {
+          excludeList.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+        if (performanceMonitor.res()){
+          window.location.href = targetUrl;
+        }
+      } catch (error) {}
+
+      // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 降级控制检测
+      performanceMonitor.check()
+      // 这里的 script 不需要保证每个页面都含有相同的数目
+      document.querySelectorAll('script[data-pjax], .pjax-reload script').forEach(e=>{
+        const code = e.text || e.textContent || e.innerHTML || '';
+        const script = document.createElement('script');
+        Object.keys(e.attributes).forEach(i=>{
+          script.setAttribute(e.attributes[i].nodeName,e.attributes[i].nodeValue)
+        })
+        if (code) {
+          script.appendChild(document.createTextNode(code));
+        }
+        e.parentNode.replaceChild(script, e);
+      });
+
+      // 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.complete.start();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      if(volantis.debug === "pjax") {
+        console.error(e);
+        console.log('pjax error: \n' + JSON.stringify(e));
+      }else{
+        // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+        volantis.pjax.method.error.start();
+        window.location.href = e.triggerElement.href;
+      }
+    });
+</script>
+
+      
+    </div>
+    <!-- import body_end begin-->
+    <!-- import body_end end-->
+    <!-- Custom Files bodyEnd begin-->
+    
+    <!-- Custom Files bodyEnd end-->
+  </body>
+</html>
