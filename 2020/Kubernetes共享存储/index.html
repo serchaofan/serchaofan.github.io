@@ -35,22 +35,23 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>Kubernetes共享存储 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="Kubernetes, Kubernetes,存储,PV,CSI,undefined">
-  <meta desc name="description" content="本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、kubernetes.io&#x2F;*、--admission-control 等内容已过时，不再作为操作依据。 - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="Kubernetes, Kubernetes,存储,PV,PVC,CSI,undefined">
+  <meta desc name="description" content="本文基于 Kubernetes v1.37 官方文档重写，从运维视角讲清 Volume、PV&#x2F;PVC 绑定、StorageClass、CSI、快照、克隆、扩容、拓扑、性能和故障排查。旧笔记中的 in-tree provisioner、kubernetes.io&#x2F;*、--admission-control... - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kubernetes共享存储">
 <meta property="og:url" content="https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、kubernetes.io&#x2F;*、--admission-control 等内容已过时，不再作为操作依据。">
+<meta property="og:description" content="本文基于 Kubernetes v1.37 官方文档重写，从运维视角讲清 Volume、PV&#x2F;PVC 绑定、StorageClass、CSI、快照、克隆、扩容、拓扑、性能和故障排查。旧笔记中的 in-tree provisioner、kubernetes.io&#x2F;*、--admission-control 等内容已过时，不再作为操作依据。 最后更新：2026-10-22">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-04-05T11:06:54.000Z">
-<meta property="article:modified_time" content="2026-10-22T15:19:33.348Z">
+<meta property="article:modified_time" content="2026-10-22T17:17:42.788Z">
 <meta property="article:author" content="Tianyi Gu">
 <meta property="article:tag" content="Kubernetes">
 <meta property="article:tag" content="存储">
 <meta property="article:tag" content="PV">
+<meta property="article:tag" content="PVC">
 <meta property="article:tag" content="CSI">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
@@ -2254,7 +2255,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792686289207),
+    lastupdate: new Date(1792690087254),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2301,7 +2302,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes共享存储/","name":"Kubernetes共享存储"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes共享存储","description":"本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、kubernetes.io/*、--admission-control 等内容已过时，不再作为操作依据。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/","wordCount":157,"datePublished":"2020-04-05T11:06:54.000Z","dateModified":"2026-10-22T15:19:33.348Z","articleSection":"Kubernetes","keywords":"Kubernetes,存储,PV,CSI","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Kubernetes/","name":"Kubernetes"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kubernetes共享存储/","name":"Kubernetes共享存储"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kubernetes共享存储","description":"本文基于 Kubernetes v1.37 官方文档重写，从运维视角讲清 Volume、PV&#x2F;PVC 绑定、StorageClass、CSI、快照、克隆、扩容、拓扑、性能和故障排查。旧笔记中的 in-tree provisioner、kubernetes.io/*、--admission-control 等内容已过时，不再作为操作依据。\n最后更新：2026-10-22","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kubernetes%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8/","wordCount":190,"datePublished":"2020-04-05T11:06:54.000Z","dateModified":"2026-10-22T17:17:42.788Z","articleSection":"Kubernetes","keywords":"Kubernetes,存储,PV,PVC,CSI","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2682,30 +2683,46 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <p>本文基于 Kubernetes v1.37 官方文档重写，讲清 Volume、PV&#x2F;PVC、StorageClass、CSI、快照、扩容和常见故障。旧笔记中的 in-tree provisioner、<code>kubernetes.io/*</code>、<code>--admission-control</code> 等内容已过时，不再作为操作依据。</p>
+    <p>本文基于 Kubernetes v1.37 官方文档重写，从运维视角讲清 Volume、PV&#x2F;PVC 绑定、StorageClass、CSI、快照、克隆、扩容、拓扑、性能和故障排查。旧笔记中的 in-tree provisioner、<code>kubernetes.io/*</code>、<code>--admission-control</code> 等内容已过时，不再作为操作依据。</p>
+<p>最后更新：2026-10-22</p>
 <span id="more"></span>
 
 <ul>
-<li><a href="#%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B">存储模型</a></li>
-<li><a href="#volume">Volume</a></li>
+<li><a href="#%E5%AD%98%E5%82%A8%E6%9E%B6%E6%9E%84">存储架构</a></li>
+<li><a href="#volume-%E7%B1%BB%E5%9E%8B">Volume 类型</a></li>
 <li><a href="#pv-%E4%B8%8E-pvc">PV 与 PVC</a></li>
-<li><a href="#storageclass-%E4%B8%8E%E5%8A%A8%E6%80%81%E4%BE%9B%E7%BB%99">StorageClass 与动态供给</a></li>
-<li><a href="#csi">CSI</a></li>
-<li><a href="#%E5%BF%AB%E7%85%A7%E4%B8%8E%E6%81%A2%E5%A4%8D">快照与恢复</a></li>
-<li><a href="#%E6%89%A9%E5%AE%B9%E4%B8%8E%E6%8B%93%E6%89%91">扩容与拓扑</a></li>
-<li><a href="#nfs-%E7%A4%BA%E4%BE%8B">NFS 示例</a></li>
+<li><a href="#storageclass">StorageClass</a></li>
+<li><a href="#csi-%E6%B7%B1%E6%8C%96">CSI 深挖</a></li>
+<li><a href="#%E8%AE%BF%E9%97%AE%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%8C%82%E8%BD%BD%E8%AF%AD%E4%B9%89">访问模式与挂载语义</a></li>
+<li><a href="#%E5%BF%AB%E7%85%A7%E5%85%8B%E9%9A%86%E4%B8%8E%E5%A4%87%E4%BB%BD">快照、克隆与备份</a></li>
+<li><a href="#%E6%89%A9%E5%AE%B9">扩容</a></li>
+<li><a href="#statefulset-%E5%AD%98%E5%82%A8">StatefulSet 存储</a></li>
+<li><a href="#%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%8B%93%E6%89%91">调度与拓扑</a></li>
+<li><a href="#%E6%80%A7%E8%83%BD">性能</a></li>
+<li><a href="#%E5%AE%89%E5%85%A8">安全</a></li>
 <li><a href="#%E6%8E%92%E9%9A%9C">排障</a></li>
 <li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
+<li><a href="#%E9%99%84%E5%BD%95">附录</a></li>
 </ul>
-<h1 id="存储模型"><a href="#存储模型" class="headerlink" title="存储模型"></a>存储模型</h1><p>Kubernetes 存储分三层：</p>
+<h1 id="存储架构"><a href="#存储架构" class="headerlink" title="存储架构"></a>存储架构</h1><p>Kubernetes 存储分三层：</p>
 <ol>
 <li><strong>Volume</strong>：Pod 级别的挂载点，定义在 Pod spec 中</li>
 <li><strong>PV&#x2F;PVC</strong>：集群级存储资源与命名空间级请求</li>
 <li><strong>StorageClass + CSI</strong>：动态创建 PV 的模板和驱动</li>
 </ol>
+<p>一次 PVC 从创建到被 Pod 使用，大致经过：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">PVC 创建</span><br><span class="line">  → 绑定 PV（静态或动态供给）</span><br><span class="line">  → Pod 调度（可能等待拓扑）</span><br><span class="line">  → Attach（ControllerPublish，挂到节点）</span><br><span class="line">  → Mount（NodeStage/NodePublish，挂到 Pod）</span><br><span class="line">  → 容器使用</span><br><span class="line">  → Pod 删除 → Unmount → Detach</span><br><span class="line">  → PVC 删除 → PV 回收</span><br></pre></td></tr></table></figure>
+
+<p>关键组件：</p>
+<ul>
+<li><strong>kube-controller-manager</strong>：PV controller、attach&#x2F;detach controller</li>
+<li><strong>CSI controller</strong>：external-provisioner、external-attacher、external-resizer、external-snapshotter</li>
+<li><strong>kubelet</strong>：调用 CSI node 插件做 NodeStage&#x2F;NodePublish</li>
+<li><strong>CSI node 插件</strong>：通常以 DaemonSet 运行，负责设备挂载和文件系统</li>
+<li><strong>scheduler</strong>：结合 volume topology 做调度</li>
+</ul>
 <p>容器可写层不适合放持久化数据；数据库、日志、文件上传等应使用 Volume 或 PVC。</p>
-<h1 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h1><p>常见 Volume 类型：</p>
-<table>
+<h1 id="Volume-类型"><a href="#Volume-类型" class="headerlink" title="Volume 类型"></a>Volume 类型</h1><table>
 <thead>
 <tr>
 <th>类型</th>
@@ -2722,6 +2739,11 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <td><code>hostPath</code></td>
 <td>随节点</td>
 <td>节点代理、日志采集，生产慎用</td>
+</tr>
+<tr>
+<td><code>local</code> PV</td>
+<td>随节点</td>
+<td>本地 SSD、高性能数据库</td>
 </tr>
 <tr>
 <td><code>configMap</code></td>
@@ -2744,19 +2766,26 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <td>数据库、持久化数据</td>
 </tr>
 <tr>
-<td><code>nfs</code></td>
-<td>独立于 Pod</td>
-<td>共享文件</td>
+<td><code>csi</code>（inline）</td>
+<td>由驱动决定</td>
+<td>临时&#x2F;特殊 CSI 卷</td>
 </tr>
 <tr>
-<td><code>csi</code></td>
-<td>由驱动决定</td>
-<td>云盘、文件存储、对象存储</td>
+<td><code>ephemeral</code></td>
+<td>随 Pod</td>
+<td>自动创建 PVC 的临时卷</td>
 </tr>
 </tbody></table>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumes:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">cache</span></span><br><span class="line">  <span class="attr">emptyDir:</span> &#123;&#125;</span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">  <span class="attr">configMap:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">app-config</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line">  <span class="attr">persistentVolumeClaim:</span></span><br><span class="line">    <span class="attr">claimName:</span> <span class="string">app-data</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumes:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">cache</span></span><br><span class="line">  <span class="attr">emptyDir:</span></span><br><span class="line">    <span class="attr">medium:</span> <span class="string">Memory</span></span><br><span class="line">    <span class="attr">sizeLimit:</span> <span class="string">512Mi</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">  <span class="attr">configMap:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">app-config</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line">  <span class="attr">persistentVolumeClaim:</span></span><br><span class="line">    <span class="attr">claimName:</span> <span class="string">app-data</span></span><br></pre></td></tr></table></figure>
 
-<p><code>emptyDir</code> 在容器重启时保留，Pod 删除时清理；<code>hostPath</code> 与节点强绑定，Pod 漂移后数据不跟随。</p>
+<p>说明：</p>
+<ul>
+<li><code>emptyDir</code> 在容器重启时保留，Pod 删除时清理；<code>medium: Memory</code> 用内存，受 <code>sizeLimit</code> 限制</li>
+<li><code>hostPath</code> 与节点强绑定，Pod 漂移后数据不跟随，且有安全风险</li>
+<li><code>local</code> PV 通过 nodeAffinity 绑定节点，适合本地 SSD</li>
+<li><code>projected</code> 可把多个来源合并到一个目录</li>
+<li>generic ephemeral volume 用 <code>ephemeral.volumeClaimTemplate</code> 自动创建 PVC，Pod 删除时清理</li>
+</ul>
 <h1 id="PV-与-PVC"><a href="#PV-与-PVC" class="headerlink" title="PV 与 PVC"></a>PV 与 PVC</h1><ul>
 <li><strong>PV</strong>：集群级资源，描述一块实际存储（容量、访问模式、回收策略、后端类型）</li>
 <li><strong>PVC</strong>：命名空间级请求，描述需要多大、什么访问模式</li>
@@ -2764,7 +2793,123 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </ul>
 <p><img src="https://kubernetes.io/images/blog/2018-07-12-resizing-persistent-volumes-using-kubernetes/pvc-storageclass.png" class="lazyload" data-srcset="https://kubernetes.io/images/blog/2018-07-12-resizing-persistent-volumes-using-kubernetes/pvc-storageclass.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="PV/PVC/StorageClass"></p>
 <p><em>图 1：PVC、PV 与 StorageClass 的关系（Kubernetes 官方博客）</em></p>
-<h2 id="访问模式"><a href="#访问模式" class="headerlink" title="访问模式"></a>访问模式</h2><table>
+<h2 id="绑定方式"><a href="#绑定方式" class="headerlink" title="绑定方式"></a>绑定方式</h2><ul>
+<li><strong>动态供给</strong>：PVC 指定 StorageClass，provisioner 创建 PV</li>
+<li><strong>静态绑定</strong>：管理员先创建 PV，PVC 通过容量&#x2F;访问模式&#x2F;selector 匹配</li>
+<li><strong>指定 PV</strong>：PVC 用 <code>volumeName</code> 直接绑定某个 PV</li>
+<li><strong>预留 PV</strong>：PV 用 <code>claimRef</code> 预留某个 PVC，避免被其他 PVC 抢走</li>
+</ul>
+<p>静态 PV 示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolume</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data-pv</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">capacity:</span></span><br><span class="line">    <span class="attr">storage:</span> <span class="string">100Gi</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">persistentVolumeReclaimPolicy:</span> <span class="string">Retain</span></span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">manual</span></span><br><span class="line">  <span class="attr">nfs:</span></span><br><span class="line">    <span class="attr">server:</span> <span class="number">10.0</span><span class="number">.0</span><span class="number">.10</span></span><br><span class="line">    <span class="attr">path:</span> <span class="string">/data/nfs</span></span><br></pre></td></tr></table></figure>
+
+<p>PVC 指定：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">manual</span></span><br><span class="line">  <span class="attr">volumeName:</span> <span class="string">data-pv</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">100Gi</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h2><p>PVC 状态：</p>
+<ul>
+<li><code>Pending</code>：还没有绑定 PV</li>
+<li><code>Bound</code>：已绑定</li>
+<li><code>Lost</code>：绑定的 PV 不存在</li>
+</ul>
+<p>PV 状态：</p>
+<ul>
+<li><code>Available</code>：可用</li>
+<li><code>Bound</code>：已绑定</li>
+<li><code>Released</code>：PVC 已删除，但 PV 还未回收</li>
+<li><code>Failed</code>：回收失败</li>
+</ul>
+<p>回收策略：</p>
+<ul>
+<li><code>Delete</code>：删除 PV 和后端存储（动态 PV 常见默认）</li>
+<li><code>Retain</code>：保留 PV 和后端数据，需要手工清理</li>
+<li><code>Recycle</code>：已废弃，不要使用</li>
+</ul>
+<h2 id="保护机制"><a href="#保护机制" class="headerlink" title="保护机制"></a>保护机制</h2><ul>
+<li>PVC 有 <code>kubernetes.io/pvc-protection</code> finalizer，正在被 Pod 使用时不会被删除</li>
+<li>PV 有 <code>kubernetes.io/pv-protection</code> finalizer，绑定期间不会被删除</li>
+<li>删除 PVC 后，PV 进入 <code>Released</code>，是否删除取决于 <code>reclaimPolicy</code></li>
+<li>删除 Namespace 会删除 PVC；PV 是否删除取决于 reclaimPolicy</li>
+</ul>
+<h2 id="绑定细节"><a href="#绑定细节" class="headerlink" title="绑定细节"></a>绑定细节</h2><ul>
+<li>PVC 一旦绑定，通常不能改 <code>storageClassName</code>&#x2F;<code>volumeName</code></li>
+<li>静态 PV 的容量、访问模式、selector 必须匹配</li>
+<li><code>claimRef</code> 可以预留 PV，防止被其他 PVC 绑定</li>
+<li>动态供给下，PVC 的 <code>storageClassName</code> 为空字符串表示禁用动态供给</li>
+<li>没有默认 StorageClass 时，PVC 可能一直 Pending</li>
+</ul>
+<h1 id="StorageClass"><a href="#StorageClass" class="headerlink" title="StorageClass"></a>StorageClass</h1><p>StorageClass 描述“用什么驱动、什么参数”创建 PV：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">storageclass.kubernetes.io/is-default-class:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">ebs.csi.aws.com</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">gp3</span></span><br><span class="line"><span class="attr">reclaimPolicy:</span> <span class="string">Delete</span></span><br><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">WaitForFirstConsumer</span></span><br><span class="line"><span class="attr">allowVolumeExpansion:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">mountOptions:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">noatime</span></span><br></pre></td></tr></table></figure>
+
+<p>关键字段：</p>
+<ul>
+<li><code>provisioner</code>：CSI 驱动名称，例如 <code>ebs.csi.aws.com</code>、<code>pd.csi.storage.gke.io</code>、<code>nfs.csi.k8s.io</code>；旧的 <code>kubernetes.io/*</code> 仅用于历史兼容</li>
+<li><code>parameters</code>：驱动特定参数（类型、IOPS、吞吐、加密、文件系统）</li>
+<li><code>reclaimPolicy</code>：<code>Delete</code> 或 <code>Retain</code></li>
+<li><code>volumeBindingMode</code>：<code>Immediate</code> 或 <code>WaitForFirstConsumer</code></li>
+<li><code>allowVolumeExpansion</code>：允许扩容 PVC</li>
+<li><code>mountOptions</code>：文件系统挂载参数</li>
+<li><code>allowedTopologies</code>：限制可用区&#x2F;区域</li>
+</ul>
+<p>默认 StorageClass：</p>
+<ul>
+<li>用注解 <code>storageclass.kubernetes.io/is-default-class: &quot;true&quot;</code></li>
+<li>多个默认类时以最近创建的为准，生产只保留一个</li>
+<li>删除默认类前先确认没有 PVC 依赖</li>
+</ul>
+<p><code>volumeBindingMode</code>：</p>
+<ul>
+<li><code>Immediate</code>：PVC 创建后立即创建 PV，可能造成拓扑不匹配</li>
+<li><code>WaitForFirstConsumer</code>：等 Pod 调度后再创建 PV，推荐用于云盘&#x2F;本地盘</li>
+</ul>
+<h1 id="CSI-深挖"><a href="#CSI-深挖" class="headerlink" title="CSI 深挖"></a>CSI 深挖</h1><p>CSI（Container Storage Interface）是 Kubernetes 与存储系统的标准接口。生产存储统一使用 CSI。</p>
+<h2 id="控制器与节点插件"><a href="#控制器与节点插件" class="headerlink" title="控制器与节点插件"></a>控制器与节点插件</h2><p>CSI 驱动通常分两部分：</p>
+<ul>
+<li><strong>Controller 插件</strong>：Deployment&#x2F;StatefulSet，负责创建&#x2F;删除卷、Attach&#x2F;Detach、扩容、快照</li>
+<li><strong>Node 插件</strong>：DaemonSet，负责 NodeStage&#x2F;NodePublish、格式化、挂载</li>
+</ul>
+<p>sidecar：</p>
+<ul>
+<li><strong>external-provisioner</strong>：创建&#x2F;删除 PV</li>
+<li><strong>external-attacher</strong>：ControllerPublish&#x2F;ControllerUnpublish</li>
+<li><strong>external-resizer</strong>：扩容</li>
+<li><strong>external-snapshotter</strong>：快照</li>
+<li><strong>node-driver-registrar</strong>：在节点注册驱动</li>
+<li><strong>livenessprobe</strong>：健康检查</li>
+<li><strong>external-health-monitor</strong>：卷健康监控（可选）</li>
+</ul>
+<h2 id="核心对象"><a href="#核心对象" class="headerlink" title="核心对象"></a>核心对象</h2><ul>
+<li><strong>CSIDriver</strong>：描述驱动能力<ul>
+<li><code>attachRequired</code></li>
+<li><code>podInfoOnMount</code></li>
+<li><code>volumeLifecycleModes</code>（Persistent&#x2F;Ephemeral）</li>
+<li><code>storageCapacity</code></li>
+<li><code>fsGroupPolicy</code>（None&#x2F;File&#x2F;ReadWriteOnceWithFSType）</li>
+<li><code>requiresRepublish</code></li>
+</ul>
+</li>
+<li><strong>CSINode</strong>：节点上的驱动和拓扑</li>
+<li><strong>VolumeAttachment</strong>：卷挂载到哪个节点，包含 attached&#x2F;attachError&#x2F;detachError</li>
+<li><strong>CSIStorageCapacity</strong>：容量感知调度</li>
+</ul>
+<h2 id="Attach-x2F-Mount-流程"><a href="#Attach-x2F-Mount-流程" class="headerlink" title="Attach &#x2F; Mount 流程"></a>Attach &#x2F; Mount 流程</h2><ol>
+<li>PVC 触发动态供给，external-provisioner 创建 PV；PV controller 完成绑定</li>
+<li>attach&#x2F;detach controller 创建 VolumeAttachment</li>
+<li>external-attacher 调用 CSI <code>ControllerPublishVolume</code></li>
+<li>kubelet 在节点上调用 CSI <code>NodeStageVolume</code>（格式化&#x2F;挂载到全局目录）</li>
+<li>kubelet 调用 <code>NodePublishVolume</code>（bind mount 到 Pod 目录）</li>
+<li>Pod 删除时反向执行</li>
+</ol>
+<p>排查时按这个链路逐段看：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get pv,pvc,volumeattachment</span><br><span class="line">kubectl describe volumeattachment &lt;name&gt;</span><br><span class="line">kubectl get csinode &lt;node&gt; -o yaml</span><br><span class="line">kubectl get csidriver</span><br><span class="line">kubectl logs -n &lt;csi-ns&gt; deploy/&lt;controller&gt;</span><br><span class="line">kubectl logs -n &lt;csi-ns&gt; ds/&lt;node-plugin&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="in-tree-与-CSI-Migration"><a href="#in-tree-与-CSI-Migration" class="headerlink" title="in-tree 与 CSI Migration"></a>in-tree 与 CSI Migration</h2><ul>
+<li>旧 in-tree 存储插件已逐步迁移到 CSI</li>
+<li>新集群不要再用 in-tree provisioner</li>
+<li>迁移后的 StorageClass 使用 CSI 驱动名</li>
+<li>升级时要确认 CSI 驱动版本和 Kubernetes 版本兼容</li>
+</ul>
+<h2 id="容量感知调度"><a href="#容量感知调度" class="headerlink" title="容量感知调度"></a>容量感知调度</h2><p><code>CSIStorageCapacity</code> 让调度器知道某个拓扑域还有多少容量，避免把 Pod 调度到没容量的存储池。需要驱动支持并开启 <code>storageCapacity</code>。</p>
+<h1 id="访问模式与挂载语义"><a href="#访问模式与挂载语义" class="headerlink" title="访问模式与挂载语义"></a>访问模式与挂载语义</h1><h2 id="访问模式"><a href="#访问模式" class="headerlink" title="访问模式"></a>访问模式</h2><table>
 <thead>
 <tr>
 <th>模式</th>
@@ -2793,118 +2938,199 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <td>单 Pod 读写，仅 CSI 支持</td>
 </tr>
 </tbody></table>
-<p>注意：RWO 是“单节点”，不是“单 Pod”。同一节点上的多个 Pod 仍可能同时挂载同一个 RWO 卷。需要严格单 Pod 独占时用 RWOP。</p>
-<p>访问模式是能力声明，最终由 CSI&#x2F;存储后端执行；不是所有驱动都支持 RWX。</p>
-<h2 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h2><p>PVC 状态：</p>
+<p>注意：</p>
 <ul>
-<li><code>Pending</code>：还没有绑定 PV</li>
-<li><code>Bound</code>：已绑定</li>
-<li><code>Lost</code>：绑定的 PV 不存在</li>
+<li>RWO 是“单节点”，不是“单 Pod”；同一节点多个 Pod 仍可能同时挂载</li>
+<li>需要严格单 Pod 独占时用 RWOP</li>
+<li>访问模式是能力声明，最终由 CSI&#x2F;存储后端执行</li>
+<li>不是所有驱动都支持 RWX</li>
 </ul>
-<p>PV 状态：</p>
-<ul>
-<li><code>Available</code>：可用</li>
-<li><code>Bound</code>：已绑定</li>
-<li><code>Released</code>：PVC 已删除，但 PV 还未回收</li>
-<li><code>Failed</code>：回收失败</li>
+<h2 id="块设备-vs-文件系统"><a href="#块设备-vs-文件系统" class="headerlink" title="块设备 vs 文件系统"></a>块设备 vs 文件系统</h2><ul>
+<li><code>volumeMode: Filesystem</code>：默认，Kubernetes 负责格式化&#x2F;挂载</li>
+<li><code>volumeMode: Block</code>：把裸块设备给容器，应用自己管理文件系统</li>
 </ul>
-<p>回收策略：</p>
-<ul>
-<li><code>Delete</code>：删除 PV 和后端存储（动态 PV 常见默认）</li>
-<li><code>Retain</code>：保留 PV 和后端数据，需要手工清理</li>
-<li><code>Recycle</code>：已废弃，不要使用</li>
-</ul>
-<h1 id="StorageClass-与动态供给"><a href="#StorageClass-与动态供给" class="headerlink" title="StorageClass 与动态供给"></a>StorageClass 与动态供给</h1><p>StorageClass 描述“用什么驱动、什么参数”创建 PV：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">storageclass.kubernetes.io/is-default-class:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">ebs.csi.aws.com</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">gp3</span></span><br><span class="line"><span class="attr">reclaimPolicy:</span> <span class="string">Delete</span></span><br><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">WaitForFirstConsumer</span></span><br><span class="line"><span class="attr">allowVolumeExpansion:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">volumeMode:</span> <span class="string">Block</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">100Gi</span></span><br></pre></td></tr></table></figure>
+
+<p>块设备适合数据库、分布式存储；普通应用优先文件系统模式。</p>
+<h2 id="fsGroup"><a href="#fsGroup" class="headerlink" title="fsGroup"></a>fsGroup</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">securityContext:</span></span><br><span class="line">  <span class="attr">fsGroup:</span> <span class="number">10001</span></span><br><span class="line">  <span class="attr">fsGroupChangePolicy:</span> <span class="string">OnRootMismatch</span></span><br></pre></td></tr></table></figure>
 
 <ul>
-<li><code>provisioner</code> 填 CSI 驱动名称，例如 <code>ebs.csi.aws.com</code>、<code>pd.csi.storage.gke.io</code>、<code>nfs.csi.k8s.io</code>；旧的 <code>kubernetes.io/*</code> 仅用于历史兼容</li>
-<li><code>volumeBindingMode: WaitForFirstConsumer</code>：等 Pod 调度后再创建 PV，避免可用区不匹配</li>
-<li><code>allowVolumeExpansion: true</code>：允许扩容 PVC</li>
-<li>默认 StorageClass 用注解标记；多个默认类时以最近创建的为准，生产应只保留一个</li>
+<li><code>fsGroup</code> 让卷的属组匹配 Pod</li>
+<li><code>fsGroupChangePolicy</code>：<code>Always</code> 或 <code>OnRootMismatch</code></li>
+<li>不是所有 CSI 驱动都支持；看 <code>CSIDriver.fsGroupPolicy</code></li>
+<li>NFS 等共享存储可能由后端 squash 决定，不只靠 fsGroup</li>
 </ul>
-<p>PVC 指定 StorageClass：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
-
-<p>不写 <code>storageClassName</code> 时使用默认类；写 <code>storageClassName: &quot;&quot;</code> 表示不使用动态供给，走静态绑定。</p>
-<h1 id="CSI"><a href="#CSI" class="headerlink" title="CSI"></a>CSI</h1><p>生产存储统一使用 CSI（Container Storage Interface）。CSI 驱动通常由以下 sidecar 组成：</p>
-<ul>
-<li><strong>external-provisioner</strong>：创建&#x2F;删除 PV</li>
-<li><strong>external-attacher</strong>：ControllerPublish&#x2F;ControllerUnpublish</li>
-<li><strong>external-resizer</strong>：扩容</li>
-<li><strong>external-snapshotter</strong>：快照</li>
-<li><strong>node-driver-registrar</strong>：在节点注册驱动</li>
-<li><strong>livenessprobe</strong>：健康检查</li>
+<h2 id="SELinux-x2F-mount-options"><a href="#SELinux-x2F-mount-options" class="headerlink" title="SELinux &#x2F; mount options"></a>SELinux &#x2F; mount options</h2><ul>
+<li>SELinux 环境需要正确标签，否则挂载失败</li>
+<li><code>mountOptions</code> 由 StorageClass 或 PV 指定</li>
+<li>常用：<code>noatime</code>、<code>discard</code>、<code>nodiratime</code></li>
+<li>不要用 <code>nobarrier</code> 关闭一致性保护</li>
 </ul>
-<p>相关对象：</p>
-<ul>
-<li><code>CSIDriver</code>：描述驱动能力，例如 <code>attachRequired</code>、<code>podInfoOnMount</code>、<code>volumeLifecycleModes</code>、<code>storageCapacity</code>、<code>fsGroupPolicy</code>；快照能力由 CSI 驱动和 <code>VolumeSnapshotClass</code> 决定，不在 <code>CSIDriver</code> 中声明</li>
-<li><code>CSINode</code>：描述节点上的驱动和拓扑</li>
-<li><code>VolumeAttachment</code>：描述卷挂载到哪个节点</li>
-</ul>
-<p>in-tree 存储插件已逐步迁移到 CSI，新集群不要再用 in-tree provisioner。</p>
-<h1 id="快照与恢复"><a href="#快照与恢复" class="headerlink" title="快照与恢复"></a>快照与恢复</h1><p>快照依赖 VolumeSnapshot CRD，通常需要单独安装：</p>
+<h1 id="快照、克隆与备份"><a href="#快照、克隆与备份" class="headerlink" title="快照、克隆与备份"></a>快照、克隆与备份</h1><h2 id="快照"><a href="#快照" class="headerlink" title="快照"></a>快照</h2><p>快照依赖 VolumeSnapshot CRD，通常需要单独安装：</p>
 <figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">snapshot.storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">VolumeSnapshot</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data-snapshot</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">volumeSnapshotClassName:</span> <span class="string">csi-snapclass</span></span><br><span class="line">  <span class="attr">source:</span></span><br><span class="line">    <span class="attr">persistentVolumeClaimName:</span> <span class="string">data</span></span><br></pre></td></tr></table></figure>
 
-<p>恢复：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data-restored</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">dataSource:</span></span><br><span class="line">    <span class="attr">kind:</span> <span class="string">VolumeSnapshot</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">data-snapshot</span></span><br><span class="line">    <span class="attr">apiGroup:</span> <span class="string">snapshot.storage.k8s.io</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
+<p>相关对象：</p>
+<ul>
+<li><code>VolumeSnapshot</code>：命名空间级快照请求</li>
+<li><code>VolumeSnapshotContent</code>：集群级快照内容</li>
+<li><code>VolumeSnapshotClass</code>：驱动和删除策略</li>
+</ul>
+<p><code>deletionPolicy</code>：</p>
+<ul>
+<li><code>Delete</code>：删除 VolumeSnapshot 时删除后端快照</li>
+<li><code>Retain</code>：保留后端快照</li>
+</ul>
+<h2 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">data-restored</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">  <span class="attr">storageClassName:</span> <span class="string">standard</span></span><br><span class="line">  <span class="attr">dataSource:</span></span><br><span class="line">    <span class="attr">kind:</span> <span class="string">VolumeSnapshot</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">data-snapshot</span></span><br><span class="line">    <span class="attr">apiGroup:</span> <span class="string">snapshot.storage.k8s.io</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
 
-<p>快照不是备份的完整替代：还需要考虑跨区域复制、应用一致性（数据库应先做一致性快照或逻辑备份）和恢复演练。</p>
-<h1 id="扩容与拓扑"><a href="#扩容与拓扑" class="headerlink" title="扩容与拓扑"></a>扩容与拓扑</h1><h2 id="扩容-PVC"><a href="#扩容-PVC" class="headerlink" title="扩容 PVC"></a>扩容 PVC</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl patch pvc data -p <span class="string">&#x27;&#123;&quot;spec&quot;:&#123;&quot;resources&quot;:&#123;&quot;requests&quot;:&#123;&quot;storage&quot;:&quot;30Gi&quot;&#125;&#125;&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>注意：</p>
+<ul>
+<li>恢复的 PVC 容量不能小于快照的 <code>restoreSize</code></li>
+<li>快照和 PVC 通常要在同一命名空间</li>
+<li>跨命名空间恢复需要预置 VolumeSnapshotContent 或复制流程</li>
+<li>应用一致性：数据库先做一致性快照或逻辑备份</li>
+</ul>
+<h2 id="克隆"><a href="#克隆" class="headerlink" title="克隆"></a>克隆</h2><p>PVC 克隆：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">dataSource:</span></span><br><span class="line">    <span class="attr">kind:</span> <span class="string">PersistentVolumeClaim</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line">  <span class="attr">resources:</span></span><br><span class="line">    <span class="attr">requests:</span></span><br><span class="line">      <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>需要 CSI 驱动支持</li>
+<li>源 PVC 和目标 PVC 通常同命名空间</li>
+<li>克隆是存储层操作，不保证应用一致性</li>
+</ul>
+<h2 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h2><ul>
+<li>快照不是备份：同存储系统，误删&#x2F;区域故障可能一起丢</li>
+<li>备份要跨区域、加密、可恢复</li>
+<li>数据库用逻辑备份 + 物理备份 + binlog&#x2F;PITR</li>
+<li>用 Velero 等工具编排 PVC 备份和恢复</li>
+<li>定期恢复演练，验证 RTO&#x2F;RPO</li>
+</ul>
+<h1 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h1><h2 id="扩容-PVC"><a href="#扩容-PVC" class="headerlink" title="扩容 PVC"></a>扩容 PVC</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl patch pvc data -p <span class="string">&#x27;&#123;&quot;spec&quot;:&#123;&quot;resources&quot;:&#123;&quot;requests&quot;:&#123;&quot;storage&quot;:&quot;30Gi&quot;&#125;&#125;&#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
 
 <p>前提：</p>
 <ul>
 <li>StorageClass <code>allowVolumeExpansion: true</code></li>
 <li>CSI 驱动支持扩容</li>
-<li>文件系统扩容有时需要重启 Pod 或等待 kubelet 完成</li>
+<li>文件系统支持在线扩容</li>
 </ul>
-<h2 id="拓扑感知"><a href="#拓扑感知" class="headerlink" title="拓扑感知"></a>拓扑感知</h2><p>云盘通常绑定可用区。使用 <code>WaitForFirstConsumer</code> 可以让 PV 在 Pod 调度后创建，避免“Pod 调度到 A 区，PV 在 B 区”导致挂载失败。</p>
+<p>状态：</p>
+<ul>
+<li><code>Resizing</code>：正在扩容</li>
+<li><code>FileSystemResizePending</code>：等待节点扩容文件系统</li>
+<li><code>NodeResizeError</code>：节点扩容失败</li>
+</ul>
+<h2 id="在线-vs-离线"><a href="#在线-vs-离线" class="headerlink" title="在线 vs 离线"></a>在线 vs 离线</h2><ul>
+<li>块存储扩容通常需要先扩后端卷，再扩文件系统</li>
+<li>ext4&#x2F;XFS 支持在线扩容（XFS 只能扩）</li>
+<li>某些驱动需要重启 Pod 完成文件系统扩容</li>
+<li>缩容通常不支持；不要原地缩容</li>
+</ul>
+<h2 id="失败处理"><a href="#失败处理" class="headerlink" title="失败处理"></a>失败处理</h2><ul>
+<li>看 PVC events 和 CSI controller 日志</li>
+<li>确认后端卷已扩容</li>
+<li>确认节点上的文件系统已扩容</li>
+<li>必要时手工触发 kubelet 重试或重启 Pod</li>
+</ul>
+<h1 id="StatefulSet-存储"><a href="#StatefulSet-存储" class="headerlink" title="StatefulSet 存储"></a>StatefulSet 存储</h1><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumeClaimTemplates:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">metadata:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">data</span></span><br><span class="line">  <span class="attr">spec:</span></span><br><span class="line">    <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteOnce&quot;</span>]</span><br><span class="line">    <span class="attr">storageClassName:</span> <span class="string">standard</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="attr">requests:</span></span><br><span class="line">        <span class="attr">storage:</span> <span class="string">20Gi</span></span><br></pre></td></tr></table></figure>
+
+<p>特点：</p>
+<ul>
+<li>每个 Pod 一个 PVC，命名 <code>&lt;template&gt;-&lt;statefulset&gt;-&lt;ordinal&gt;</code></li>
+<li>Pod 重建后复用原 PVC</li>
+<li>缩容时 PVC 默认保留</li>
+<li>删除 StatefulSet 时 PVC 默认保留</li>
+</ul>
+<p><code>persistentVolumeClaimRetentionPolicy</code>：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">persistentVolumeClaimRetentionPolicy:</span></span><br><span class="line">  <span class="attr">whenDeleted:</span> <span class="string">Retain</span></span><br><span class="line">  <span class="attr">whenScaled:</span> <span class="string">Retain</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>Retain</code>：保留 PVC</li>
+<li><code>Delete</code>：自动删除 PVC</li>
+<li>生产默认保留，避免误删数据</li>
+<li>恢复时要确认 PVC 和 PV 的绑定关系</li>
+</ul>
+<h1 id="调度与拓扑"><a href="#调度与拓扑" class="headerlink" title="调度与拓扑"></a>调度与拓扑</h1><p>云盘&#x2F;本地盘通常绑定可用区或节点：</p>
 <figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">WaitForFirstConsumer</span></span><br><span class="line"><span class="attr">allowedTopologies:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">matchLabelExpressions:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">topology.kubernetes.io/zone</span></span><br><span class="line">    <span class="attr">values:</span> [<span class="string">&quot;us-east-1a&quot;</span>, <span class="string">&quot;us-east-1b&quot;</span>]</span><br></pre></td></tr></table></figure>
 
-<h1 id="NFS-示例"><a href="#NFS-示例" class="headerlink" title="NFS 示例"></a>NFS 示例</h1><p>推荐使用 CSI NFS driver；旧版 <code>nfs-subdir-external-provisioner</code> 仍可用，但新集群优先 CSI。</p>
-<p>StorageClass：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">storage.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StorageClass</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs</span></span><br><span class="line"><span class="attr">provisioner:</span> <span class="string">nfs.csi.k8s.io</span></span><br><span class="line"><span class="attr">parameters:</span></span><br><span class="line">  <span class="attr">server:</span> <span class="number">10.0</span><span class="number">.0</span><span class="number">.10</span></span><br><span class="line">  <span class="attr">share:</span> <span class="string">/data/nfs</span></span><br><span class="line"><span class="attr">reclaimPolicy:</span> <span class="string">Retain</span></span><br><span class="line"><span class="attr">volumeBindingMode:</span> <span class="string">Immediate</span></span><br></pre></td></tr></table></figure>
-
-<p>静态 NFS PV：</p>
-<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PersistentVolume</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nfs-pv</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">capacity:</span></span><br><span class="line">    <span class="attr">storage:</span> <span class="string">100Gi</span></span><br><span class="line">  <span class="attr">accessModes:</span> [<span class="string">&quot;ReadWriteMany&quot;</span>]</span><br><span class="line">  <span class="attr">persistentVolumeReclaimPolicy:</span> <span class="string">Retain</span></span><br><span class="line">  <span class="attr">nfs:</span></span><br><span class="line">    <span class="attr">server:</span> <span class="number">10.0</span><span class="number">.0</span><span class="number">.10</span></span><br><span class="line">    <span class="attr">path:</span> <span class="string">/data/nfs</span></span><br></pre></td></tr></table></figure>
-
-<p>NFS 注意事项：</p>
 <ul>
-<li>RWX 下多客户端并发写需要应用自己处理锁和一致性</li>
-<li><code>hard</code> mount 可能导致客户端永久阻塞，<code>soft</code> mount 可能丢数据，按业务权衡</li>
-<li>NFS 版本、MTU、防火墙和 DNS 都要确认</li>
-<li>生产建议使用支持快照和扩容的 CSI NFS 驱动</li>
+<li><code>WaitForFirstConsumer</code>：Pod 调度后再创建&#x2F;绑定 PV</li>
+<li><code>Immediate</code>：先创建 PV，可能和 Pod 调度冲突</li>
+<li>local PV 用 nodeAffinity 绑定节点</li>
+<li>多可用区集群要确保 StorageClass 和节点池匹配</li>
+<li>拓扑不匹配的典型错误：Pod Pending、attach 失败、mount 失败</li>
+</ul>
+<h1 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h1><ul>
+<li>块存储适合数据库和低延迟；文件存储适合共享读、内容目录</li>
+<li>关注 IOPS、吞吐、队列深度和尾延迟，不只看平均值</li>
+<li>数据库避免多个 Pod 同时写同一个 RWO&#x2F;RWX 卷</li>
+<li>文件系统、块大小、mount options 会影响性能</li>
+<li>本地 SSD 性能好但生命周期跟节点绑定</li>
+<li>用 fio 等工具做基准测试，记录基线</li>
+<li>注意 CSI 驱动的缓存&#x2F;直写策略</li>
+<li>大量小文件关注 inode 和元数据性能</li>
+<li>RWX 文件存储注意锁、一致性和网络延迟</li>
+</ul>
+<h1 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h1><ul>
+<li>CSI node 插件通常需要较高权限，限制 namespace&#x2F;RBAC</li>
+<li>不要把 <code>hostPath</code> 当持久化方案</li>
+<li>Secret&#x2F;ConfigMap 挂载注意权限和只读</li>
+<li>启用 etcd 静态加密，保护 Secret</li>
+<li>快照可能包含敏感数据，限制访问和跨区域复制</li>
+<li>多租户限制可用 StorageClass 和容量</li>
+<li>审计 PVC&#x2F;PV&#x2F;VolumeSnapshot 的创建和删除</li>
+<li>使用加密 StorageClass（云盘&#x2F;KMS）</li>
+<li>备份加密，密钥独立管理</li>
 </ul>
 <h1 id="排障"><a href="#排障" class="headerlink" title="排障"></a>排障</h1><h2 id="PVC-一直-Pending"><a href="#PVC-一直-Pending" class="headerlink" title="PVC 一直 Pending"></a>PVC 一直 Pending</h2><ul>
 <li>是否有默认 StorageClass</li>
 <li>provisioner 是否正常</li>
 <li>容量&#x2F;访问模式是否满足</li>
-<li><code>volumeBindingMode: WaitForFirstConsumer</code> 时是否还没有 Pod 使用</li>
+<li><code>WaitForFirstConsumer</code> 时是否还没有 Pod 使用</li>
 <li>拓扑&#x2F;可用区是否匹配</li>
+<li>ResourceQuota 是否限制</li>
 </ul>
 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl describe pvc &lt;pvc&gt;</span><br><span class="line">kubectl get storageclass</span><br><span class="line">kubectl get pods -n &lt;csi-namespace&gt;</span><br><span class="line">kubectl get events -n &lt;ns&gt; --sort-by=.lastTimestamp</span><br></pre></td></tr></table></figure>
 
-<h2 id="多节点挂载失败"><a href="#多节点挂载失败" class="headerlink" title="多节点挂载失败"></a>多节点挂载失败</h2><ul>
-<li>RWO 卷被其他节点挂载</li>
-<li>文件系统损坏或未卸载干净</li>
-<li>云盘仍挂载在旧节点</li>
-</ul>
-<p>查看 VolumeAttachment：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get volumeattachment</span><br><span class="line">kubectl describe volumeattachment &lt;name&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="Attach-x2F-Detach-失败"><a href="#Attach-x2F-Detach-失败" class="headerlink" title="Attach&#x2F;Detach 失败"></a>Attach&#x2F;Detach 失败</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl get volumeattachment</span><br><span class="line">kubectl describe volumeattachment &lt;name&gt;</span><br><span class="line">kubectl logs -n &lt;csi-ns&gt; deploy/&lt;controller&gt;</span><br></pre></td></tr></table></figure>
 
-<h2 id="权限问题"><a href="#权限问题" class="headerlink" title="权限问题"></a>权限问题</h2><ul>
-<li>容器 UID&#x2F;GID 与存储目录属主不一致</li>
-<li>NFS squash 配置</li>
-<li><code>fsGroup</code> 对某些 CSI 卷不生效</li>
-<li><code>readOnlyRootFilesystem</code> 下应用仍试图写根目录</li>
+<p>常见原因：</p>
+<ul>
+<li>卷已挂到其他节点（Multi-Attach）</li>
+<li>旧节点未卸载</li>
+<li>云盘&#x2F;存储后端状态异常</li>
+<li>CSI controller 不可用</li>
+<li>节点 NotReady</li>
+</ul>
+<h2 id="Mount-失败"><a href="#Mount-失败" class="headerlink" title="Mount 失败"></a>Mount 失败</h2><ul>
+<li>文件系统损坏</li>
+<li>设备路径不存在</li>
+<li>权限&#x2F;SELinux</li>
+<li>网络存储不可达</li>
+<li>kubelet&#x2F;CSI node 插件异常</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">kubectl describe pod &lt;pod&gt;</span><br><span class="line">kubectl logs -n kube-system &lt;kubelet-pod&gt;  <span class="comment"># 如果以 Pod 运行</span></span><br><span class="line">journalctl -u kubelet -f</span><br></pre></td></tr></table></figure>
+
+<h2 id="扩容卡住"><a href="#扩容卡住" class="headerlink" title="扩容卡住"></a>扩容卡住</h2><ul>
+<li>StorageClass 未允许扩容</li>
+<li>CSI resizer 未运行</li>
+<li>后端卷已扩，文件系统未扩</li>
+<li><code>FileSystemResizePending</code> 需要节点操作</li>
+<li>事件和 CSI 日志</li>
+</ul>
+<h2 id="快照-x2F-恢复失败"><a href="#快照-x2F-恢复失败" class="headerlink" title="快照&#x2F;恢复失败"></a>快照&#x2F;恢复失败</h2><ul>
+<li>VolumeSnapshotClass 不存在</li>
+<li>CSI snapshotter 未运行</li>
+<li>快照未 <code>readyToUse</code></li>
+<li>恢复容量小于 <code>restoreSize</code></li>
+<li>跨命名空间&#x2F;跨区域限制</li>
 </ul>
 <h2 id="数据丢失风险"><a href="#数据丢失风险" class="headerlink" title="数据丢失风险"></a>数据丢失风险</h2><ul>
 <li><code>reclaimPolicy: Delete</code> 时删除 PVC 会删后端存储</li>
 <li>StatefulSet 的 PVC 默认不随 Pod 删除</li>
-<li>删除 Namespace 会删除其中的 PVC；PV 是否删除取决于 <code>reclaimPolicy</code>：<code>Delete</code>（动态供给默认）会同时删除 PV 和后端存储，<code>Retain</code> 则保留 PV 并进入 <code>Released</code></li>
+<li>删除 Namespace 会删除 PVC；PV 是否删除取决于 reclaimPolicy</li>
 <li>快照未做恢复演练</li>
+<li>误删 PV&#x2F;PVC 后不要急着手工删后端卷</li>
 </ul>
-<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="StorageClass-设计"><a href="#StorageClass-设计" class="headerlink" title="StorageClass 设计"></a>StorageClass 设计</h2><p>按性能和成本分层，而不是所有业务共用一个类：</p>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="StorageClass-设计"><a href="#StorageClass-设计" class="headerlink" title="StorageClass 设计"></a>StorageClass 设计</h2><p>按性能和成本分层：</p>
 <ul>
 <li><code>standard</code>：普通云盘&#x2F;HDD，成本低</li>
 <li><code>ssd</code>：通用 SSD</li>
@@ -2913,16 +3139,15 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </ul>
 <p>设计要点：</p>
 <ul>
-<li>默认类只保留一个，多个默认类行为以最近创建者为准，容易失控</li>
-<li>关键数据 <code>reclaimPolicy: Retain</code>，临时数据可以用 <code>Delete</code></li>
-<li>默认使用 <code>volumeBindingMode: WaitForFirstConsumer</code>，避免拓扑不匹配</li>
-<li>需要扩容时设置 <code>allowVolumeExpansion: true</code></li>
-<li>用 <code>mountOptions</code> 统一文件系统参数</li>
-<li>用 ResourceQuota 限制每个 Namespace 可用的存储总量和 PVC 数量</li>
-<li>多租户场景限制可用的 StorageClass，避免越权使用高成本存储</li>
+<li>默认类只保留一个</li>
+<li>关键数据 <code>reclaimPolicy: Retain</code></li>
+<li>默认 <code>WaitForFirstConsumer</code></li>
+<li>需要扩容时 <code>allowVolumeExpansion: true</code></li>
+<li>统一 <code>mountOptions</code></li>
+<li>用 ResourceQuota 限制容量和 PVC 数量</li>
+<li>多租户限制可用 StorageClass</li>
 </ul>
-<h2 id="CSI-选型"><a href="#CSI-选型" class="headerlink" title="CSI 选型"></a>CSI 选型</h2><p>选型要看业务，不只看“能挂载”：</p>
-<ul>
+<h2 id="CSI-选型"><a href="#CSI-选型" class="headerlink" title="CSI 选型"></a>CSI 选型</h2><ul>
 <li>块存储还是文件存储，是否需要 RWX</li>
 <li>IOPS、吞吐、延迟和稳定性</li>
 <li>是否支持快照、克隆、扩容、加密</li>
@@ -2932,65 +3157,53 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <li>商业支持、升级路径和故障处理资料</li>
 <li>与 Kubernetes 版本的兼容性</li>
 </ul>
-<p>数据库优先块存储；共享文件、CI 缓存、内容目录可以用文件存储；对象存储不要把 PVC 当对象存储用。</p>
 <h2 id="数据保护"><a href="#数据保护" class="headerlink" title="数据保护"></a>数据保护</h2><ul>
-<li>遵循 3-2-1：至少 3 份、2 种介质、1 份异地</li>
-<li>快照不是备份：快照通常在同一存储系统，误删、勒索、区域故障可能一起丢失</li>
-<li>数据库使用应用一致性备份（逻辑备份或一致性快照），不要只依赖卷快照</li>
-<li>关键 PVC 配置跨区域复制或定期导出</li>
+<li>3-2-1：至少 3 份、2 种介质、1 份异地</li>
+<li>快照不是备份</li>
+<li>数据库用应用一致性备份</li>
+<li>关键 PVC 跨区域复制</li>
 <li>备份加密，密钥独立管理</li>
-<li>定期做恢复演练，验证 RTO&#x2F;RPO</li>
-<li>明确保留策略：小时&#x2F;日&#x2F;周&#x2F;月，避免快照无限增长</li>
+<li>定期恢复演练，验证 RTO&#x2F;RPO</li>
+<li>明确保留策略</li>
 </ul>
 <h2 id="容量与配额"><a href="#容量与配额" class="headerlink" title="容量与配额"></a>容量与配额</h2><ul>
 <li>用 <code>requests.storage</code> 限制 Namespace 总量</li>
 <li>用 <code>count/persistentvolumeclaims</code> 限制 PVC 数量</li>
-<li>监控 PVC 使用率、inode、IOPS、吞吐和延迟</li>
-<li>扩容要确认 StorageClass 和 CSI 支持，文件系统扩容有时需要重启 Pod</li>
-<li>定期清理未使用 PVC、Released PV 和孤儿快照</li>
-<li>容量告警要留出扩容和迁移时间</li>
-</ul>
-<h2 id="性能"><a href="#性能" class="headerlink" title="性能"></a>性能</h2><ul>
-<li>块存储适合数据库和低延迟；文件存储适合共享读、内容目录</li>
-<li>关注 IOPS、吞吐、队列深度和尾延迟，不只看平均值</li>
-<li>数据库避免多个 Pod 同时写同一个 RWO&#x2F;RWX 卷</li>
-<li>文件系统、块大小、mount options 会影响性能</li>
-<li>本地 SSD 性能好但生命周期跟节点绑定，不适合持久化关键数据</li>
-<li>用 fio 等工具做基准测试，记录基线</li>
-</ul>
-<h2 id="多租户"><a href="#多租户" class="headerlink" title="多租户"></a>多租户</h2><ul>
-<li>限制可用 StorageClass</li>
-<li>用 ResourceQuota 限制容量和 PVC 数量</li>
-<li>敏感数据启用加密和独立密钥</li>
-<li>网络和访问权限隔离，避免跨 Namespace 挂载</li>
-<li>明确数据归属和删除责任</li>
-<li>强隔离场景考虑独立存储后端或独立集群</li>
+<li>监控 PVC 使用率、inode、IOPS、吞吐、延迟</li>
+<li>扩容前确认 StorageClass&#x2F;CSI&#x2F;文件系统支持</li>
+<li>定期清理未使用 PVC、Released PV、孤儿快照</li>
+<li>容量告警留出扩容时间</li>
 </ul>
 <h2 id="运维"><a href="#运维" class="headerlink" title="运维"></a>运维</h2><ul>
-<li>监控 CSI controller&#x2F;node 组件、VolumeAttachment 和快照任务</li>
-<li>关注多挂载、挂载超时、文件系统损坏和卸载失败</li>
-<li>CSI 升级前确认兼容性和回滚方案</li>
-<li>节点维护前确认卷是否能安全迁移</li>
-<li>定期检查卷的健康状态和后端容量</li>
-<li>把备份、恢复、扩容和故障处理写成 runbook</li>
+<li>监控 CSI controller&#x2F;node、VolumeAttachment、快照任务</li>
+<li>关注多挂载、挂载超时、文件系统损坏、卸载失败</li>
+<li>CSI 升级前确认兼容性和回滚</li>
+<li>节点维护前确认卷能安全迁移</li>
+<li>定期检查卷健康和后端容量</li>
+<li>把备份、恢复、扩容、故障处理写成 runbook</li>
 </ul>
 <h2 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h2><ul>
 <li>删除 PVC 时 <code>reclaimPolicy: Delete</code> 会删后端数据</li>
 <li>删除 Namespace 会删 PVC，动态 PV 可能随后被删除</li>
-<li>RWO 不是“单 Pod”，同一节点多个 Pod 仍可能同时挂载</li>
+<li>RWO 不是“单 Pod”</li>
 <li>RWX 多写需要应用处理锁和一致性</li>
 <li>多默认 StorageClass 行为不可控</li>
-<li>快照没做恢复演练，关键时刻不可用</li>
+<li>快照没做恢复演练</li>
 <li>忽略 inode 和文件系统限制</li>
 <li>使用未固定版本的第三方 provisioner 镜像</li>
 </ul>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看</span></span><br><span class="line">kubectl get pv,pvc,storageclass,volumeattachment -A</span><br><span class="line">kubectl get volumesnapshot,volumesnapshotcontent -A</span><br><span class="line">kubectl get csidriver,csistoragecapacity -A</span><br><span class="line">kubectl describe pvc &lt;pvc&gt; -n &lt;ns&gt;</span><br><span class="line">kubectl describe pv &lt;pv&gt;</span><br><span class="line">kubectl describe volumeattachment &lt;name&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 扩容</span></span><br><span class="line">kubectl patch pvc &lt;pvc&gt; -n &lt;ns&gt; -p <span class="string">&#x27;&#123;&quot;spec&quot;:&#123;&quot;resources&quot;:&#123;&quot;requests&quot;:&#123;&quot;storage&quot;:&quot;30Gi&quot;&#125;&#125;&#125;&#125;&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 快照</span></span><br><span class="line">kubectl get volumesnapshot -n &lt;ns&gt;</span><br><span class="line">kubectl describe volumesnapshot &lt;name&gt; -n &lt;ns&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># CSI</span></span><br><span class="line">kubectl get pods -n &lt;csi-ns&gt;</span><br><span class="line">kubectl logs -n &lt;csi-ns&gt; deploy/&lt;controller&gt;</span><br><span class="line">kubectl logs -n &lt;csi-ns&gt; ds/&lt;node-plugin&gt;</span><br></pre></td></tr></table></figure>
+
 <h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
 <li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/volumes/">Volumes</a></li>
 <li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/">Persistent Volumes</a></li>
 <li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/storage-classes/">Storage Classes</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/">Dynamic Provisioning</a></li>
 <li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/volumes/#csi">CSI</a></li>
 <li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/volume-snapshots/">Volume Snapshots</a></li>
-<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/">动态供给</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#expanding-persistent-volumes-claims">Volume Expansion</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSet</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/storage/storage-capacity/">Storage Capacity</a></li>
 </ul>
 
   </div>
@@ -3020,8 +3233,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AD%98%E5%82%A8/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>存储</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PV/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>PV</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/CSI/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>CSI</p></a></div>
-  <span hidden itemprop="keywords">Kubernetes 存储 PV CSI</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%AD%98%E5%82%A8/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>存储</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PV/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>PV</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/PVC/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>PVC</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/CSI/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>CSI</p></a></div>
+  <span hidden itemprop="keywords">Kubernetes 存储 PV PVC CSI</span>
   
 
 
@@ -3097,7 +3310,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">存储模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Volume"><span class="toc-text">Volume</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PV-%E4%B8%8E-PVC"><span class="toc-text">PV 与 PVC</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%A8%A1%E5%BC%8F"><span class="toc-text">访问模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">生命周期</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#StorageClass-%E4%B8%8E%E5%8A%A8%E6%80%81%E4%BE%9B%E7%BB%99"><span class="toc-text">StorageClass 与动态供给</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#CSI"><span class="toc-text">CSI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">快照与恢复</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9%E4%B8%8E%E6%8B%93%E6%89%91"><span class="toc-text">扩容与拓扑</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9-PVC"><span class="toc-text">扩容 PVC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%93%E6%89%91%E6%84%9F%E7%9F%A5"><span class="toc-text">拓扑感知</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#NFS-%E7%A4%BA%E4%BE%8B"><span class="toc-text">NFS 示例</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C"><span class="toc-text">排障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PVC-%E4%B8%80%E7%9B%B4-Pending"><span class="toc-text">PVC 一直 Pending</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E8%8A%82%E7%82%B9%E6%8C%82%E8%BD%BD%E5%A4%B1%E8%B4%A5"><span class="toc-text">多节点挂载失败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%99%90%E9%97%AE%E9%A2%98"><span class="toc-text">权限问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E9%A3%8E%E9%99%A9"><span class="toc-text">数据丢失风险</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#StorageClass-%E8%AE%BE%E8%AE%A1"><span class="toc-text">StorageClass 设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CSI-%E9%80%89%E5%9E%8B"><span class="toc-text">CSI 选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BF%9D%E6%8A%A4"><span class="toc-text">数据保护</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F%E4%B8%8E%E9%85%8D%E9%A2%9D"><span class="toc-text">容量与配额</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD"><span class="toc-text">性能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%9F%E6%88%B7"><span class="toc-text">多租户</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4"><span class="toc-text">运维</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91"><span class="toc-text">常见坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E6%9E%B6%E6%9E%84"><span class="toc-text">存储架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Volume-%E7%B1%BB%E5%9E%8B"><span class="toc-text">Volume 类型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PV-%E4%B8%8E-PVC"><span class="toc-text">PV 与 PVC</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%91%E5%AE%9A%E6%96%B9%E5%BC%8F"><span class="toc-text">绑定方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="toc-text">生命周期</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E6%8A%A4%E6%9C%BA%E5%88%B6"><span class="toc-text">保护机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%91%E5%AE%9A%E7%BB%86%E8%8A%82"><span class="toc-text">绑定细节</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#StorageClass"><span class="toc-text">StorageClass</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#CSI-%E6%B7%B1%E6%8C%96"><span class="toc-text">CSI 深挖</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E5%99%A8%E4%B8%8E%E8%8A%82%E7%82%B9%E6%8F%92%E4%BB%B6"><span class="toc-text">控制器与节点插件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%AF%B9%E8%B1%A1"><span class="toc-text">核心对象</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Attach-x2F-Mount-%E6%B5%81%E7%A8%8B"><span class="toc-text">Attach &#x2F; Mount 流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#in-tree-%E4%B8%8E-CSI-Migration"><span class="toc-text">in-tree 与 CSI Migration</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F%E6%84%9F%E7%9F%A5%E8%B0%83%E5%BA%A6"><span class="toc-text">容量感知调度</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%8C%82%E8%BD%BD%E8%AF%AD%E4%B9%89"><span class="toc-text">访问模式与挂载语义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E6%A8%A1%E5%BC%8F"><span class="toc-text">访问模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9D%97%E8%AE%BE%E5%A4%87-vs-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F"><span class="toc-text">块设备 vs 文件系统</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#fsGroup"><span class="toc-text">fsGroup</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SELinux-x2F-mount-options"><span class="toc-text">SELinux &#x2F; mount options</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E3%80%81%E5%85%8B%E9%9A%86%E4%B8%8E%E5%A4%87%E4%BB%BD"><span class="toc-text">快照、克隆与备份</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7"><span class="toc-text">快照</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%81%A2%E5%A4%8D"><span class="toc-text">恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%8B%E9%9A%86"><span class="toc-text">克隆</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD"><span class="toc-text">备份</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9"><span class="toc-text">扩容</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9-PVC"><span class="toc-text">扩容 PVC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8%E7%BA%BF-vs-%E7%A6%BB%E7%BA%BF"><span class="toc-text">在线 vs 离线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%B1%E8%B4%A5%E5%A4%84%E7%90%86"><span class="toc-text">失败处理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#StatefulSet-%E5%AD%98%E5%82%A8"><span class="toc-text">StatefulSet 存储</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E4%B8%8E%E6%8B%93%E6%89%91"><span class="toc-text">调度与拓扑</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%A7%E8%83%BD"><span class="toc-text">性能</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E5%85%A8"><span class="toc-text">安全</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C"><span class="toc-text">排障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PVC-%E4%B8%80%E7%9B%B4-Pending"><span class="toc-text">PVC 一直 Pending</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Attach-x2F-Detach-%E5%A4%B1%E8%B4%A5"><span class="toc-text">Attach&#x2F;Detach 失败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mount-%E5%A4%B1%E8%B4%A5"><span class="toc-text">Mount 失败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%AE%B9%E5%8D%A1%E4%BD%8F"><span class="toc-text">扩容卡住</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7-x2F-%E6%81%A2%E5%A4%8D%E5%A4%B1%E8%B4%A5"><span class="toc-text">快照&#x2F;恢复失败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E9%A3%8E%E9%99%A9"><span class="toc-text">数据丢失风险</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#StorageClass-%E8%AE%BE%E8%AE%A1"><span class="toc-text">StorageClass 设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CSI-%E9%80%89%E5%9E%8B"><span class="toc-text">CSI 选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BF%9D%E6%8A%A4"><span class="toc-text">数据保护</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F%E4%B8%8E%E9%85%8D%E9%A2%9D"><span class="toc-text">容量与配额</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4"><span class="toc-text">运维</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91"><span class="toc-text">常见坑</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 

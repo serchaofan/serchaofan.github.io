@@ -36,27 +36,22 @@
   <!-- 页面元数据 -->
   <title>Docker存储 - Tianyi的技术随笔</title>
   <meta name="keywords" content="Docker, Docker,存储,undefined">
-  <meta desc name="description" content="主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记（存储驱动相关行为已按 Docker 29 更新，历史驱动会单独标注）本篇主要包含以下内容
+  <meta desc name="description" content="Docker 存储要区分两个层面：
 
-Docker 存储介绍
-BindMount
-bind-propagation 传播挂载
-Selinux 标签
+镜像&#x2F;容器层存储：由 storage driver 或 containerd snapshotter 管理，负责镜像层、容器可写层、写时复制。
+数据持久化：由 volume、bind mount、tmpfs 提供，把数据放在容器可写层之外。
 
-
-Volume 数据卷
-Tmpfs
-数据... - Tianyi Gu - Tianyi的技术随笔">
+本文基于 Docker... - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker存储">
 <meta property="og:url" content="https://tianyigu.top/2018/Docker%E5%AD%98%E5%82%A8/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记（存储驱动相关行为已按 Docker 29 更新，历史驱动会单独标注）本篇主要包含以下内容  Docker 存储介绍 BindMount bind-propagation 传播挂载 Selinux 标签   Volume 数据卷 Tmpfs 数据卷容器 数据卷备份、还原与迁移 备份一个容器 还原一个容器 删除一个数据卷     存">
+<meta property="og:description" content="Docker 存储要区分两个层面：  镜像&#x2F;容器层存储：由 storage driver 或 containerd snapshotter 管理，负责镜像层、容器可写层、写时复制。 数据持久化：由 volume、bind mount、tmpfs 提供，把数据放在容器可写层之外。  本文基于 Docker Engine 29.9.x（2026-10）官方文档重写，重点说明 Docker 2">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2018-07-06T05:33:01.000Z">
-<meta property="article:modified_time" content="2026-10-22T14:29:11.940Z">
+<meta property="article:modified_time" content="2026-10-22T16:47:04.200Z">
 <meta property="article:author" content="Tianyi Gu">
 <meta property="article:tag" content="Docker">
 <meta property="article:tag" content="存储">
@@ -2262,7 +2257,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792686289207),
+    lastupdate: new Date(1792690087254),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2309,7 +2304,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Docker/","name":"Docker"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2018/Docker存储/","name":"Docker存储"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Docker存储","description":"主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记（存储驱动相关行为已按 Docker 29 更新，历史驱动会单独标注）本篇主要包含以下内容\n\nDocker 存储介绍\nBindMount\nbind-propagation 传播挂载\nSelinux 标签\n\n\nVolume 数据卷\nTmpfs\n数据卷容器\n数据卷备份、还原与迁移\n备份一个容器\n还原一个容器\n删除一个数据卷\n\n\n\n\n存储引擎\n常见问题\n参考资料","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2018/Docker%E5%AD%98%E5%82%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2018/Docker%E5%AD%98%E5%82%A8/","wordCount":213,"datePublished":"2018-07-06T05:33:01.000Z","dateModified":"2026-10-22T14:29:11.940Z","articleSection":"Docker","keywords":"Docker,存储","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Docker/","name":"Docker"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2018/Docker存储/","name":"Docker存储"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Docker存储","description":"Docker 存储要区分两个层面：\n\n镜像&#x2F;容器层存储：由 storage driver 或 containerd snapshotter 管理，负责镜像层、容器可写层、写时复制。\n数据持久化：由 volume、bind mount、tmpfs 提供，把数据放在容器可写层之外。\n\n本文基于 Docker Engine 29.9.x（2026-10）官方文档重写，重点说明 Docker 29 默认的 containerd image store、overlay2、三种挂载方式、备份恢复和空间治理。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2018/Docker%E5%AD%98%E5%82%A8/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2018/Docker%E5%AD%98%E5%82%A8/","wordCount":255,"datePublished":"2018-07-06T05:33:01.000Z","dateModified":"2026-10-22T16:47:04.200Z","articleSection":"Docker","keywords":"Docker,存储","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2690,66 +2685,48 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <p><strong>主要是对 docker 文档(v18.03)的翻译以及自己的学习笔记</strong>（存储驱动相关行为已按 Docker 29 更新，历史驱动会单独标注）<br>本篇主要包含以下内容</p>
+    <p>Docker 存储要区分两个层面：</p>
 <ul>
-<li><a href="#docker-%E5%AD%98%E5%82%A8%E4%BB%8B%E7%BB%8D">Docker 存储介绍</a></li>
-<li><a href="#bindmount">BindMount</a><ul>
-<li><a href="#bind-propagation-%E4%BC%A0%E6%92%AD%E6%8C%82%E8%BD%BD">bind-propagation 传播挂载</a></li>
-<li><a href="#selinux-%E6%A0%87%E7%AD%BE">Selinux 标签</a></li>
+<li><strong>镜像&#x2F;容器层存储</strong>：由 storage driver 或 containerd snapshotter 管理，负责镜像层、容器可写层、写时复制。</li>
+<li><strong>数据持久化</strong>：由 volume、bind mount、tmpfs 提供，把数据放在容器可写层之外。</li>
 </ul>
-</li>
+<p>本文基于 Docker Engine 29.9.x（2026-10）官方文档重写，重点说明 Docker 29 默认的 containerd image store、overlay2、三种挂载方式、备份恢复和空间治理。</p>
+<span id="more"></span>
+
+<ul>
+<li><a href="#docker-%E5%AD%98%E5%82%A8%E5%88%86%E5%B1%82">Docker 存储分层</a></li>
+<li><a href="#docker-29-%E7%9A%84%E9%95%9C%E5%83%8F%E5%AD%98%E5%82%A8">Docker 29 的镜像存储</a></li>
+<li><a href="#%E5%AD%98%E5%82%A8%E9%A9%B1%E5%8A%A8">存储驱动</a></li>
+<li><a href="#%E4%B8%89%E7%A7%8D%E6%8C%82%E8%BD%BD%E6%96%B9%E5%BC%8F">三种挂载方式</a></li>
 <li><a href="#volume-%E6%95%B0%E6%8D%AE%E5%8D%B7">Volume 数据卷</a></li>
-<li><a href="#tmpfs">Tmpfs</a></li>
-<li><a href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8">数据卷容器</a><ul>
-<li><a href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%A4%87%E4%BB%BD%E8%BF%98%E5%8E%9F%E4%B8%8E%E8%BF%81%E7%A7%BB">数据卷备份、还原与迁移</a><ul>
-<li><a href="#%E5%A4%87%E4%BB%BD%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8">备份一个容器</a></li>
-<li><a href="#%E8%BF%98%E5%8E%9F%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8">还原一个容器</a></li>
-<li><a href="#%E5%88%A0%E9%99%A4%E4%B8%80%E4%B8%AA%E6%95%B0%E6%8D%AE%E5%8D%B7">删除一个数据卷</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E">存储引擎</a></li>
+<li><a href="#bind-mount">Bind mount</a></li>
+<li><a href="#tmpfs">tmpfs</a></li>
+<li><a href="#%E5%AE%B9%E5%99%A8%E5%8F%AF%E5%86%99%E5%B1%82%E4%B8%8E%E5%AF%BC%E5%85%A5%E5%AF%BC%E5%87%BA">容器可写层与导入导出</a></li>
+<li><a href="#%E7%A9%BA%E9%97%B4%E7%AE%A1%E7%90%86%E4%B8%8E%E6%B8%85%E7%90%86">空间管理与清理</a></li>
+<li><a href="#%E7%94%9F%E4%BA%A7%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5">生产最佳实践</a></li>
 <li><a href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98">常见问题</a></li>
-<li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a><span id="more"></span></li>
+<li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li>
 </ul>
-<h2 id="Docker-存储介绍"><a href="#Docker-存储介绍" class="headerlink" title="Docker 存储介绍"></a>Docker 存储介绍</h2><p>Docker 里要区分两类存储：</p>
-<ul>
-<li><strong>storage driver（存储驱动）</strong>：管理镜像层和容器可写层，负责联合文件系统与写时复制。overlay2 是经典默认；Docker 29 起全新安装默认使用 containerd image store 的 snapshotter。</li>
-<li><strong>挂载（mount）</strong>：把数据放在容器可写层之外，分三种：<ul>
-<li>volume：由 Docker 管理，默认在 <code>/var/lib/docker/volumes</code>，适合持久化数据</li>
-<li>bind mount：直接挂载宿主机目录&#x2F;文件，适合配置、代码和需要宿主机访问的数据</li>
-<li>tmpfs：只存在内存，容器停止即丢失</li>
-</ul>
-</li>
-</ul>
-<p>容器可写层由 storage driver 管理；volume、bind mount、tmpfs 都不经过联合文件系统。</p>
-<p><strong>存储驱动：</strong>主流是 overlay2；btrfs、zfs 属可选方案，vfs 仅作兜底。Docker 29 起全新安装默认使用 containerd image store（snapshotter），不再走经典 graphdriver，详见<a href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E">存储引擎</a>。</p>
-<p><strong>原理：</strong></p>
-<ol>
-<li>Copy-On-Write 写时复制<br>大多数驱动使用 CoW：所有容器共享只读的镜像层，需要写入时才把文件复制到容器自己的可写层，修改的是副本。vfs 不使用 CoW，而是为每个容器完整复制一份，空间占用大。</li>
-<li>allocate-on-demand 用时分配<br>在要写入一个文件时才按需分配空间</li>
-</ol>
-<p><strong>驱动（历史）：</strong></p>
-<ol>
-<li>AUFS：一种 Union FS 联合文件系统，文件级存储。Docker v24.0 已移除。</li>
-<li>Overlay：旧版 UnionFS 驱动，只有 upper&#x2F;lower 两层，Docker v24.0 已移除，改用 overlay2。</li>
-<li>Device Mapper：曾用于旧内核，Docker v25.0 已移除。</li>
-</ol>
-<p>默认情况下，容器内创建的所有文件都写入<strong>容器可写层</strong>。该层位于宿主机磁盘（由 storage driver 管理，经典 overlay2 下为 <code>/var/lib/docker/overlay2/&lt;容器ID&gt;/diff</code>；Docker 29 全新安装使用 containerd image store 时在 <code>/var/lib/containerd</code>），容器停止后仍然存在，但容器被删除（<code>docker rm</code>）时一并删除。因此需要 bind mount 或 volume 来持久化数据；tmpfs 则是显式指定的内存挂载，容器停止即丢失。</p>
-<p>三种挂载方式的对比：</p>
+<h1 id="Docker-存储分层"><a href="#Docker-存储分层" class="headerlink" title="Docker 存储分层"></a>Docker 存储分层</h1><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">镜像只读层（多个 layer）</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">容器可写层（container layer，Copy-on-Write）</span><br><span class="line">        │</span><br><span class="line">        ├── volume       → Docker 管理的持久化目录</span><br><span class="line">        ├── bind mount   → 宿主机任意目录/文件</span><br><span class="line">        └── tmpfs        → 内存</span><br></pre></td></tr></table></figure>
+
 <table>
 <thead>
 <tr>
-<th>方式</th>
+<th>类型</th>
 <th>数据位置</th>
 <th>容器删除后</th>
-<th>典型场景</th>
+<th>典型用途</th>
 </tr>
 </thead>
 <tbody><tr>
+<td>容器可写层</td>
+<td>storage driver&#x2F;snapshotter 管理</td>
+<td>丢失</td>
+<td>临时文件、运行时生成文件</td>
+</tr>
+<tr>
 <td>volume</td>
-<td><code>/var/lib/docker/volumes</code></td>
+<td>Docker 管理（默认 <code>/var/lib/docker/volumes</code>）</td>
 <td>保留</td>
 <td>数据库、应用持久化数据</td>
 </tr>
@@ -2766,154 +2743,375 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <td>临时文件、缓存、敏感数据</td>
 </tr>
 </tbody></table>
+<p>原则：<strong>容器可写层不适合持久化数据</strong>。写可写层需要经过联合文件系统&#x2F;快照层，性能不如直接写 volume；容器删除后数据也会丢失。</p>
+<h1 id="Docker-29-的镜像存储"><a href="#Docker-29-的镜像存储" class="headerlink" title="Docker 29 的镜像存储"></a>Docker 29 的镜像存储</h1><p>Docker Engine 29.0+ <strong>全新安装</strong>默认使用 <strong>containerd image store</strong>：</p>
 <ul>
-<li><a href="#BindMount"><code>bind mount</code></a>：可将容器数据存放在宿主机的任何位置。</li>
-<li><a href="#Volume%E6%95%B0%E6%8D%AE%E5%8D%B7"><code>volumes</code></a>：通过创建数据卷将容器数据持久化到文件系统。</li>
-<li><a href="#Tmpfs"><code>tmpfs</code></a>：数据存放在内存中，不会写入文件系统。</li>
+<li>使用 containerd snapshotter，默认 <code>overlayfs</code>。</li>
+<li>镜像内容由 containerd 管理，不再走经典 graphdriver。</li>
+<li>支持本地多平台镜像、attestations（provenance&#x2F;SBOM）、Wasm 容器、lazy pulling 等。</li>
+<li>升级安装的环境仍可能继续使用经典 <code>overlay2</code>，需要手动启用 containerd image store。</li>
 </ul>
-<p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042240.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042240.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
-<h2 id="BindMount"><a href="#BindMount" class="headerlink" title="BindMount"></a>BindMount</h2><p><code>bind mount</code>可使容器中的文件存储在主机系统的任何位置。Docker 主机或 Docker 容器上的非 Docker 进程可以随时修改它们。bind mount 非常高效，但它们依赖于具有特定目录结构的主机文件系统。</p>
-<p>docker 提供两种选项进行 bind mount。</p>
-<ul>
-<li><code>-v</code>或<code>--volume</code>：三个字段组成，冒号分隔。</li>
-</ul>
-<ol>
-<li>第一个字段：bind mount 为宿主机路径，volume 为卷名；匿名卷可省略</li>
-<li>第二个字段：文件或目录在容器中的路径</li>
-<li>第三个字段：可选项，例如<code>ro</code>、<code>z</code>、<code>Z</code>，默认可读可写</li>
-</ol>
-<ul>
-<li><code>--mount</code>：由多个键值对组成，用逗号分隔，键和值用<code>=</code>连接。以下是提供的键：</li>
-</ul>
-<ol>
-<li><code>type</code>：挂载的类型，可以是 bind，volume 或 tmpfs。</li>
-<li><code>source</code>或<code>src</code>：挂载源。bind 为宿主机路径，volume 为卷名；匿名卷可省略。</li>
-<li><code>destination</code>或<code>dst</code>或<code>target</code>：挂载到的容器中的指定目录或文件路径</li>
-<li><code>readonly</code>或<code>ro</code>：以只读方式挂载，可选。</li>
-<li><code>volume-nocopy</code>：卷为空时不把容器目标目录的内容复制进卷（仅 volume）</li>
-<li><code>volume-opt</code>：卷选项，可指定多次，也是键值对形式</li>
-<li><code>bind-propagation</code>：绑定传播，有以下选择：<code>rprivate</code>，<code>private</code>，<code>rshared</code>，<code>shared</code>，<code>rslave</code>，<code>slave</code><br>注：<code>--mount</code> 不支持设置 selinux 的<code>z</code>或<code>Z</code>选项，需要 SELinux 标签时用 <code>-v</code></li>
-</ol>
-<p><strong>如果使用<code>-v</code>或<code>--volume</code>绑定安装 Docker 主机上尚不存在的文件或目录，则-v 会为您创建端点。它始终作为目录创建。而如果使用<code>--mount</code>，Docker 不会自动为您创建它，但会生成错误。</strong></p>
-<p><strong>注：</strong>bind mount 允许访问敏感文件<br>使用 bind mount 的一个副作用：可以通过容器中运行的进程更改主机文件系统，包括创建，修改或删除重要的系统文件或目录。这是一种强大的功能，可能会产生安全隐患，包括影响主机系统上的非 Docker 进程。</p>
-<p>当挂载一个 bind mount 或非空数据卷到容器中的一个非空目录，则该目录中原有的文件会被掩盖（并非删除），而只显示挂载的卷内容。当挂载一个空数据卷到容器中的一个非空目录，则该目录中的文件都会复制到该卷中。若启动容器时指定了一个不存在的数据卷，则会自动创建一个卷。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">使用-v挂载</span><br><span class="line">docker run -v &lt;源目录或文件&gt;:&lt;容器中目录或文件&gt;</span><br><span class="line"># 路径都需要绝对路径</span><br><span class="line"># 若添加单个文件，主机源文件必须存在，否则会当做一个新目录挂载到容器</span><br><span class="line">使用--mount挂载</span><br><span class="line">docker run --mount type=bind,src=&lt;源目录或文件&gt;,dst=&lt;容器目录或文件&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="检查当前存储后端"><a href="#检查当前存储后端" class="headerlink" title="检查当前存储后端"></a>检查当前存储后端</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker info</span><br><span class="line">docker info -f <span class="string">&#x27;&#123;&#123; .DriverStatus &#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
 
-<p><code>docker inspect 容器</code>查看是否挂载了数据卷</p>
-<h3 id="bind-propagation-传播挂载"><a href="#bind-propagation-传播挂载" class="headerlink" title="bind-propagation 传播挂载"></a>bind-propagation 传播挂载</h3><p>在指定的 bind mount 或数据卷上挂载是否能被复制到挂载的目录中去。用于做动态，可通过编排工具方便实现。</p>
-<p>有以下几种选项：</p>
 <ul>
-<li>shared：源挂载的子挂载会暴露给副本挂载，副本挂载的子挂载也会复制到源挂载。</li>
-<li>slave：类似于 shared，但只在一个方向上。如果源挂载暴露了子挂载，则副本挂载可以看到它。但是，如果副本挂载暴露了子挂载，则源装载无法看到它。</li>
-<li>private：此挂载是私人的。其中的子挂载不会暴露给副本挂载，副本挂载的子挂载不会暴露给源挂载。</li>
-<li>rshared：与 shared 相同，但传播也扩展到嵌套在任何源或副本挂载中的挂载点。</li>
-<li>rslave：与 slave 相同，但传播也扩展到嵌套在任何源或副本挂载中的挂载点。</li>
-<li>rprivate：默认值。与 private 相同，源或副本挂载中任何位置的挂载点都不会沿任一方向传播。</li>
+<li>经典驱动：<code>Storage Driver: overlay2</code>。</li>
+<li>containerd image store：<code>[[driver-type io.containerd.snapshotter.v1]]</code>。</li>
 </ul>
-<h3 id="Selinux-标签"><a href="#Selinux-标签" class="headerlink" title="Selinux 标签"></a>Selinux 标签</h3><p>如果使用 selinux，则可以添加<code>z</code>或<code>Z</code>选项以修改要挂载到容器的主机文件或目录的 selinux 标签。这会影响主机本身上的文件或目录，并且可能会影响到 Docker 外部。</p>
+<h2 id="升级环境启用-containerd-image-store"><a href="#升级环境启用-containerd-image-store" class="headerlink" title="升级环境启用 containerd image store"></a>升级环境启用 containerd image store</h2><p><code>/etc/docker/daemon.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;features&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;containerd-snapshotter&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo systemctl restart docker</span><br><span class="line">docker info -f <span class="string">&#x27;&#123;&#123; .DriverStatus &#125;&#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
 <ul>
-<li><code>z</code>选项表示绑定装载内容在多个容器之间共享。</li>
-<li><code>Z</code>选项表示绑定装载内容是私有且非共享的。使用<code>Z</code>选项绑定安装系统目录（例如<code>/home</code>或<code>/usr</code>）会导致主机无法运行。</li>
+<li>切换后，旧的 overlay2 镜像&#x2F;容器会暂时隐藏，但数据仍在磁盘；切回旧配置可恢复。</li>
+<li>需要继续使用旧镜像时，先推送到 registry 或 <code>docker save</code>。</li>
+<li><code>userns-remap</code> 与 containerd image store 目前不兼容。</li>
+<li>Docker 29 中 cgroup v1 已弃用，建议使用 cgroup v2。</li>
 </ul>
-<p>当 bind mount 和 service 一起使用时，会自动忽略 selinux 标签（<code>z</code>和<code>Z</code>）还有<code>ro</code>。</p>
-<h2 id="Volume-数据卷"><a href="#Volume-数据卷" class="headerlink" title="Volume 数据卷"></a>Volume 数据卷</h2><p>卷是保存 Docker 容器生成和使用的数据的首选机制，并且卷完全由 Docker 管理。<br>写入容器的可写层需要 storage driver 管理联合文件系统，会带来额外开销；volume 是 Docker 管理的目录，直接使用宿主机文件系统，绕过联合文件系统，性能和持久化都更好。数据卷独立于容器的生命周期，容器删除时卷不会被删除。</p>
+<h2 id="containerd-image-store-的影响"><a href="#containerd-image-store-的影响" class="headerlink" title="containerd image store 的影响"></a>containerd image store 的影响</h2><ul>
+<li><code>docker image ls</code> 可能显示多平台镜像索引。</li>
+<li><code>docker save</code> 的行为与经典存储不同，可能包含多平台内容；脚本要验证。</li>
+<li>镜像内容路径由 containerd root 决定，常见为 <code>/var/lib/containerd</code>，不要手工修改。</li>
+<li>构建多平台镜像不再必须依赖外部 builder。</li>
+</ul>
+<h1 id="存储驱动"><a href="#存储驱动" class="headerlink" title="存储驱动"></a>存储驱动</h1><h2 id="经典-storage-driver"><a href="#经典-storage-driver" class="headerlink" title="经典 storage driver"></a>经典 storage driver</h2><p>Docker Engine 29 升级环境仍可能使用经典驱动；全新安装默认 containerd snapshotter。</p>
+<table>
+<thead>
+<tr>
+<th>驱动</th>
+<th>说明</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>overlay2</code></td>
+<td>联合文件系统，性能&#x2F;稳定性好</td>
+<td>大多数 Linux</td>
+</tr>
+<tr>
+<td><code>fuse-overlayfs</code></td>
+<td>用户态 overlay，rootless 常用</td>
+<td>rootless、无内核 overlay 支持</td>
+</tr>
+<tr>
+<td><code>btrfs</code></td>
+<td>依赖 btrfs 文件系统，支持快照</td>
+<td>btrfs 环境</td>
+</tr>
+<tr>
+<td><code>zfs</code></td>
+<td>依赖 zfs，支持快照</td>
+<td>zfs 环境</td>
+</tr>
+<tr>
+<td><code>vfs</code></td>
+<td>无 CoW，每层完整复制</td>
+<td>调试&#x2F;兜底，不推荐生产</td>
+</tr>
+</tbody></table>
+<p>查看：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker info | grep -A2 <span class="string">&#x27;Storage Driver&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="支持的-backing-filesystem"><a href="#支持的-backing-filesystem" class="headerlink" title="支持的 backing filesystem"></a>支持的 backing filesystem</h2><table>
+<thead>
+<tr>
+<th>驱动</th>
+<th>支持的 backing filesystem</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>overlay2</code></td>
+<td><code>xfs</code>（ftype&#x3D;1）、<code>ext4</code>、<code>btrfs</code> 等</td>
+</tr>
+<tr>
+<td><code>fuse-overlayfs</code></td>
+<td>任意文件系统</td>
+</tr>
+<tr>
+<td><code>btrfs</code></td>
+<td><code>btrfs</code></td>
+</tr>
+<tr>
+<td><code>zfs</code></td>
+<td><code>zfs</code></td>
+</tr>
+<tr>
+<td><code>vfs</code></td>
+<td>任意文件系统</td>
+</tr>
+</tbody></table>
+<p>注意：</p>
+<ul>
+<li>XFS 必须启用 <code>ftype=1</code>，否则 overlay2 可能无法正常工作。</li>
+<li>不建议把 <code>/var/lib/docker</code> 放在 NFS 上；网络文件系统的一致性、锁和性能不适合作为 Docker data-root。</li>
+<li><code>vfs</code> 空间占用大、性能差，只用于调试或没有 CoW 文件系统的场景。</li>
+</ul>
+<h2 id="更换存储驱动"><a href="#更换存储驱动" class="headerlink" title="更换存储驱动"></a>更换存储驱动</h2><p>更换 storage driver 后，旧镜像&#x2F;容器会不可见，因为新驱动无法使用旧层。切换前备份、推送镜像，切换后重新拉取&#x2F;构建。</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;storage-driver&quot;</span><span class="punctuation">:</span> <span class="string">&quot;overlay2&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo systemctl restart docker</span><br><span class="line">docker info</span><br></pre></td></tr></table></figure>
+
+<h1 id="三种挂载方式"><a href="#三种挂载方式" class="headerlink" title="三种挂载方式"></a>三种挂载方式</h1><h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><table>
+<thead>
+<tr>
+<th>方式</th>
+<th>管理方</th>
+<th>宿主机可见</th>
+<th>典型用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>volume</td>
+<td>Docker</td>
+<td>在 Docker 数据目录</td>
+<td>数据库、持久化数据</td>
+</tr>
+<tr>
+<td>bind mount</td>
+<td>用户</td>
+<td>任意路径</td>
+<td>配置、代码、宿主机已有数据</td>
+</tr>
+<tr>
+<td>tmpfs</td>
+<td>内核</td>
+<td>不可见（内存）</td>
+<td>临时文件、缓存、敏感数据</td>
+</tr>
+</tbody></table>
+<h2 id="v-与-mount"><a href="#v-与-mount" class="headerlink" title="-v 与 --mount"></a><code>-v</code> 与 <code>--mount</code></h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 短语法</span></span><br><span class="line">docker run -v myvol:/data myapp:1.0</span><br><span class="line">docker run -v /host/config:/app/config:ro myapp:1.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># 长语法（推荐，语义清晰）</span></span><br><span class="line">docker run --mount <span class="built_in">type</span>=volume,src=myvol,dst=/data myapp:1.0</span><br><span class="line">docker run --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/host/config,dst=/app/config,<span class="built_in">readonly</span> myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<p>区别：</p>
+<ul>
+<li><code>-v</code> 对宿主机路径不存在时会自动创建目录；<code>--mount</code> 对 bind source 不存在会报错。</li>
+<li><code>--mount</code> 参数更明确，适合脚本和 Compose。</li>
+<li>volume 的 <code>-v</code> 和 <code>--mount</code> 都会在卷为空时把镜像目标目录内容复制进卷；<code>volume-nocopy</code> 可禁用。</li>
+</ul>
+<h1 id="Volume-数据卷"><a href="#Volume-数据卷" class="headerlink" title="Volume 数据卷"></a>Volume 数据卷</h1><p>Volume 由 Docker 管理，是持久化数据的首选。</p>
+<h2 id="创建与使用"><a href="#创建与使用" class="headerlink" title="创建与使用"></a>创建与使用</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker volume create myvol</span><br><span class="line">docker volume <span class="built_in">ls</span></span><br><span class="line">docker volume inspect myvol</span><br><span class="line"></span><br><span class="line">docker run -d \</span><br><span class="line">  --name db \</span><br><span class="line">  --mount <span class="built_in">type</span>=volume,src=myvol,dst=/var/lib/postgresql/data \</span><br><span class="line">  postgres:16</span><br></pre></td></tr></table></figure>
+
+<p>短语法：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d -v myvol:/data --name app myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<h2 id="匿名卷与命名卷"><a href="#匿名卷与命名卷" class="headerlink" title="匿名卷与命名卷"></a>匿名卷与命名卷</h2><ul>
+<li><strong>匿名卷</strong>：不指定名字，Docker 生成随机 ID；<code>docker run -v /data</code>。</li>
+<li><strong>命名卷</strong>：显式命名，便于备份、迁移和复用；<code>docker run -v myvol:/data</code>。</li>
+</ul>
+<p>生产建议使用命名卷，并在 Compose&#x2F;编排中显式声明。</p>
+<h2 id="只读挂载"><a href="#只读挂载" class="headerlink" title="只读挂载"></a>只读挂载</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --mount <span class="built_in">type</span>=volume,src=myvol,dst=/data,<span class="built_in">readonly</span> myapp:1.0</span><br><span class="line">docker run -v myvol:/data:ro myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<h2 id="volume-nocopy"><a href="#volume-nocopy" class="headerlink" title="volume-nocopy"></a>volume-nocopy</h2><p>默认情况下，如果卷为空，Docker 会把镜像中目标目录的内容复制到卷里。禁用复制：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --mount <span class="built_in">type</span>=volume,src=myvol,dst=/data,volume-nocopy myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<p>适合希望卷完全由应用初始化的场景。</p>
+<h2 id="volume-subpath"><a href="#volume-subpath" class="headerlink" title="volume-subpath"></a>volume-subpath</h2><p>只挂载卷中的子目录：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --mount <span class="built_in">type</span>=volume,src=myvol,dst=/data,volume-subpath=/tenant-a myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<p>要求子目录在卷中已存在。</p>
+<h2 id="NFS-卷"><a href="#NFS-卷" class="headerlink" title="NFS 卷"></a>NFS 卷</h2><p>使用 <code>local</code> 驱动挂载 NFS：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker volume create --driver <span class="built_in">local</span> \</span><br><span class="line">  --opt <span class="built_in">type</span>=nfs \</span><br><span class="line">  --opt o=addr=192.168.1.10,rw,nfsvers=4 \</span><br><span class="line">  --opt device=:/export/data \</span><br><span class="line">  nfsvol</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --mount <span class="built_in">type</span>=volume,src=nfsvol,dst=/data myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>NFS 的锁、延迟、故障恢复与本地盘不同，数据库类负载要谨慎评估。</li>
+<li>建议使用支持 NFSv4 的服务端，并测试断网&#x2F;重连。</li>
+<li>生产可考虑云厂商文件存储、CSI 驱动或专用 volume plugin。</li>
+</ul>
+<h2 id="备份与恢复"><a href="#备份与恢复" class="headerlink" title="备份与恢复"></a>备份与恢复</h2><p>备份卷：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --<span class="built_in">rm</span> \</span><br><span class="line">  --volumes-from db \</span><br><span class="line">  -v <span class="string">&quot;<span class="variable">$PWD</span>&quot;</span>:/backup \</span><br><span class="line">  ubuntu \</span><br><span class="line">  tar cvf /backup/db-backup.tar /var/lib/postgresql/data</span><br></pre></td></tr></table></figure>
+
+<p>恢复：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --<span class="built_in">rm</span> \</span><br><span class="line">  --volumes-from db-restore \</span><br><span class="line">  -v <span class="string">&quot;<span class="variable">$PWD</span>&quot;</span>:/backup \</span><br><span class="line">  ubuntu \</span><br><span class="line">  bash -c <span class="string">&quot;cd /var/lib/postgresql/data &amp;&amp; tar xvf /backup/db-backup.tar --strip 1&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>备份前尽量停止写入或使用数据库自己的备份工具（pg_dump、mysqldump、xtrabackup）。</li>
+<li>直接 tar 正在写入的数据文件可能得到不一致备份。</li>
+<li>恢复后检查文件权限、UID&#x2F;GID、SELinux 标签。</li>
+<li>定期做恢复演练，不要只验证备份文件存在。</li>
+</ul>
+<h2 id="删除卷"><a href="#删除卷" class="headerlink" title="删除卷"></a>删除卷</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker volume <span class="built_in">rm</span> myvol</span><br><span class="line">docker volume prune</span><br></pre></td></tr></table></figure>
+
+<p>卷被容器占用时无法删除，需要先删除&#x2F;断开容器。<code>docker volume prune</code> 会删除所有未使用卷，执行前确认。</p>
+<h1 id="Bind-mount"><a href="#Bind-mount" class="headerlink" title="Bind mount"></a>Bind mount</h1><p>Bind mount 把宿主机路径直接挂载到容器：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">  --name nginx \</span><br><span class="line">  --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/etc/nginx/conf.d,dst=/etc/nginx/conf.d,<span class="built_in">readonly</span> \</span><br><span class="line">  nginx:1.27</span><br></pre></td></tr></table></figure>
+
+<p>短语法：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d -v /etc/nginx/conf.d:/etc/nginx/conf.d:ro nginx:1.27</span><br></pre></td></tr></table></figure>
+
+<h2 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h2><ul>
+<li>宿主机和容器共享同一份数据，任一方的修改立即可见。</li>
+<li>适合配置文件、开发代码、宿主机已有数据目录。</li>
+<li>依赖宿主机目录结构，可移植性差。</li>
+<li>容器可以修改宿主机文件，需谨慎控制权限和只读挂载。</li>
+<li>源路径必须是绝对路径（<code>--mount</code> 要求存在；<code>-v</code> 会自动创建目录）。</li>
+</ul>
+<h2 id="只读与-SELinux"><a href="#只读与-SELinux" class="headerlink" title="只读与 SELinux"></a>只读与 SELinux</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 只读</span></span><br><span class="line">docker run --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/data,dst=/data,<span class="built_in">readonly</span> myapp:1.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># SELinux：z 私有标签，Z 共享标签</span></span><br><span class="line">docker run -v /host/data:/data:z myapp:1.0</span><br><span class="line">docker run -v /host/data:/data:Z myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>z</code>：给挂载内容打上私有 SELinux 标签，适合多个容器共享。</li>
+<li><code>Z</code>：打上独占标签，适合单容器。</li>
+<li>不使用 SELinux 的环境可忽略。</li>
+</ul>
+<h2 id="bind-propagation"><a href="#bind-propagation" class="headerlink" title="bind-propagation"></a>bind-propagation</h2><p>挂载传播控制宿主机和容器之间挂载事件如何传播：</p>
+<table>
+<thead>
+<tr>
+<th>值</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>private</code></td>
+<td>默认，挂载事件不传播</td>
+</tr>
+<tr>
+<td><code>rprivate</code></td>
+<td>递归 private</td>
+</tr>
+<tr>
+<td><code>shared</code></td>
+<td>挂载事件双向传播</td>
+</tr>
+<tr>
+<td><code>rshared</code></td>
+<td>递归 shared</td>
+</tr>
+<tr>
+<td><code>slave</code></td>
+<td>单向传播（宿主机 → 容器）</td>
+</tr>
+<tr>
+<td><code>rslave</code></td>
+<td>递归 slave</td>
+</tr>
+</tbody></table>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run --mount <span class="built_in">type</span>=<span class="built_in">bind</span>,src=/host,dst=/container,bind-propagation=rslave myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<p>使用场景：宿主机上动态挂载&#x2F;卸载目录，容器需要感知变化（如 CSI、NFS、Kubernetes 挂载）。</p>
+<h2 id="Docker-Desktop"><a href="#Docker-Desktop" class="headerlink" title="Docker Desktop"></a>Docker Desktop</h2><p>macOS&#x2F;Windows 的 Docker Desktop 通过虚拟机运行 Linux 引擎，bind mount 需要跨文件系统共享，性能低于 Linux 原生。大量小文件读写场景建议使用 volume，或把代码放在虚拟机文件系统中。</p>
+<h1 id="tmpfs"><a href="#tmpfs" class="headerlink" title="tmpfs"></a>tmpfs</h1><p>tmpfs 把数据放在内存，适合临时文件、缓存、敏感数据：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d \</span><br><span class="line">  --name app \</span><br><span class="line">  --mount <span class="built_in">type</span>=tmpfs,dst=/tmp,tmpfs-size=64m,tmpfs-mode=1777 \</span><br><span class="line">  myapp:1.0</span><br></pre></td></tr></table></figure>
+
+<p>短语法：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker run -d --tmpfs /tmp:rw,noexec,nosuid,size=64m myapp:1.0</span><br></pre></td></tr></table></figure>
+
 <p>特点：</p>
 <ul>
-<li>卷比 bind mount 更容易备份或迁移。</li>
-<li>卷适用于 Linux 和 Windows 容器。</li>
-<li>可以在多个容器之间更安全地共享卷。</li>
-<li>在容器启动时初始化：如果卷为空，容器挂载点中已有的数据会被复制进卷（可用 <code>volume-nocopy</code> 关闭）</li>
-<li>数据卷变化不会影响镜像更新</li>
-<li>卷驱动程序允许在远程主机或云提供程序上存储卷，加密卷的内容或添加其他功能。</li>
+<li>容器停止后数据丢失。</li>
+<li>不写入宿主机磁盘（可能使用 swap，取决于系统配置）。</li>
+<li>适合存放临时 token、缓存、运行时 socket。</li>
+<li>大小受内存和 <code>tmpfs-size</code> 限制，过大会影响宿主机内存。</li>
 </ul>
-<p>可通过<code>docker volume create 数据卷名</code>创建数据卷。每创建一个 volume，就会在<code>/var/lib/docker/volumes</code>中创建一个同名目录。若不指定数据卷名，就会随机生成一个 volume ID 作为数据卷名。</p>
-<p><code>docker volume</code>命令</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">create 创建数据卷</span><br><span class="line">inspect 查看数据卷信息</span><br><span class="line">ls 查看所有数据卷</span><br><span class="line">prune 删除未使用的数据卷</span><br><span class="line">rm 删除指定数据卷</span><br></pre></td></tr></table></figure>
+<h1 id="容器可写层与导入导出"><a href="#容器可写层与导入导出" class="headerlink" title="容器可写层与导入导出"></a>容器可写层与导入导出</h1><h2 id="可写层"><a href="#可写层" class="headerlink" title="可写层"></a>可写层</h2><ul>
+<li>容器启动时在镜像只读层之上创建一个可写层。</li>
+<li>写文件时使用 Copy-on-Write：首次写入才复制到可写层。</li>
+<li>容器删除后，可写层删除，数据丢失。</li>
+<li>可写层不适合数据库等持久化数据。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker diff &lt;container&gt;          <span class="comment"># 查看可写层变化</span></span><br><span class="line">docker <span class="built_in">cp</span> &lt;container&gt;:/path ./   <span class="comment"># 从容器复制文件</span></span><br></pre></td></tr></table></figure>
 
-<p><strong>使用卷</strong></p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker volume create app-data</span><br><span class="line"></span><br><span class="line">docker run -d --name app \</span><br><span class="line">  --mount <span class="built_in">type</span>=volume,src=app-data,dst=/data \</span><br><span class="line">  nginx</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只读挂载</span></span><br><span class="line">docker run --<span class="built_in">rm</span> --mount <span class="built_in">type</span>=volume,src=app-data,dst=/data,ro alpine <span class="built_in">ls</span> /data</span><br><span class="line"></span><br><span class="line"><span class="comment"># 不把镜像中目标目录的内容复制进空卷</span></span><br><span class="line">docker run --<span class="built_in">rm</span> \</span><br><span class="line">  --mount <span class="built_in">type</span>=volume,src=app-data,dst=/data,volume-nocopy alpine <span class="built_in">ls</span> /data</span><br><span class="line"></span><br><span class="line">docker volume inspect app-data</span><br></pre></td></tr></table></figure>
+<h2 id="commit"><a href="#commit" class="headerlink" title="commit"></a>commit</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker commit &lt;container&gt; myimage:snapshot</span><br></pre></td></tr></table></figure>
 
+<p><code>docker commit</code> 会把可写层保存为新镜像，但不推荐用于生产：</p>
 <ul>
-<li>默认情况下，如果卷是空的，容器目标目录中已有的内容会被复制进卷；<code>volume-nocopy</code> 可关闭</li>
-<li>同一个卷可以同时挂给多个容器，也可以对不同容器分别以 rw&#x2F;ro 挂载</li>
-<li>默认只删除未被使用的匿名卷；加 <code>-a/--all</code> 才会连命名卷一起删除，执行前先确认</li>
+<li>不可重复、不可审计。</li>
+<li>可能包含临时文件、密钥、日志。</li>
+<li>镜像层会越来越大。</li>
+<li>应使用 Dockerfile 构建可复现镜像。</li>
 </ul>
-<p>在创建 volume 时，或启动使用尚未创建卷的容器时，可以指定卷的驱动。<br>数据卷驱动可通过<code>docker plugin install [选项] 驱动名</code>。<br><strong>如果卷驱动程序要求您传递选项，则必须使用<code>--mount</code>标志来装入卷</strong></p>
-<p>docker 提供<code>-v</code>和<code>--mount</code>选项进行挂载。使用与 bind mount 基本一致。<br>如果需要指定卷驱动程序选项，则必须使用<code>--mount</code>。将卷与服务一起使用时，仅支持<code>--mount</code>。</p>
-<p><strong>注：挂载数据卷不支持单个文件，只能是目录。卷默认可读写，可通过 <code>ro</code> 或 <code>readonly</code> 挂载为只读。</strong><br>因为容器配置文件里的可以指定<code>docker inspect</code>查看，发现<code>Mounts</code>中的<code>Source</code>字段，其中已指定了源，源为：<code>/var/lib/docker/volumes/容器长ID/_data</code>。</p>
-<p>以上两种方法数据源其实还是宿主机中的，并不是真正放在 volume container 中，可以在通过 dockerfile 的<code>ADD</code>将数据打包进镜像并指定<code>VOLUME</code>，将<code>ADD</code>指定的目录与<code>VOLUME</code>设为一致，此法称为<code>data-packed volume container</code>。</p>
-<h2 id="Tmpfs"><a href="#Tmpfs" class="headerlink" title="Tmpfs"></a>Tmpfs</h2><p>使用<code>tmpfs mount</code>创建容器时，容器可以在容器的可写层之外创建文件。tmpfs 挂载是临时的，仅保留在主机内存中。当容器停止时，将删除 tmpfs 挂载，该数据不可被共享。Docker 默认使用 storage driver 的可写层，tmpfs 需要显式指定（<code>/dev/shm</code> 是默认 tmpfs 的特例）。<br><code>--tmpfs</code>：安装 tmpfs 挂载，可带选项，例如 <code>--tmpfs /tmp:rw,size=64m</code>，只能与独立容器一起使用。<br>也可以通过 <code>--mount</code> 指定 <code>type=tmpfs</code>，例如 <code>--mount type=tmpfs,dst=/tmp,tmpfs-size=64m</code>。</p>
+<h2 id="save-x2F-load-与-export-x2F-import"><a href="#save-x2F-load-与-export-x2F-import" class="headerlink" title="save&#x2F;load 与 export&#x2F;import"></a>save&#x2F;load 与 export&#x2F;import</h2><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>对象</th>
+<th>是否保留镜像历史&#x2F;层</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>docker save</code> &#x2F; <code>load</code></td>
+<td>镜像</td>
+<td>保留</td>
+</tr>
+<tr>
+<td><code>docker export</code> &#x2F; <code>import</code></td>
+<td>容器文件系统</td>
+<td>不保留</td>
+</tr>
+</tbody></table>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 镜像迁移</span></span><br><span class="line">docker save -o app.tar app:1.0</span><br><span class="line">docker load -i app.tar</span><br><span class="line"></span><br><span class="line"><span class="comment"># 容器文件系统快照（不保留历史）</span></span><br><span class="line">docker <span class="built_in">export</span> &lt;container&gt; -o container.tar</span><br><span class="line">docker import container.tar app:snapshot</span><br></pre></td></tr></table></figure>
+
+<h1 id="空间管理与清理"><a href="#空间管理与清理" class="headerlink" title="空间管理与清理"></a>空间管理与清理</h1><h2 id="查看占用"><a href="#查看占用" class="headerlink" title="查看占用"></a>查看占用</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker system <span class="built_in">df</span></span><br><span class="line">docker system <span class="built_in">df</span> -v</span><br></pre></td></tr></table></figure>
+
+<p><code>docker system df</code> 会统计镜像、容器、卷、构建缓存；<code>-v</code> 显示明细。</p>
+<h2 id="清理"><a href="#清理" class="headerlink" title="清理"></a>清理</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 停止并删除所有容器（危险）</span></span><br><span class="line">docker container prune</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除未使用镜像</span></span><br><span class="line">docker image prune</span><br><span class="line">docker image prune -a</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除未使用卷（危险）</span></span><br><span class="line">docker volume prune</span><br><span class="line">docker volume prune --filter <span class="string">&quot;label!=keep&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除构建缓存</span></span><br><span class="line">docker builder prune</span><br><span class="line">docker builder prune --filter until=24h</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除未使用网络</span></span><br><span class="line">docker network prune</span><br><span class="line"></span><br><span class="line"><span class="comment"># 综合清理（危险）</span></span><br><span class="line">docker system prune</span><br><span class="line">docker system prune -a --volumes</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
 <ul>
-<li>tmpfs 只支持 Linux 容器</li>
-<li>tmpfs 不能在不同容器之间共享</li>
-<li>数据只存在内存中，容器停止或宿主机重启后丢失</li>
-<li>未设置 <code>size</code> 时默认不受限，可能耗尽宿主机内存</li>
+<li><code>docker system prune -a --volumes</code> 会删除未使用镜像、容器、网络、卷和构建缓存。</li>
+<li>生产执行前确认没有依赖匿名卷&#x2F;未使用卷的数据。</li>
+<li>可以用 <code>--filter until=24h</code> 避免删除最近使用的数据。</li>
 </ul>
-<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><p>容器挂载数据卷，其他容器通过挂载该容器实现数据共享，挂载数据卷的容器称为数据卷容器。现在更推荐直接用命名卷 + <code>--mount</code>；数据卷容器主要用于兼容旧方案。</p>
-<p>创建容器时<code>--volumes-from 数据卷容器</code>创建数据卷容器<br><strong>注：由于数据卷容器仅是提供数据，所以只要 create，不用 run</strong><br><code>docker rm -v 容器</code> 会删除该容器的匿名卷；命名卷仍会保留，需要 <code>docker volume rm</code> 单独删除。只要有容器还在使用该数据卷，数据卷就不会删除。宿主机上的数据卷若删除，就真的没了。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt; docker volume create volume_1</span><br><span class="line">&gt; docker volume create volume_2</span><br><span class="line"># 创建数据卷容器，挂载volume_1，volume_2</span><br><span class="line">&gt; docker create \</span><br><span class="line">    -v volume_1:/volume1 \</span><br><span class="line">    -v volume_2:/volume2 \</span><br><span class="line">    --name vol_container \</span><br><span class="line">    alpine</span><br><span class="line"># 创建容器挂载数据卷容器</span><br><span class="line">&gt; docker run -it \</span><br><span class="line">    --volumes-from vol_container \</span><br><span class="line">    --name test \</span><br><span class="line">    alpine</span><br><span class="line">/ # ls</span><br><span class="line">bin       home      mnt       run       sys       var</span><br><span class="line">dev       lib       proc      sbin      tmp       volume1</span><br><span class="line">etc       media     root      srv       usr       volume2</span><br><span class="line"># 数据卷容器中挂载的数据卷也被挂载到新容器的根目录了，也可通过-v设置挂载点</span><br></pre></td></tr></table></figure>
+<h2 id="日志占用"><a href="#日志占用" class="headerlink" title="日志占用"></a>日志占用</h2><p>默认 <code>json-file</code> 日志可能占满磁盘。配置轮转：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;log-driver&quot;</span><span class="punctuation">:</span> <span class="string">&quot;local&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;log-opts&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;max-size&quot;</span><span class="punctuation">:</span> <span class="string">&quot;100m&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;max-file&quot;</span><span class="punctuation">:</span> <span class="string">&quot;3&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
 
-<h3 id="数据卷备份、还原与迁移"><a href="#数据卷备份、还原与迁移" class="headerlink" title="数据卷备份、还原与迁移"></a>数据卷备份、还原与迁移</h3><p>使用数据卷能方便地进行数据备份、迁移和还原。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042859.jpg" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120042859.jpg" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
-<h4 id="备份一个容器"><a href="#备份一个容器" class="headerlink" title="备份一个容器"></a>备份一个容器</h4><p>首先创建一个数据卷，用于存放备份数据。<br><code>docker volume create vol_backup</code><br>然后创建一个数据卷容器，挂载该数据卷</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker create --name backup_container\</span><br><span class="line">     -v vol_backup:/backup \</span><br><span class="line">     alpine</span><br></pre></td></tr></table></figure>
+<h2 id="手动排查目录"><a href="#手动排查目录" class="headerlink" title="手动排查目录"></a>手动排查目录</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo <span class="built_in">du</span> -sh /var/lib/docker/*</span><br><span class="line">sudo <span class="built_in">du</span> -sh /var/lib/docker/overlay2/* 2&gt;/dev/null | <span class="built_in">sort</span> -h | <span class="built_in">tail</span></span><br><span class="line">sudo <span class="built_in">du</span> -sh /var/lib/docker/volumes/* 2&gt;/dev/null | <span class="built_in">sort</span> -h | <span class="built_in">tail</span></span><br></pre></td></tr></table></figure>
 
-<p>接着运行要备份容器，挂载数据卷容器 backup_container，并将要备份的数据打包放入数据卷。下面把备份写到宿主机当前目录（把 <code>/usr /var</code> 换成实际要备份的目录）：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run --rm \</span><br><span class="line">    --volumes-from backup_container \</span><br><span class="line">    -v &quot;$(pwd)&quot;:/backup \</span><br><span class="line">    alpine tar -cvf /backup/data.tar /usr /var</span><br></pre></td></tr></table></figure>
-
-<p>若想直接写进 vol_backup，去掉 <code>-v &quot;$(pwd)&quot;:/backup</code> 即可，文件会出现在 <code>/var/lib/docker/volumes/vol_backup/_data/</code>。</p>
-<h4 id="还原一个容器"><a href="#还原一个容器" class="headerlink" title="还原一个容器"></a>还原一个容器</h4><p>还原时目标容器必须已经把数据卷挂在 <code>/dbdata</code>，且 tar 中的路径要与目标目录对应：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">docker run --rm \</span><br><span class="line">    --volumes-from target_container \</span><br><span class="line">    -v &quot;$(pwd)&quot;:/backup \</span><br><span class="line">    alpine \</span><br><span class="line">    bash -c &quot;cd /dbdata &amp;&amp; tar xvf /backup/data.tar --strip 1&quot;</span><br></pre></td></tr></table></figure>
-
-<h4 id="删除一个数据卷"><a href="#删除一个数据卷" class="headerlink" title="删除一个数据卷"></a>删除一个数据卷</h4><p>删除的数据卷有两种情况：</p>
-<ul>
-<li>命名卷在容器外部有指定源，删除了容器，数据卷并不会被删除</li>
-<li>匿名卷没有指定源，删除容器时默认仍会保留，只有 <code>docker rm -v</code> 或创建容器时加 <code>--rm</code> 才会一并删除。</li>
+<p>不要在 daemon 运行时手动删除 <code>/var/lib/docker</code> 下的文件，可能导致元数据不一致。使用 Docker 命令清理。</p>
+<h1 id="生产最佳实践"><a href="#生产最佳实践" class="headerlink" title="生产最佳实践"></a>生产最佳实践</h1><ul>
+<li>数据持久化用 volume，不要依赖容器可写层。</li>
+<li>数据库使用专用卷，配合数据库原生备份，不要只 tar 数据目录。</li>
+<li>配置文件用只读 bind mount 或 ConfigMap&#x2F;Secret（Kubernetes）。</li>
+<li>临时&#x2F;敏感数据用 tmpfs，并限制大小。</li>
+<li>卷命名规范清晰，Compose&#x2F;编排中显式声明，避免匿名卷失控。</li>
+<li>关注 UID&#x2F;GID、文件权限、SELinux 标签，尤其是非 root 容器。</li>
+<li>不要把 <code>/var/lib/docker</code> 放在 NFS 上；数据库更不要直接跑在 NFS 上。</li>
+<li>定期 <code>docker system df</code>、清理构建缓存和旧镜像。</li>
+<li>备份策略要覆盖卷、数据库、Compose 文件、镜像 tag&#x2F;digest。</li>
+<li>恢复演练比备份本身更重要。</li>
+<li>升级 Docker 29 前确认 image store、cgroup、网络后端和存储驱动兼容性。</li>
 </ul>
-<h2 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h2><p>Docker 通过 storage driver 管理镜像层与容器层。经典场景下现代 Linux 发行版默认使用 <strong>overlay2</strong>；btrfs、zfs 仍可选，vfs 仅作兜底（无写时复制、空间浪费大），不建议生产使用。devicemapper 在 v25 移除，aufs 与旧版 overlay 在 v24 移除。</p>
-<p>Docker 29 起全新安装默认使用 <strong>containerd image store</strong>（snapshotter），此时镜像与快照位于 <code>/var/lib/containerd</code>，下文 overlay2 的路径与行为只适用于经典 graphdriver。<code>docker info</code> 中可看到当前使用的存储方式。</p>
-<p>只有容器可写层由 storage driver 管理，bind mount 和 volume 不经过 overlay2。</p>
-<p>选择存储驱动时优先 overlay2；btrfs、zfs 需要底层文件系统支持；vfs 只在没有 CoW 文件系统且不关心性能时使用。更换存储驱动需要先停 Docker、修改 daemon.json 的 <code>storage-driver</code>，旧镜像和容器不会自动迁移，需要重新拉取&#x2F;重建。<code>docker info</code> 中可以看到当前存储驱动和 <code>Supports d_type</code> 等信息。</p>
-<p>overlay2 基于内核 OverlayFS，把多个目录叠加成单一视图：</p>
-<ul>
-<li><strong>lowerdir</strong>：只读的镜像层，可以有多个，按顺序叠加</li>
-<li><strong>upperdir</strong>：容器可写层，位于宿主机磁盘（如 <code>/var/lib/docker/overlay2/&lt;id&gt;/diff</code>）</li>
-<li><strong>merged</strong>：容器内看到的合并目录</li>
-<li><strong>workdir</strong>：OverlayFS 内部工作目录，必须与 upperdir 在同一文件系统且为空，内核用它完成 copy-up、rename 等需要原子性的操作；不挂入容器，也不能被多个 overlay 挂载共用</li>
-</ul>
-<p>读取文件时从上层往下找，命中即返回。写入时如果文件位于 lowerdir，会先<strong>整个文件</strong>复制到 upperdir 再修改（<code>chmod</code>&#x2F;<code>chown</code> 等元数据变更也会触发，且只在首次写入时复制），这就是<strong>写时复制</strong>。OverlayFS 是文件级而非块级，改大文件的一小部分也要整文件拷贝。由此带来几个运维上要注意的点：</p>
-<ul>
-<li>容器内删除 lowerdir 中的文件，会在 upperdir 生成 <strong>whiteout 文件</strong>；删除目录同样生成 whiteout。只有需要在可写层屏蔽 lower 同名目录的全部内容（如 <code>rm -rf</code> 后重建同名目录）时，才会使用 <strong>opaque 目录</strong>。镜像层本身不变，所以镜像层空间不会释放（只要镜像还在、仍被引用），容器层反而会多占少量 inode</li>
-<li>大量小文件写入会让 upperdir 持续膨胀；镜像层数过多也会拖慢查找，构建时应合并 RUN 指令减少层数（overlay2 最多 128 个 lower 层，超过会构建失败）</li>
-<li><code>docker diff</code> 可查看容器自创建以来文件的变化，输出 <code>A</code> 新增、<code>C</code> 修改、<code>D</code> 删除，只列路径，不含内容差异和大小</li>
-</ul>
-<p>查看当前驱动与数据目录：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker info | grep <span class="string">&quot;Storage Driver&quot;</span></span><br><span class="line">docker info | grep <span class="string">&quot;Docker Root Dir&quot;</span></span><br></pre></td></tr></table></figure>
+<h1 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h1><h2 id="磁盘空间不足"><a href="#磁盘空间不足" class="headerlink" title="磁盘空间不足"></a>磁盘空间不足</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker system <span class="built_in">df</span> -v</span><br><span class="line">docker builder prune</span><br><span class="line">docker image prune -a</span><br><span class="line">docker volume prune</span><br></pre></td></tr></table></figure>
 
-<p>overlay2 要求内核 ≥ 4.0（RHEL&#x2F;CentOS 7 为 3.10.0-514+），且 <code>/var/lib/docker</code> 所在文件系统支持 <code>d_type</code>（xfs 需以 <code>ftype=1</code> 格式化），可用 <code>xfs_info &quot;$(findmnt -no TARGET /var/lib/docker)&quot; | grep ftype=1</code> 或 <code>docker info</code> 中的 <code>Supports d_type: true</code> 验证。</p>
-<p>磁盘满或 inode 耗尽时，先查 <code>docker system df -v</code>：镜像的 SIZE 会把共享层重复计入，应看 SHARED SIZE &#x2F; UNIQUE SIZE；inode 用 <code>df -i</code> 检查。<code>/var/lib/docker</code> 只读查看，切勿手工删除或修改其中的文件。</p>
-<blockquote>
-<p><strong>注意</strong>：<code>docker system prune</code> 默认会删除所有已停止的容器、未使用网络、悬空镜像和构建缓存；加 <code>-a</code> 删除所有未被容器引用的镜像，加 <code>--volumes</code> 删除未使用的匿名卷。生产环境建议先用 <code>docker system df -v</code> 确认，再按需使用 <code>docker container prune</code>、<code>docker image prune</code>、<code>docker builder prune</code> 等更细粒度的命令，避免误删仍需保留的停止容器。</p>
-</blockquote>
-<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><p><strong>磁盘满 &#x2F; inode 耗尽</strong></p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker system <span class="built_in">df</span> -v      <span class="comment"># 镜像、容器、卷、构建缓存</span></span><br><span class="line"><span class="built_in">df</span> -i                    <span class="comment"># inode</span></span><br><span class="line"><span class="built_in">du</span> -sh /var/lib/docker/overlay2 2&gt;/dev/null</span><br><span class="line"><span class="built_in">du</span> -sh /var/lib/containerd 2&gt;/dev/null</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>日志占满：检查 <code>/var/lib/docker/containers/*/*-json.log</code>，配置日志轮转</li>
-<li>镜像&#x2F;构建缓存占满：<code>docker image prune</code>、<code>docker builder prune</code></li>
-<li>卷占满：<code>docker system df -v</code> 后逐个确认，不要直接 <code>docker volume prune</code></li>
+<p>检查日志轮转、容器可写层、未使用卷、构建缓存。</p>
+<h2 id="overlay2-报错"><a href="#overlay2-报错" class="headerlink" title="overlay2 报错"></a>overlay2 报错</h2><ul>
+<li>XFS 未启用 <code>ftype=1</code>：<code>xfs_info /var/lib/docker | grep ftype</code>。</li>
+<li>内核不支持 overlay2：检查内核版本和文件系统。</li>
+<li>存储驱动切换后旧镜像不可见：切回原驱动或重新拉取。</li>
 </ul>
-<p><strong>容器内写文件很慢 &#x2F; 磁盘占用异常</strong></p>
-<p>写容器可写层会经过 storage driver（overlay2 的 copy-up），大文件、数据库、日志应放 volume 或 bind mount。</p>
-<p><strong>权限问题</strong></p>
-<p>容器内 UID&#x2F;GID 与宿主机不一致会导致 Permission denied。可用 <code>--user</code> 指定运行用户，或在镜像中固定 UID&#x2F;GID；K8s 用 <code>fsGroup</code> 调整卷属组。启用 userns-remap&#x2F;rootless 时，宿主机看到的 UID 会再次映射。</p>
-<p><strong>bind mount 覆盖了镜像里的文件</strong></p>
-<p>挂载到非空目录会遮住镜像原有内容，这是预期行为；需要保留镜像内容时改用 volume（空卷会先复制目标目录内容），或换挂载路径。</p>
-<p><strong>NFS &#x2F; 远程存储</strong></p>
-<p>可以用 local 卷驱动的 <code>volume-opt</code> 挂 NFS，例如：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">docker volume create --driver <span class="built_in">local</span> \</span><br><span class="line">  --opt <span class="built_in">type</span>=nfs \</span><br><span class="line">  --opt o=addr=10.0.0.10,rw,nfsvers=4 \</span><br><span class="line">  --opt device=:/data/nfs \</span><br><span class="line">  nfs-vol</span><br></pre></td></tr></table></figure>
-
-<p>rootless 模式对 NFS 和部分挂载选项支持有限，需先验证。</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p><a target="_blank" rel="noopener" href="https://docs.docker.com/storage/">Docker 官方文档-存储</a><br>每天 5 分钟玩转 docker 容器技术</p>
+<h2 id="权限拒绝"><a href="#权限拒绝" class="headerlink" title="权限拒绝"></a>权限拒绝</h2><ul>
+<li>容器内 UID 与宿主机目录权限不匹配。</li>
+<li>SELinux 阻止访问：使用 <code>:z</code>&#x2F;<code>:Z</code> 或调整策略。</li>
+<li>rootless 模式下 UID 映射不同，检查 <code>subuid/subgid</code>。</li>
+</ul>
+<h2 id="卷删除失败"><a href="#卷删除失败" class="headerlink" title="卷删除失败"></a>卷删除失败</h2><ul>
+<li>卷仍被容器使用：<code>docker ps -a</code>，删除&#x2F;断开容器。</li>
+<li>卷被外部进程占用：检查挂载点和文件句柄。</li>
+</ul>
+<h2 id="数据丢失"><a href="#数据丢失" class="headerlink" title="数据丢失"></a>数据丢失</h2><ul>
+<li>容器删除导致可写层丢失：使用 volume。</li>
+<li>误执行 <code>docker volume prune</code>：从备份恢复。</li>
+<li>数据库直接 tar 备份不一致：使用数据库原生备份工具。</li>
+</ul>
+<h2 id="containerd-image-store-切换后镜像不见"><a href="#containerd-image-store-切换后镜像不见" class="headerlink" title="containerd image store 切换后镜像不见"></a>containerd image store 切换后镜像不见</h2><ul>
+<li>旧镜像仍在磁盘，切回 overlay2 可恢复。</li>
+<li>需要在新 store 中使用时，重新 pull 或 <code>docker save</code>&#x2F;<code>load</code>。</li>
+<li>不要手工删除 containerd content store。</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/storage/">Docker Storage</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/storage/drivers/select-storage-driver/">Select a storage driver</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/storage/containerd/">containerd image store</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/storage/volumes/">Volumes</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/storage/bind-mounts/">Bind mounts</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/storage/tmpfs/">tmpfs mounts</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/reference/cli/docker/system/df/">docker system df</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/reference/cli/docker/system/prune/">docker system prune</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/release-notes/">Docker Engine 29 release notes</a></li>
+</ul>
 
   </div>
   
@@ -3029,7 +3227,7 @@ GRE-O...</p>
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Docker-%E5%AD%98%E5%82%A8%E4%BB%8B%E7%BB%8D"><span class="toc-text">Docker 存储介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BindMount"><span class="toc-text">BindMount</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#bind-propagation-%E4%BC%A0%E6%92%AD%E6%8C%82%E8%BD%BD"><span class="toc-text">bind-propagation 传播挂载</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Selinux-%E6%A0%87%E7%AD%BE"><span class="toc-text">Selinux 标签</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Volume-%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-text">Volume 数据卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tmpfs"><span class="toc-text">Tmpfs</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%AE%B9%E5%99%A8"><span class="toc-text">数据卷容器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%8D%B7%E5%A4%87%E4%BB%BD%E3%80%81%E8%BF%98%E5%8E%9F%E4%B8%8E%E8%BF%81%E7%A7%BB"><span class="toc-text">数据卷备份、还原与迁移</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8"><span class="toc-text">备份一个容器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%98%E5%8E%9F%E4%B8%80%E4%B8%AA%E5%AE%B9%E5%99%A8"><span class="toc-text">还原一个容器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E4%B8%80%E4%B8%AA%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-text">删除一个数据卷</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="toc-text">存储引擎</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-text">常见问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Docker-%E5%AD%98%E5%82%A8%E5%88%86%E5%B1%82"><span class="toc-text">Docker 存储分层</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Docker-29-%E7%9A%84%E9%95%9C%E5%83%8F%E5%AD%98%E5%82%A8"><span class="toc-text">Docker 29 的镜像存储</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A3%80%E6%9F%A5%E5%BD%93%E5%89%8D%E5%AD%98%E5%82%A8%E5%90%8E%E7%AB%AF"><span class="toc-text">检查当前存储后端</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7%E7%8E%AF%E5%A2%83%E5%90%AF%E7%94%A8-containerd-image-store"><span class="toc-text">升级环境启用 containerd image store</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#containerd-image-store-%E7%9A%84%E5%BD%B1%E5%93%8D"><span class="toc-text">containerd image store 的影响</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AD%98%E5%82%A8%E9%A9%B1%E5%8A%A8"><span class="toc-text">存储驱动</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%8F%E5%85%B8-storage-driver"><span class="toc-text">经典 storage driver</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%AF%E6%8C%81%E7%9A%84-backing-filesystem"><span class="toc-text">支持的 backing filesystem</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%8D%A2%E5%AD%98%E5%82%A8%E9%A9%B1%E5%8A%A8"><span class="toc-text">更换存储驱动</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E7%A7%8D%E6%8C%82%E8%BD%BD%E6%96%B9%E5%BC%8F"><span class="toc-text">三种挂载方式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E6%AF%94"><span class="toc-text">对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#v-%E4%B8%8E-mount"><span class="toc-text">-v 与 --mount</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Volume-%E6%95%B0%E6%8D%AE%E5%8D%B7"><span class="toc-text">Volume 数据卷</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E4%B8%8E%E4%BD%BF%E7%94%A8"><span class="toc-text">创建与使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8C%BF%E5%90%8D%E5%8D%B7%E4%B8%8E%E5%91%BD%E5%90%8D%E5%8D%B7"><span class="toc-text">匿名卷与命名卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AA%E8%AF%BB%E6%8C%82%E8%BD%BD"><span class="toc-text">只读挂载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#volume-nocopy"><span class="toc-text">volume-nocopy</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#volume-subpath"><span class="toc-text">volume-subpath</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NFS-%E5%8D%B7"><span class="toc-text">NFS 卷</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">备份与恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A0%E9%99%A4%E5%8D%B7"><span class="toc-text">删除卷</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Bind-mount"><span class="toc-text">Bind mount</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E7%82%B9"><span class="toc-text">特点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AA%E8%AF%BB%E4%B8%8E-SELinux"><span class="toc-text">只读与 SELinux</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#bind-propagation"><span class="toc-text">bind-propagation</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Docker-Desktop"><span class="toc-text">Docker Desktop</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#tmpfs"><span class="toc-text">tmpfs</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E5%8F%AF%E5%86%99%E5%B1%82%E4%B8%8E%E5%AF%BC%E5%85%A5%E5%AF%BC%E5%87%BA"><span class="toc-text">容器可写层与导入导出</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E5%86%99%E5%B1%82"><span class="toc-text">可写层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#commit"><span class="toc-text">commit</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#save-x2F-load-%E4%B8%8E-export-x2F-import"><span class="toc-text">save&#x2F;load 与 export&#x2F;import</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A9%BA%E9%97%B4%E7%AE%A1%E7%90%86%E4%B8%8E%E6%B8%85%E7%90%86"><span class="toc-text">空间管理与清理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E5%8D%A0%E7%94%A8"><span class="toc-text">查看占用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B8%85%E7%90%86"><span class="toc-text">清理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E5%8D%A0%E7%94%A8"><span class="toc-text">日志占用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E6%8E%92%E6%9F%A5%E7%9B%AE%E5%BD%95"><span class="toc-text">手动排查目录</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">生产最佳实践</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-text">常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A3%81%E7%9B%98%E7%A9%BA%E9%97%B4%E4%B8%8D%E8%B6%B3"><span class="toc-text">磁盘空间不足</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#overlay2-%E6%8A%A5%E9%94%99"><span class="toc-text">overlay2 报错</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%99%90%E6%8B%92%E7%BB%9D"><span class="toc-text">权限拒绝</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%B7%E5%88%A0%E9%99%A4%E5%A4%B1%E8%B4%A5"><span class="toc-text">卷删除失败</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1"><span class="toc-text">数据丢失</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#containerd-image-store-%E5%88%87%E6%8D%A2%E5%90%8E%E9%95%9C%E5%83%8F%E4%B8%8D%E8%A7%81"><span class="toc-text">containerd image store 切换后镜像不见</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
     </div>
   </section>
 

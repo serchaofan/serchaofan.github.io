@@ -1,0 +1,4707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/#6.0.2'>
+  <meta name="generator" content="Hexo 6.3.0">
+  <meta name="Volantis" content="6.0.2">
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://tianyigu.top/2026/servicemesh深度笔记/"/>
+  <!-- 渲染优化 -->
+    <meta http-equiv='x-dns-prefetch-control' content='on' />
+      <link rel='dns-prefetch' href='https://unpkg.com'>
+      <link rel="preconnect" href="https://unpkg.com" crossorigin>
+      <link rel='dns-prefetch' href='https://cdn.bootcdn.net'>
+      <link rel="preconnect" href="https://cdn.bootcdn.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self' https:; block-all-mixed-content; base-uri 'self' https:; form-action 'self' https:; worker-src 'self' https:; connect-src 'self' https: *; img-src 'self' data: https: *; media-src 'self' https: *; font-src 'self' data: https: *; frame-src 'self' https: *; manifest-src 'self' https: *; child-src https:; script-src 'self' https: 'unsafe-inline' *; style-src 'self' https: 'unsafe-inline' *; ">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+  <meta content="telephone=no" name="format-detection">
+  <!-- import head_begin begin -->
+  <!-- import head_begin end -->
+  <!-- Custom Files headBegin begin-->
+  
+  <!-- Custom Files headBegin end-->
+    <link rel="shortcut icon" type='image/x-icon' href="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preload" href="https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<link rel="preload" href="https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <!-- feed -->
+  <!-- 页面元数据 -->
+  <title>Service Mesh 深度笔记 - Tianyi的技术随笔</title>
+  <meta name="keywords" content="服务网格, Gateway API,Istio,Service Mesh,云原生,Linkerd,Cilium,undefined">
+  <meta desc name="description" content="本文基于 2026-10 抓取到的最新官方文档编写：Istio 1.31.3、Linkerd 2.20、Cilium 1.20.3，以及 Gateway API（GAMMA 自 v1.1 进入 Standard Channel）。重点不是 YAML 大全，而是从架构师视角讲清 Service Mesh 的第一性原... - Tianyi Gu - Tianyi的技术随笔">
+  
+<meta property="og:type" content="article">
+<meta property="og:title" content="Service Mesh 深度笔记">
+<meta property="og:url" content="https://tianyigu.top/2026/ServiceMesh%E6%B7%B1%E5%BA%A6%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Tianyi的技术随笔">
+<meta property="og:description" content="本文基于 2026-10 抓取到的最新官方文档编写：Istio 1.31.3、Linkerd 2.20、Cilium 1.20.3，以及 Gateway API（GAMMA 自 v1.1 进入 Standard Channel）。重点不是 YAML 大全，而是从架构师视角讲清 Service Mesh 的第一性原理、数据面谱系、控制面协议、身份与策略、性能成本模型、故障学和选型演进。 与《Isti">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+<meta property="article:published_time" content="2026-10-23T02:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-22T16:54:05.833Z">
+<meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="Gateway API">
+<meta property="article:tag" content="Istio">
+<meta property="article:tag" content="Service Mesh">
+<meta property="article:tag" content="云原生">
+<meta property="article:tag" content="Linkerd">
+<meta property="article:tag" content="Cilium">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+  <style>
+    /* 首屏样式 */
+    #safearea {
+  display: none;
+}
+:root {
+  --color-site-body: #f4f4f4;
+  --color-site-bg: #f4f4f4;
+  --color-site-inner: #fff;
+  --color-site-footer: #666;
+  --color-card: #fff;
+  --color-text: #444;
+  --color-block: #f6f6f6;
+  --color-inlinecode: #c74f00;
+  --color-codeblock: #fff7ea;
+  --color-h1: #3a3a3a;
+  --color-h2: #3a3a3a;
+  --color-h3: #333;
+  --color-h4: #444;
+  --color-h5: #555;
+  --color-h6: #666;
+  --color-p: #444;
+  --color-list: #666;
+  --color-list-hl: #30ad91;
+  --color-meta: #888;
+  --color-read-bkg: #e0d8c8;
+  --color-read-post: #f8f1e2;
+  --color-copyright-bkg: #f5f5f5;
+}
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+*::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+html {
+  color: var(--color-text);
+  width: 100%;
+  height: 100%;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  font-size: 16px;
+}
+html >::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+html >::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+html >::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+html >::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+body {
+  background-color: var(--color-site-body);
+  text-rendering: optimizelegibility;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+body.modal-active {
+  overflow: hidden;
+}
+@media screen and (max-width: 680px) {
+  body.modal-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+a {
+  color: #2092ec;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+a:hover {
+  color: #ff5722;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+ol {
+  padding-left: 0;
+}
+ul li,
+ol li {
+  list-style: none;
+}
+header {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+img {
+  border: 0;
+  background: none;
+  max-width: 100%;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  height: 0;
+  border: 0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  border-bottom: 1px solid rgba(68,68,68,0.1);
+}
+button,
+input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+button {
+  overflow: visible;
+  text-transform: none;
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+@supports (backdrop-filter: blur(20px)) {
+  .blur {
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+.shadow {
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.shadow.floatable {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.shadow.floatable:hover {
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+}
+#l_cover {
+  min-height: 64px;
+}
+.cover-wrapper {
+  top: 0;
+  left: 0;
+  max-width: 100%;
+  height: 100vh;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+  color: var(--color-site-inner);
+  padding: 0 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -100px;
+}
+.cover-wrapper .cover-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+}
+.cover-wrapper .cover-bg.lazyload:not(.loaded) {
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+}
+.cover-wrapper .cover-bg.lazyload.loaded {
+  animation-delay: 0s;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+  animation-name: fadeIn;
+}
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cover-wrapper#full {
+  height: calc(100vh + 100px);
+  padding-bottom: 100px;
+}
+.cover-wrapper#half {
+  max-height: 640px;
+  min-height: 400px;
+  height: calc(36vh - 64px + 200px);
+}
+.cover-wrapper #scroll-down {
+  width: 100%;
+  height: 64px;
+  position: absolute;
+  bottom: 100px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover-wrapper #scroll-down .scroll-down-effects {
+  color: #fff;
+  font-size: 24px;
+  line-height: 64px;
+  position: absolute;
+  width: 24px;
+  left: calc(50% - 12px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  animation: scroll-down-effect 1.5s infinite;
+  -webkit-animation: scroll-down-effect 1.5s infinite;
+  -khtml-animation: scroll-down-effect 1.5s infinite;
+  -moz-animation: scroll-down-effect 1.5s infinite;
+  -o-animation: scroll-down-effect 1.5s infinite;
+  -ms-animation: scroll-down-effect 1.5s infinite;
+}
+@-moz-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  margin-top: 64px;
+  margin-bottom: 100px;
+}
+.cover-wrapper .cover-body,
+.cover-wrapper .cover-body .top,
+.cover-wrapper .cover-body .bottom {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  max-width: 100%;
+}
+.cover-wrapper .cover-body .bottom {
+  margin-top: 32px;
+}
+.cover-wrapper .cover-body .title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+  font-size: 3.125rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.cover-wrapper .cover-body .subtitle {
+  font-size: 20px;
+}
+.cover-wrapper .cover-body .logo {
+  max-height: 120px;
+  max-width: calc(100% - 4 * 16px);
+}
+@media screen and (min-height: 1024px) {
+  .cover-wrapper .cover-body .title {
+    font-size: 3rem;
+  }
+  .cover-wrapper .cover-body .subtitle {
+    font-size: 1.05rem;
+  }
+  .cover-wrapper .cover-body .logo {
+    max-height: 150px;
+  }
+}
+.cover-wrapper .cover-body .m_search {
+  position: relative;
+  max-width: calc(100% - 16px);
+  width: 320px;
+  vertical-align: middle;
+}
+.cover-wrapper .cover-body .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  width: 100%;
+}
+.cover-wrapper .cover-body .m_search .icon,
+.cover-wrapper .cover-body .m_search .input {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.cover-wrapper .cover-body .m_search .icon {
+  position: absolute;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  line-height: 2.5rem;
+  width: 32px;
+  top: 0;
+  left: 5px;
+  color: rgba(68,68,68,0.75);
+}
+.cover-wrapper .cover-body .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  padding-left: 36px;
+  border-radius: 1.4rem;
+  -webkit-border-radius: 1.4rem;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: var(--color-text);
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .cover-body .m_search .input {
+    padding-left: 36px;
+  }
+}
+.cover-wrapper .cover-body .m_search .input:hover {
+  background: rgba(255,255,255,0.8);
+}
+.cover-wrapper .cover-body .m_search .input:focus {
+  background: #fff;
+}
+.cover-wrapper .list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -khtml-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -o-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  align-items: stretch;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.cover-wrapper .list-h a {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  font-weight: 600;
+}
+.cover-wrapper .list-h a img {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  margin: 4px;
+  min-width: 40px;
+  max-width: 44px;
+}
+@media screen and (max-width: 768px) {
+  .cover-wrapper .list-h a img {
+    min-width: 36px;
+    max-width: 40px;
+  }
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .list-h a img {
+    margin: 2px 4px;
+    min-width: 32px;
+    max-width: 36px;
+  }
+}
+@media screen and (max-width: 375px) {
+  .cover-wrapper .list-h a img {
+    min-width: 28px;
+    max-width: 32px;
+  }
+}
+.cover-wrapper {
+  max-width: 100%;
+}
+.cover-wrapper.search .bottom .menu {
+  margin-top: 16px;
+}
+.cover-wrapper.search .bottom .menu .list-h a {
+  white-space: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2px;
+  margin: 4px;
+  color: var(--color-site-inner);
+  opacity: 0.75;
+  -webkit-opacity: 0.75;
+  -moz-opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 2px solid transparent;
+}
+.cover-wrapper.search .bottom .menu .list-h a i {
+  margin-right: 4px;
+}
+.cover-wrapper.search .bottom .menu .list-h a p {
+  font-size: 0.9375rem;
+}
+.cover-wrapper.search .bottom .menu .list-h a:hover,
+.cover-wrapper.search .bottom .menu .list-h a.active,
+.cover-wrapper.search .bottom .menu .list-h a:active {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  border-bottom: 2px solid var(--color-site-inner);
+}
+.cover-wrapper.dock .menu,
+.cover-wrapper.featured .menu,
+.cover-wrapper.focus .menu {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+.cover-wrapper.dock .menu .list-h a,
+.cover-wrapper.featured .menu .list-h a,
+.cover-wrapper.focus .menu .list-h a {
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  line-height: 24px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-bottom: none;
+  text-align: center;
+  align-content: flex-end;
+  color: rgba(68,68,68,0.7);
+  font-size: 1.5rem;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h a,
+  .cover-wrapper.featured .menu .list-h a,
+  .cover-wrapper.focus .menu .list-h a {
+    padding: 12px 8px;
+  }
+}
+.cover-wrapper.dock .menu .list-h a i,
+.cover-wrapper.featured .menu .list-h a i,
+.cover-wrapper.focus .menu .list-h a i {
+  margin: 8px;
+}
+.cover-wrapper.dock .menu .list-h a p,
+.cover-wrapper.featured .menu .list-h a p,
+.cover-wrapper.focus .menu .list-h a p {
+  font-size: 0.875rem;
+}
+.cover-wrapper.dock .menu .list-h a.active,
+.cover-wrapper.featured .menu .list-h a.active,
+.cover-wrapper.focus .menu .list-h a.active {
+  background: var(--color-card);
+  backdrop-filter: none;
+}
+.cover-wrapper.dock .menu .list-h a.active i,
+.cover-wrapper.featured .menu .list-h a.active i,
+.cover-wrapper.focus .menu .list-h a.active i,
+.cover-wrapper.dock .menu .list-h a.active i+p,
+.cover-wrapper.featured .menu .list-h a.active i+p,
+.cover-wrapper.focus .menu .list-h a.active i+p {
+  color: #3dd9b6;
+}
+.cover-wrapper.dock .menu .list-h a.active img+p,
+.cover-wrapper.featured .menu .list-h a.active img+p,
+.cover-wrapper.focus .menu .list-h a.active img+p {
+  color: var(--color-text);
+}
+.cover-wrapper.dock .menu .list-h a:hover,
+.cover-wrapper.featured .menu .list-h a:hover,
+.cover-wrapper.focus .menu .list-h a:hover {
+  background: var(--color-card);
+}
+.cover-wrapper.dock .top {
+  margin-bottom: 48px;
+}
+.cover-wrapper.dock .menu {
+  background: rgba(255,255,255,0.5);
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+}
+.cover-wrapper.dock .menu .list-h {
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  margin: 4px;
+}
+.cover-wrapper.dock .menu .list-h a+a {
+  margin-left: 4px;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h {
+    overflow-x: scroll;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb {
+    background: #3dd9b6;
+    cursor: pointer;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb:hover {
+    background: #ff5722;
+  }
+}
+@supports (backdrop-filter: blur(20px)) {
+  .cover-wrapper.dock .menu {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url("https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Varela Round';
+  src: url("https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/VarelaRound/VarelaRound-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+.l_header {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--color-card);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.l_header.auto {
+  transition: opacity 0.4s ease;
+  -webkit-transition: opacity 0.4s ease;
+  -khtml-transition: opacity 0.4s ease;
+  -moz-transition: opacity 0.4s ease;
+  -o-transition: opacity 0.4s ease;
+  -ms-transition: opacity 0.4s ease;
+  visibility: hidden;
+}
+.l_header.auto.show {
+  opacity: 1 !important;
+  -webkit-opacity: 1 !important;
+  -moz-opacity: 1 !important;
+  visibility: visible;
+}
+.l_header .container {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.l_header #wrapper {
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.l_header #wrapper .nav-main,
+.l_header #wrapper .nav-sub {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -khtml-justify-content: space-between;
+  -moz-justify-content: space-between;
+  -o-justify-content: space-between;
+  -ms-justify-content: space-between;
+  align-items: center;
+}
+.l_header #wrapper .nav-main {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.l_header #wrapper.sub .nav-main {
+  transform: translateY(-64px);
+  -webkit-transform: translateY(-64px);
+  -khtml-transform: translateY(-64px);
+  -moz-transform: translateY(-64px);
+  -o-transform: translateY(-64px);
+  -ms-transform: translateY(-64px);
+}
+.l_header #wrapper .nav-sub {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+  height: 64px;
+  width: calc(100% - 2 * 16px);
+  position: absolute;
+}
+.l_header #wrapper .nav-sub ::-webkit-scrollbar {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (min-width: 2048px) {
+  .l_header #wrapper .nav-sub {
+    max-width: 55vw;
+    margin: auto;
+  }
+}
+.l_header #wrapper.sub .nav-sub {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+}
+.l_header #wrapper .title {
+  position: relative;
+  color: var(--color-text);
+  padding-left: 24px;
+  max-height: 64px;
+}
+.l_header #wrapper .nav-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  line-height: 64px;
+  padding: 0 24px;
+  font-size: 1.25rem;
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+}
+.l_header #wrapper .nav-main .title img {
+  height: 64px;
+}
+.l_header .nav-sub {
+  max-width: 1580px;
+  margin: auto;
+}
+.l_header .nav-sub .title {
+  font-weight: bold;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  line-height: 1.2;
+  max-height: 64px;
+  white-space: normal;
+  flex-shrink: 1;
+}
+.l_header .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  line-height: 64px;
+  align-items: center;
+}
+.l_header .switcher .s-toc {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  .l_header .switcher .s-toc {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+  }
+}
+.l_header .switcher >li {
+  height: 48px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  margin: 2px;
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li {
+    margin: 0 1px;
+    height: 48px;
+  }
+}
+.l_header .switcher >li >a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0.85em 1.1em;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  color: #3dd9b6;
+}
+.l_header .switcher >li >a:hover {
+  border: none;
+}
+.l_header .switcher >li >a.active,
+.l_header .switcher >li >a:active {
+  border: none;
+  background: var(--color-site-bg);
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li >a {
+    width: 36px;
+    height: 48px;
+  }
+}
+.l_header .nav-sub .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+}
+.l_header .m_search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  height: 64px;
+  width: 240px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (max-width: 1024px) {
+  .l_header .m_search {
+    width: 44px;
+    min-width: 44px;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+  }
+  .l_header .m_search:hover {
+    width: 240px;
+  }
+  .l_header .m_search:hover input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search:hover .input {
+    width: 100%;
+  }
+  .l_header .m_search:hover .input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search {
+    min-width: 0;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.l_header .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.l_header .m_search .icon {
+  position: absolute;
+  width: 36px;
+  left: 5px;
+  color: var(--color-meta);
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .icon {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+.l_header .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
+  width: 100%;
+  color: var(--color-text);
+  background: #fafafa;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 40px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search .input:focus {
+    box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .input {
+    background: var(--color-block);
+    padding-left: 8px;
+    border: none;
+  }
+  .l_header .m_search .input:hover,
+  .l_header .m_search .input:focus {
+    border: none;
+  }
+}
+@media (max-width: 500px) {
+  .l_header .m_search {
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    transition: all 0.28s ease;
+    -webkit-transition: all 0.28s ease;
+    -khtml-transition: all 0.28s ease;
+    -moz-transition: all 0.28s ease;
+    -o-transition: all 0.28s ease;
+    -ms-transition: all 0.28s ease;
+  }
+  .l_header .m_search .input {
+    border-radius: 32px;
+    -webkit-border-radius: 32px;
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  .l_header.z_search-open .m_search {
+    width: 100%;
+  }
+  .l_header.z_search-open .m_search .input {
+    width: calc(100% - 120px);
+  }
+}
+ul.m-pc >li>a {
+  color: inherit;
+  border-bottom: 2px solid transparent;
+}
+ul.m-pc >li>a:active,
+ul.m-pc >li>a.active {
+  border-bottom: 2px solid #3dd9b6;
+}
+ul.m-pc li:hover >ul.list-v,
+ul.list-v li:hover >ul.list-v {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.nav-list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  align-items: stretch;
+}
+ul.nav-list-h>li {
+  position: relative;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  height: 100%;
+  line-height: 2.4;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+ul.nav-list-h>li >a {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+ul.list-v {
+  z-index: 1;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: absolute;
+  background: var(--color-card);
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  margin-top: -6px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  padding: 8px 0;
+}
+ul.list-v.show {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.list-v hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+ul.list-v >li {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+ul.list-v >li.header {
+  font-size: 0.78125rem;
+  font-weight: bold;
+  line-height: 2em;
+  color: var(--color-meta);
+  margin: 8px 16px 4px;
+}
+ul.list-v >li.header i {
+  margin-right: 8px;
+}
+ul.list-v >li ul {
+  margin-left: 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: -40px;
+}
+ul.list-v .aplayer-container {
+  min-height: 64px;
+  padding: 6px 16px;
+}
+ul.list-v >li>a {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  color: var(--color-list);
+  font-size: 0.875rem;
+  font-weight: bold;
+  line-height: 36px;
+  padding: 0 20px 0 16px;
+  text-overflow: ellipsis;
+  margin: 0 4px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+@media screen and (max-width: 1024px) {
+  ul.list-v >li>a {
+    line-height: 40px;
+  }
+}
+ul.list-v >li>a >i {
+  margin-right: 8px;
+}
+ul.list-v >li>a:active,
+ul.list-v >li>a.active {
+  color: var(--color-list-hl);
+}
+ul.list-v >li>a:hover {
+  color: var(--color-list-hl);
+  background: var(--color-site-bg);
+}
+.l_header .menu >ul>li>a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding: 0 8px;
+}
+.l_header .menu >ul>li>a >i {
+  margin-right: 4px;
+}
+.l_header ul.nav-list-h>li {
+  color: var(--color-list);
+  line-height: 64px;
+}
+.l_header ul.nav-list-h>li >a {
+  max-height: 64px;
+  overflow: hidden;
+  color: inherit;
+}
+.l_header ul.nav-list-h>li >a:active,
+.l_header ul.nav-list-h>li >a.active {
+  color: #3dd9b6;
+}
+.l_header ul.nav-list-h>li:hover>a {
+  color: var(--color-list-hl);
+}
+.l_header ul.nav-list-h>li i.music {
+  animation: rotate-effect 1.5s linear infinite;
+  -webkit-animation: rotate-effect 1.5s linear infinite;
+  -khtml-animation: rotate-effect 1.5s linear infinite;
+  -moz-animation: rotate-effect 1.5s linear infinite;
+  -o-animation: rotate-effect 1.5s linear infinite;
+  -ms-animation: rotate-effect 1.5s linear infinite;
+}
+@-moz-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-o-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+.menu-phone li ul.list-v {
+  right: calc(100% - 0.5 * 16px);
+}
+.menu-phone li ul.list-v ul {
+  right: calc(100% - 0.5 * 16px);
+}
+#wrapper {
+  max-width: 1580px;
+  margin: auto;
+}
+@media screen and (min-width: 2048px) {
+  #wrapper {
+    max-width: 55vw;
+  }
+}
+#wrapper .menu {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 1;
+  -ms-flex: 1 1;
+  flex: 1 1;
+  margin: 0 16px 0 0;
+}
+#wrapper .menu .list-v ul {
+  left: calc(100% - 0.5 * 16px);
+}
+.menu-phone {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: 16px;
+  right: 8px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.menu-phone ul {
+  right: calc(100% - 0.5 * 16px);
+}
+@media screen and (max-width: 500px) {
+  .menu-phone {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: block;
+  }
+}
+.l_header {
+  max-width: 65vw;
+  left: calc((100% - 65vw) * 0.5);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media screen and (max-width: 2048px) {
+  .l_header {
+    max-width: 1612px;
+    left: calc((100% - 1612px) * 0.5);
+  }
+}
+@media screen and (max-width: 1612px) {
+  .l_header {
+    left: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    max-width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .l_header #wrapper .nav-main .title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .l_header #wrapper .nav-sub {
+    width: 100%;
+  }
+  .l_header #wrapper .nav-sub .title {
+    overflow-y: scroll;
+    margin-top: 2px;
+    padding: 8px 16px;
+  }
+  .l_header #wrapper .switcher {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+    margin-right: 8px;
+  }
+  .l_header .menu {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+@media screen and (max-width: 500px) {
+  .list-v li {
+    max-width: 270px;
+  }
+}
+#u-search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 60px 20px;
+  z-index: 1001;
+}
+@media screen and (max-width: 680px) {
+  #u-search {
+    padding: 0px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+    '.kill-t{'+
+      'font-size: 2rem;'+
+    '}'+
+    '.kill-c{'+
+      'font-size: 1.2rem;'+
+    '}'+
+		'#l_header,#l_body{'+
+			'display: none;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        `<span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>`+
+        `<span class="kill-c">微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</span><br/>`+
+        `<a target="_blank" rel="noopener" href="https://blogs.windows.com/windowsexperience/2021/05/19/the-future-of-internet-explorer-on-windows-10-is-in-microsoft-edge/"><strong>了解详情 ></strong></a>`+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+    .kill-t{
+      font-size: 2rem;
+    }
+    .kill-c{
+      font-size: 1.2rem;
+    }
+		#l_header,#l_body{
+			display: none;
+		}
+	</style>
+    <div class="kill-noscript">
+        <span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>
+        <span class="kill-c">本页面需要浏览器支持（启用）JavaScript</span><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+
+  <script>
+  /************这个文件存放不需要重载的全局变量和全局函数*********/
+  // window.volantis = {}; // volantis 全局变量
+/**
+ * 内存安全的全局 volantis 对象实现
+ * 特性：
+ * 1. 支持 window.volantis.xxx = yyy 直观赋值语法
+ * 2. 基于 WeakMap 存储数据，自动回收内存
+ * 3. 支持属性枚举（如 Object.keys(window.volantis)）
+ * 4. 支持删除属性（delete window.volantis.xxx）
+ */
+(function initializeVolantis() {
+  // 1. 初始化 WeakMap 存储实际数据（键：volantisProxy 实例，值：属性键值对）
+  const volantisDataStore = new WeakMap();
+
+  // 2. 创建 Proxy 代理处理属性访问
+  const volantisProxy = new Proxy({}, {
+    /**
+     * 拦截属性读取（如 window.volantis.dom）
+     * @param {Object} target - 代理目标对象（仅作为占位符，不存储数据）
+     * @param {string} prop - 访问的属性名
+     * @returns {any} 属性值或 undefined
+     */
+    get(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      return data?.[prop]; // 使用可选链避免数据未初始化时的错误
+    },
+
+    /**
+     * 拦截属性赋值（如 window.volantis.dom = "a"）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 赋值的属性名
+     * @param {any} value - 赋值的属性值
+     * @returns {boolean} 赋值是否成功
+     */
+    set(target, prop, value) {
+      // 初始化数据容器（若不存在）
+      if (!volantisDataStore.has(volantisProxy)) {
+        volantisDataStore.set(volantisProxy, Object.create(null)); // 使用无原型对象避免原型污染
+      }
+      // 存储属性值
+      const data = volantisDataStore.get(volantisProxy);
+      data[prop] = value;
+      return true; // 符合 Proxy 规范，返回成功标志
+    },
+
+    /**
+     * 拦截属性删除（如 delete window.volantis.dom）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 要删除的属性名
+     * @returns {boolean} 删除是否成功
+     */
+    deleteProperty(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, prop)) {
+        return false; // 属性不存在，删除失败
+      }
+      delete data[prop];
+      // 若数据为空，清理 WeakMap 条目（优化内存回收）
+      if (Object.keys(data).length === 0) {
+        volantisDataStore.delete(volantisProxy);
+      }
+      return true;
+    },
+
+    /**
+     * 拦截属性枚举（如 Object.keys(window.volantis)）
+     * @param {Object} target - 代理目标对象
+     * @returns {string[]} 可枚举的属性名数组
+     */
+    ownKeys(target) {
+      const data = volantisDataStore.get(volantisProxy);
+      return data ? Object.keys(data) : [];
+    },
+
+    /**
+     * 拦截属性描述符查询（如 Object.getOwnPropertyDescriptor）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 属性名
+     * @returns {PropertyDescriptor|undefined} 属性描述符
+     */
+    getOwnPropertyDescriptor(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, prop)) {
+        return undefined;
+      }
+      return {
+        value: data[prop],
+        writable: true,
+        enumerable: true,
+        configurable: true
+      };
+    }
+  });
+
+  // 3. 挂载到 window 对象，暴露全局访问入口
+  Object.defineProperty(window, 'volantis', {
+    value: volantisProxy,
+    writable: true, // 允许后续手动设置为 null 触发清理
+    configurable: true,
+    enumerable: true
+  });
+
+})();
+  volantis.debug = "env"; // 调试模式
+  volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
+  /******************** volantis.EventListener ********************************/
+  // 事件监听器 see: /source/js/app.js
+  volantis.EventListener = {}
+  // 这里存放pjax切换页面时将被移除的事件监听器
+  volantis.EventListener.list = []
+  //构造方法
+  function volantisEventListener(type, f, ele) {
+    this.type = type
+    this.f = f
+    this.ele = ele
+  }
+  // 移除事件监听器
+  volantis.EventListener.remove = () => {
+    volantis.EventListener.list.forEach(function (i) {
+      i.ele.removeEventListener(i.type, i.f, false)
+    })
+    volantis.EventListener.list = [];
+  }
+  /******************** volantis.dom.$ ********************************/
+  // 注：这里没有选择器，也没有forEach一次只处理一个dom，这里重新封装主题常用的dom方法，返回的是dom对象，对象包含了以下方法，同时保留dom的原生API
+  function volantisDom(ele) {
+    if (!ele) ele = document.createElement("div")
+    this.ele = ele;
+    // ==============================================================
+    this.ele.find = (c) => {
+      let q = this.ele.querySelector(c)
+      if (q)
+        return new volantisDom(q)
+    }
+    // ==============================================================
+    this.ele.hasClass = (c) => {
+      return this.ele.className.match(new RegExp('(\\s|^)' + c + '(\\s|$)'));
+    }
+    this.ele.addClass = (c) => {
+      this.ele.classList.add(c);
+      return this.ele
+    }
+    this.ele.removeClass = (c) => {
+      this.ele.classList.remove(c);
+      return this.ele
+    }
+    this.ele.toggleClass = (c) => {
+      if (this.ele.hasClass(c)) {
+        this.ele.removeClass(c)
+      } else {
+        this.ele.addClass(c)
+      }
+      return this.ele
+    }
+    // ==============================================================
+    // 参数 r 为 true 表示pjax切换页面时事件监听器将被移除，false不移除
+    this.ele.on = (c, f, r = 1) => {
+      this.ele.addEventListener(c, f, false)
+      if (r) {
+        volantis.EventListener.list.push(new volantisEventListener(c, f, this.ele))
+      }
+      return this.ele
+    }
+    this.ele.click = (f, r) => {
+      this.ele.on("click", f, r)
+      return this.ele
+    }
+    this.ele.scroll = (f, r) => {
+      this.ele.on("scroll", f, r)
+      return this.ele
+    }
+    // ==============================================================
+    this.ele.html = (c) => {
+      // if(c=== undefined){
+      //   return this.ele.innerHTML
+      // }else{
+      this.ele.innerHTML = c
+      return this.ele
+      // }
+    }
+    // ==============================================================
+    this.ele.hide = (c) => {
+      this.ele.style.display = "none"
+      return this.ele
+    }
+    this.ele.show = (c) => {
+      this.ele.style.display = "block"
+      return this.ele
+    }
+    // ==============================================================
+    return this.ele
+  }
+  volantis.dom.$ = (ele) => {
+    return !!ele ? new volantisDom(ele) : null;
+  }
+  /******************** RunItem ********************************/
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = () => {
+          volantis.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) => {
+      for (let index = 0; index < this.list.length; index++) {
+        const e = this.list[index];
+        if (e.name == name) {
+          this.list.splice(index, 1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }
+  }
+  /******************** Pjax ********************************/
+  // /layout/_plugins/pjax/index.ejs
+  // volantis.pjax.send(callBack[,"callBackName"]) 传入pjax:send回调函数
+  // volantis.pjax.push(callBack[,"callBackName"]) 传入pjax:complete回调函数
+  // volantis.pjax.error(callBack[,"callBackName"]) 传入pjax:error回调函数
+  volantis.pjax = {};
+  volantis.pjax.method = {
+    complete: new RunItem(),
+    error: new RunItem(),
+    send: new RunItem(),
+  };
+  volantis.pjax = Object.assign(volantis.pjax, {
+    push: volantis.pjax.method.complete.push,
+    error: volantis.pjax.method.error.push,
+    send: volantis.pjax.method.send.push,
+  });
+  /******************** RightMenu ********************************/
+  // volantis.rightmenu.handle(callBack[,"callBackName"]) 外部菜单项控制
+  // 可在 volantis.mouseEvent 处获取右键事件
+  volantis.rightmenu = {};
+  volantis.rightmenu.method = {
+    handle: new RunItem(),
+  }
+  volantis.rightmenu = Object.assign(volantis.rightmenu, {
+    handle: volantis.rightmenu.method.handle.push,
+  });
+  /********************  Dark Mode  ********************************/
+  // /layout/_partial/scripts/darkmode.ejs
+  // volantis.dark.mode 当前模式 dark or light
+  // volantis.dark.toggle() 暗黑模式触发器
+  // volantis.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  volantis.dark = {};
+  volantis.dark.method = {
+    toggle: new RunItem(),
+  };
+  volantis.dark = Object.assign(volantis.dark, {
+    push: volantis.dark.method.toggle.push,
+  });
+  /********************  Message  ********************************/
+  // VolantisApp.message
+  /********************  isMobile  ********************************/
+  // /source/js/app.js
+  // volantis.isMobile
+  // volantis.isMobileOld
+  /********************脚本动态加载函数********************************/
+  // volantis.js(src, cb)  cb 可以传入onload回调函数 或者 JSON对象 例如: volantis.js("src", ()=>{}) 或 volantis.js("src", {defer:true,onload:()=>{}})
+  // volantis.css(src)
+
+  // 返回Promise对象，如下方法同步加载资源，这利于处理文件资源之间的依赖关系，例如：APlayer 需要在 MetingJS 之前加载
+  // (async () => {
+  //     await volantis.js("...theme.plugins.aplayer.js.aplayer...")
+  //     await volantis.js("...theme.plugins.aplayer.js.meting...")
+  // })();
+
+  // 已经加入了setTimeout
+  volantis.js = (src, cb) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var HEAD = document.getElementsByTagName("head")[0] || document.documentElement;
+        var script = document.createElement("script");
+        script.setAttribute("type", "text/javascript");
+        if (cb) {
+          if (JSON.stringify(cb)) {
+            for (let p in cb) {
+              if (p == "onload") {
+                script[p] = () => {
+                  cb[p]()
+                  resolve()
+                }
+              } else {
+                script[p] = cb[p]
+                script.onload = resolve
+              }
+            }
+          } else {
+            script.onload = () => {
+              cb()
+              resolve()
+            };
+          }
+        } else {
+          script.onload = resolve
+        }
+        script.setAttribute("src", src);
+        HEAD.appendChild(script);
+      });
+    });
+  }
+  volantis.css = (src) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var link = document.createElement('link');
+        link.rel = "stylesheet";
+        link.href = src;
+        link.onload = resolve;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      });
+    });
+  }
+  /********************按需加载的插件********************************/
+  // volantis.import.jQuery().then(()=>{})
+  volantis.import = {
+    jQuery: () => {
+      if (typeof jQuery == "undefined") {
+        return volantis.js("https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js")
+      } else {
+        return new Promise(resolve => {
+          resolve()
+        });
+      }
+    }
+  }
+  /********************** requestAnimationFrame ********************************/
+  // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+  // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+  volantis.requestAnimationFrame = (fn) => {
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+    }
+    window.requestAnimationFrame(fn)
+  }
+  /************************ layoutHelper *****************************************/
+  volantis.layoutHelper = (helper, html, opt) => {
+    opt = Object.assign({ clean: false, pjax: true }, opt)
+    function myhelper(helper, html, clean) {
+      volantis.tempDiv = document.createElement("div");
+      volantis.tempDiv.innerHTML = html;
+      let layoutHelper = document.querySelector("#layoutHelper-" + helper)
+      if (layoutHelper) {
+        if (clean) {
+          layoutHelper.innerHTML = ""
+        }
+        layoutHelper.append(volantis.tempDiv);
+      }
+    }
+    myhelper(helper, html, opt.clean)
+    if (opt.pjax) {
+      volantis.pjax.push(() => {
+        myhelper(helper, html, opt.clean)
+      }, "layoutHelper-" + helper)
+    }
+  }
+  /****************************** 滚动事件处理 ****************************************/
+  volantis.scroll = {
+    engine: new RunItem(),
+    unengine: new RunItem(),
+  };
+  volantis.scroll = Object.assign(volantis.scroll, {
+    push: volantis.scroll.engine.push,
+  });
+  // 滚动条距离顶部的距离
+  volantis.scroll.getScrollTop = () => {
+    let scrollPos;
+    if (window.pageYOffset) {
+      scrollPos = window.pageYOffset;
+    } else if (document.compatMode && document.compatMode != 'BackCompat') {
+      scrollPos = document.documentElement.scrollTop;
+    } else if (document.body) {
+      scrollPos = document.body.scrollTop;
+    }
+    return scrollPos;
+  }
+  volantis.scroll.scrollHeight = function () {
+    return Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+    )
+  }
+  volantis.scroll.offsetHeight = function () {
+    return Math.min(
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight,
+      document.body.clientHeight,
+      document.documentElement.clientHeight
+    )
+  }
+  volantis.scroll.progress = function () {
+    return volantis.scroll.getScrollTop() / (volantis.scroll.scrollHeight() - volantis.scroll.offsetHeight())
+  }
+  // 使用 requestAnimationFrame 处理滚动事件
+  // `volantis.scroll.del` 中存储了一个数值, 该数值检测一定时间间隔内滚动条滚动的位移, 数值的检测频率是浏览器的刷新频率. 数值为正数时, 表示向下滚动. 数值为负数时, 表示向上滚动.
+  volantis.scroll.handleScrollEvents = () => {
+    volantis.scroll.lastScrollTop = volantis.scroll.getScrollTop()
+    function loop() {
+      const scrollTop = volantis.scroll.getScrollTop();
+      if (volantis.scroll.lastScrollTop !== scrollTop) {
+        volantis.scroll.del = scrollTop - volantis.scroll.lastScrollTop;
+        volantis.scroll.lastScrollTop = scrollTop;
+        // if (volantis.scroll.del > 0) {
+        //   console.log("向下滚动");
+        // } else {
+        //   console.log("向上滚动");
+        // }
+        // 注销过期的unengine未滚动事件
+        volantis.scroll.unengine.list = []
+        volantis.scroll.engine.start();
+      } else {
+        volantis.scroll.unengine.start();
+      }
+      volantis.requestAnimationFrame(loop)
+    }
+    volantis.requestAnimationFrame(loop)
+  }
+  volantis.scroll.handleScrollEvents()
+  volantis.scroll.ele = null;
+  // 触发页面滚动至目标元素位置
+  volantis.scroll.to = (ele, option = {}) => {
+    if (!ele) return;
+    volantis.scroll.ele = ele;
+    // 默认配置
+    opt = {
+      top: ele.getBoundingClientRect().top + document.documentElement.scrollTop,
+      behavior: "smooth"
+    }
+    // 定义配置
+    if ("top" in option) {
+      opt.top = option.top
+    }
+    if ("behavior" in option) {
+      opt.behavior = option.behavior
+    }
+    if ("addTop" in option) {
+      opt.top += option.addTop
+    }
+    if (!("observerDic" in option)) {
+      option.observerDic = 100
+    }
+    // 滚动
+    window.scrollTo(opt);
+    // 监视器
+    // 监视并矫正元素滚动到指定位置
+    // 用于处理 lazyload 引起的 cls 导致的定位失败问题
+    // option.observer = false
+    if (option.observer) {
+      setTimeout(() => {
+        if (volantis.scroll.ele != ele) {
+          return
+        }
+        volantis.scroll.unengine.push(() => {
+          let me = ele.getBoundingClientRect().top
+          if (!(me >= -option.observerDic && me <= option.observerDic)) {
+            volantis.scroll.to(ele, option)
+          }
+          volantis.scroll.unengine.remove("unengineObserver")
+        }, "unengineObserver")
+      }, 1000)
+    }
+  }
+  /********************** Content Visibility ********************************/
+  // 见 source/css/first.styl 如果遇到任何问题 删除 .post-story 即可
+  // 一个元素被声明 content-visibility 属性后 如果元素不在 viewport 中 浏览器不会计算其后代元素样式和属性 从而节省 Style & Layout 耗时
+  // content-visibility 的副作用: 锚点失效 等等(实验初期 暂不明确), 使用此方法清除样式
+  volantis.cleanContentVisibility = () => {
+    if (document.querySelector(".post-story")) {
+      console.log("cleanContentVisibility");
+      document.querySelectorAll(".post-story").forEach(e => {
+        e.classList.remove("post-story")
+      })
+    }
+  }
+  /******************************************************************************/
+  /******************************************************************************/
+  /******************************************************************************/
+  //图像加载出错时的处理
+  function errorImgAvatar(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg";
+    img.onerror = null;
+  }
+  function errorImgCover(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg";
+    img.onerror = null;
+  }
+  /******************************************************************************/
+</script>
+<script>
+  volantis.GLOBAL_CONFIG ={
+    root: '/',
+    debug: "env",
+    default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
+    lastupdate: new Date(1792690087254),
+    cdn: {
+      izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
+      izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
+      fancybox_css: 'https://cdn.bootcdn.net/ajax/libs/fancyapps-ui/4.0.31/fancybox.min.css',
+      fancybox_js: 'https://cdn.bootcdn.net/ajax/libs/fancyapps-ui/4.0.31/fancybox.umd.min.js'
+    },
+    sidebar: {
+      for_page: ["blogger","category","tagcloud"],
+      for_post: ["toc"],
+      webinfo: {
+        lastupd: {
+          enable: true,
+          friendlyShow: true
+        },
+        runtime: {
+          data: "2020/01/01",
+          unit: "天"
+        }
+      }
+    },
+    plugins: {
+      message: {"enable":true,"icon":{"default":"fa-solid fa-info-circle light-blue","quection":"fa-solid fa-question-circle light-blue"},"time":{"default":5000,"quection":20000},"position":"topRight","transitionIn":"bounceInLeft","transitionOut":"fadeOutRight","titleColor":"var(--color-text)","messageColor":"var(--color-text)","backgroundColor":"var(--color-card)","zindex":2147483647,"copyright":{"enable":true,"title":"知识共享许可协议","message":"请遵守 CC BY-NC-SA 4.0 协议。","icon":"far fa-copyright light-blue"},"aplayer":{"enable":true,"play":"fa-solid fa-play","pause":"fa-solid fa-pause"},"rightmenu":{"enable":true,"notice":true}},
+      
+      
+    },
+    search: {
+      
+
+      
+        dataPath: (("/" || "/").endsWith("/") ? "/" || "/" : "//" || "/") + "content.json",
+      
+
+      
+    },
+    languages: {
+      
+        search: {
+          hits_empty: "找不到您查询的内容：${query}",
+          hits_stats: "找到 ${hits} 条结果，用时 ${time} 毫秒",
+        }
+      
+    }
+  }
+</script>
+
+  
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/服务网格/","name":"服务网格"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2026/ServiceMesh深度笔记/","name":"Service Mesh 深度笔记"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Service Mesh 深度笔记","description":"本文基于 2026-10 抓取到的最新官方文档编写：Istio 1.31.3、Linkerd 2.20、Cilium 1.20.3，以及 Gateway API（GAMMA 自 v1.1 进入 Standard Channel）。重点不是 YAML 大全，而是从架构师视角讲清 Service Mesh 的第一性原理、数据面谱系、控制面协议、身份与策略、性能成本模型、故障学和选型演进。\n与《Istio 笔记》的分工：那篇讲 Istio 的安装、配置和排障；这篇讲“为什么这样设计、什么时候该用、代价是什么、如何不把自己搞挂”。\n最后更新：2026-10-23","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2026/ServiceMesh%E6%B7%B1%E5%BA%A6%E7%AC%94%E8%AE%B0/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2026/ServiceMesh%E6%B7%B1%E5%BA%A6%E7%AC%94%E8%AE%B0/","wordCount":280,"datePublished":"2026-10-23T02:00:00.000Z","dateModified":"2026-10-22T16:54:05.833Z","articleSection":"服务网格","keywords":"Gateway API,Istio,Service Mesh,云原生,Linkerd,Cilium","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  
+  <!-- import head_end begin -->
+  <!-- import head_end end -->
+  <!-- Custom Files headEnd begin-->
+  
+  <!-- Custom Files headEnd end-->
+</head>
+  <body itemscope itemtype="http://schema.org/WebPage">
+    <!-- import body_begin begin-->
+    <!-- import body_begin end-->
+    <!-- Custom Files bodyBegin begin-->
+    
+    <!-- Custom Files bodyBegin end-->
+    <header itemscope itemtype="http://schema.org/WPHeader" id="l_header" class="l_header auto shadow floatable blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fa-solid fa-comments fa-fw" target="_self" title="comment"></a></li>
+        
+          <li><a id="s-toc" class="s-toc fa-solid fa-list fa-fw" target="_self" title="toc"></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+      
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fa-solid fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+      
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fa-solid fa-search fa-fw" target="_self" title="search"></a></li>
+				
+				<li>
+          <a class="s-menu fa-solid fa-bars fa-fw" target="_self" title="menu"></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+
+      <!-- Custom Files header begin -->
+      
+      <!-- Custom Files header end -->
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+      <!-- see: /layout/_partial/scripts/_ctrl.ejs -->
+      <div id="none" class='cover-wrapper post dock' style="display: none;">
+        
+  <div class='cover-bg lazyload placeholder' data-bg="https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg"></div>
+
+<div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              active-action="action-v4getting-started">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              active-action="action-faqs">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              active-action="action-examples">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              active-action="action-contributors">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              active-action="action-archives">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              active-action="action-https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+      </div>
+    
+  
+</div>
+
+      <div id="safearea">
+        <div class="body-wrapper">
+          
+<div id="l_main" class=''>
+  <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow floatable blur article-type-post" id="post" itemscope itemprop="blogPost">
+  <link itemprop="mainEntityOfPage" href="https://tianyigu.top/2026/ServiceMesh深度笔记/">
+  <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+  </span>
+  <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+    <meta itemprop="name" content="Service Mesh 深度笔记">
+    <meta itemprop="description" content="Tianyi的技术随笔">
+  </span>
+  
+
+
+  
+    <span hidden>
+      <meta itemprop="image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+    </span>
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title" itemprop="name headline">
+        Service Mesh 深度笔记
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  
+  
+  
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC/">服务网格</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/%E6%9C%8D%E5%8A%A1%E7%BD%91%E6%A0%BC/" itemprop="url"><span itemprop="name">服务网格</span></a>
+      </span>
+    
+  </div>
+  
+
+
+
+          
+        
+          
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2026-10-23T11:00:00+09:00">
+  <a class='notlink'>
+    <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2026年10月23日</p>
+  </a>
+</div>
+
+          
+        
+        <!-- Custom Files topMeta begin-->
+        
+        <!-- Custom Files topMeta end-->
+      </div>
+    
+  </div>
+
+
+  <div id="layoutHelper-page-plugins"></div>
+  <div id="post-body" itemprop="articleBody">
+    <p>本文基于 2026-10 抓取到的最新官方文档编写：<strong>Istio 1.31.3</strong>、<strong>Linkerd 2.20</strong>、<strong>Cilium 1.20.3</strong>，以及 <strong>Gateway API</strong>（GAMMA 自 v1.1 进入 Standard Channel）。重点不是 YAML 大全，而是从架构师视角讲清 Service Mesh 的第一性原理、数据面谱系、控制面协议、身份与策略、性能成本模型、故障学和选型演进。</p>
+<p>与《Istio 笔记》的分工：那篇讲 Istio 的安装、配置和排障；这篇讲“为什么这样设计、什么时候该用、代价是什么、如何不把自己搞挂”。</p>
+<p>最后更新：2026-10-23</p>
+<span id="more"></span>
+
+<ul>
+<li><a href="#%E7%89%88%E6%9C%AC%E4%B8%8E%E4%BA%8B%E5%AE%9E%E5%9F%BA%E7%BA%BF">版本与事实基线</a></li>
+<li><a href="#%E7%AC%AC%E4%B8%80%E6%80%A7%E5%8E%9F%E7%90%86mesh-%E5%88%B0%E5%BA%95%E5%9C%A8%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88">第一性原理：Mesh 到底在解决什么</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E9%9D%A2%E8%B0%B1%E7%B3%BBsidecarambient-%E4%B8%8E-ebpf">数据面谱系：Sidecar、Ambient 与 eBPF</a></li>
+<li><a href="#%E6%8E%A7%E5%88%B6%E9%9D%A2%E6%B7%B1%E6%BD%9C%E4%BB%8E-kubernetes-%E5%AF%B9%E8%B1%A1%E5%88%B0-xds">控制面深潜：从 Kubernetes 对象到 xDS</a></li>
+<li><a href="#%E6%B5%81%E9%87%8F%E7%AE%A1%E7%90%86%E6%B7%B1%E6%BD%9C%E5%AE%9A%E4%B9%89%E5%A4%B1%E8%B4%A5%E6%A8%A1%E5%9E%8B">流量管理深潜：定义失败模型</a></li>
+<li><a href="#%E5%AE%89%E5%85%A8%E6%B7%B1%E6%BD%9C%E9%9B%B6%E4%BF%A1%E4%BB%BB%E4%B8%8D%E6%98%AF%E5%BC%80%E4%BA%86-mtls">安全深潜：零信任不是“开了 mTLS”</a></li>
+<li><a href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E6%B7%B1%E6%BD%9C%E6%8C%87%E6%A0%87%E8%BF%BD%E8%B8%AA%E4%B8%8E%E5%9F%BA%E6%95%B0">可观测性深潜：指标、追踪与基数</a></li>
+<li><a href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%AE%B9%E9%87%8F%E4%B8%80%E5%BC%A0%E6%9E%B6%E6%9E%84%E5%B8%88%E8%B4%A6%E5%8D%95">性能与容量：一张架构师账单</a></li>
+<li><a href="#%E7%94%9F%E4%BA%A7%E8%BF%90%E7%BB%B4%E4%B8%8E%E6%95%85%E9%9A%9C%E5%AD%A6">生产运维与故障学</a></li>
+<li><a href="#%E9%80%89%E5%9E%8B%E8%BF%81%E7%A7%BB%E4%B8%8E-tco">选型、迁移与 TCO</a></li>
+<li><a href="#%E6%9E%B6%E6%9E%84%E5%B8%88%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95">架构师检查清单</a></li>
+<li><a href="#%E9%99%84%E5%BD%95">附录</a></li>
+</ul>
+<h1 id="版本与事实基线"><a href="#版本与事实基线" class="headerlink" title="版本与事实基线"></a>版本与事实基线</h1><table>
+<thead>
+<tr>
+<th>组件</th>
+<th>本文基线</th>
+<th>关键事实</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Istio</td>
+<td>1.31.3（1.31.0 于 2026-08-31 发布）</td>
+<td>官方支持 Kubernetes 1.32–1.36；Sidecar 与 Ambient 两种数据面可在同一网格共存</td>
+</tr>
+<tr>
+<td>Linkerd</td>
+<td>2.20（2026-06-23 发布）</td>
+<td>Rust 编写的 linkerd2-proxy；2.20 引入 rate-limit-aware 负载均衡、降低内存、改进指标</td>
+</tr>
+<tr>
+<td>Cilium</td>
+<td>1.20.3</td>
+<td>eBPF 数据面，L3&#x2F;L4 在内核处理，L7 仍借助 Envoy 等代理</td>
+</tr>
+<tr>
+<td>Gateway API</td>
+<td>GAMMA 自 v1.1 起为 Standard Channel &#x2F; GA</td>
+<td>Mesh 场景下 Route 直接挂到 Service，不使用 Gateway&#x2F;GatewayClass 作为网格入口</td>
+</tr>
+<tr>
+<td>Kubernetes</td>
+<td>1.32+</td>
+<td>Sidecar 容器、EndpointSlice、CNI chaining 等能力是理解数据面的前提</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>版本会继续演进，但本文讨论的架构约束不会：代理放在哪、身份从哪里来、配置如何一致地下发、故障域如何切割。</p>
+</blockquote>
+<h1 id="第一性原理：Mesh-到底在解决什么"><a href="#第一性原理：Mesh-到底在解决什么" class="headerlink" title="第一性原理：Mesh 到底在解决什么"></a>第一性原理：Mesh 到底在解决什么</h1><h2 id="通信治理的七个横切关注点"><a href="#通信治理的七个横切关注点" class="headerlink" title="通信治理的七个横切关注点"></a>通信治理的七个横切关注点</h2><p>微服务之间的每一次调用，都隐式包含七类问题：</p>
+<ol>
+<li><strong>服务发现</strong>：对方现在有哪些可用实例？</li>
+<li><strong>负载均衡</strong>：选哪一个实例？按连接、按请求、按延迟，还是一致性哈希？</li>
+<li><strong>韧性</strong>：超时多久、重试几次、失败如何隔离、过载如何限流？</li>
+<li><strong>身份</strong>：如何证明“我是谁”，又如何验证“你是谁”？</li>
+<li><strong>授权</strong>：这个身份能否访问这个方法&#x2F;路径&#x2F;租户？</li>
+<li><strong>可观测性</strong>：一次调用跨了哪些服务，延迟花在哪，错误码是什么？</li>
+<li><strong>流量整形</strong>：灰度、镜像、故障注入、地域&#x2F;租户路由。</li>
+</ol>
+<p>在没有 Mesh 的年代，这些逻辑被三种方式处理：写进 SDK、塞进 API 网关、或者干脆不做。SDK 的问题是语言碎片化和升级困难；网关的问题是只覆盖南北向，东西向仍然裸奔；不做的代价则在大规模故障时一次性偿还。</p>
+<p>Service Mesh 的本质，是把这七类逻辑从“应用进程内”下沉到“基础设施进程内”，再用一个统一控制面下发策略。它不是某个代理软件，而是<strong>一组数据面代理 + 一个配置&#x2F;身份控制面 + 一套运维契约</strong>。</p>
+<h2 id="从-SDK-到-Sidecar：控制权的转移"><a href="#从-SDK-到-Sidecar：控制权的转移" class="headerlink" title="从 SDK 到 Sidecar：控制权的转移"></a>从 SDK 到 Sidecar：控制权的转移</h2><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>治理位置</th>
+<th>优点</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>应用内 SDK</td>
+<td>进程内</td>
+<td>性能最好、语义最全</td>
+<td>多语言重复实现、版本碎片、业务侵入</td>
+</tr>
+<tr>
+<td>API 网关</td>
+<td>集群边缘</td>
+<td>集中、易审计</td>
+<td>只覆盖南北向，东西向缺失</td>
+</tr>
+<tr>
+<td>Sidecar</td>
+<td>每个 Pod</td>
+<td>语言无关、策略统一、故障隔离好</td>
+<td>每 Pod 一份资源开销、注入与升级复杂</td>
+</tr>
+<tr>
+<td>节点代理 &#x2F; eBPF</td>
+<td>每节点 &#x2F; 内核</td>
+<td>资源摊薄、对应用透明</td>
+<td>租户隔离、L7 能力、内核依赖、爆炸半径变大</td>
+</tr>
+</tbody></table>
+<p>这条演进线不是“越新越好”，而是<strong>把复杂度从应用团队转移到平台团队</strong>。架构师真正要回答的是：平台团队有没有能力承接这份复杂度？</p>
+<h2 id="控制面-x2F-数据面分离-x3D-一个分布式控制回路"><a href="#控制面-x2F-数据面分离-x3D-一个分布式控制回路" class="headerlink" title="控制面 &#x2F; 数据面分离 &#x3D; 一个分布式控制回路"></a>控制面 &#x2F; 数据面分离 &#x3D; 一个分布式控制回路</h2><p>把 Mesh 看成控制系统，结构非常清晰：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">期望状态（K8s CRD / Service / EndpointSlice / 证书策略）</span><br><span class="line">        │  watch + 校验 + 合并</span><br><span class="line">        ▼</span><br><span class="line">控制面（istiod / destination / operator）</span><br><span class="line">        │  xDS / gRPC / 文件 / DNS</span><br><span class="line">        ▼</span><br><span class="line">数据面（Envoy / ztunnel / eBPF / linkerd2-proxy）</span><br><span class="line">        │  转发、加密、限流、上报</span><br><span class="line">        ▼</span><br><span class="line">观测状态（指标、日志、追踪、连接状态）</span><br><span class="line">        │  反馈</span><br><span class="line">        └──────────────► 期望状态修正</span><br></pre></td></tr></table></figure>
+
+<p>这个回路有三个天然难点：</p>
+<ul>
+<li><strong>最终一致性</strong>：控制面下发不是事务。配置变更后，不同代理在不同时间看到不同版本，必须允许“短时间配置不一致”。</li>
+<li><strong>背压</strong>：一次 CRD 变更可能触发上千个代理重算配置。控制面必须有 debounce、节流、增量推送和范围裁剪。</li>
+<li><strong>故障域</strong>：控制面挂了，数据面通常还能按最后一份配置继续转发；但新 Pod 注入、证书轮换、配置变更会停。这个“降级但不清零”的特性是 Mesh 可用性的基础。</li>
+</ul>
+<h2 id="Mesh-不解决什么"><a href="#Mesh-不解决什么" class="headerlink" title="Mesh 不解决什么"></a>Mesh 不解决什么</h2><p>架构师最容易被“零信任”“全链路加密”这类词带偏。Mesh 的边界必须写清楚：</p>
+<ul>
+<li><strong>不替代应用鉴权</strong>：mTLS 只证明“工作负载身份”，不证明“这个用户能查这个订单”。</li>
+<li><strong>不替代网络安全组&#x2F;NetworkPolicy</strong>：它管的是 L4–L7 的服务间策略，不是主机加固、漏洞扫描、边界防火墙。</li>
+<li><strong>不保证业务幂等</strong>：重试会把非幂等写操作放大成重复扣款。</li>
+<li><strong>不修复糟糕的拓扑</strong>：同步调用链过长、数据库共享、缺少隔离，Mesh 只能让问题更可见，不能让它消失。</li>
+<li><strong>不覆盖所有流量</strong>：绕过代理的流量（hostNetwork、特权 Pod、未注入的 Job、外部直连）仍然是缺口。</li>
+<li><strong>不自动产生 SLO</strong>：指标是原料，SLO 需要业务定义和错误预算。</li>
+</ul>
+<h2 id="什么时候不该上-Mesh"><a href="#什么时候不该上-Mesh" class="headerlink" title="什么时候不该上 Mesh"></a>什么时候不该上 Mesh</h2><p>以下场景应谨慎，甚至明确不上：</p>
+<ul>
+<li>服务数量少（例如个位数）、团队小、没有多语言治理诉求：API 网关 + 云 LB + 基础可观测性足够。</li>
+<li>极致尾延迟场景：每跳代理都会引入排队和调度抖动，先证明收益大于 p99 成本。</li>
+<li>非 Kubernetes 为主、无法统一身份平面：Mesh 的价值会大打折扣。</li>
+<li>平台团队没有 day-2 运维能力：Mesh 的升级、证书、策略和故障排查是长期投入。</li>
+<li>组织没有“平台即产品”的契约：Mesh 会退化成一堆没人敢动的 YAML。</li>
+</ul>
+<blockquote>
+<p>架构师注：Mesh 的立项理由应该是“统一通信治理与身份边界”，而不是“别人都在用”。如果写不出三条可量化的成功指标（例如 mTLS 覆盖率、P99 延迟预算、变更失败率），先不要上。</p>
+</blockquote>
+<h1 id="数据面谱系：Sidecar、Ambient-与-eBPF"><a href="#数据面谱系：Sidecar、Ambient-与-eBPF" class="headerlink" title="数据面谱系：Sidecar、Ambient 与 eBPF"></a>数据面谱系：Sidecar、Ambient 与 eBPF</h1><p>数据面是 Mesh 的“肌肉”。过去十年最大的变化，不是代理功能变多，而是<strong>代理的位置和粒度</strong>在变化。</p>
+<h2 id="Sidecar-模型：每个-Pod-一个代理"><a href="#Sidecar-模型：每个-Pod-一个代理" class="headerlink" title="Sidecar 模型：每个 Pod 一个代理"></a>Sidecar 模型：每个 Pod 一个代理</h2><h3 id="注入与流量拦截"><a href="#注入与流量拦截" class="headerlink" title="注入与流量拦截"></a>注入与流量拦截</h3><p>Sidecar 模式由注入开始。以 Istio 为例，Pod 创建时 admission webhook 会把 <code>istio-proxy</code> 容器（Envoy）和初始化逻辑加入 Pod：</p>
+<ul>
+<li>传统方式由 <code>istio-init</code> 容器在 Pod 网络命名空间写 iptables 规则，把入站&#x2F;出站流量重定向到 Envoy。</li>
+<li>生产更常用 Istio CNI 插件，避免应用 Pod 需要 <code>NET_ADMIN</code>。</li>
+<li>出站通常重定向到 <code>15001</code>，入站到 <code>15006</code>，Envoy 管理端口 <code>15000</code>，HBONE 监听 <code>15008</code>（Ambient 也会用到）。</li>
+</ul>
+<p>拦截之后，应用仍然以为自己连的是目标 Service，实际流量被透明地送进代理。</p>
+<h3 id="Envoy-内部：监听器、过滤器链、路由、集群"><a href="#Envoy-内部：监听器、过滤器链、路由、集群" class="headerlink" title="Envoy 内部：监听器、过滤器链、路由、集群"></a>Envoy 内部：监听器、过滤器链、路由、集群</h3><p>理解 Envoy 的配置模型，比背 CRD 字段更重要：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Listener（地址/端口）</span><br><span class="line">  └─ FilterChain（匹配条件 + TLS）</span><br><span class="line">       └─ HTTP Connection Manager（L7 解析、超时、重试、熔断）</span><br><span class="line">            └─ Route（host/path/header 匹配）</span><br><span class="line">                 └─ Cluster（目标服务 + 负载均衡策略 + 连接池）</span><br><span class="line">                      └─ Endpoint（具体 Pod IP:Port）</span><br></pre></td></tr></table></figure>
+
+<p>一次请求在 Sidecar 中的路径大致是：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">应用进程 → 出站 iptables → 客户端 Envoy</span><br><span class="line">        → 连接池/负载均衡 → mTLS（SDS 取证书）</span><br><span class="line">        → 服务端 Envoy → 入站过滤器链 → 授权 → 应用进程</span><br></pre></td></tr></table></figure>
+
+<p>Sidecar 同时承担出站和入站，因此一条请求通常经过<strong>两个代理</strong>。这也是 Sidecar 延迟和 CPU 成本的主要来源。</p>
+<h3 id="Sidecar-的优势与代价"><a href="#Sidecar-的优势与代价" class="headerlink" title="Sidecar 的优势与代价"></a>Sidecar 的优势与代价</h3><p>优势：</p>
+<ul>
+<li><strong>故障隔离最好</strong>：一个 Pod 的代理挂了，只影响这个 Pod。</li>
+<li><strong>身份边界清晰</strong>：每个 Pod 有自己的证书和 SDS 通道。</li>
+<li><strong>L7 能力完整</strong>：HTTP&#x2F;gRPC 路由、重试、熔断、Wasm、授权都在本地。</li>
+<li><strong>升级粒度细</strong>：可以按命名空间、按 Deployment 滚动。</li>
+</ul>
+<p>代价：</p>
+<ul>
+<li><strong>资源税</strong>：每个 Pod 都要预留 CPU&#x2F;内存，哪怕它一天只处理几个请求。</li>
+<li><strong>生命周期耦合</strong>：注入、启动顺序、优雅退出、Job 完成都会变复杂。</li>
+<li><strong>升级需要重建 Pod</strong>：Sidecar 版本跟应用 Pod 绑定，升级是一次“应用发布”。</li>
+<li><strong>配置规模</strong>：每个代理都持有自己关心的那一份配置，配置越大内存越高。</li>
+</ul>
+<h2 id="Ambient-模型：把-L4-和-L7-拆开"><a href="#Ambient-模型：把-L4-和-L7-拆开" class="headerlink" title="Ambient 模型：把 L4 和 L7 拆开"></a>Ambient 模型：把 L4 和 L7 拆开</h2><p>Istio Ambient 的核心思想不是“去掉代理”，而是<strong>把代理按层拆开，按需付费</strong>：</p>
+<ul>
+<li><strong>ztunnel</strong>：每节点一个，Rust 编写，只做 L3&#x2F;L4——mTLS、身份认证、L4 授权、L4 遥测、HBONE 隧道。</li>
+<li><strong>waypoint</strong>：可选的 Envoy Deployment，做 L7——HTTP 路由、L7 授权、Wasm、L7 遥测。</li>
+</ul>
+<h3 id="ztunnel：节点级多租户代理"><a href="#ztunnel：节点级多租户代理" class="headerlink" title="ztunnel：节点级多租户代理"></a>ztunnel：节点级多租户代理</h3><p>ztunnel 的关键设计：</p>
+<ul>
+<li>每个 Kubernetes 节点一个 DaemonSet Pod，负责该节点上所有 Ambient 工作负载的 L4 数据面。</li>
+<li>通过 xDS 与 <code>istiod</code> 通信，获取配置和<strong>该节点上所有 Pod 的 ServiceAccount 证书</strong>。</li>
+<li>不解析 HTTP，不终止应用 HTTP 流量；只处理连接、mTLS、隧道和 L4 策略。</li>
+<li>由于是节点级多租户，证书和配置的集中度比 Sidecar 高，这是它节省资源的原因，也是爆炸半径变大的原因。</li>
+</ul>
+<h3 id="HBONE：HTTP-x2F-2-CONNECT-mTLS"><a href="#HBONE：HTTP-x2F-2-CONNECT-mTLS" class="headerlink" title="HBONE：HTTP&#x2F;2 + CONNECT + mTLS"></a>HBONE：HTTP&#x2F;2 + CONNECT + mTLS</h3><p>HBONE（HTTP-Based Overlay Network Environment）是 Istio 的隧道协议，组合三个开放标准：</p>
+<ul>
+<li><strong>HTTP&#x2F;2</strong>：多路复用，把多条应用 TCP 流复用到一条加密连接上。</li>
+<li><strong>HTTP CONNECT</strong>：建立隧道。</li>
+<li><strong>mTLS</strong>：加密并验证双方身份。</li>
+</ul>
+<p>默认监听 TCP <code>15008</code>。它的重要属性是：<strong>不修改应用流量本身</strong>，元数据通过 CONNECT 头传递，因此不需要往应用请求里塞 Istio 私有 header。</p>
+<h3 id="流量重定向：规则在-Pod-网络命名空间里"><a href="#流量重定向：规则在-Pod-网络命名空间里" class="headerlink" title="流量重定向：规则在 Pod 网络命名空间里"></a>流量重定向：规则在 Pod 网络命名空间里</h3><p>Ambient 的重定向由 <code>istio-cni</code> 节点代理和 ztunnel 协作完成：</p>
+<ul>
+<li><code>istio-cni</code> 响应 Pod 创建&#x2F;删除事件，并监听 Ambient 标签变化。</li>
+<li>它安装一个 chained CNI 插件，在集群主 CNI 之后执行，只用于通知节点代理“新 Pod 出现了”。</li>
+<li>ztunnel 在<strong>应用 Pod 的网络命名空间内</strong>建立数据面捕获规则，因此可以与任意 CNI 共存，不需要替换集群网络。</li>
+</ul>
+<p>官方文档给出的 iptables 规则可以看到典型的 Ambient 端口：</p>
+<ul>
+<li>入站 TPROXY 到 <code>15006</code></li>
+<li>出站 REDIRECT 到 <code>15001</code></li>
+<li>HBONE 到 <code>15008</code></li>
+</ul>
+<p>这也意味着：<strong>本节点内的 Pod 到 Pod 流量同样经过 ztunnel</strong>，所以 L4 授权和遥测对本地流量与跨节点流量是一致的。</p>
+<h3 id="数据路径"><a href="#数据路径" class="headerlink" title="数据路径"></a>数据路径</h3><p><strong>入站</strong>：Pod 收到请求 → 透明重定向到节点 ztunnel → 执行 L4 授权 → 转发给 Pod。ztunnel 默认同时接受 HBONE 和明文；如果要求“必须是网格内身份”，需要用 L4 AuthorizationPolicy 显式拒绝无身份流量。</p>
+<p><strong>出站</strong>：Pod 发出请求 → 重定向到节点 ztunnel → 判断目的地能力：</p>
+<ul>
+<li>目的地也在 Mesh：升级为 HBONE 加密隧道。</li>
+<li>目的地有 waypoint：先送到 waypoint 做 L7 策略，再由 waypoint 通过第二条 HBONE 隧道送到目的地节点 ztunnel。</li>
+<li>目的地不在 Mesh：按普通流量转发。</li>
+</ul>
+<p><strong>waypoint 路径</strong>：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">源 Pod → 源节点 ztunnel → waypoint（HBONE）</span><br><span class="line">       → 目的节点 ztunnel（HBONE）→ 目的 Pod</span><br></pre></td></tr></table></figure>
+
+<p>waypoint 只接收 HBONE 流量。它对 <code>Pod</code> 直接转发并执行策略；对 <code>Service</code> 还会执行路由和负载均衡。默认情况下 Service 路由到自己，可以用 Gateway API 的 <code>HTTPRoute</code> 覆盖。</p>
+<h3 id="waypoint-的作用域与策略归属"><a href="#waypoint-的作用域与策略归属" class="headerlink" title="waypoint 的作用域与策略归属"></a>waypoint 的作用域与策略归属</h3><p>waypoint 通过标签启用，粒度可以是命名空间、Service 或 Pod：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 部署命名空间级 waypoint，并自动给命名空间打标签</span></span><br><span class="line">istioctl waypoint apply -n default --enroll-namespace</span><br><span class="line"></span><br><span class="line"><span class="comment"># 也可以手动打标签</span></span><br><span class="line">kubectl label ns default istio.io/use-waypoint=waypoint</span><br></pre></td></tr></table></figure>
+
+<p>Ambient 与 Sidecar 的一个关键差异是：<strong>策略在目的地执行</strong>。waypoint 相当于资源（命名空间&#x2F;Service&#x2F;Pod）的入口网关，Istio 保证进入该资源的流量经过 waypoint，由 waypoint 执行该资源的 L7 策略。</p>
+<h3 id="Ambient-的边界与坑"><a href="#Ambient-的边界与坑" class="headerlink" title="Ambient 的边界与坑"></a>Ambient 的边界与坑</h3><ul>
+<li><strong>L7 功能需要 waypoint</strong>：只用 ztunnel 时只有 L4 能力；VirtualService、L7 授权、Wasm、L7 遥测都需要 waypoint。</li>
+<li><strong>当前版本中，来自 Sidecar 和 Gateway 的流量不会经过 waypoint</strong>；网格外流量也不知道 waypoint 的存在，会直接打到目的地。这是做“渐进迁移”和“混合数据面”时必须验证的点。</li>
+<li><strong>waypoint 是共享组件</strong>：一个 waypoint 挂掉会影响其作用域内的所有服务，必须按爆炸半径设计副本、PDB、资源和升级策略。</li>
+<li><strong>ztunnel 是节点级单点</strong>：节点上的 ztunnel 异常会影响该节点所有 Ambient Pod 的连通性，监控和自愈要比 Sidecar 更敏感。</li>
+<li><strong>多租户隔离弱于 Sidecar</strong>：同一节点上的多个租户共享 ztunnel 进程，安全边界更多依赖内核与 Istio 的实现，而不是进程隔离。</li>
+</ul>
+<h2 id="eBPF-模型：把数据面推进内核"><a href="#eBPF-模型：把数据面推进内核" class="headerlink" title="eBPF 模型：把数据面推进内核"></a>eBPF 模型：把数据面推进内核</h2><p>Cilium 的路线是：L3&#x2F;L4 用 eBPF 在内核完成，L7 仍然用 Envoy 等用户态代理。</p>
+<p>典型能力：</p>
+<ul>
+<li><strong>Socket-level load balancing</strong>：在 connect 阶段完成 Service 到后端的选择，减少 iptables&#x2F;conntrack 路径。</li>
+<li><strong>kube-proxy replacement</strong>：用 eBPF 替代 kube-proxy 的 iptables&#x2F;IPVS 规则。</li>
+<li><strong>身份与策略</strong>：基于 CiliumIdentity 的 L3&#x2F;L4 策略，配合 L7 策略。</li>
+<li><strong>Hubble</strong>：基于 eBPF 的流级可观测性。</li>
+<li><strong>L7 解析</strong>：HTTP&#x2F;gRPC&#x2F;DNS 等由 Envoy 参与，仍然有用户态代理成本。</li>
+</ul>
+<p>eBPF 的优势是路径短、资源摊薄、对应用透明；代价是：</p>
+<ul>
+<li>对内核版本和发行版有要求，升级路径受节点 OS 约束。</li>
+<li>排障需要理解 eBPF、TC、XDP、socket LB，人才门槛更高。</li>
+<li>L7 能力仍依赖代理，所谓“sidecarless”不等于“proxyless”。</li>
+<li>与云厂商托管 CNI、网络插件的兼容性需要逐项验证。</li>
+</ul>
+<h2 id="三种数据面放在一起比较"><a href="#三种数据面放在一起比较" class="headerlink" title="三种数据面放在一起比较"></a>三种数据面放在一起比较</h2><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Sidecar（Envoy）</th>
+<th>Ambient（ztunnel + waypoint）</th>
+<th>eBPF（Cilium）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>代理粒度</td>
+<td>每 Pod</td>
+<td>每节点 + 可选 waypoint</td>
+<td>内核 + 每节点 L7 代理</td>
+</tr>
+<tr>
+<td>L4 开销</td>
+<td>高（每 Pod 一份）</td>
+<td>低（按节点摊薄）</td>
+<td>最低（内核路径）</td>
+</tr>
+<tr>
+<td>L7 能力</td>
+<td>完整</td>
+<td>需要 waypoint，能力完整</td>
+<td>依赖 Envoy，能力较完整</td>
+</tr>
+<tr>
+<td>故障隔离</td>
+<td>最好（Pod 级）</td>
+<td>中（节点&#x2F;作用域级）</td>
+<td>中（节点&#x2F;内核级）</td>
+</tr>
+<tr>
+<td>升级影响</td>
+<td>需重建应用 Pod</td>
+<td>ztunnel&#x2F;waypoint 独立滚动</td>
+<td>依赖 CNI&#x2F;内核升级</td>
+</tr>
+<tr>
+<td>多租户隔离</td>
+<td>强（进程级）</td>
+<td>中（节点级共享）</td>
+<td>中（内核&#x2F;节点级）</td>
+</tr>
+<tr>
+<td>运维复杂度</td>
+<td>中</td>
+<td>中高（多一层 waypoint）</td>
+<td>高（内核与 CNI）</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>功能优先、隔离优先</td>
+<td>大规模、资源敏感、渐进落地</td>
+<td>已用 Cilium、网络&#x2F;安全一体化</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>架构师注：不要问“哪个最快”，先问“我的瓶颈是每 Pod 资源、尾延迟、隔离等级，还是运维人力”。答案不同，选型完全不同。</p>
+</blockquote>
+<h1 id="控制面深潜：从-Kubernetes-对象到-xDS"><a href="#控制面深潜：从-Kubernetes-对象到-xDS" class="headerlink" title="控制面深潜：从 Kubernetes 对象到 xDS"></a>控制面深潜：从 Kubernetes 对象到 xDS</h1><h2 id="istiod-的职责"><a href="#istiod-的职责" class="headerlink" title="istiod 的职责"></a>istiod 的职责</h2><p>Istio 的控制面统一为 <code>istiod</code>，历史上分散的组件被合并：</p>
+<ul>
+<li><strong>Pilot</strong>：服务发现、配置转换、xDS 下发。</li>
+<li><strong>Citadel</strong>：工作负载身份与证书签发。</li>
+<li><strong>Galley</strong>：配置校验与 ingestion（职责已并入）。</li>
+<li><strong>注入与校验 webhook</strong>：Sidecar 注入、配置校验。</li>
+</ul>
+<p>它监听 Kubernetes API 中的 Service、EndpointSlice、Pod、Gateway、VirtualService、DestinationRule、AuthorizationPolicy 等对象，把这些“用户意图 + 系统状态”编译成 Envoy&#x2F;ztunnel 能理解的 xDS 资源。</p>
+<h2 id="xDS-资源图"><a href="#xDS-资源图" class="headerlink" title="xDS 资源图"></a>xDS 资源图</h2><p>Envoy 的动态配置协议统称 xDS，核心资源：</p>
+<table>
+<thead>
+<tr>
+<th>资源</th>
+<th>作用</th>
+<th>典型内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CDS</td>
+<td>Cluster Discovery Service</td>
+<td>上游集群、负载均衡策略、连接池、TLS 上下文</td>
+</tr>
+<tr>
+<td>EDS</td>
+<td>Endpoint Discovery Service</td>
+<td>集群后端 IP:Port、健康状态、 locality</td>
+</tr>
+<tr>
+<td>LDS</td>
+<td>Listener Discovery Service</td>
+<td>监听地址、过滤器链、TLS</td>
+</tr>
+<tr>
+<td>RDS</td>
+<td>Route Discovery Service</td>
+<td>虚拟主机、路径&#x2F;header 匹配、路由动作</td>
+</tr>
+<tr>
+<td>SDS</td>
+<td>Secret Discovery Service</td>
+<td>证书、私钥、CA 证书</td>
+</tr>
+</tbody></table>
+<p>Istio 使用 <strong>ADS（Aggregated Discovery Service）</strong> 把上述资源聚合到一条 gRPC 流上，保证顺序和一致性。协议有两个变体：</p>
+<ul>
+<li><strong>SotW（State of the World）</strong>：每次发送完整资源状态，实现简单，配置大时开销高。</li>
+<li><strong>Delta xDS</strong>：只发送增量的新增&#x2F;更新&#x2F;删除，适合大规模和高变更率场景。</li>
+</ul>
+<p>每个响应带 <code>version</code> 和 <code>nonce</code>。代理应用成功后回 ACK；失败回 NACK，并保留上一份可用配置。<code>istioctl proxy-status</code> 中的 <code>STALE</code>、<code>NOT SENT</code>、<code>NACK</code> 就是这条链路的状态。</p>
+<h3 id="一个-Service-如何变成-Envoy-配置"><a href="#一个-Service-如何变成-Envoy-配置" class="headerlink" title="一个 Service 如何变成 Envoy 配置"></a>一个 Service 如何变成 Envoy 配置</h3><p>以 <code>echo.default.svc.cluster.local:80</code> 为例：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Kubernetes Service echo</span><br><span class="line">  + EndpointSlice（Pod IP:Port）</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">istiod 生成：</span><br><span class="line">  EDS: outbound|80||echo.default.svc.cluster.local → 后端列表</span><br><span class="line">  CDS: outbound|80||echo.default.svc.cluster.local → 负载均衡/连接池/TLS</span><br><span class="line">  RDS: 虚拟主机 echo.default.svc.cluster.local:80 → 路由</span><br><span class="line">  LDS: 0.0.0.0:15001（出站监听）→ 过滤器链</span><br><span class="line">        │</span><br><span class="line">        ▼</span><br><span class="line">Sidecar Envoy 应用配置</span><br></pre></td></tr></table></figure>
+
+<p>调试时不要猜，直接看代理视角的配置：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">istioctl proxy-config cluster  &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config endpoint &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config route    &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config listener &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config secret   &lt;pod&gt; -n &lt;ns&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置推送与一致性"><a href="#配置推送与一致性" class="headerlink" title="配置推送与一致性"></a>配置推送与一致性</h2><p>一次配置变更的路径：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">API Server 事件</span><br><span class="line">  → istiod 的 config controller 更新内存状态</span><br><span class="line">  → 标记受影响的代理</span><br><span class="line">  → push queue（debounce / 合并）</span><br><span class="line">  → 为每个代理生成 xDS</span><br><span class="line">  → gRPC 推送</span><br><span class="line">  → ACK/NACK</span><br></pre></td></tr></table></figure>
+
+<p>工程上要关注四个参数&#x2F;机制：</p>
+<ul>
+<li><strong>Debounce</strong>：短时间内的多次变更合并，避免每个事件都全量重算。</li>
+<li><strong>Push throttle</strong>：限制并发推送，保护控制面和网络。</li>
+<li><strong>增量与范围裁剪</strong>：只推受影响的资源，避免“改一个路由，推全网格”。</li>
+<li><strong>配置作用域</strong>：<code>Sidecar</code> 资源、<code>exportTo</code>、<code>discoverySelectors</code> 可以显著降低每个代理看到的配置量。</li>
+</ul>
+<h3 id="为什么“配置生效慢”"><a href="#为什么“配置生效慢”" class="headerlink" title="为什么“配置生效慢”"></a>为什么“配置生效慢”</h3><p>常见原因不是 istiod 慢，而是：</p>
+<ul>
+<li>变更触发了大量代理重算，推送到尾部需要时间。</li>
+<li>代理 NACK，控制面在重试；旧配置继续生效。</li>
+<li>配置作用域导致某些代理根本看不到新资源。</li>
+<li>DNS&#x2F;EndpointSlice 还没同步，EDS 仍是旧后端。</li>
+<li>应用侧连接池复用了旧连接，新配置只影响新连接。</li>
+</ul>
+<p>这解释了为什么 Mesh 的变更不能按“数据库事务”的心智模型来管理，必须按<strong>最终一致的分布式系统</strong>来设计发布流程。</p>
+<h2 id="控制面容量模型"><a href="#控制面容量模型" class="headerlink" title="控制面容量模型"></a>控制面容量模型</h2><p>官方文档明确指出，istiod 的 CPU 消耗与以下因素相关：</p>
+<ul>
+<li>Deployment&#x2F; Pod 变更速率。</li>
+<li>配置对象变更速率。</li>
+<li>连接上来的代理数量。</li>
+</ul>
+<p>并且这部分可以水平扩展：增加 istiod 副本可以缩短配置到达所有代理的时间。大规模场景应使用配置作用域，否则每个代理都会持有远超其需要的配置。</p>
+<p>容量规划时至少估算：</p>
+<ul>
+<li>服务数、Endpoint 数、配置对象数（VirtualService&#x2F;DestinationRule&#x2F;AuthorizationPolicy）。</li>
+<li>每分钟 Pod 变更数（HPA、批处理、滚动发布都会放大）。</li>
+<li>代理数量（Sidecar 数量或节点数 + waypoint 副本数）。</li>
+<li>单个 Envoy 的配置内存上限与 istiod 的堆内存。</li>
+</ul>
+<h2 id="身份与证书：控制面的另一半"><a href="#身份与证书：控制面的另一半" class="headerlink" title="身份与证书：控制面的另一半"></a>身份与证书：控制面的另一半</h2><p>Istio 的身份模型基于 <strong>SPIFFE</strong>：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">spiffe://&lt;trust-domain&gt;/ns/&lt;namespace&gt;/sa/&lt;service-account&gt;</span><br></pre></td></tr></table></figure>
+
+<p>默认 trust domain 是 <code>cluster.local</code>，例如：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">spiffe://cluster.local/ns/default/sa/reviews</span><br></pre></td></tr></table></figure>
+
+<p>证书签发流程：</p>
+<ol>
+<li><code>istiod</code> 提供 gRPC CSR 服务。</li>
+<li>Istio agent 生成私钥和 CSR，用工作负载凭据向 <code>istiod</code> 申请。</li>
+<li><code>istiod</code> 内的 CA 校验凭据后签发证书。</li>
+<li>Envoy 通过 <strong>SDS</strong> 从 agent 获取证书和私钥。</li>
+<li>agent 监控证书有效期，在过期前自动轮换。</li>
+</ol>
+<p>默认工作负载证书 TTL 通常为 24 小时，可配置。生产上要关注：</p>
+<ul>
+<li><strong>CA 根证书轮换</strong>：根证书过期会导致全网格握手失败，必须有提前量和演练。</li>
+<li><strong>外部 CA</strong>：可以用 cert-manager、Vault、外部 SPIFFE 等替换自签 CA，但要保证轮换链路可控。</li>
+<li><strong>时钟</strong>：节点时间漂移会导致证书“未生效&#x2F;已过期”，mTLS 直接失败。</li>
+<li><strong>Ambient 的集中度</strong>：ztunnel 持有本节点所有 ServiceAccount 的证书，节点被攻破的影响面大于单 Pod Sidecar。</li>
+</ul>
+<h2 id="控制面故障域"><a href="#控制面故障域" class="headerlink" title="控制面故障域"></a>控制面故障域</h2><table>
+<thead>
+<tr>
+<th>故障</th>
+<th>数据面影响</th>
+<th>控制面影响</th>
+<th>缓解</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>istiod 全部不可用</td>
+<td>已下发配置继续转发</td>
+<td>新配置、注入、证书轮换停止</td>
+<td>多副本、PDB、跨 AZ、证书提前量</td>
+</tr>
+<tr>
+<td>注入 webhook 不可用</td>
+<td>新 Pod 可能无法创建</td>
+<td>发布中断</td>
+<td>webhook 多副本、failurePolicy 评估、预检</td>
+</tr>
+<tr>
+<td>CA 不可用</td>
+<td>现有证书到期前可继续</td>
+<td>新证书签发失败</td>
+<td>外部 CA HA、根证书备份</td>
+</tr>
+<tr>
+<td>xDS 推送风暴</td>
+<td>代理 CPU 升高、尾延迟变差</td>
+<td>istiod CPU&#x2F;内存升高</td>
+<td>配置作用域、debounce、变更窗口</td>
+</tr>
+<tr>
+<td>单个代理 NACK</td>
+<td>该代理保留旧配置</td>
+<td>推送重试</td>
+<td><code>proxy-status</code> + <code>analyze</code> + 配置测试</td>
+</tr>
+</tbody></table>
+<h1 id="流量管理深潜：定义失败模型"><a href="#流量管理深潜：定义失败模型" class="headerlink" title="流量管理深潜：定义失败模型"></a>流量管理深潜：定义失败模型</h1><p>流量管理的本质不是“把请求送到某个版本”，而是<strong>定义系统在成功、超时、过载、部分故障时的行为</strong>。</p>
+<h2 id="对象模型：Istio-API-与-Gateway-API"><a href="#对象模型：Istio-API-与-Gateway-API" class="headerlink" title="对象模型：Istio API 与 Gateway API"></a>对象模型：Istio API 与 Gateway API</h2><p>Istio 传统 API：</p>
+<ul>
+<li><code>VirtualService</code>：路由规则（host、match、route、retry、timeout、mirror、fault）。</li>
+<li><code>DestinationRule</code>：目标策略（subset、负载均衡、连接池、outlier detection、TLS）。</li>
+<li><code>Gateway</code>：入口&#x2F;出口网关。</li>
+<li><code>ServiceEntry</code>：把外部服务纳入网格。</li>
+</ul>
+<p>Gateway API &#x2F; GAMMA：</p>
+<ul>
+<li>Mesh 场景下，<code>HTTPRoute</code> 等 Route 直接以 <strong>Service 为 parent</strong>，不使用 <code>Gateway</code>&#x2F;<code>GatewayClass</code>。</li>
+<li>GAMMA 定义了 Service 的 <strong>frontend</strong>（名字 + ClusterIP）和 <strong>backend</strong>（Pod&#x2F;Endpoint）两个面，避免 Service 语义含糊。</li>
+<li>GAMMA 自 Gateway API v1.1 起进入 Standard Channel，属于 GA 能力。</li>
+</ul>
+<p>一个 Mesh 内的 HTTPRoute：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">gateway.networking.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">HTTPRoute</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">echo</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">parentRefs:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">group:</span> <span class="string">&quot;&quot;</span></span><br><span class="line">      <span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">echo</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">backendRefs:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">echo-v1</span></span><br><span class="line">          <span class="attr">port:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>这表示“所有发往 <code>echo</code> Service 的 HTTP 流量，转给 <code>echo-v1</code>”。在 Ambient 中，这类 Route 由 waypoint 执行；在 Sidecar 模式中由 Sidecar 执行。</p>
+<h2 id="路由匹配与生效顺序"><a href="#路由匹配与生效顺序" class="headerlink" title="路由匹配与生效顺序"></a>路由匹配与生效顺序</h2><p>以 Istio <code>VirtualService</code> 为例，常见匹配顺序：</p>
+<ul>
+<li>host 先匹配（精确 &gt; 通配）。</li>
+<li>HTTP match 内部：精确路径 &gt; 前缀 &gt; 正则（以官方文档为准）。</li>
+<li>多条规则按声明顺序，先匹配先生效。</li>
+<li>作用域优先级：Sidecar&#x2F; workload 级 &gt; namespace 级 &gt; mesh 级；Gateway 规则只作用于该 Gateway。</li>
+</ul>
+<p>工程建议：</p>
+<ul>
+<li>不要把“默认路由”和“异常路由”混在一个 VirtualService 里，按团队&#x2F;服务拆分，降低评审难度。</li>
+<li>用 <code>istioctl analyze</code> 和 CI 做 schema&#x2F;冲突检查。</li>
+<li>路由变更必须能回答：影响哪些 host、哪些来源、回滚是什么。</li>
+</ul>
+<h2 id="负载均衡：算法只是表象"><a href="#负载均衡：算法只是表象" class="headerlink" title="负载均衡：算法只是表象"></a>负载均衡：算法只是表象</h2><p>常见算法：</p>
+<table>
+<thead>
+<tr>
+<th>算法</th>
+<th>适用</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ROUND_ROBIN</td>
+<td>同构后端、请求成本均匀</td>
+<td>长连接下容易不均</td>
+</tr>
+<tr>
+<td>LEAST_REQUEST</td>
+<td>请求成本差异大</td>
+<td>需要代理维护活跃请求数</td>
+</tr>
+<tr>
+<td>RANDOM</td>
+<td>大规模、简单</td>
+<td>方差较大</td>
+</tr>
+<tr>
+<td>RING_HASH &#x2F; MAGLEV</td>
+<td>会话保持、缓存亲和</td>
+<td>后端增减会重排，需评估缓存命中</td>
+</tr>
+<tr>
+<td>PASSTHROUGH</td>
+<td>直接透传</td>
+<td>不做 LB，慎用</td>
+</tr>
+</tbody></table>
+<p>还要叠加：</p>
+<ul>
+<li><strong>Locality LB</strong>：优先同区域&#x2F;同 AZ，失败再跨区；<code>failoverPriority</code> 控制顺序。</li>
+<li><strong>Panic threshold</strong>：健康后端比例低于阈值时，Envoy 可能“恐慌”并把流量打向所有后端，避免全挂。要理解这个 fail-open 行为。</li>
+<li><strong>Endpoint 健康</strong>：K8s readiness、outlier detection、主动健康检查共同决定后端是否可用。</li>
+<li><strong>连接池</strong>：HTTP&#x2F;1.1 的连接复用、HTTP&#x2F;2 的多路复用、最大连接数&#x2F;待处理请求数，都会影响过载行为。</li>
+</ul>
+<h2 id="韧性：重试、超时、熔断的数学"><a href="#韧性：重试、超时、熔断的数学" class="headerlink" title="韧性：重试、超时、熔断的数学"></a>韧性：重试、超时、熔断的数学</h2><h3 id="重试会放大故障"><a href="#重试会放大故障" class="headerlink" title="重试会放大故障"></a>重试会放大故障</h3><p>假设单次失败率 10%，最多重试 3 次（总共 4 次尝试）：</p>
+<ul>
+<li>请求最终失败率：<code>1 - 0.9^4 = 34.4%</code>。</li>
+<li>期望尝试次数：<code>1 + 0.1 + 0.01 + 0.001 = 1.111</code>，即额外 11.1% 的负载。</li>
+</ul>
+<p>如果失败是<strong>过载</strong>而不是瞬时抖动，重试会进一步压垮后端，形成重试风暴。重试只对“瞬时、独立、可重放”的失败有效。</p>
+<p>实践原则：</p>
+<ul>
+<li>只对幂等请求重试；写操作必须有幂等键。</li>
+<li>限制重试次数和总时间预算，避免超过调用方 deadline。</li>
+<li>对重试比例做预算&#x2F;熔断，防止放大。</li>
+<li>区分连接失败、5xx、超时；不要无差别 <code>retryOn: 5xx</code>。</li>
+</ul>
+<h3 id="超时是端到端预算"><a href="#超时是端到端预算" class="headerlink" title="超时是端到端预算"></a>超时是端到端预算</h3><p>Mesh 的 <code>timeout</code> 是单跳超时，不是业务端到端 deadline。一个三层调用链：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">A → B → C</span><br></pre></td></tr></table></figure>
+
+<p>如果 A 的超时是 1s，B 的超时是 1s，C 又重试 3 次，那么 A 很可能在 B 还在重试时就放弃，产生“幽灵请求”。正确做法是：</p>
+<ul>
+<li>调用方设置<strong>剩余预算</strong>，每跳递减。</li>
+<li>gRPC 使用 deadline 传播；HTTP 用 header 传递预算（需要应用配合）。</li>
+<li><code>perTryTimeout × (attempts + 1) &lt; 上游 timeout</code>。</li>
+</ul>
+<h3 id="熔断与-outlier-detection"><a href="#熔断与-outlier-detection" class="headerlink" title="熔断与 outlier detection"></a>熔断与 outlier detection</h3><p>Istio 的熔断有两层：</p>
+<ul>
+<li><strong>连接池限制</strong>：最大连接数、最大待处理请求、最大重试并发，过载时快速失败。</li>
+<li><strong>异常点驱逐</strong>：连续 5xx、网关错误等达到阈值后，把后端从负载均衡池中剔除一段时间。</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.istio.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DestinationRule</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">reviews</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">host:</span> <span class="string">reviews</span></span><br><span class="line">  <span class="attr">trafficPolicy:</span></span><br><span class="line">    <span class="attr">outlierDetection:</span></span><br><span class="line">      <span class="attr">consecutive5xxErrors:</span> <span class="number">5</span></span><br><span class="line">      <span class="attr">interval:</span> <span class="string">30s</span></span><br><span class="line">      <span class="attr">baseEjectionTime:</span> <span class="string">30s</span></span><br><span class="line">      <span class="attr">maxEjectionPercent:</span> <span class="number">50</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li><code>maxEjectionPercent</code> 太低会导致故障后端仍在接流量；太高会让整个池被踢空。</li>
+<li>驱逐是“被动”的，恢复依赖时间窗口，不适合快速抖动的故障。</li>
+<li>熔断不是限流；真正的过载保护需要入口限流、并发限制和队列管理。</li>
+</ul>
+<h2 id="灰度、镜像与故障注入"><a href="#灰度、镜像与故障注入" class="headerlink" title="灰度、镜像与故障注入"></a>灰度、镜像与故障注入</h2><ul>
+<li><strong>权重灰度</strong>：按比例分流，简单但反馈慢；适合大版本。</li>
+<li><strong>Header&#x2F;Cookie 灰度</strong>：按用户&#x2F;租户&#x2F;请求特征分流，适合精确验证。</li>
+<li><strong>流量镜像</strong>：把生产流量复制到新版本，不返回响应；适合读请求和性能验证，写请求必须确认幂等和副作用。</li>
+<li><strong>故障注入</strong>：延迟&#x2F;中止，用于验证超时、重试、熔断和告警；只在受控环境或小比例生产使用。</li>
+</ul>
+<p>灰度不是“配个 10% 就完了”，要同时定义：</p>
+<ul>
+<li>成功指标（错误率、P99、业务转化）。</li>
+<li>观测窗口和样本量。</li>
+<li>自动回滚条件。</li>
+<li>数据兼容性（双写、schema 变更）。</li>
+</ul>
+<h2 id="出口流量与-ServiceEntry"><a href="#出口流量与-ServiceEntry" class="headerlink" title="出口流量与 ServiceEntry"></a>出口流量与 ServiceEntry</h2><p>默认情况下，Mesh 对未知外部服务的处理取决于 <code>outboundTrafficPolicy</code>：</p>
+<ul>
+<li><code>ALLOW_ANY</code>：未知流量直接放行，迁移期常用，但等于没有出口治理。</li>
+<li><code>REGISTRY_ONLY</code>：只允许注册过的外部服务，需要 <code>ServiceEntry</code>。</li>
+</ul>
+<p>生产建议：</p>
+<ul>
+<li>用 <code>ServiceEntry</code> 显式登记外部依赖，配合出口网关做审计和固定源 IP。</li>
+<li>注意 DNS 解析和 TLS  origination：Mesh 可以发起 TLS，但证书校验和 SNI 要配置正确。</li>
+<li>不要把 <code>REGISTRY_ONLY</code> 当成强安全边界，它只减少意外外联。</li>
+</ul>
+<h2 id="多集群"><a href="#多集群" class="headerlink" title="多集群"></a>多集群</h2><p>Istio 的典型拓扑：</p>
+<ul>
+<li><strong>Primary-Remote</strong>：一个主集群运行控制面，远程集群只跑数据面。</li>
+<li><strong>Multi-Primary</strong>：每个集群都有控制面，互相发现。</li>
+<li><strong>East-West Gateway</strong>：跨网络时，通过专用网关承载跨集群服务流量。</li>
+</ul>
+<p>关键设计点：</p>
+<ul>
+<li><strong>网络标识</strong>：<code>topology.istio.io/network</code> 决定跨网络路径。</li>
+<li><strong>信任域</strong>：跨集群 mTLS 要求 trust domain 和根证书策略一致；不同信任域需要显式配置。</li>
+<li><strong>服务发现</strong>：跨集群 Endpoint 的可见性、DNS 解析、locality 感知。</li>
+<li><strong>故障域</strong>：跨集群调用增加一跳网络，超时和重试预算要重新计算。</li>
+<li><strong>Ambient 多集群</strong>：能力随版本演进，落地前必须以当前版本的官方支持矩阵为准，不要假设与 Sidecar 完全等价。</li>
+</ul>
+<h1 id="安全深潜：零信任不是“开了-mTLS”"><a href="#安全深潜：零信任不是“开了-mTLS”" class="headerlink" title="安全深潜：零信任不是“开了 mTLS”"></a>安全深潜：零信任不是“开了 mTLS”</h1><h2 id="零信任的三个不变量"><a href="#零信任的三个不变量" class="headerlink" title="零信任的三个不变量"></a>零信任的三个不变量</h2><ol>
+<li><strong>身份优先</strong>：策略基于工作负载身份（SPIFFE），而不是 IP&#x2F;端口。</li>
+<li><strong>默认不信任</strong>：没有明确允许的通信应被拒绝。</li>
+<li><strong>持续验证</strong>：证书轮换、短生命周期、每次连接都验证，而不是“进内网就信任”。</li>
+</ol>
+<p>Mesh 能提供前两个的技术底座，第三个取决于证书生命周期和策略执行点。</p>
+<h2 id="mTLS-握手与身份验证"><a href="#mTLS-握手与身份验证" class="headerlink" title="mTLS 握手与身份验证"></a>mTLS 握手与身份验证</h2><p>一次 mTLS 连接包含：</p>
+<ol>
+<li>客户端验证服务端证书链和 SAN（通常是 SPIFFE ID）。</li>
+<li>服务端验证客户端证书链和 SAN。</li>
+<li>双方协商会话密钥。</li>
+<li>后续应用数据加密传输。</li>
+</ol>
+<p>关键点：</p>
+<ul>
+<li><strong>mTLS 证明的是工作负载身份</strong>，不是终端用户身份。</li>
+<li><strong>证书 SAN 必须与策略中的 principal 匹配</strong>，否则授权会失效。</li>
+<li><strong>PERMISSIVE 模式</strong>同时接受明文和 mTLS，迁移期有用，但也是降级风险；迁移完成后应切到 STRICT。</li>
+<li><strong>证书轮换</strong>是持续过程，控制面&#x2F;CA 故障会在 TTL 到期后集中爆发。</li>
+</ul>
+<h2 id="策略分层"><a href="#策略分层" class="headerlink" title="策略分层"></a>策略分层</h2><p>Istio 的安全策略分三层：</p>
+<table>
+<thead>
+<tr>
+<th>资源</th>
+<th>回答的问题</th>
+<th>典型配置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PeerAuthentication</code></td>
+<td>这个工作负载接受什么传输层身份？</td>
+<td><code>STRICT</code> &#x2F; <code>PERMISSIVE</code> &#x2F; <code>DISABLE</code></td>
+</tr>
+<tr>
+<td><code>RequestAuthentication</code></td>
+<td>终端用户 JWT 是否有效？</td>
+<td>issuer、jwks、 audiences</td>
+</tr>
+<tr>
+<td><code>AuthorizationPolicy</code></td>
+<td>这个请求是否允许？</td>
+<td>ALLOW &#x2F; DENY &#x2F; CUSTOM，基于 principal、namespace、method、path、JWT claims</td>
+</tr>
+</tbody></table>
+<p>全命名空间强制 mTLS：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">security.istio.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PeerAuthentication</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">default</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">foo</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">mtls:</span></span><br><span class="line">    <span class="attr">mode:</span> <span class="string">STRICT</span></span><br></pre></td></tr></table></figure>
+
+<p>默认拒绝 + 显式允许：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">security.istio.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">AuthorizationPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">deny-all</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">foo</span></span><br><span class="line"><span class="attr">spec:</span> &#123;&#125;</span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">security.istio.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">AuthorizationPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">allow-reviews</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">foo</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">reviews</span></span><br><span class="line">  <span class="attr">action:</span> <span class="string">ALLOW</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">from:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">source:</span></span><br><span class="line">            <span class="attr">principals:</span></span><br><span class="line">              <span class="bullet">-</span> <span class="string">&quot;cluster.local/ns/foo/sa/web&quot;</span></span><br><span class="line">      <span class="attr">to:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">operation:</span></span><br><span class="line">            <span class="attr">methods:</span> [<span class="string">&quot;GET&quot;</span>]</span><br><span class="line">            <span class="attr">paths:</span> [<span class="string">&quot;/api/v1/reviews/*&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>语义要点：</p>
+<ul>
+<li><strong>DENY 优先于 ALLOW</strong>；只要有一条 DENY 匹配，请求就被拒绝。</li>
+<li>如果没有任何 ALLOW 策略，默认允许；因此“默认拒绝”必须显式加一条空规则或 deny-all。</li>
+<li><code>principals</code> 的格式通常是 <code>&lt;trust-domain&gt;/ns/&lt;ns&gt;/sa/&lt;sa&gt;</code>。</li>
+<li>L7 策略（method&#x2F;path&#x2F;claims）需要 L7 解析；在 Ambient 中由 waypoint 执行，仅有 ztunnel 时只能做 L4。</li>
+</ul>
+<h2 id="Ambient-下的策略执行点"><a href="#Ambient-下的策略执行点" class="headerlink" title="Ambient 下的策略执行点"></a>Ambient 下的策略执行点</h2><ul>
+<li><strong>ztunnel</strong>：L4 AuthorizationPolicy、mTLS 身份、L4 遥测。</li>
+<li><strong>waypoint</strong>：L7 AuthorizationPolicy、RequestAuthentication、Wasm、L7 遥测、路由。</li>
+<li><strong>目的地执行</strong>：Ambient 的策略在目的地 waypoint 执行，而不是源端 Sidecar。这改变了“策略在哪生效”的排障心智。</li>
+</ul>
+<p>一个容易忽略的点：ztunnel 默认接受明文入站。如果你的策略只写了 ALLOW，没有拒绝无身份流量，那么网格外明文请求可能仍然通过。要显式要求身份：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">security.istio.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">AuthorizationPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">require-identity</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">foo</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">reviews</span></span><br><span class="line">  <span class="attr">action:</span> <span class="string">ALLOW</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">from:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">source:</span></span><br><span class="line">            <span class="attr">principals:</span> [<span class="string">&quot;cluster.local/ns/foo/sa/web&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>并配合默认拒绝，确保没有 principal 的流量被挡住。</p>
+<h2 id="威胁模型"><a href="#威胁模型" class="headerlink" title="威胁模型"></a>威胁模型</h2><table>
+<thead>
+<tr>
+<th>威胁</th>
+<th>Mesh 能做什么</th>
+<th>残余风险</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pod 被攻破，横向扫描</td>
+<td>mTLS + L4&#x2F;L7 授权限制可达服务</td>
+<td>被攻破的工作负载可用自己的合法身份访问被允许的服务</td>
+</tr>
+<tr>
+<td>中间人窃听</td>
+<td>mTLS 加密</td>
+<td>网格外流量、绕过代理的流量</td>
+</tr>
+<tr>
+<td>身份伪造</td>
+<td>SPIFFE + 证书校验</td>
+<td>控制面&#x2F;CA 被攻破、节点 root</td>
+</tr>
+<tr>
+<td>未授权 API 调用</td>
+<td>AuthorizationPolicy + JWT</td>
+<td>策略写错、路径匹配漏洞、业务逻辑漏洞</td>
+</tr>
+<tr>
+<td>供应链恶意镜像</td>
+<td>镜像签名&#x2F;准入控制（Mesh 之外）</td>
+<td>Mesh 不负责镜像可信</td>
+</tr>
+<tr>
+<td>出口数据泄露</td>
+<td>ServiceEntry + 出口网关 + 审计</td>
+<td>直连 IP、DNS 隧道、允许的外部服务</td>
+</tr>
+<tr>
+<td>拒绝服务</td>
+<td>限流、连接池、熔断</td>
+<td>Mesh 不是抗 DDoS 设备</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>架构师注：Mesh 的安全价值在于“把身份和策略变成默认路径”，而不是“让应用变得安全”。应用自身的输入校验、权限模型、密钥管理仍然是第一道防线。</p>
+</blockquote>
+<h2 id="常见安全错误"><a href="#常见安全错误" class="headerlink" title="常见安全错误"></a>常见安全错误</h2><ul>
+<li>只开 mTLS，不做授权：加密了，但谁都能调。</li>
+<li>长期使用 PERMISSIVE：迁移完成后忘记切 STRICT。</li>
+<li>用 IP&#x2F;端口写策略：Pod 重建后策略失效或过宽。</li>
+<li>路径匹配写成 <code>/*</code>：把管理接口也暴露了。</li>
+<li>JWT 只校验签名，不校验 issuer&#x2F;audience&#x2F;expiry。</li>
+<li>把 <code>REGISTRY_ONLY</code> 当出口安全边界。</li>
+<li>根证书没有轮换演练，过期当天全网格 503。</li>
+<li>共享 waypoint 没有按安全边界拆分，一个命名空间的策略污染另一个。</li>
+</ul>
+<h1 id="可观测性深潜：指标、追踪与基数"><a href="#可观测性深潜：指标、追踪与基数" class="headerlink" title="可观测性深潜：指标、追踪与基数"></a>可观测性深潜：指标、追踪与基数</h1><h2 id="指标：先理解-reporter"><a href="#指标：先理解-reporter" class="headerlink" title="指标：先理解 reporter"></a>指标：先理解 reporter</h2><p>Istio 的核心指标（如 <code>istio_requests_total</code>、<code>istio_request_duration_milliseconds</code>）带 <code>reporter</code> 标签：</p>
+<ul>
+<li><code>reporter=source</code>：源端代理观测到的请求。</li>
+<li><code>reporter=destination</code>：目的端代理观测到的请求。</li>
+</ul>
+<p>同一条请求会在两边各产生一份指标。做 SLO 时要明确用哪一侧：</p>
+<ul>
+<li>看“调用方体验”：source。</li>
+<li>看“服务端实际处理”：destination。</li>
+<li>两边都看，才能定位“请求没到”还是“到了但失败”。</li>
+</ul>
+<p>常见 <code>response_flags</code>：</p>
+<table>
+<thead>
+<tr>
+<th>flag</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>UF</code></td>
+<td>upstream connection failure</td>
+</tr>
+<tr>
+<td><code>UC</code></td>
+<td>upstream connection termination</td>
+</tr>
+<tr>
+<td><code>UO</code></td>
+<td>upstream overflow（熔断&#x2F;连接池）</td>
+</tr>
+<tr>
+<td><code>NR</code></td>
+<td>no route</td>
+</tr>
+<tr>
+<td><code>URX</code></td>
+<td>retry limit exceeded</td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td>正常</td>
+</tr>
+</tbody></table>
+<p>这些 flag 比 HTTP 状态码更接近根因。</p>
+<h2 id="基数治理"><a href="#基数治理" class="headerlink" title="基数治理"></a>基数治理</h2><p>Mesh 指标天然高基数：</p>
+<ul>
+<li><code>source_workload</code>、<code>destination_workload</code>、<code>destination_service</code>、<code>response_code</code>、<code>reporter</code> 组合爆炸。</li>
+<li>每个服务版本、每个端点、每个错误码都会产生时间序列。</li>
+</ul>
+<p>治理手段：</p>
+<ul>
+<li>用 Telemetry API 关闭不需要的标签。</li>
+<li>在 Prometheus 侧做 metric relabeling &#x2F; cardinality limit。</li>
+<li>不要把用户 ID、请求 ID、URL 全路径放进标签。</li>
+<li>区分“平台指标”和“业务指标”，不要把 Mesh 当业务分析数据库。</li>
+</ul>
+<h2 id="追踪"><a href="#追踪" class="headerlink" title="追踪"></a>追踪</h2><p>Mesh 能在代理层生成 span，但<strong>跨服务上下文传播仍然依赖应用</strong>：</p>
+<ul>
+<li>应用必须透传 W3C <code>traceparent</code> 或 B3 header。</li>
+<li>代理默认可能只采样一部分；需要配置采样率。</li>
+<li>全量采样成本高，生产常用尾部采样（tail sampling）。</li>
+<li>Ambient 下，ztunnel 只做 L4，L7 span 主要在 waypoint 产生；追踪链路要确认 waypoint 是否在路径上。</li>
+</ul>
+<h2 id="日志与拓扑"><a href="#日志与拓扑" class="headerlink" title="日志与拓扑"></a>日志与拓扑</h2><ul>
+<li>Envoy 访问日志：按需开启，注意量和脱敏。</li>
+<li>ztunnel 日志：Ambient 排障的关键，尤其是连接建立、HBONE、授权失败。</li>
+<li>Hubble：Cilium 的流级可观测性，适合 L3&#x2F;L4 视角。</li>
+<li>Kiali：服务拓扑、配置校验、流量动画；适合作为平台自服务界面。</li>
+</ul>
+<h2 id="带重试的-SLO"><a href="#带重试的-SLO" class="headerlink" title="带重试的 SLO"></a>带重试的 SLO</h2><p>重试会让“用户看到的失败率”和“后端看到的失败率”不一致：</p>
+<ul>
+<li>后端 10% 失败，重试 3 次后用户失败率可能降到 34.4%，但后端压力增加。</li>
+<li>SLO 应基于<strong>用户请求</strong>（source 侧最终结果），同时单独监控<strong>尝试级</strong>失败率。</li>
+<li>错误预算要扣除重试放大带来的额外负载。</li>
+</ul>
+<h1 id="性能与容量：一张架构师账单"><a href="#性能与容量：一张架构师账单" class="headerlink" title="性能与容量：一张架构师账单"></a>性能与容量：一张架构师账单</h1><h2 id="延迟路径"><a href="#延迟路径" class="headerlink" title="延迟路径"></a>延迟路径</h2><table>
+<thead>
+<tr>
+<th>模式</th>
+<th>请求路径</th>
+<th>额外跳数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>无 Mesh</td>
+<td>应用 → 应用</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Sidecar</td>
+<td>应用 → 客户端 Envoy → 服务端 Envoy → 应用</td>
+<td>2 个代理</td>
+</tr>
+<tr>
+<td>Ambient（仅 L4）</td>
+<td>应用 → 源 ztunnel → 目的 ztunnel → 应用</td>
+<td>2 个节点代理</td>
+</tr>
+<tr>
+<td>Ambient + waypoint</td>
+<td>应用 → ztunnel → waypoint → ztunnel → 应用</td>
+<td>3 个代理</td>
+</tr>
+</tbody></table>
+<p>每个代理都会引入：</p>
+<ul>
+<li>连接建立&#x2F;TLS 握手（可被连接复用摊薄）。</li>
+<li>请求解析、路由匹配、过滤器链。</li>
+<li>队列等待和 CPU 调度（尾延迟的主要来源）。</li>
+<li>遥测采集（通常不直接计入请求时间，但会占用 worker）。</li>
+</ul>
+<h2 id="官方基准数据"><a href="#官方基准数据" class="headerlink" title="官方基准数据"></a>官方基准数据</h2><p>Istio 官方性能文档（1.24 基准，1 KB payload、mTLS、2 worker threads、1000 rps）给出：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>CPU</th>
+<th>内存</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sidecar Envoy</td>
+<td>~0.20 vCPU</td>
+<td>~60 MB</td>
+</tr>
+<tr>
+<td>Waypoint Envoy</td>
+<td>~0.25 vCPU</td>
+<td>~60 MB</td>
+</tr>
+<tr>
+<td>ztunnel</td>
+<td>~0.06 vCPU</td>
+<td>~12 MB</td>
+</tr>
+</tbody></table>
+<p>这些数字的含义：</p>
+<ul>
+<li><strong>Sidecar 的成本是“每 Pod”</strong>；Pod 越多，固定成本越高，即使流量很低。</li>
+<li><strong>ztunnel 的成本是“每节点”</strong>；节点越多，成本线性增长，但与 Pod 密度无关。</li>
+<li><strong>waypoint 的成本是“每副本”</strong>；共享程度越高，单位服务成本越低，但爆炸半径越大。</li>
+<li>内存强烈依赖配置规模（listener&#x2F;cluster&#x2F;route 数量），不能只看基准值。</li>
+</ul>
+<blockquote>
+<p>不要直接把厂商基准当容量规划。必须用你自己的协议、payload、连接模式、mTLS、CPU limit 和内核参数复测。</p>
+</blockquote>
+<h2 id="成本模型"><a href="#成本模型" class="headerlink" title="成本模型"></a>成本模型</h2><p>一个粗略但实用的公式：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Sidecar 年化成本 ≈ Σ(Pod 数 × 单代理 CPU/内存 × 单价) + 控制面 + 可观测性存储</span><br><span class="line">Ambient 年化成本 ≈ Σ(节点数 × ztunnel 成本) + Σ(waypoint 副本 × 成本) + 控制面 + 存储</span><br></pre></td></tr></table></figure>
+
+<p>示例（仅示意，不是报价）：</p>
+<ul>
+<li>500 个 Pod，每个 Pod 峰值 1000 rps：Sidecar 约 <code>500 × 0.20 = 100 vCPU</code>、<code>500 × 60MB = 30GB</code>。</li>
+<li>同样负载跑在 20 个节点：ztunnel 约 <code>20 × 0.06 = 1.2 vCPU</code>、<code>20 × 12MB = 240MB</code>。</li>
+<li>再加 2 个 waypoint 副本：约 <code>0.5 vCPU</code>、<code>120MB</code>。</li>
+</ul>
+<p>但这只是“代理本身”的成本。还要加上：</p>
+<ul>
+<li>为代理预留的节点容量和碎片。</li>
+<li>控制面副本、etcd 压力、镜像仓库。</li>
+<li>指标&#x2F;日志&#x2F;追踪的存储与查询成本。</li>
+<li>平台团队的运维人力（通常被低估）。</li>
+<li>升级窗口和变更风险。</li>
+</ul>
+<h2 id="容量规划清单"><a href="#容量规划清单" class="headerlink" title="容量规划清单"></a>容量规划清单</h2><ul>
+<li>服务数、Endpoint 数、配置对象数。</li>
+<li>每 Pod&#x2F;每节点 RPS、连接数、并发请求数。</li>
+<li>协议分布（HTTP&#x2F;1.1、HTTP&#x2F;2、gRPC、TCP）。</li>
+<li>变更频率（HPA、滚动发布、批处理）。</li>
+<li>代理 CPU limit 与 throttling（尾延迟杀手）。</li>
+<li>单 Envoy 配置内存上限、istiod 堆内存。</li>
+<li>节点 ulimit、conntrack、文件描述符、内核参数。</li>
+<li>监控&#x2F;日志采样率与存储保留。</li>
+</ul>
+<h2 id="基准测试方法"><a href="#基准测试方法" class="headerlink" title="基准测试方法"></a>基准测试方法</h2><p>要得到可信结论，至少控制：</p>
+<ul>
+<li>相同节点规格、相同 CNI、相同内核参数。</li>
+<li>相同 payload、协议、并发连接、mTLS 开关。</li>
+<li>测量 p50&#x2F;p90&#x2F;p99，而不是只看平均值。</li>
+<li>记录 CPU throttling、GC、连接复用、错误率。</li>
+<li>分别测“无 Mesh &#x2F; Sidecar &#x2F; Ambient &#x2F; Ambient+waypoint”。</li>
+<li>用真实业务调用链，而不是单跳 echo。</li>
+</ul>
+<h1 id="生产运维与故障学"><a href="#生产运维与故障学" class="headerlink" title="生产运维与故障学"></a>生产运维与故障学</h1><h2 id="安装与升级"><a href="#安装与升级" class="headerlink" title="安装与升级"></a>安装与升级</h2><h3 id="Sidecar：revision-金丝雀"><a href="#Sidecar：revision-金丝雀" class="headerlink" title="Sidecar：revision 金丝雀"></a>Sidecar：revision 金丝雀</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装新 revision 的控制面</span></span><br><span class="line">istioctl install --<span class="built_in">set</span> revision=1-31-3</span><br><span class="line"></span><br><span class="line"><span class="comment"># 新命名空间使用新 revision</span></span><br><span class="line">kubectl label ns app istio.io/rev=1-31-3 --overwrite</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重建 Pod 让新 Sidecar 生效</span></span><br><span class="line">kubectl rollout restart deploy -n app</span><br></pre></td></tr></table></figure>
+
+<p>要点：</p>
+<ul>
+<li>控制面可以先升级，数据面按命名空间&#x2F;工作负载逐步切换。</li>
+<li>切换时移除旧的 <code>istio-injection=enabled</code>，避免双注入。</li>
+<li>必须确认控制面与数据面的版本偏差在官方支持范围内。</li>
+<li>Sidecar 升级意味着应用 Pod 重建，要纳入发布窗口和容量预算。</li>
+</ul>
+<h3 id="Ambient：分层升级"><a href="#Ambient：分层升级" class="headerlink" title="Ambient：分层升级"></a>Ambient：分层升级</h3><ul>
+<li>先升级 <code>istiod</code>，再滚动 ztunnel DaemonSet，最后滚动 waypoint Deployment。</li>
+<li>应用 Pod 通常不需要重建（以官方升级说明为准），但标签和 CNI 规则要验证。</li>
+<li>升级后重点验证：mTLS、HBONE、waypoint 路由、L4&#x2F;L7 策略。</li>
+</ul>
+<h2 id="故障模式表"><a href="#故障模式表" class="headerlink" title="故障模式表"></a>故障模式表</h2><table>
+<thead>
+<tr>
+<th>现象</th>
+<th>常见根因</th>
+<th>排查入口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>503 <code>UF</code></td>
+<td>上游连接失败、端口错、Pod 未就绪</td>
+<td><code>proxy-config endpoint</code>、readiness、NetworkPolicy</td>
+</tr>
+<tr>
+<td>503 <code>UC</code></td>
+<td>上游主动断开、超时、协议不匹配</td>
+<td>上游日志、超时配置、HTTP&#x2F;2 设置</td>
+</tr>
+<tr>
+<td>503 <code>UO</code></td>
+<td>连接池&#x2F;熔断溢出</td>
+<td><code>DestinationRule</code> 连接池、并发、限流</td>
+</tr>
+<tr>
+<td>503 <code>NR</code></td>
+<td>没有匹配路由</td>
+<td><code>proxy-config route</code>、host、Gateway</td>
+</tr>
+<tr>
+<td>503 TLS error</td>
+<td>mTLS 模式不一致、证书过期&#x2F; SAN 不匹配</td>
+<td><code>PeerAuthentication</code>、<code>proxy-config secret</code>、时钟</td>
+</tr>
+<tr>
+<td>401&#x2F;403</td>
+<td>JWT 无效、授权策略拒绝</td>
+<td><code>RequestAuthentication</code>、<code>AuthorizationPolicy</code>、principal</td>
+</tr>
+<tr>
+<td>配置不生效</td>
+<td>NACK、作用域、debounce、连接复用</td>
+<td><code>proxy-status</code>、<code>analyze</code>、<code>proxy-config</code></td>
+</tr>
+<tr>
+<td>新 Pod 起不来</td>
+<td>注入 webhook&#x2F;CNI 失败</td>
+<td>webhook 日志、<code>istio-cni</code> 日志、Events</td>
+</tr>
+<tr>
+<td>节点流量全断</td>
+<td>ztunnel 异常</td>
+<td>ztunnel DaemonSet、节点日志、CNI</td>
+</tr>
+<tr>
+<td>某命名空间 L7 失效</td>
+<td>waypoint 副本不足&#x2F;崩溃</td>
+<td>waypoint Deployment、HPA、PDB</td>
+</tr>
+<tr>
+<td>延迟突然升高</td>
+<td>代理 CPU throttling、推送风暴、DNS</td>
+<td><code>kubectl top</code>、throttling 指标、istiod 指标</td>
+</tr>
+</tbody></table>
+<h2 id="排障顺序"><a href="#排障顺序" class="headerlink" title="排障顺序"></a>排障顺序</h2><ol>
+<li><strong>确认范围</strong>：单 Pod、单服务、单节点、单命名空间，还是全网格？</li>
+<li><strong>确认路径</strong>：请求有没有经过代理？<code>proxy-config</code> 看 listener&#x2F;route&#x2F;cluster&#x2F;endpoint。</li>
+<li><strong>确认身份</strong>：mTLS 是否成功？证书是否有效？principal 是什么？</li>
+<li><strong>确认策略</strong>：PeerAuthentication &#x2F; RequestAuthentication &#x2F; AuthorizationPolicy 是否命中？</li>
+<li><strong>确认控制面</strong>：<code>proxy-status</code> 是否 STALE&#x2F;NACK？istiod 是否在推送？</li>
+<li><strong>确认数据面</strong>：CPU throttling、连接池、Endpoint 健康、DNS。</li>
+<li><strong>最后抓包</strong>：<code>tcpdump</code>、ztunnel 日志、Hubble，验证“看到的配置”和“实际流量”是否一致。</li>
+</ol>
+<p>常用命令：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">istioctl analyze -A</span><br><span class="line">istioctl proxy-status</span><br><span class="line">istioctl proxy-config cluster &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config endpoint &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config route &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config secret &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">kubectl logs -n istio-system -l app=istiod --<span class="built_in">tail</span>=200</span><br><span class="line">kubectl logs -n istio-system -l app=ztunnel --<span class="built_in">tail</span>=200</span><br><span class="line">kubectl get pods -n istio-system -o wide</span><br></pre></td></tr></table></figure>
+
+<h2 id="GitOps-与策略即代码"><a href="#GitOps-与策略即代码" class="headerlink" title="GitOps 与策略即代码"></a>GitOps 与策略即代码</h2><ul>
+<li>所有 Mesh 配置进 Git，禁止控制台手改。</li>
+<li>CI 中跑 <code>istioctl analyze</code>、schema 校验、策略单测（conftest&#x2F;OPA）。</li>
+<li>关键策略（默认拒绝、mTLS STRICT、出口白名单）要有“策略测试”环境。</li>
+<li>变更分级：路由&#x2F;权重可自动；安全策略&#x2F;控制面升级需人工审批。</li>
+<li>记录“配置版本 ↔ 镜像版本 ↔ 数据面版本”的对应关系，便于回滚。</li>
+</ul>
+<h2 id="多租户平台"><a href="#多租户平台" class="headerlink" title="多租户平台"></a>多租户平台</h2><ul>
+<li>命名空间是基本隔离单元；用 <code>Sidecar</code>、<code>exportTo</code> 限制配置可见性。</li>
+<li>共享控制面 vs 每租户控制面：前者成本低，后者隔离强；按合规要求选择。</li>
+<li>waypoint 按安全边界共享，不要跨租户复用。</li>
+<li>为租户提供“黄金路径”模板，而不是让每个团队自由写 YAML。</li>
+</ul>
+<h1 id="选型、迁移与-TCO"><a href="#选型、迁移与-TCO" class="headerlink" title="选型、迁移与 TCO"></a>选型、迁移与 TCO</h1><h2 id="选型矩阵"><a href="#选型矩阵" class="headerlink" title="选型矩阵"></a>选型矩阵</h2><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Istio</th>
+<th>Linkerd</th>
+<th>Cilium</th>
+<th>托管 Mesh</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>功能完整度</td>
+<td>最高（L4&#x2F;L7、多集群、Wasm、授权）</td>
+<td>中等（核心治理、mTLS、重试&#x2F;超时）</td>
+<td>高（网络+安全+可观测）</td>
+<td>取决于厂商</td>
+</tr>
+<tr>
+<td>数据面</td>
+<td>Envoy Sidecar &#x2F; Ambient</td>
+<td>Rust 微代理 Sidecar</td>
+<td>eBPF + Envoy</td>
+<td>通常 Sidecar&#x2F;托管</td>
+</tr>
+<tr>
+<td>资源开销</td>
+<td>中高（Sidecar）&#x2F; 低（Ambient）</td>
+<td>低</td>
+<td>低（L4）</td>
+<td>中</td>
+</tr>
+<tr>
+<td>运维复杂度</td>
+<td>高</td>
+<td>低</td>
+<td>高</td>
+<td>低</td>
+</tr>
+<tr>
+<td>多集群</td>
+<td>成熟</td>
+<td>支持</td>
+<td>支持</td>
+<td>取决于产品</td>
+</tr>
+<tr>
+<td>适用</td>
+<td>大型平台、复杂治理、多集群</td>
+<td>K8s 为主、追求简单</td>
+<td>已用 Cilium、网络一体化</td>
+<td>小团队、合规托管</td>
+</tr>
+</tbody></table>
+<p>选择原则：</p>
+<ul>
+<li><strong>需要完整 L7 + 多集群 + 生态</strong>：Istio；资源敏感则优先评估 Ambient。</li>
+<li><strong>需要简单、轻量、快速落地</strong>：Linkerd。</li>
+<li><strong>已经把 Cilium 作为 CNI，且希望网络&#x2F;安全&#x2F;可观测一体化</strong>：Cilium Service Mesh。</li>
+<li><strong>没有平台团队、但必须满足合规</strong>：托管服务，接受功能延迟和成本溢价。</li>
+<li><strong>SMI</strong>：历史项目，已不建议作为新选型基础。</li>
+</ul>
+<h2 id="迁移路线"><a href="#迁移路线" class="headerlink" title="迁移路线"></a>迁移路线</h2><p>不要“一步到位”。推荐分阶段：</p>
+<ol>
+<li><strong>盘点</strong>：服务清单、协议、调用链、关键 SLO、现有网关&#x2F;服务发现。</li>
+<li><strong>L4 基线</strong>：先上 mTLS + L4 遥测 + 基础策略，验证身份和证书链路。</li>
+<li><strong>选择性 L7</strong>：只对需要灰度&#x2F;重试&#x2F;授权的服务启用 L7，避免全量代理税。</li>
+<li><strong>策略硬化</strong>：默认拒绝、JWT、出口白名单、审计。</li>
+<li><strong>多集群&#x2F;多环境</strong>：统一信任域、跨集群发现、故障演练。</li>
+<li><strong>数据面演进</strong>：Sidecar → Ambient 按命名空间逐步迁移，保留回滚路径。</li>
+</ol>
+<p>Sidecar → Ambient 的注意事项：</p>
+<ul>
+<li>两种模式可在同一网格共存，但策略执行点不同（源端 vs 目的端）。</li>
+<li>来自 Sidecar&#x2F;Gateway 的流量当前不会经过 waypoint，混合期要验证策略覆盖。</li>
+<li>waypoint 的容量、HA、PDB 要按作用域设计。</li>
+<li>迁移顺序：先 L4（ztunnel），再按需加 waypoint；不要一次性把所有 L7 策略搬过去。</li>
+</ul>
+<h2 id="TCO-的真实构成"><a href="#TCO-的真实构成" class="headerlink" title="TCO 的真实构成"></a>TCO 的真实构成</h2><table>
+<thead>
+<tr>
+<th>成本项</th>
+<th>内容</th>
+<th>常见低估点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>基础设施</td>
+<td>代理 CPU&#x2F;内存、节点、控制面</td>
+<td>为代理预留的碎片容量</td>
+</tr>
+<tr>
+<td>可观测性</td>
+<td>指标&#x2F;日志&#x2F;追踪存储</td>
+<td>高基数带来的查询成本</td>
+</tr>
+<tr>
+<td>人力</td>
+<td>平台团队、on-call、升级</td>
+<td>day-2 排障和证书轮换</td>
+</tr>
+<tr>
+<td>变更风险</td>
+<td>发布失败、策略误杀</td>
+<td>回滚演练不足</td>
+</tr>
+<tr>
+<td>机会成本</td>
+<td>团队本可以做业务的时间</td>
+<td>过度自建</td>
+</tr>
+</tbody></table>
+<h2 id="反模式"><a href="#反模式" class="headerlink" title="反模式"></a>反模式</h2><ul>
+<li>把 Mesh 当“安全银弹”，只开 mTLS 不做授权。</li>
+<li>全网格无差别重试，制造重试风暴。</li>
+<li>100% 追踪采样，压垮存储。</li>
+<li>每个服务一个 waypoint，资源比 Sidecar 还高。</li>
+<li>没有 SLO 就做灰度，回滚全靠感觉。</li>
+<li>控制面单副本、无 PDB、无跨 AZ。</li>
+<li>安全策略没有测试环境，直接上生产。</li>
+<li>把 Mesh 配置当 CMDB，所有东西都塞进一个 VirtualService。</li>
+<li>没有退出策略：一旦 Mesh 故障，应用无法直连降级。</li>
+</ul>
+<h1 id="架构师检查清单"><a href="#架构师检查清单" class="headerlink" title="架构师检查清单"></a>架构师检查清单</h1><p>上线前用这 20 个问题做一次评审：</p>
+<ol>
+<li>我们要解决的三个可量化问题是什么？</li>
+<li>服务数量、协议、调用链深度、峰值 RPS 是多少？</li>
+<li>P99 延迟预算里，允许代理占多少？</li>
+<li>选择 Sidecar、Ambient 还是 eBPF，依据是什么？</li>
+<li>每 Pod&#x2F;每节点的资源税算清楚了吗？</li>
+<li>控制面几个副本、跨 AZ 吗？PDB 呢？</li>
+<li>证书 TTL、根证书轮换、CA 故障预案是什么？</li>
+<li>mTLS 是 STRICT 吗？迁移期如何避免长期 PERMISSIVE？</li>
+<li>默认拒绝策略落地了吗？谁负责评审？</li>
+<li>JWT 的 issuer&#x2F;audience&#x2F;expiry 校验了吗？</li>
+<li>重试只用于幂等请求吗？有总预算吗？</li>
+<li>超时是端到端预算还是单跳拍脑袋？</li>
+<li>熔断&#x2F;连接池参数经过压测吗？</li>
+<li>灰度有成功指标和自动回滚吗？</li>
+<li>可观测性基数可控吗？采样率是多少？</li>
+<li>升级路径经过演练吗？数据面版本偏差支持吗？</li>
+<li>出问题能否在 10 分钟内定位到控制面&#x2F;数据面&#x2F;策略？</li>
+<li>多租户隔离边界在哪里？waypoint 是否跨租户共享？</li>
+<li>如果 Mesh 整体故障，应用的降级路径是什么？</li>
+<li>平台团队的 on-call、文档、黄金路径准备好了吗？</li>
+</ol>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="术语表"><a href="#术语表" class="headerlink" title="术语表"></a>术语表</h2><table>
+<thead>
+<tr>
+<th>术语</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>xDS</td>
+<td>Envoy 动态配置协议集合（CDS&#x2F;EDS&#x2F;LDS&#x2F;RDS&#x2F;SDS）</td>
+</tr>
+<tr>
+<td>ADS</td>
+<td>聚合发现服务，把 xDS 资源聚合到一条流</td>
+</tr>
+<tr>
+<td>SotW</td>
+<td>State of the World，全量推送</td>
+</tr>
+<tr>
+<td>NACK</td>
+<td>代理拒绝配置，保留旧配置</td>
+</tr>
+<tr>
+<td>SPIFFE</td>
+<td>安全工作负载身份标准</td>
+</tr>
+<tr>
+<td>SDS</td>
+<td>Secret Discovery Service，证书下发</td>
+</tr>
+<tr>
+<td>HBONE</td>
+<td>HTTP&#x2F;2 + CONNECT + mTLS 的隧道协议</td>
+</tr>
+<tr>
+<td>ztunnel</td>
+<td>Ambient 的节点级 L4 代理</td>
+</tr>
+<tr>
+<td>waypoint</td>
+<td>Ambient 的可选 L7 代理</td>
+</tr>
+<tr>
+<td>GAMMA</td>
+<td>Gateway API for Mesh</td>
+</tr>
+<tr>
+<td>RED</td>
+<td>Rate、Errors、Duration 三个服务指标</td>
+</tr>
+</tbody></table>
+<h2 id="官方文档"><a href="#官方文档" class="headerlink" title="官方文档"></a>官方文档</h2><ul>
+<li>Istio 架构：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ops/deployment/architecture/">https://istio.io/latest/docs/ops/deployment/architecture/</a></li>
+<li>Istio Ambient 概览：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ambient/overview/">https://istio.io/latest/docs/ambient/overview/</a></li>
+<li>Ambient 数据面：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ambient/architecture/data-plane/">https://istio.io/latest/docs/ambient/architecture/data-plane/</a></li>
+<li>Ambient 控制面：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ambient/architecture/control-plane/">https://istio.io/latest/docs/ambient/architecture/control-plane/</a></li>
+<li>HBONE：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ambient/architecture/hbone/">https://istio.io/latest/docs/ambient/architecture/hbone/</a></li>
+<li>Ambient 流量重定向：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ambient/architecture/traffic-redirection/">https://istio.io/latest/docs/ambient/architecture/traffic-redirection/</a></li>
+<li>Waypoint：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ambient/usage/waypoint/">https://istio.io/latest/docs/ambient/usage/waypoint/</a></li>
+<li>Istio 安全：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/concepts/security/">https://istio.io/latest/docs/concepts/security/</a></li>
+<li>Istio 性能：<a target="_blank" rel="noopener" href="https://istio.io/latest/docs/ops/deployment/performance-and-scalability/">https://istio.io/latest/docs/ops/deployment/performance-and-scalability/</a></li>
+<li>Istio 1.31 发布说明：<a target="_blank" rel="noopener" href="https://istio.io/latest/news/releases/1.31.x/announcing-1.31/">https://istio.io/latest/news/releases/1.31.x/announcing-1.31/</a></li>
+<li>Linkerd 架构：<a target="_blank" rel="noopener" href="https://linkerd.io/2/reference/architecture/">https://linkerd.io/2/reference/architecture/</a></li>
+<li>Linkerd 2.20：<a target="_blank" rel="noopener" href="https://linkerd.io/2026/06/23/announcing-linkerd-2.20/">https://linkerd.io/2026/06/23/announcing-linkerd-2.20/</a></li>
+<li>Cilium Service Mesh：<a target="_blank" rel="noopener" href="https://docs.cilium.io/en/stable/network/servicemesh/">https://docs.cilium.io/en/stable/network/servicemesh/</a></li>
+<li>Gateway API GAMMA：<a target="_blank" rel="noopener" href="https://gateway-api.sigs.k8s.io/concepts/gamma/">https://gateway-api.sigs.k8s.io/concepts/gamma/</a></li>
+</ul>
+<h2 id="命令速查"><a href="#命令速查" class="headerlink" title="命令速查"></a>命令速查</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 安装/升级</span></span><br><span class="line">istioctl install --<span class="built_in">set</span> profile=ambient --<span class="built_in">set</span> revision=1-31-3</span><br><span class="line">istioctl waypoint apply -n default --enroll-namespace</span><br><span class="line"></span><br><span class="line"><span class="comment"># 接入 Ambient</span></span><br><span class="line">kubectl label ns default istio.io/dataplane-mode=ambient</span><br><span class="line">kubectl label ns default istio.io/use-waypoint=waypoint</span><br><span class="line"></span><br><span class="line"><span class="comment"># 诊断</span></span><br><span class="line">istioctl analyze -A</span><br><span class="line">istioctl proxy-status</span><br><span class="line">istioctl proxy-config cluster  &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config endpoint &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config route    &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line">istioctl proxy-config secret   &lt;pod&gt; -n &lt;ns&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 观察</span></span><br><span class="line">kubectl get pods -n istio-system -o wide</span><br><span class="line">kubectl logs -n istio-system -l app=ztunnel --<span class="built_in">tail</span>=200</span><br><span class="line">kubectl logs -n istio-system -l app=istiod --<span class="built_in">tail</span>=200</span><br></pre></td></tr></table></figure>
+
+  </div>
+  
+  
+    
+    <div class='footer'>
+       <!-- 参考资料、相关资料等 -->
+      
+       <!-- 相关文章 -->
+      
+      <!-- 版权声明组件 -->
+      
+      <!-- 打赏组件 -->
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Gateway-API/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Gateway API</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Istio/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Istio</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Service-Mesh/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Service Mesh</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E4%BA%91%E5%8E%9F%E7%94%9F/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>云原生</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Linkerd/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Linkerd</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Cilium/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Cilium</p></a></div>
+  <span hidden itemprop="keywords">Gateway API Istio Service Mesh 云原生 Linkerd Cilium</span>
+  
+
+
+        
+      
+    </div>
+    <!-- Custom Files bottomMeta begin -->
+    
+    <!-- Custom Files bottomMeta end -->
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2026/SSL%E8%AF%81%E4%B9%A6%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>SSL证书笔记</p>
+          <p class='content'>本文按「信任体系 → 签发流程 → 客户端验证 → 企业落地」的顺序，讲清楚一张证书从生成密钥到被浏览器信任的完整链路。重点回答三个问题：
+
+谁有权签发证书，信任是怎么一层层传下来的？
+一张证书...</p>
+        </a>
+      
+      
+        <a class='next' href='/2026/SpringBoot%E6%B7%B1%E5%BA%A6%E7%AC%94%E8%AE%B0/'>
+          <p class='title'>Spring Boot 深度笔记<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>本文基于 Spring Boot 4.1.2 官方文档重写，面向有生产经验的 Java 开发，讲清自动配置、配置体系、Bean 生命周期、Web、数据访问、事务、安全、可观测性、测试、原生镜像、...</p>
+        </a>
+      
+    </div>
+  
+  <!-- 文章推荐 -->
+  
+  
+  <!-- Custom Files postEnd begin-->
+  
+  <!-- Custom Files postEnd end-->
+</article>
+
+
+
+
+</div>
+<aside id='l_side' itemscope itemtype="http://schema.org/WPSideBar">
+  
+
+  
+    
+    
+      
+    
+  
+
+
+<div class="widget-sticky pjax">
+
+  
+  
+
+
+  <section class="widget toc-wrapper desktop mobile " id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E4%B8%8E%E4%BA%8B%E5%AE%9E%E5%9F%BA%E7%BA%BF"><span class="toc-text">版本与事实基线</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%80%A7%E5%8E%9F%E7%90%86%EF%BC%9AMesh-%E5%88%B0%E5%BA%95%E5%9C%A8%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="toc-text">第一性原理：Mesh 到底在解决什么</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E4%BF%A1%E6%B2%BB%E7%90%86%E7%9A%84%E4%B8%83%E4%B8%AA%E6%A8%AA%E5%88%87%E5%85%B3%E6%B3%A8%E7%82%B9"><span class="toc-text">通信治理的七个横切关注点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-SDK-%E5%88%B0-Sidecar%EF%BC%9A%E6%8E%A7%E5%88%B6%E6%9D%83%E7%9A%84%E8%BD%AC%E7%A7%BB"><span class="toc-text">从 SDK 到 Sidecar：控制权的转移</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E9%9D%A2-x2F-%E6%95%B0%E6%8D%AE%E9%9D%A2%E5%88%86%E7%A6%BB-x3D-%E4%B8%80%E4%B8%AA%E5%88%86%E5%B8%83%E5%BC%8F%E6%8E%A7%E5%88%B6%E5%9B%9E%E8%B7%AF"><span class="toc-text">控制面 &#x2F; 数据面分离 &#x3D; 一个分布式控制回路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mesh-%E4%B8%8D%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="toc-text">Mesh 不解决什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E8%AF%A5%E4%B8%8A-Mesh"><span class="toc-text">什么时候不该上 Mesh</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E9%9D%A2%E8%B0%B1%E7%B3%BB%EF%BC%9ASidecar%E3%80%81Ambient-%E4%B8%8E-eBPF"><span class="toc-text">数据面谱系：Sidecar、Ambient 与 eBPF</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Sidecar-%E6%A8%A1%E5%9E%8B%EF%BC%9A%E6%AF%8F%E4%B8%AA-Pod-%E4%B8%80%E4%B8%AA%E4%BB%A3%E7%90%86"><span class="toc-text">Sidecar 模型：每个 Pod 一个代理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%E5%85%A5%E4%B8%8E%E6%B5%81%E9%87%8F%E6%8B%A6%E6%88%AA"><span class="toc-text">注入与流量拦截</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Envoy-%E5%86%85%E9%83%A8%EF%BC%9A%E7%9B%91%E5%90%AC%E5%99%A8%E3%80%81%E8%BF%87%E6%BB%A4%E5%99%A8%E9%93%BE%E3%80%81%E8%B7%AF%E7%94%B1%E3%80%81%E9%9B%86%E7%BE%A4"><span class="toc-text">Envoy 内部：监听器、过滤器链、路由、集群</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sidecar-%E7%9A%84%E4%BC%98%E5%8A%BF%E4%B8%8E%E4%BB%A3%E4%BB%B7"><span class="toc-text">Sidecar 的优势与代价</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ambient-%E6%A8%A1%E5%9E%8B%EF%BC%9A%E6%8A%8A-L4-%E5%92%8C-L7-%E6%8B%86%E5%BC%80"><span class="toc-text">Ambient 模型：把 L4 和 L7 拆开</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ztunnel%EF%BC%9A%E8%8A%82%E7%82%B9%E7%BA%A7%E5%A4%9A%E7%A7%9F%E6%88%B7%E4%BB%A3%E7%90%86"><span class="toc-text">ztunnel：节点级多租户代理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HBONE%EF%BC%9AHTTP-x2F-2-CONNECT-mTLS"><span class="toc-text">HBONE：HTTP&#x2F;2 + CONNECT + mTLS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%81%E9%87%8F%E9%87%8D%E5%AE%9A%E5%90%91%EF%BC%9A%E8%A7%84%E5%88%99%E5%9C%A8-Pod-%E7%BD%91%E7%BB%9C%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4%E9%87%8C"><span class="toc-text">流量重定向：规则在 Pod 网络命名空间里</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E8%B7%AF%E5%BE%84"><span class="toc-text">数据路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#waypoint-%E7%9A%84%E4%BD%9C%E7%94%A8%E5%9F%9F%E4%B8%8E%E7%AD%96%E7%95%A5%E5%BD%92%E5%B1%9E"><span class="toc-text">waypoint 的作用域与策略归属</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ambient-%E7%9A%84%E8%BE%B9%E7%95%8C%E4%B8%8E%E5%9D%91"><span class="toc-text">Ambient 的边界与坑</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#eBPF-%E6%A8%A1%E5%9E%8B%EF%BC%9A%E6%8A%8A%E6%95%B0%E6%8D%AE%E9%9D%A2%E6%8E%A8%E8%BF%9B%E5%86%85%E6%A0%B8"><span class="toc-text">eBPF 模型：把数据面推进内核</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E7%A7%8D%E6%95%B0%E6%8D%AE%E9%9D%A2%E6%94%BE%E5%9C%A8%E4%B8%80%E8%B5%B7%E6%AF%94%E8%BE%83"><span class="toc-text">三种数据面放在一起比较</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E9%9D%A2%E6%B7%B1%E6%BD%9C%EF%BC%9A%E4%BB%8E-Kubernetes-%E5%AF%B9%E8%B1%A1%E5%88%B0-xDS"><span class="toc-text">控制面深潜：从 Kubernetes 对象到 xDS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#istiod-%E7%9A%84%E8%81%8C%E8%B4%A3"><span class="toc-text">istiod 的职责</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#xDS-%E8%B5%84%E6%BA%90%E5%9B%BE"><span class="toc-text">xDS 资源图</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA-Service-%E5%A6%82%E4%BD%95%E5%8F%98%E6%88%90-Envoy-%E9%85%8D%E7%BD%AE"><span class="toc-text">一个 Service 如何变成 Envoy 配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%8E%A8%E9%80%81%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">配置推送与一致性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E2%80%9C%E9%85%8D%E7%BD%AE%E7%94%9F%E6%95%88%E6%85%A2%E2%80%9D"><span class="toc-text">为什么“配置生效慢”</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E9%9D%A2%E5%AE%B9%E9%87%8F%E6%A8%A1%E5%9E%8B"><span class="toc-text">控制面容量模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BA%AB%E4%BB%BD%E4%B8%8E%E8%AF%81%E4%B9%A6%EF%BC%9A%E6%8E%A7%E5%88%B6%E9%9D%A2%E7%9A%84%E5%8F%A6%E4%B8%80%E5%8D%8A"><span class="toc-text">身份与证书：控制面的另一半</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E9%9D%A2%E6%95%85%E9%9A%9C%E5%9F%9F"><span class="toc-text">控制面故障域</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B5%81%E9%87%8F%E7%AE%A1%E7%90%86%E6%B7%B1%E6%BD%9C%EF%BC%9A%E5%AE%9A%E4%B9%89%E5%A4%B1%E8%B4%A5%E6%A8%A1%E5%9E%8B"><span class="toc-text">流量管理深潜：定义失败模型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E6%A8%A1%E5%9E%8B%EF%BC%9AIstio-API-%E4%B8%8E-Gateway-API"><span class="toc-text">对象模型：Istio API 与 Gateway API</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B7%AF%E7%94%B1%E5%8C%B9%E9%85%8D%E4%B8%8E%E7%94%9F%E6%95%88%E9%A1%BA%E5%BA%8F"><span class="toc-text">路由匹配与生效顺序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%EF%BC%9A%E7%AE%97%E6%B3%95%E5%8F%AA%E6%98%AF%E8%A1%A8%E8%B1%A1"><span class="toc-text">负载均衡：算法只是表象</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9F%A7%E6%80%A7%EF%BC%9A%E9%87%8D%E8%AF%95%E3%80%81%E8%B6%85%E6%97%B6%E3%80%81%E7%86%94%E6%96%AD%E7%9A%84%E6%95%B0%E5%AD%A6"><span class="toc-text">韧性：重试、超时、熔断的数学</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E8%AF%95%E4%BC%9A%E6%94%BE%E5%A4%A7%E6%95%85%E9%9A%9C"><span class="toc-text">重试会放大故障</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B6%85%E6%97%B6%E6%98%AF%E7%AB%AF%E5%88%B0%E7%AB%AF%E9%A2%84%E7%AE%97"><span class="toc-text">超时是端到端预算</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%86%94%E6%96%AD%E4%B8%8E-outlier-detection"><span class="toc-text">熔断与 outlier detection</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%81%B0%E5%BA%A6%E3%80%81%E9%95%9C%E5%83%8F%E4%B8%8E%E6%95%85%E9%9A%9C%E6%B3%A8%E5%85%A5"><span class="toc-text">灰度、镜像与故障注入</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%BA%E5%8F%A3%E6%B5%81%E9%87%8F%E4%B8%8E-ServiceEntry"><span class="toc-text">出口流量与 ServiceEntry</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E9%9B%86%E7%BE%A4"><span class="toc-text">多集群</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%B7%B1%E6%BD%9C%EF%BC%9A%E9%9B%B6%E4%BF%A1%E4%BB%BB%E4%B8%8D%E6%98%AF%E2%80%9C%E5%BC%80%E4%BA%86-mTLS%E2%80%9D"><span class="toc-text">安全深潜：零信任不是“开了 mTLS”</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%B6%E4%BF%A1%E4%BB%BB%E7%9A%84%E4%B8%89%E4%B8%AA%E4%B8%8D%E5%8F%98%E9%87%8F"><span class="toc-text">零信任的三个不变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mTLS-%E6%8F%A1%E6%89%8B%E4%B8%8E%E8%BA%AB%E4%BB%BD%E9%AA%8C%E8%AF%81"><span class="toc-text">mTLS 握手与身份验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AD%96%E7%95%A5%E5%88%86%E5%B1%82"><span class="toc-text">策略分层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ambient-%E4%B8%8B%E7%9A%84%E7%AD%96%E7%95%A5%E6%89%A7%E8%A1%8C%E7%82%B9"><span class="toc-text">Ambient 下的策略执行点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A8%81%E8%83%81%E6%A8%A1%E5%9E%8B"><span class="toc-text">威胁模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%AE%89%E5%85%A8%E9%94%99%E8%AF%AF"><span class="toc-text">常见安全错误</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E6%B7%B1%E6%BD%9C%EF%BC%9A%E6%8C%87%E6%A0%87%E3%80%81%E8%BF%BD%E8%B8%AA%E4%B8%8E%E5%9F%BA%E6%95%B0"><span class="toc-text">可观测性深潜：指标、追踪与基数</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%87%E6%A0%87%EF%BC%9A%E5%85%88%E7%90%86%E8%A7%A3-reporter"><span class="toc-text">指标：先理解 reporter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E6%95%B0%E6%B2%BB%E7%90%86"><span class="toc-text">基数治理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%BD%E8%B8%AA"><span class="toc-text">追踪</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E4%B8%8E%E6%8B%93%E6%89%91"><span class="toc-text">日志与拓扑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%A6%E9%87%8D%E8%AF%95%E7%9A%84-SLO"><span class="toc-text">带重试的 SLO</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%AE%B9%E9%87%8F%EF%BC%9A%E4%B8%80%E5%BC%A0%E6%9E%B6%E6%9E%84%E5%B8%88%E8%B4%A6%E5%8D%95"><span class="toc-text">性能与容量：一张架构师账单</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BB%B6%E8%BF%9F%E8%B7%AF%E5%BE%84"><span class="toc-text">延迟路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%9F%BA%E5%87%86%E6%95%B0%E6%8D%AE"><span class="toc-text">官方基准数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E6%9C%AC%E6%A8%A1%E5%9E%8B"><span class="toc-text">成本模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F%E8%A7%84%E5%88%92%E6%B8%85%E5%8D%95"><span class="toc-text">容量规划清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E5%87%86%E6%B5%8B%E8%AF%95%E6%96%B9%E6%B3%95"><span class="toc-text">基准测试方法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E8%BF%90%E7%BB%B4%E4%B8%8E%E6%95%85%E9%9A%9C%E5%AD%A6"><span class="toc-text">生产运维与故障学</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E5%8D%87%E7%BA%A7"><span class="toc-text">安装与升级</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Sidecar%EF%BC%9Arevision-%E9%87%91%E4%B8%9D%E9%9B%80"><span class="toc-text">Sidecar：revision 金丝雀</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ambient%EF%BC%9A%E5%88%86%E5%B1%82%E5%8D%87%E7%BA%A7"><span class="toc-text">Ambient：分层升级</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%A8%A1%E5%BC%8F%E8%A1%A8"><span class="toc-text">故障模式表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%92%E9%9A%9C%E9%A1%BA%E5%BA%8F"><span class="toc-text">排障顺序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GitOps-%E4%B8%8E%E7%AD%96%E7%95%A5%E5%8D%B3%E4%BB%A3%E7%A0%81"><span class="toc-text">GitOps 与策略即代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%9F%E6%88%B7%E5%B9%B3%E5%8F%B0"><span class="toc-text">多租户平台</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%80%89%E5%9E%8B%E3%80%81%E8%BF%81%E7%A7%BB%E4%B8%8E-TCO"><span class="toc-text">选型、迁移与 TCO</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%89%E5%9E%8B%E7%9F%A9%E9%98%B5"><span class="toc-text">选型矩阵</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%81%E7%A7%BB%E8%B7%AF%E7%BA%BF"><span class="toc-text">迁移路线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TCO-%E7%9A%84%E7%9C%9F%E5%AE%9E%E6%9E%84%E6%88%90"><span class="toc-text">TCO 的真实构成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">反模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84%E5%B8%88%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-text">架构师检查清单</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AF%E8%AF%AD%E8%A1%A8"><span class="toc-text">术语表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3"><span class="toc-text">官方文档</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5"><span class="toc-text">命令速查</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+  
+
+</div>
+
+
+<!-- 没有 pjax 占位会报错 万恶的 pjax -->
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <!-- Custom Files side begin -->
+  
+  <!-- Custom Files side end -->
+</aside>
+
+
+
+          <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<pjax>
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  pdata.commentConfig={};
+  //  see: /layout/_partial/scripts/_ctrl.ejs
+  
+    // header
+    var l_header=document.getElementById("l_header");
+    
+    l_header.classList.add("show");
+    
+    
+      // cover
+      var cover_wrapper=document.querySelector('#l_cover .cover-wrapper');
+      var scroll_down=document.getElementById('scroll-down');
+      cover_wrapper.id="none";
+      cover_wrapper.style.display="none";
+      scroll_down.style.display="none";
+    
+  
+</script>
+</pjax>
+        </div>
+        
+  
+  <footer class="footer clearfix"  itemscope itemtype="http://schema.org/WPFooter">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper" itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer" itemprop="url">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+    <!-- Custom Files footer begin-->
+    
+    <!-- Custom Files footer end-->
+  </footer>
+
+
+        <a id="s-top" class="fa-solid fa-arrow-up fa-fw" title="top"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+  /******************** volantis.dom ********************************/
+  // 页面选择器 将dom对象缓存起来 see: /source/js/app.js etc.
+  volantis.dom.bodyAnchor = volantis.dom.$(document.getElementById("safearea")); // 页面主体
+  volantis.dom.topBtn = volantis.dom.$(document.getElementById('s-top')); // 向上
+  volantis.dom.wrapper = volantis.dom.$(document.getElementById('wrapper')); // 整个导航栏
+  volantis.dom.coverAnchor = volantis.dom.$(document.querySelector('#l_cover .cover-wrapper')); // 1个
+  volantis.dom.switcher = volantis.dom.$(document.querySelector('#l_header .switcher .s-search')); // 搜索按钮   移动端 1个
+  volantis.dom.header = volantis.dom.$(document.getElementById('l_header')); // 移动端导航栏
+  volantis.dom.search = volantis.dom.$(document.querySelector('#l_header .m_search')); // 搜索框 桌面端 移动端 1个
+  volantis.dom.mPhoneList = volantis.dom.$(document.querySelectorAll('#l_header .m-phone .list-v')); //  手机端 子菜单 多个
+</script>
+
+<script>
+  
+  volantis.css("https://cdn.bootcdn.net/ajax/libs/font-awesome/6.1.1/css/all.min.css");
+  
+  
+  
+</script>
+
+<!-- required -->
+
+
+<!-- internal -->
+<script src="/js/app.js"></script>
+
+
+
+<!-- rightmenu要在darkmode之前（ToggleButton） darkmode要在comments之前（volantis.dark.push）-->
+
+
+
+<script>
+  function loadIssuesJS() {
+    
+      const sites_api = document.getElementById('sites-api');
+      if (sites_api != undefined && typeof SitesJS === 'undefined') {
+        volantis.js("/js/plugins/tags/sites.js")
+      }
+    
+    
+      const friends_api = document.getElementById('friends-api');
+      if (friends_api != undefined && typeof FriendsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/friends.js")
+      }
+    
+    
+      const contributors_api = document.getElementById('contributors-api');
+      if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/contributors.js")
+      }
+    
+  };
+  loadIssuesJS()
+  volantis.pjax.push(()=>{
+    loadIssuesJS();
+  })
+
+</script>
+
+
+
+
+  <script defer src="https://cdn.bootcdn.net/ajax/libs/vanilla-lazyload/17.1.0/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: ["#"],
+	maxRPS: 6,
+	hoverDelay: 0
+  };
+</script>
+<script defer src="https://unpkg.com/volantis-static@0.0.1660614606622/libs/flying-pages/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+      <script>
+  volantis.layoutHelper("comments",`<div id="giscus_container"></div>`)
+
+  volantis.giscus = {};
+
+  function check_giscus() {
+    if (volantis.dark.mode === "dark") {
+      volantis.giscus.Theme = 'dark';
+    } else {
+      volantis.giscus.Theme = 'light';
+    }
+
+    return document.getElementById("giscus_container");
+  }
+
+  function pjax_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+    let cfg = Object.assign({"theme":{"light":"light","dark":"dark"}},pdata.commentConfig)
+    const script = document.createElement('script');
+    script.setAttribute('src', 'https://giscus.app/client.js');
+    Object.keys(cfg).forEach(k=>{
+      if (k != "theme") {
+        script.setAttribute('data-'+k, cfg[k]);
+      }
+    })
+    script.setAttribute('data-theme', volantis.giscus.Theme);
+    script.setAttribute('crossorigin', "anonymous");
+    HEAD.appendChild(script);
+  }
+
+  function dark_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+
+    const message = {
+      setConfig: {
+        theme: volantis.giscus.Theme
+      }
+    };
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    giscusIframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+  }
+  pjax_giscus();
+  volantis.pjax.push(pjax_giscus);
+  volantis.dark.push(dark_giscus);
+</script>
+
+    
+
+
+
+
+
+<!-- optional -->
+
+  <script>
+  async function loadSearchScript() {
+    
+        
+    
+    return volantis.js("/js/search/hexo.js");
+  }
+
+  function loadSearchService() {
+    loadSearchScript();
+    document.querySelectorAll(".input.u-search-input").forEach((e) => {
+      e.removeEventListener("focus", loadSearchService, false);
+    });
+
+    document.querySelectorAll(".u-search-form").forEach((e) => {
+      e.addEventListener("submit", (event) => {
+        event.preventDefault();
+      }, false);
+    });
+  }
+
+  // 打开并搜索 字符串 s
+  function OpenSearch(s) {
+    if (typeof SearchService === 'undefined')
+      loadSearchScript().then(() => {
+        SearchService.setQueryText(s);
+        SearchService.search();
+      });
+    else {
+      SearchService.setQueryText(s);
+      SearchService.search();
+    }
+  }
+
+  // 访问含有 ?s=xxx  的链接时打开搜索 // 与搜索引擎 structured data 相关: /scripts/helpers/structured-data/lib/config.js
+  if (window.location.search && /^\?s=/g.test(window.location.search)) {
+    let queryText = decodeURI(window.location.search)
+      .replace(/\ /g, "-")
+      .replace(/^\?s=/g, "");
+    OpenSearch(queryText);
+  }
+
+  // 搜索输入框获取焦点时加载搜索
+  document.querySelectorAll(".input.u-search-input").forEach((e) => {
+    e.addEventListener("focus", loadSearchService, false);
+  });
+</script>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  function pjax_highlightjs_copyCode(){
+    if (!(document.querySelector(".highlight .code pre") ||
+      document.querySelector(".article pre code"))) {
+      return;
+    }
+    VolantisApp.utilCopyCode(".highlight .code pre, .article pre code")
+  }
+  volantis.requestAnimationFrame(pjax_highlightjs_copyCode)
+  volantis.pjax.push(pjax_highlightjs_copyCode)
+
+</script>
+
+
+
+
+
+
+
+
+
+
+  <script>
+  function load_swiper() {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    volantis.css("https://cdn.bootcdn.net/ajax/libs/Swiper/8.3.2/swiper-bundle.min.css");
+    volantis.js("https://cdn.bootcdn.net/ajax/libs/Swiper/8.3.2/swiper-bundle.min.js").then(() => {
+      pjax_swiper();
+    });
+  }
+
+  load_swiper();
+
+  function pjax_swiper() {
+    volantis.swiper = new Swiper('.swiper-container', {
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      centeredSlides: true,
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+
+  volantis.pjax.push(() => {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    if (typeof volantis.swiper === "undefined") {
+      load_swiper();
+    } else {
+      pjax_swiper();
+    }
+  });
+</script>
+
+
+
+  <script>
+  volantis.css("https://cdn.bootcdn.net/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.min.css");
+  volantis.js("https://cdn.bootcdn.net/ajax/libs/pace/1.2.4/pace.min.js").then(() => {
+    Pace.options.restartOnPushState = false;
+    volantis.pjax.send(Pace.restart);
+    // 阅读进度
+    volantis.scroll.push(() => {
+      Pace.stop();
+      Pace.trigger('start');
+      Pace.bar.update(volantis.scroll.progress() * 100);
+      document.body.className = document.body.className.replaceAll("pace-running ","");
+    },"阅读进度")
+    // todo：配置项开关, 哪些页面添加阅读进度
+  })
+</script>
+
+
+<!-- pjax 标签必须存在于所有页面 否则 pjax error -->
+<pjax>
+
+</pjax>
+
+<script>
+  function listenSidebarTOC() {
+    const navItems = document.querySelectorAll(".toc li");
+    if (!navItems.length) return;
+    const targets = []
+    const sections = Array.from(navItems).forEach((element) => {
+      const link = element.querySelector(".toc-link");
+      const target = document.getElementById(
+        link.getAttribute("href") ? decodeURI(link.getAttribute("href")).replace("#", "") : link.getAttribute("toc-action").split("toc-")[1] // 兼容 hexo-blog-encrypt
+      );
+      targets.push(target)
+      // 解除 a 标签 href 的 锚点定位, a 标签 href 的 锚点定位 会随机启用?? 产生错位???
+      if (link.getAttribute("href")) {
+        link.setAttribute("toc-action", "toc-" + decodeURI(link.getAttribute("href")).replace("#", ""))
+        link.removeAttribute("href")
+      }
+      // 配置 点击 触发新的锚点定位
+      if (target && target.id) {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          // 这里的 addTop 是通过错位使得 toc 自动展开.
+          volantis.scroll.to(target, { addTop: 5, observer: true })
+          // Anchor id
+          history.pushState(null, document.title, "#" + target.id);
+        });
+      }
+      return target;
+    });
+
+    function activateNavByIndex(target) {
+      if (target.classList.contains("active-current")) return;
+
+      document.querySelectorAll(".toc .active").forEach((element) => {
+        element.classList.remove("active", "active-current");
+      });
+      target.classList.add("active", "active-current");
+      let parent = target.parentNode;
+      while (!parent.matches(".toc")) {
+        if (parent.matches("li")) parent.classList.add("active");
+        parent = parent.parentNode;
+      }
+    }
+
+    // 方案一：
+    volantis.activateNavIndex = 0
+    activateNavByIndex(navItems[volantis.activateNavIndex])
+    if (targets[0]) {
+      volantis.scroll.push(() => {
+        if (targets[0].getBoundingClientRect().top >= 0) {
+          volantis.activateNavIndex = 0
+        } else if (targets[targets.length - 1].getBoundingClientRect().top < 0) {
+          volantis.activateNavIndex = targets.length - 1
+        } else {
+          for (let index = 0; index < targets.length; index++) {
+            const target0 = targets[index];
+            const target1 = targets[(index + 1) % targets.length];
+            if (target0.getBoundingClientRect().top < 0 && target1.getBoundingClientRect().top >= 0) {
+              volantis.activateNavIndex = index
+              break;
+            }
+          }
+        }
+        activateNavByIndex(navItems[volantis.activateNavIndex])
+      })
+    }
+
+    // 方案二：
+    // IntersectionObserver 不是完美精确到像素级别 也不是低延时性的
+    // function findIndex(entries) {
+    //   let index = 0;
+    //   let entry = entries[index];
+    //   if (entry.boundingClientRect.top > 0) {
+    //     index = sections.indexOf(entry.target);
+    //     return index === 0 ? 0 : index - 1;
+    //   }
+    //   for (; index < entries.length; index++) {
+    //     if (entries[index].boundingClientRect.top <= 0) {
+    //       entry = entries[index];
+    //     } else {
+    //       return sections.indexOf(entry.target);
+    //     }
+    //   }
+    //   return sections.indexOf(entry.target);
+    // }
+    // function createIntersectionObserver(marginTop) {
+    //   marginTop = Math.floor(marginTop + 10000);
+    //   let intersectionObserver = new IntersectionObserver(
+    //     (entries, observe) => {
+    //       let scrollHeight = document.documentElement.scrollHeight;
+    //       if (scrollHeight > marginTop) {
+    //         observe.disconnect();
+    //         createIntersectionObserver(scrollHeight);
+    //         return;
+    //       }
+    //       let index = findIndex(entries);
+    //       activateNavByIndex(navItems[index]);
+    //     }, {
+    //       rootMargin: marginTop + "px 0px -100% 0px",
+    //       threshold: 0,
+    //     }
+    //   );
+    //   sections.forEach((element) => {
+    //     element && intersectionObserver.observe(element);
+    //   });
+    // }
+    // createIntersectionObserver(document.documentElement.scrollHeight);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    volantis.requestAnimationFrame(listenSidebarTOC)
+  });
+  volantis.pjax.push(listenSidebarTOC);
+</script>
+
+
+
+
+
+<script>
+  document.onreadystatechange = function () {
+    if (document.readyState == 'complete') {
+      // 页面加载完毕 样式加载失败，或是当前网速慢，或是开启了省流模式
+      const { saveData, effectiveType } = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {}
+      if (getComputedStyle(document.querySelector("#safearea"), null)["display"] == "none" || saveData || /2g/.test(effectiveType)) {
+        document.querySelectorAll(".reveal").forEach(function (e) {
+          e.style["opacity"] = "1";
+        });
+        document.querySelector("#safearea").style["display"] = "block";
+      }
+    }
+  }
+</script>
+
+
+
+      
+        <!--
+  pjax重载区域接口：
+  1.  <pjax></pjax> 标签 pjax 标签必须存在于所有页面 否则 pjax error
+  2.  script[data-pjax]
+  3.  .pjax-reload script
+  4.  .pjax
+-->
+
+
+
+<script src="https://cdn.bootcdn.net/ajax/libs/pjax/0.2.8/pjax.min.js"></script>
+
+<script>
+// 性能监控与降级控制
+const performanceMonitor = {
+  slowThreshold: 800,     // 慢请求阈值(毫秒)
+  slowCount: 0,           // 连续慢请求计数
+  maxSlowAllowed: 2,      // 允许的最大连续慢请求数
+  requestStartTime: 0,    // 请求开始时间戳
+
+  // 记录请求开始时间
+  start() {
+    this.requestStartTime = Date.now();
+  },
+
+  // 计算请求耗时并判断
+  check() {
+    const duration = Date.now() - this.requestStartTime;
+    
+    if (duration > this.slowThreshold) {
+      this.slowCount++;
+    } else {
+      this.slowCount = 0;    // 耗时正常，重置计数
+    }
+  },
+  // 测试结果
+  res(){
+    // 连续慢请求达到阈值，强制刷新
+    if (this.slowCount >= this.maxSlowAllowed) {         
+      return true;    // 需要降级
+    }
+    return false;     // 无需降级
+  }
+};
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox]):not([onclick="return false;"]):not([onclick="return!1"]):not([target="_blank"]):not([target="view_window"]):not([href$=".xml"])',
+        // 这里的 selectors 需要保证每个页面都含有相同的数目
+        selectors: [
+          "head title",
+          "head meta[name=keywords]",
+          "head meta[name=description]",
+          
+          "#l_main",
+          "#pjax-header-nav-list",
+          ".pjax",
+          "pjax", // <pjax></pjax> 标签
+          // 临时测试
+          "meta[name=robots]",
+          "link[rel=canonical]",
+          "meta[property='og:title']",
+          "meta[property='og:description']",
+          "meta[property='og:url']",
+          "meta[property='og:image']",
+          "script[type='application/ld+json']",
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000,
+        
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+      performanceMonitor.start();  // 请求开始计时
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var excludeList = [""];
+        if (excludeList[0] != "") {
+          excludeList.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+        if (performanceMonitor.res()){
+          window.location.href = targetUrl;
+        }
+      } catch (error) {}
+
+      // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 降级控制检测
+      performanceMonitor.check()
+      // 这里的 script 不需要保证每个页面都含有相同的数目
+      document.querySelectorAll('script[data-pjax], .pjax-reload script').forEach(e=>{
+        const code = e.text || e.textContent || e.innerHTML || '';
+        const script = document.createElement('script');
+        Object.keys(e.attributes).forEach(i=>{
+          script.setAttribute(e.attributes[i].nodeName,e.attributes[i].nodeValue)
+        })
+        if (code) {
+          script.appendChild(document.createTextNode(code));
+        }
+        e.parentNode.replaceChild(script, e);
+      });
+
+      // 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.complete.start();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      if(volantis.debug === "pjax") {
+        console.error(e);
+        console.log('pjax error: \n' + JSON.stringify(e));
+      }else{
+        // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+        volantis.pjax.method.error.start();
+        window.location.href = e.triggerElement.href;
+      }
+    });
+</script>
+
+      
+    </div>
+    <!-- import body_end begin-->
+    <!-- import body_end end-->
+    <!-- Custom Files bodyEnd begin-->
+    
+    <!-- Custom Files bodyEnd end-->
+  </body>
+</html>

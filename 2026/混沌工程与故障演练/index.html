@@ -1,0 +1,4265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head hexo-theme='https://github.com/volantis-x/hexo-theme-volantis/#6.0.2'>
+  <meta name="generator" content="Hexo 6.3.0">
+  <meta name="Volantis" content="6.0.2">
+  <meta charset="utf-8">
+  <!-- SEO相关 -->
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="https://tianyigu.top/2026/混沌工程与故障演练/"/>
+  <!-- 渲染优化 -->
+    <meta http-equiv='x-dns-prefetch-control' content='on' />
+      <link rel='dns-prefetch' href='https://unpkg.com'>
+      <link rel="preconnect" href="https://unpkg.com" crossorigin>
+      <link rel='dns-prefetch' href='https://cdn.bootcdn.net'>
+      <link rel="preconnect" href="https://cdn.bootcdn.net" crossorigin>
+  <meta name="renderer" content="webkit">
+  <meta name="force-rendering" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta http-equiv="Content-Security-Policy" content=" default-src 'self' https:; block-all-mixed-content; base-uri 'self' https:; form-action 'self' https:; worker-src 'self' https:; connect-src 'self' https: *; img-src 'self' data: https: *; media-src 'self' https: *; font-src 'self' data: https: *; frame-src 'self' https: *; manifest-src 'self' https: *; child-src https:; script-src 'self' https: 'unsafe-inline' *; style-src 'self' https: 'unsafe-inline' *; ">
+  <meta name="HandheldFriendly" content="True" >
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
+  <meta content="telephone=no" name="format-detection">
+  <!-- import head_begin begin -->
+  <!-- import head_begin end -->
+  <!-- Custom Files headBegin begin-->
+  
+  <!-- Custom Files headBegin end-->
+    <link rel="shortcut icon" type='image/x-icon' href="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202202240150263.jpg">
+  <link rel="preload" href="/css/style.css" as="style">
+  <link rel="preload" href="https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+<link rel="preload" href="https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
+
+  <!-- feed -->
+  <!-- 页面元数据 -->
+  <title>混沌工程与故障演练 - Tianyi的技术随笔</title>
+  <meta name="keywords" content="SRE, Kubernetes,SRE,混沌工程,故障演练,可靠性,undefined">
+  <meta desc name="description" content="混沌工程不是“随机搞破坏”，而是用受控实验验证系统在真实故障下是否还能守住 SLO。本文按 Principles of Chaos、Google SRE、Chaos Mesh、ChaosBlade、LitmusChaos 的官方资料，讲清实验设计、故障类型、工具选型、生产安全、Game Day、自动化和组织治理。... - Tianyi Gu - Tianyi的技术随笔">
+  
+<meta property="og:type" content="article">
+<meta property="og:title" content="混沌工程与故障演练">
+<meta property="og:url" content="https://tianyigu.top/2026/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E4%B8%8E%E6%95%85%E9%9A%9C%E6%BC%94%E7%BB%83/index.html">
+<meta property="og:site_name" content="Tianyi的技术随笔">
+<meta property="og:description" content="混沌工程不是“随机搞破坏”，而是用受控实验验证系统在真实故障下是否还能守住 SLO。本文按 Principles of Chaos、Google SRE、Chaos Mesh、ChaosBlade、LitmusChaos 的官方资料，讲清实验设计、故障类型、工具选型、生产安全、Game Day、自动化和组织治理。 最后更新：2026-10-22">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+<meta property="article:published_time" content="2026-10-22T09:10:00.000Z">
+<meta property="article:modified_time" content="2026-10-22T17:01:09.552Z">
+<meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="Kubernetes">
+<meta property="article:tag" content="SRE">
+<meta property="article:tag" content="混沌工程">
+<meta property="article:tag" content="故障演练">
+<meta property="article:tag" content="可靠性">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+  <style>
+    /* 首屏样式 */
+    #safearea {
+  display: none;
+}
+:root {
+  --color-site-body: #f4f4f4;
+  --color-site-bg: #f4f4f4;
+  --color-site-inner: #fff;
+  --color-site-footer: #666;
+  --color-card: #fff;
+  --color-text: #444;
+  --color-block: #f6f6f6;
+  --color-inlinecode: #c74f00;
+  --color-codeblock: #fff7ea;
+  --color-h1: #3a3a3a;
+  --color-h2: #3a3a3a;
+  --color-h3: #333;
+  --color-h4: #444;
+  --color-h5: #555;
+  --color-h6: #666;
+  --color-p: #444;
+  --color-list: #666;
+  --color-list-hl: #30ad91;
+  --color-meta: #888;
+  --color-read-bkg: #e0d8c8;
+  --color-read-post: #f8f1e2;
+  --color-copyright-bkg: #f5f5f5;
+}
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  margin: 0;
+  padding: 0;
+}
+*::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+*::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+html {
+  color: var(--color-text);
+  width: 100%;
+  height: 100%;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  font-size: 16px;
+}
+html >::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+html >::-webkit-scrollbar-track-piece {
+  background: transparent;
+}
+html >::-webkit-scrollbar-thumb {
+  background: #3dd9b6;
+  cursor: pointer;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+}
+html >::-webkit-scrollbar-thumb:hover {
+  background: #ff5722;
+}
+body {
+  background-color: var(--color-site-body);
+  text-rendering: optimizelegibility;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+body.modal-active {
+  overflow: hidden;
+}
+@media screen and (max-width: 680px) {
+  body.modal-active {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+}
+a {
+  color: #2092ec;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+a:hover {
+  color: #ff5722;
+}
+a:active,
+a:hover {
+  outline: 0;
+}
+ul,
+ol {
+  padding-left: 0;
+}
+ul li,
+ol li {
+  list-style: none;
+}
+header {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+img {
+  border: 0;
+  background: none;
+  max-width: 100%;
+}
+svg:not(:root) {
+  overflow: hidden;
+}
+hr {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  height: 0;
+  border: 0;
+  border-radius: 1px;
+  -webkit-border-radius: 1px;
+  border-bottom: 1px solid rgba(68,68,68,0.1);
+}
+button,
+input {
+  color: inherit;
+  font: inherit;
+  margin: 0;
+}
+button {
+  overflow: visible;
+  text-transform: none;
+  -webkit-appearance: button;
+  cursor: pointer;
+}
+@supports (backdrop-filter: blur(20px)) {
+  .blur {
+    background: rgba(255,255,255,0.9) !important;
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+.shadow {
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.shadow.floatable {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.shadow.floatable:hover {
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.1), 0 4px 8px 0px rgba(0,0,0,0.1), 0 8px 16px 0px rgba(0,0,0,0.1);
+}
+#l_cover {
+  min-height: 64px;
+}
+.cover-wrapper {
+  top: 0;
+  left: 0;
+  max-width: 100%;
+  height: 100vh;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  align-content: center;
+  color: var(--color-site-inner);
+  padding: 0 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: -100px;
+}
+.cover-wrapper .cover-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+}
+.cover-wrapper .cover-bg.lazyload:not(.loaded) {
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+}
+.cover-wrapper .cover-bg.lazyload.loaded {
+  animation-delay: 0s;
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
+  animation-name: fadeIn;
+}
+@-moz-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+    filter: blur(12px);
+    transform: scale(1.02);
+    -webkit-transform: scale(1.02);
+    -khtml-transform: scale(1.02);
+    -moz-transform: scale(1.02);
+    -o-transform: scale(1.02);
+    -ms-transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  z-index: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cover-wrapper#full {
+  height: calc(100vh + 100px);
+  padding-bottom: 100px;
+}
+.cover-wrapper#half {
+  max-height: 640px;
+  min-height: 400px;
+  height: calc(36vh - 64px + 200px);
+}
+.cover-wrapper #scroll-down {
+  width: 100%;
+  height: 64px;
+  position: absolute;
+  bottom: 100px;
+  text-align: center;
+  cursor: pointer;
+}
+.cover-wrapper #scroll-down .scroll-down-effects {
+  color: #fff;
+  font-size: 24px;
+  line-height: 64px;
+  position: absolute;
+  width: 24px;
+  left: calc(50% - 12px);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  animation: scroll-down-effect 1.5s infinite;
+  -webkit-animation: scroll-down-effect 1.5s infinite;
+  -khtml-animation: scroll-down-effect 1.5s infinite;
+  -moz-animation: scroll-down-effect 1.5s infinite;
+  -o-animation: scroll-down-effect 1.5s infinite;
+  -ms-animation: scroll-down-effect 1.5s infinite;
+}
+@-moz-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-webkit-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@-o-keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@keyframes scroll-down-effect {
+  0% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+  50% {
+    top: -16px;
+    opacity: 0.4;
+    -webkit-opacity: 0.4;
+    -moz-opacity: 0.4;
+  }
+  100% {
+    top: 0;
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.cover-wrapper .cover-body {
+  margin-top: 64px;
+  margin-bottom: 100px;
+}
+.cover-wrapper .cover-body,
+.cover-wrapper .cover-body .top,
+.cover-wrapper .cover-body .bottom {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  max-width: 100%;
+}
+.cover-wrapper .cover-body .bottom {
+  margin-top: 32px;
+}
+.cover-wrapper .cover-body .title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+  font-size: 3.125rem;
+  line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.cover-wrapper .cover-body .subtitle {
+  font-size: 20px;
+}
+.cover-wrapper .cover-body .logo {
+  max-height: 120px;
+  max-width: calc(100% - 4 * 16px);
+}
+@media screen and (min-height: 1024px) {
+  .cover-wrapper .cover-body .title {
+    font-size: 3rem;
+  }
+  .cover-wrapper .cover-body .subtitle {
+    font-size: 1.05rem;
+  }
+  .cover-wrapper .cover-body .logo {
+    max-height: 150px;
+  }
+}
+.cover-wrapper .cover-body .m_search {
+  position: relative;
+  max-width: calc(100% - 16px);
+  width: 320px;
+  vertical-align: middle;
+}
+.cover-wrapper .cover-body .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  width: 100%;
+}
+.cover-wrapper .cover-body .m_search .icon,
+.cover-wrapper .cover-body .m_search .input {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.cover-wrapper .cover-body .m_search .icon {
+  position: absolute;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  line-height: 2.5rem;
+  width: 32px;
+  top: 0;
+  left: 5px;
+  color: rgba(68,68,68,0.75);
+}
+.cover-wrapper .cover-body .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  height: 2.5rem;
+  width: 100%;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  font-size: 0.875rem;
+  -webkit-appearance: none;
+  padding-left: 36px;
+  border-radius: 1.4rem;
+  -webkit-border-radius: 1.4rem;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: none;
+  color: var(--color-text);
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .cover-body .m_search .input {
+    padding-left: 36px;
+  }
+}
+.cover-wrapper .cover-body .m_search .input:hover {
+  background: rgba(255,255,255,0.8);
+}
+.cover-wrapper .cover-body .m_search .input:focus {
+  background: #fff;
+}
+.cover-wrapper .list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  flex-wrap: wrap;
+  -webkit-flex-wrap: wrap;
+  -khtml-flex-wrap: wrap;
+  -moz-flex-wrap: wrap;
+  -o-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  align-items: stretch;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.cover-wrapper .list-h a {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 0;
+  -ms-flex: 1 0;
+  flex: 1 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  font-weight: 600;
+}
+.cover-wrapper .list-h a img {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  margin: 4px;
+  min-width: 40px;
+  max-width: 44px;
+}
+@media screen and (max-width: 768px) {
+  .cover-wrapper .list-h a img {
+    min-width: 36px;
+    max-width: 40px;
+  }
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper .list-h a img {
+    margin: 2px 4px;
+    min-width: 32px;
+    max-width: 36px;
+  }
+}
+@media screen and (max-width: 375px) {
+  .cover-wrapper .list-h a img {
+    min-width: 28px;
+    max-width: 32px;
+  }
+}
+.cover-wrapper {
+  max-width: 100%;
+}
+.cover-wrapper.search .bottom .menu {
+  margin-top: 16px;
+}
+.cover-wrapper.search .bottom .menu .list-h a {
+  white-space: nowrap;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  align-items: baseline;
+  padding: 2px;
+  margin: 4px;
+  color: var(--color-site-inner);
+  opacity: 0.75;
+  -webkit-opacity: 0.75;
+  -moz-opacity: 0.75;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-bottom: 2px solid transparent;
+}
+.cover-wrapper.search .bottom .menu .list-h a i {
+  margin-right: 4px;
+}
+.cover-wrapper.search .bottom .menu .list-h a p {
+  font-size: 0.9375rem;
+}
+.cover-wrapper.search .bottom .menu .list-h a:hover,
+.cover-wrapper.search .bottom .menu .list-h a.active,
+.cover-wrapper.search .bottom .menu .list-h a:active {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+  border-bottom: 2px solid var(--color-site-inner);
+}
+.cover-wrapper.dock .menu,
+.cover-wrapper.featured .menu,
+.cover-wrapper.focus .menu {
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+}
+.cover-wrapper.dock .menu .list-h a,
+.cover-wrapper.featured .menu .list-h a,
+.cover-wrapper.focus .menu .list-h a {
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  line-height: 24px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-bottom: none;
+  text-align: center;
+  align-content: flex-end;
+  color: rgba(68,68,68,0.7);
+  font-size: 1.5rem;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h a,
+  .cover-wrapper.featured .menu .list-h a,
+  .cover-wrapper.focus .menu .list-h a {
+    padding: 12px 8px;
+  }
+}
+.cover-wrapper.dock .menu .list-h a i,
+.cover-wrapper.featured .menu .list-h a i,
+.cover-wrapper.focus .menu .list-h a i {
+  margin: 8px;
+}
+.cover-wrapper.dock .menu .list-h a p,
+.cover-wrapper.featured .menu .list-h a p,
+.cover-wrapper.focus .menu .list-h a p {
+  font-size: 0.875rem;
+}
+.cover-wrapper.dock .menu .list-h a.active,
+.cover-wrapper.featured .menu .list-h a.active,
+.cover-wrapper.focus .menu .list-h a.active {
+  background: var(--color-card);
+  backdrop-filter: none;
+}
+.cover-wrapper.dock .menu .list-h a.active i,
+.cover-wrapper.featured .menu .list-h a.active i,
+.cover-wrapper.focus .menu .list-h a.active i,
+.cover-wrapper.dock .menu .list-h a.active i+p,
+.cover-wrapper.featured .menu .list-h a.active i+p,
+.cover-wrapper.focus .menu .list-h a.active i+p {
+  color: #3dd9b6;
+}
+.cover-wrapper.dock .menu .list-h a.active img+p,
+.cover-wrapper.featured .menu .list-h a.active img+p,
+.cover-wrapper.focus .menu .list-h a.active img+p {
+  color: var(--color-text);
+}
+.cover-wrapper.dock .menu .list-h a:hover,
+.cover-wrapper.featured .menu .list-h a:hover,
+.cover-wrapper.focus .menu .list-h a:hover {
+  background: var(--color-card);
+}
+.cover-wrapper.dock .top {
+  margin-bottom: 48px;
+}
+.cover-wrapper.dock .menu {
+  background: rgba(255,255,255,0.5);
+  position: absolute;
+  bottom: 0;
+  max-width: 100%;
+}
+.cover-wrapper.dock .menu .list-h {
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  margin: 4px;
+}
+.cover-wrapper.dock .menu .list-h a+a {
+  margin-left: 4px;
+}
+@media screen and (max-width: 500px) {
+  .cover-wrapper.dock .menu .list-h {
+    overflow-x: scroll;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb {
+    background: #3dd9b6;
+    cursor: pointer;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+  }
+  .cover-wrapper.dock .menu .list-h::-webkit-scrollbar-thumb:hover {
+    background: #ff5722;
+  }
+}
+@supports (backdrop-filter: blur(20px)) {
+  .cover-wrapper.dock .menu {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: saturate(200%) blur(20px);
+  }
+}
+@font-face {
+  font-family: 'UbuntuMono';
+  src: url("https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Varela Round';
+  src: url("https://unpkg.com/volantis-static@0.0.1660614606622/media/fonts/VarelaRound/VarelaRound-Regular.ttf");
+  font-weight: 'normal';
+  font-style: 'normal';
+  font-display: swap;
+}
+.l_header {
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--color-card);
+  box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
+}
+.l_header.auto {
+  transition: opacity 0.4s ease;
+  -webkit-transition: opacity 0.4s ease;
+  -khtml-transition: opacity 0.4s ease;
+  -moz-transition: opacity 0.4s ease;
+  -o-transition: opacity 0.4s ease;
+  -ms-transition: opacity 0.4s ease;
+  visibility: hidden;
+}
+.l_header.auto.show {
+  opacity: 1 !important;
+  -webkit-opacity: 1 !important;
+  -moz-opacity: 1 !important;
+  visibility: visible;
+}
+.l_header .container {
+  margin-left: 16px;
+  margin-right: 16px;
+}
+.l_header #wrapper {
+  height: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.l_header #wrapper .nav-main,
+.l_header #wrapper .nav-sub {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-wrap: nowrap;
+  -khtml-flex-wrap: nowrap;
+  -moz-flex-wrap: nowrap;
+  -o-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  justify-content: space-between;
+  -webkit-justify-content: space-between;
+  -khtml-justify-content: space-between;
+  -moz-justify-content: space-between;
+  -o-justify-content: space-between;
+  -ms-justify-content: space-between;
+  align-items: center;
+}
+.l_header #wrapper .nav-main {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.l_header #wrapper.sub .nav-main {
+  transform: translateY(-64px);
+  -webkit-transform: translateY(-64px);
+  -khtml-transform: translateY(-64px);
+  -moz-transform: translateY(-64px);
+  -o-transform: translateY(-64px);
+  -ms-transform: translateY(-64px);
+}
+.l_header #wrapper .nav-sub {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  opacity: 0;
+  -webkit-opacity: 0;
+  -moz-opacity: 0;
+  height: 64px;
+  width: calc(100% - 2 * 16px);
+  position: absolute;
+}
+.l_header #wrapper .nav-sub ::-webkit-scrollbar {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (min-width: 2048px) {
+  .l_header #wrapper .nav-sub {
+    max-width: 55vw;
+    margin: auto;
+  }
+}
+.l_header #wrapper.sub .nav-sub {
+  opacity: 1;
+  -webkit-opacity: 1;
+  -moz-opacity: 1;
+}
+.l_header #wrapper .title {
+  position: relative;
+  color: var(--color-text);
+  padding-left: 24px;
+  max-height: 64px;
+}
+.l_header #wrapper .nav-main .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  line-height: 64px;
+  padding: 0 24px;
+  font-size: 1.25rem;
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Helvetica, monospace;
+}
+.l_header #wrapper .nav-main .title img {
+  height: 64px;
+}
+.l_header .nav-sub {
+  max-width: 1580px;
+  margin: auto;
+}
+.l_header .nav-sub .title {
+  font-weight: bold;
+  font-family: UbuntuMono, "Varela Round", "PingFang SC", "Microsoft YaHei", Helvetica, Arial, Menlo, Monaco, monospace, sans-serif;
+  line-height: 1.2;
+  max-height: 64px;
+  white-space: normal;
+  flex-shrink: 1;
+}
+.l_header .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  line-height: 64px;
+  align-items: center;
+}
+.l_header .switcher .s-toc {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  .l_header .switcher .s-toc {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+  }
+}
+.l_header .switcher >li {
+  height: 48px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  margin: 2px;
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li {
+    margin: 0 1px;
+    height: 48px;
+  }
+}
+.l_header .switcher >li >a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0.85em 1.1em;
+  border-radius: 100px;
+  -webkit-border-radius: 100px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  color: #3dd9b6;
+}
+.l_header .switcher >li >a:hover {
+  border: none;
+}
+.l_header .switcher >li >a.active,
+.l_header .switcher >li >a:active {
+  border: none;
+  background: var(--color-site-bg);
+}
+@media screen and (max-width: 500px) {
+  .l_header .switcher >li >a {
+    width: 36px;
+    height: 48px;
+  }
+}
+.l_header .nav-sub .switcher {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+}
+.l_header .m_search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  height: 64px;
+  width: 240px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (max-width: 1024px) {
+  .l_header .m_search {
+    width: 44px;
+    min-width: 44px;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 0;
+    -webkit-opacity: 0;
+    -moz-opacity: 0;
+  }
+  .l_header .m_search:hover {
+    width: 240px;
+  }
+  .l_header .m_search:hover input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search:hover .input {
+    width: 100%;
+  }
+  .l_header .m_search:hover .input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search {
+    min-width: 0;
+  }
+  .l_header .m_search input::placeholder {
+    opacity: 1;
+    -webkit-opacity: 1;
+    -moz-opacity: 1;
+  }
+}
+.l_header .m_search .form {
+  position: relative;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+.l_header .m_search .icon {
+  position: absolute;
+  width: 36px;
+  left: 5px;
+  color: var(--color-meta);
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .icon {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+.l_header .m_search .input {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  line-height: 1.3;
+  width: 100%;
+  color: var(--color-text);
+  background: #fafafa;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  padding-left: 40px;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border: none;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+@media screen and (min-width: 500px) {
+  .l_header .m_search .input:focus {
+    box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+    -webkit-box-shadow: 0 4px 8px 0px rgba(0,0,0,0.1);
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .m_search .input {
+    background: var(--color-block);
+    padding-left: 8px;
+    border: none;
+  }
+  .l_header .m_search .input:hover,
+  .l_header .m_search .input:focus {
+    border: none;
+  }
+}
+@media (max-width: 500px) {
+  .l_header .m_search {
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    position: absolute;
+    background: #fff;
+    transition: all 0.28s ease;
+    -webkit-transition: all 0.28s ease;
+    -khtml-transition: all 0.28s ease;
+    -moz-transition: all 0.28s ease;
+    -o-transition: all 0.28s ease;
+    -ms-transition: all 0.28s ease;
+  }
+  .l_header .m_search .input {
+    border-radius: 32px;
+    -webkit-border-radius: 32px;
+    margin-left: 16px;
+    padding-left: 16px;
+  }
+  .l_header.z_search-open .m_search {
+    width: 100%;
+  }
+  .l_header.z_search-open .m_search .input {
+    width: calc(100% - 120px);
+  }
+}
+ul.m-pc >li>a {
+  color: inherit;
+  border-bottom: 2px solid transparent;
+}
+ul.m-pc >li>a:active,
+ul.m-pc >li>a.active {
+  border-bottom: 2px solid #3dd9b6;
+}
+ul.m-pc li:hover >ul.list-v,
+ul.list-v li:hover >ul.list-v {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.nav-list-h {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: -ms-flexbox /* TWEENER - IE 10 */;
+  display: -webkit-flex /* NEW - Chrome */;
+  display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+  display: flex;
+  align-items: stretch;
+}
+ul.nav-list-h>li {
+  position: relative;
+  justify-content: center;
+  -webkit-justify-content: center;
+  -khtml-justify-content: center;
+  -moz-justify-content: center;
+  -o-justify-content: center;
+  -ms-justify-content: center;
+  height: 100%;
+  line-height: 2.4;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+ul.nav-list-h>li >a {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-weight: 600;
+}
+ul.list-v {
+  z-index: 1;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: absolute;
+  background: var(--color-card);
+  box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  -webkit-box-shadow: 0 2px 4px 0px rgba(0,0,0,0.08), 0 4px 8px 0px rgba(0,0,0,0.08), 0 8px 16px 0px rgba(0,0,0,0.08);
+  margin-top: -6px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  padding: 8px 0;
+}
+ul.list-v.show {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+}
+ul.list-v hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+ul.list-v >li {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+ul.list-v >li.header {
+  font-size: 0.78125rem;
+  font-weight: bold;
+  line-height: 2em;
+  color: var(--color-meta);
+  margin: 8px 16px 4px;
+}
+ul.list-v >li.header i {
+  margin-right: 8px;
+}
+ul.list-v >li ul {
+  margin-left: 0;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: -40px;
+}
+ul.list-v .aplayer-container {
+  min-height: 64px;
+  padding: 6px 16px;
+}
+ul.list-v >li>a {
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  color: var(--color-list);
+  font-size: 0.875rem;
+  font-weight: bold;
+  line-height: 36px;
+  padding: 0 20px 0 16px;
+  text-overflow: ellipsis;
+  margin: 0 4px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+}
+@media screen and (max-width: 1024px) {
+  ul.list-v >li>a {
+    line-height: 40px;
+  }
+}
+ul.list-v >li>a >i {
+  margin-right: 8px;
+}
+ul.list-v >li>a:active,
+ul.list-v >li>a.active {
+  color: var(--color-list-hl);
+}
+ul.list-v >li>a:hover {
+  color: var(--color-list-hl);
+  background: var(--color-site-bg);
+}
+.l_header .menu >ul>li>a {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: block;
+  padding: 0 8px;
+}
+.l_header .menu >ul>li>a >i {
+  margin-right: 4px;
+}
+.l_header ul.nav-list-h>li {
+  color: var(--color-list);
+  line-height: 64px;
+}
+.l_header ul.nav-list-h>li >a {
+  max-height: 64px;
+  overflow: hidden;
+  color: inherit;
+}
+.l_header ul.nav-list-h>li >a:active,
+.l_header ul.nav-list-h>li >a.active {
+  color: #3dd9b6;
+}
+.l_header ul.nav-list-h>li:hover>a {
+  color: var(--color-list-hl);
+}
+.l_header ul.nav-list-h>li i.music {
+  animation: rotate-effect 1.5s linear infinite;
+  -webkit-animation: rotate-effect 1.5s linear infinite;
+  -khtml-animation: rotate-effect 1.5s linear infinite;
+  -moz-animation: rotate-effect 1.5s linear infinite;
+  -o-animation: rotate-effect 1.5s linear infinite;
+  -ms-animation: rotate-effect 1.5s linear infinite;
+}
+@-moz-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-webkit-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@-o-keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+@keyframes rotate-effect {
+  0% {
+    transform: rotate(0);
+    -webkit-transform: rotate(0);
+    -khtml-transform: rotate(0);
+    -moz-transform: rotate(0);
+    -o-transform: rotate(0);
+    -ms-transform: rotate(0);
+  }
+  25% {
+    transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    -khtml-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+  }
+  50% {
+    transform: rotate(180deg);
+    -webkit-transform: rotate(180deg);
+    -khtml-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+  75% {
+    transform: rotate(270deg);
+    -webkit-transform: rotate(270deg);
+    -khtml-transform: rotate(270deg);
+    -moz-transform: rotate(270deg);
+    -o-transform: rotate(270deg);
+    -ms-transform: rotate(270deg);
+  }
+  100% {
+    transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -khtml-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+  }
+}
+.menu-phone li ul.list-v {
+  right: calc(100% - 0.5 * 16px);
+}
+.menu-phone li ul.list-v ul {
+  right: calc(100% - 0.5 * 16px);
+}
+#wrapper {
+  max-width: 1580px;
+  margin: auto;
+}
+@media screen and (min-width: 2048px) {
+  #wrapper {
+    max-width: 55vw;
+  }
+}
+#wrapper .menu {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -webkit-flex: 1 1;
+  -ms-flex: 1 1;
+  flex: 1 1;
+  margin: 0 16px 0 0;
+}
+#wrapper .menu .list-v ul {
+  left: calc(100% - 0.5 * 16px);
+}
+.menu-phone {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  margin-top: 16px;
+  right: 8px;
+  transition: all 0.28s ease;
+  -webkit-transition: all 0.28s ease;
+  -khtml-transition: all 0.28s ease;
+  -moz-transition: all 0.28s ease;
+  -o-transition: all 0.28s ease;
+  -ms-transition: all 0.28s ease;
+}
+.menu-phone ul {
+  right: calc(100% - 0.5 * 16px);
+}
+@media screen and (max-width: 500px) {
+  .menu-phone {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: block;
+  }
+}
+.l_header {
+  max-width: 65vw;
+  left: calc((100% - 65vw) * 0.5);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+@media screen and (max-width: 2048px) {
+  .l_header {
+    max-width: 1612px;
+    left: calc((100% - 1612px) * 0.5);
+  }
+}
+@media screen and (max-width: 1612px) {
+  .l_header {
+    left: 0;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    max-width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .l_header .container {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .l_header #wrapper .nav-main .title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .l_header #wrapper .nav-sub {
+    width: 100%;
+  }
+  .l_header #wrapper .nav-sub .title {
+    overflow-y: scroll;
+    margin-top: 2px;
+    padding: 8px 16px;
+  }
+  .l_header #wrapper .switcher {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: -ms-flexbox /* TWEENER - IE 10 */;
+    display: -webkit-flex /* NEW - Chrome */;
+    display: flex /* NEW, Spec - Opera 12.1, Firefox 20+ */;
+    display: flex;
+    margin-right: 8px;
+  }
+  .l_header .menu {
+    display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+    display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+    display: none;
+  }
+}
+@media screen and (max-width: 500px) {
+  .list-v li {
+    max-width: 270px;
+  }
+}
+#u-search {
+  display: -webkit-box /* OLD - iOS 6-, Safari 3.1-6 */;
+  display: -moz-box /* OLD - Firefox 19- (buggy but mostly works) */;
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 60px 20px;
+  z-index: 1001;
+}
+@media screen and (max-width: 680px) {
+  #u-search {
+    padding: 0px;
+  }
+}
+
+  </style>
+  <link rel="stylesheet" href="/css/style.css" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css"></noscript>
+  
+<script>
+if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMode))
+    document.write(
+	'<style>'+
+		'html{'+
+			'overflow-x: hidden !important;'+
+			'overflow-y: hidden !important;'+
+		'}'+
+		'.kill-ie{'+
+			'text-align:center;'+
+			'height: 100%;'+
+			'margin-top: 15%;'+
+			'margin-bottom: 5500%;'+
+		'}'+
+    '.kill-t{'+
+      'font-size: 2rem;'+
+    '}'+
+    '.kill-c{'+
+      'font-size: 1.2rem;'+
+    '}'+
+		'#l_header,#l_body{'+
+			'display: none;'+
+		'}'+
+	'</style>'+
+    '<div class="kill-ie">'+
+        `<span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>`+
+        `<span class="kill-c">微软已经于2016年终止了对 Internet Explorer (IE) 10 及更早版本的支持，<br/>继续使用存在极大的安全隐患，请使用当代主流的浏览器进行访问。</span><br/>`+
+        `<a target="_blank" rel="noopener" href="https://blogs.windows.com/windowsexperience/2021/05/19/the-future-of-internet-explorer-on-windows-10-is-in-microsoft-edge/"><strong>了解详情 ></strong></a>`+
+    '</div>');
+</script>
+
+
+<noscript>
+	<style>
+		html{
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.kill-noscript{
+			text-align:center;
+			height: 100%;
+			margin-top: 15%;
+			margin-bottom: 5500%;
+		}
+    .kill-t{
+      font-size: 2rem;
+    }
+    .kill-c{
+      font-size: 1.2rem;
+    }
+		#l_header,#l_body{
+			display: none;
+		}
+	</style>
+    <div class="kill-noscript">
+        <span class="kill-t"><b>抱歉，您的浏览器无法访问本站</b></span><br/>
+        <span class="kill-c">本页面需要浏览器支持（启用）JavaScript</span><br/>
+        <a target="_blank" rel="noopener" href="https://www.baidu.com/s?wd=启用JavaScript"><strong>了解详情 ></strong></a>
+    </div>
+</noscript>
+
+
+  <script>
+  /************这个文件存放不需要重载的全局变量和全局函数*********/
+  // window.volantis = {}; // volantis 全局变量
+/**
+ * 内存安全的全局 volantis 对象实现
+ * 特性：
+ * 1. 支持 window.volantis.xxx = yyy 直观赋值语法
+ * 2. 基于 WeakMap 存储数据，自动回收内存
+ * 3. 支持属性枚举（如 Object.keys(window.volantis)）
+ * 4. 支持删除属性（delete window.volantis.xxx）
+ */
+(function initializeVolantis() {
+  // 1. 初始化 WeakMap 存储实际数据（键：volantisProxy 实例，值：属性键值对）
+  const volantisDataStore = new WeakMap();
+
+  // 2. 创建 Proxy 代理处理属性访问
+  const volantisProxy = new Proxy({}, {
+    /**
+     * 拦截属性读取（如 window.volantis.dom）
+     * @param {Object} target - 代理目标对象（仅作为占位符，不存储数据）
+     * @param {string} prop - 访问的属性名
+     * @returns {any} 属性值或 undefined
+     */
+    get(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      return data?.[prop]; // 使用可选链避免数据未初始化时的错误
+    },
+
+    /**
+     * 拦截属性赋值（如 window.volantis.dom = "a"）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 赋值的属性名
+     * @param {any} value - 赋值的属性值
+     * @returns {boolean} 赋值是否成功
+     */
+    set(target, prop, value) {
+      // 初始化数据容器（若不存在）
+      if (!volantisDataStore.has(volantisProxy)) {
+        volantisDataStore.set(volantisProxy, Object.create(null)); // 使用无原型对象避免原型污染
+      }
+      // 存储属性值
+      const data = volantisDataStore.get(volantisProxy);
+      data[prop] = value;
+      return true; // 符合 Proxy 规范，返回成功标志
+    },
+
+    /**
+     * 拦截属性删除（如 delete window.volantis.dom）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 要删除的属性名
+     * @returns {boolean} 删除是否成功
+     */
+    deleteProperty(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, prop)) {
+        return false; // 属性不存在，删除失败
+      }
+      delete data[prop];
+      // 若数据为空，清理 WeakMap 条目（优化内存回收）
+      if (Object.keys(data).length === 0) {
+        volantisDataStore.delete(volantisProxy);
+      }
+      return true;
+    },
+
+    /**
+     * 拦截属性枚举（如 Object.keys(window.volantis)）
+     * @param {Object} target - 代理目标对象
+     * @returns {string[]} 可枚举的属性名数组
+     */
+    ownKeys(target) {
+      const data = volantisDataStore.get(volantisProxy);
+      return data ? Object.keys(data) : [];
+    },
+
+    /**
+     * 拦截属性描述符查询（如 Object.getOwnPropertyDescriptor）
+     * @param {Object} target - 代理目标对象
+     * @param {string} prop - 属性名
+     * @returns {PropertyDescriptor|undefined} 属性描述符
+     */
+    getOwnPropertyDescriptor(target, prop) {
+      const data = volantisDataStore.get(volantisProxy);
+      if (!data || !Object.prototype.hasOwnProperty.call(data, prop)) {
+        return undefined;
+      }
+      return {
+        value: data[prop],
+        writable: true,
+        enumerable: true,
+        configurable: true
+      };
+    }
+  });
+
+  // 3. 挂载到 window 对象，暴露全局访问入口
+  Object.defineProperty(window, 'volantis', {
+    value: volantisProxy,
+    writable: true, // 允许后续手动设置为 null 触发清理
+    configurable: true,
+    enumerable: true
+  });
+
+})();
+  volantis.debug = "env"; // 调试模式
+  volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
+  /******************** volantis.EventListener ********************************/
+  // 事件监听器 see: /source/js/app.js
+  volantis.EventListener = {}
+  // 这里存放pjax切换页面时将被移除的事件监听器
+  volantis.EventListener.list = []
+  //构造方法
+  function volantisEventListener(type, f, ele) {
+    this.type = type
+    this.f = f
+    this.ele = ele
+  }
+  // 移除事件监听器
+  volantis.EventListener.remove = () => {
+    volantis.EventListener.list.forEach(function (i) {
+      i.ele.removeEventListener(i.type, i.f, false)
+    })
+    volantis.EventListener.list = [];
+  }
+  /******************** volantis.dom.$ ********************************/
+  // 注：这里没有选择器，也没有forEach一次只处理一个dom，这里重新封装主题常用的dom方法，返回的是dom对象，对象包含了以下方法，同时保留dom的原生API
+  function volantisDom(ele) {
+    if (!ele) ele = document.createElement("div")
+    this.ele = ele;
+    // ==============================================================
+    this.ele.find = (c) => {
+      let q = this.ele.querySelector(c)
+      if (q)
+        return new volantisDom(q)
+    }
+    // ==============================================================
+    this.ele.hasClass = (c) => {
+      return this.ele.className.match(new RegExp('(\\s|^)' + c + '(\\s|$)'));
+    }
+    this.ele.addClass = (c) => {
+      this.ele.classList.add(c);
+      return this.ele
+    }
+    this.ele.removeClass = (c) => {
+      this.ele.classList.remove(c);
+      return this.ele
+    }
+    this.ele.toggleClass = (c) => {
+      if (this.ele.hasClass(c)) {
+        this.ele.removeClass(c)
+      } else {
+        this.ele.addClass(c)
+      }
+      return this.ele
+    }
+    // ==============================================================
+    // 参数 r 为 true 表示pjax切换页面时事件监听器将被移除，false不移除
+    this.ele.on = (c, f, r = 1) => {
+      this.ele.addEventListener(c, f, false)
+      if (r) {
+        volantis.EventListener.list.push(new volantisEventListener(c, f, this.ele))
+      }
+      return this.ele
+    }
+    this.ele.click = (f, r) => {
+      this.ele.on("click", f, r)
+      return this.ele
+    }
+    this.ele.scroll = (f, r) => {
+      this.ele.on("scroll", f, r)
+      return this.ele
+    }
+    // ==============================================================
+    this.ele.html = (c) => {
+      // if(c=== undefined){
+      //   return this.ele.innerHTML
+      // }else{
+      this.ele.innerHTML = c
+      return this.ele
+      // }
+    }
+    // ==============================================================
+    this.ele.hide = (c) => {
+      this.ele.style.display = "none"
+      return this.ele
+    }
+    this.ele.show = (c) => {
+      this.ele.style.display = "block"
+      return this.ele
+    }
+    // ==============================================================
+    return this.ele
+  }
+  volantis.dom.$ = (ele) => {
+    return !!ele ? new volantisDom(ele) : null;
+  }
+  /******************** RunItem ********************************/
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = () => {
+          volantis.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) => {
+      for (let index = 0; index < this.list.length; index++) {
+        const e = this.list[index];
+        if (e.name == name) {
+          this.list.splice(index, 1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
+      };
+    }
+  }
+  /******************** Pjax ********************************/
+  // /layout/_plugins/pjax/index.ejs
+  // volantis.pjax.send(callBack[,"callBackName"]) 传入pjax:send回调函数
+  // volantis.pjax.push(callBack[,"callBackName"]) 传入pjax:complete回调函数
+  // volantis.pjax.error(callBack[,"callBackName"]) 传入pjax:error回调函数
+  volantis.pjax = {};
+  volantis.pjax.method = {
+    complete: new RunItem(),
+    error: new RunItem(),
+    send: new RunItem(),
+  };
+  volantis.pjax = Object.assign(volantis.pjax, {
+    push: volantis.pjax.method.complete.push,
+    error: volantis.pjax.method.error.push,
+    send: volantis.pjax.method.send.push,
+  });
+  /******************** RightMenu ********************************/
+  // volantis.rightmenu.handle(callBack[,"callBackName"]) 外部菜单项控制
+  // 可在 volantis.mouseEvent 处获取右键事件
+  volantis.rightmenu = {};
+  volantis.rightmenu.method = {
+    handle: new RunItem(),
+  }
+  volantis.rightmenu = Object.assign(volantis.rightmenu, {
+    handle: volantis.rightmenu.method.handle.push,
+  });
+  /********************  Dark Mode  ********************************/
+  // /layout/_partial/scripts/darkmode.ejs
+  // volantis.dark.mode 当前模式 dark or light
+  // volantis.dark.toggle() 暗黑模式触发器
+  // volantis.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  volantis.dark = {};
+  volantis.dark.method = {
+    toggle: new RunItem(),
+  };
+  volantis.dark = Object.assign(volantis.dark, {
+    push: volantis.dark.method.toggle.push,
+  });
+  /********************  Message  ********************************/
+  // VolantisApp.message
+  /********************  isMobile  ********************************/
+  // /source/js/app.js
+  // volantis.isMobile
+  // volantis.isMobileOld
+  /********************脚本动态加载函数********************************/
+  // volantis.js(src, cb)  cb 可以传入onload回调函数 或者 JSON对象 例如: volantis.js("src", ()=>{}) 或 volantis.js("src", {defer:true,onload:()=>{}})
+  // volantis.css(src)
+
+  // 返回Promise对象，如下方法同步加载资源，这利于处理文件资源之间的依赖关系，例如：APlayer 需要在 MetingJS 之前加载
+  // (async () => {
+  //     await volantis.js("...theme.plugins.aplayer.js.aplayer...")
+  //     await volantis.js("...theme.plugins.aplayer.js.meting...")
+  // })();
+
+  // 已经加入了setTimeout
+  volantis.js = (src, cb) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var HEAD = document.getElementsByTagName("head")[0] || document.documentElement;
+        var script = document.createElement("script");
+        script.setAttribute("type", "text/javascript");
+        if (cb) {
+          if (JSON.stringify(cb)) {
+            for (let p in cb) {
+              if (p == "onload") {
+                script[p] = () => {
+                  cb[p]()
+                  resolve()
+                }
+              } else {
+                script[p] = cb[p]
+                script.onload = resolve
+              }
+            }
+          } else {
+            script.onload = () => {
+              cb()
+              resolve()
+            };
+          }
+        } else {
+          script.onload = resolve
+        }
+        script.setAttribute("src", src);
+        HEAD.appendChild(script);
+      });
+    });
+  }
+  volantis.css = (src) => {
+    return new Promise(resolve => {
+      setTimeout(function () {
+        var link = document.createElement('link');
+        link.rel = "stylesheet";
+        link.href = src;
+        link.onload = resolve;
+        document.getElementsByTagName("head")[0].appendChild(link);
+      });
+    });
+  }
+  /********************按需加载的插件********************************/
+  // volantis.import.jQuery().then(()=>{})
+  volantis.import = {
+    jQuery: () => {
+      if (typeof jQuery == "undefined") {
+        return volantis.js("https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js")
+      } else {
+        return new Promise(resolve => {
+          resolve()
+        });
+      }
+    }
+  }
+  /********************** requestAnimationFrame ********************************/
+  // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+  // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+  volantis.requestAnimationFrame = (fn) => {
+    if (!window.requestAnimationFrame) {
+      window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+    }
+    window.requestAnimationFrame(fn)
+  }
+  /************************ layoutHelper *****************************************/
+  volantis.layoutHelper = (helper, html, opt) => {
+    opt = Object.assign({ clean: false, pjax: true }, opt)
+    function myhelper(helper, html, clean) {
+      volantis.tempDiv = document.createElement("div");
+      volantis.tempDiv.innerHTML = html;
+      let layoutHelper = document.querySelector("#layoutHelper-" + helper)
+      if (layoutHelper) {
+        if (clean) {
+          layoutHelper.innerHTML = ""
+        }
+        layoutHelper.append(volantis.tempDiv);
+      }
+    }
+    myhelper(helper, html, opt.clean)
+    if (opt.pjax) {
+      volantis.pjax.push(() => {
+        myhelper(helper, html, opt.clean)
+      }, "layoutHelper-" + helper)
+    }
+  }
+  /****************************** 滚动事件处理 ****************************************/
+  volantis.scroll = {
+    engine: new RunItem(),
+    unengine: new RunItem(),
+  };
+  volantis.scroll = Object.assign(volantis.scroll, {
+    push: volantis.scroll.engine.push,
+  });
+  // 滚动条距离顶部的距离
+  volantis.scroll.getScrollTop = () => {
+    let scrollPos;
+    if (window.pageYOffset) {
+      scrollPos = window.pageYOffset;
+    } else if (document.compatMode && document.compatMode != 'BackCompat') {
+      scrollPos = document.documentElement.scrollTop;
+    } else if (document.body) {
+      scrollPos = document.body.scrollTop;
+    }
+    return scrollPos;
+  }
+  volantis.scroll.scrollHeight = function () {
+    return Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+    )
+  }
+  volantis.scroll.offsetHeight = function () {
+    return Math.min(
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight,
+      document.body.clientHeight,
+      document.documentElement.clientHeight
+    )
+  }
+  volantis.scroll.progress = function () {
+    return volantis.scroll.getScrollTop() / (volantis.scroll.scrollHeight() - volantis.scroll.offsetHeight())
+  }
+  // 使用 requestAnimationFrame 处理滚动事件
+  // `volantis.scroll.del` 中存储了一个数值, 该数值检测一定时间间隔内滚动条滚动的位移, 数值的检测频率是浏览器的刷新频率. 数值为正数时, 表示向下滚动. 数值为负数时, 表示向上滚动.
+  volantis.scroll.handleScrollEvents = () => {
+    volantis.scroll.lastScrollTop = volantis.scroll.getScrollTop()
+    function loop() {
+      const scrollTop = volantis.scroll.getScrollTop();
+      if (volantis.scroll.lastScrollTop !== scrollTop) {
+        volantis.scroll.del = scrollTop - volantis.scroll.lastScrollTop;
+        volantis.scroll.lastScrollTop = scrollTop;
+        // if (volantis.scroll.del > 0) {
+        //   console.log("向下滚动");
+        // } else {
+        //   console.log("向上滚动");
+        // }
+        // 注销过期的unengine未滚动事件
+        volantis.scroll.unengine.list = []
+        volantis.scroll.engine.start();
+      } else {
+        volantis.scroll.unengine.start();
+      }
+      volantis.requestAnimationFrame(loop)
+    }
+    volantis.requestAnimationFrame(loop)
+  }
+  volantis.scroll.handleScrollEvents()
+  volantis.scroll.ele = null;
+  // 触发页面滚动至目标元素位置
+  volantis.scroll.to = (ele, option = {}) => {
+    if (!ele) return;
+    volantis.scroll.ele = ele;
+    // 默认配置
+    opt = {
+      top: ele.getBoundingClientRect().top + document.documentElement.scrollTop,
+      behavior: "smooth"
+    }
+    // 定义配置
+    if ("top" in option) {
+      opt.top = option.top
+    }
+    if ("behavior" in option) {
+      opt.behavior = option.behavior
+    }
+    if ("addTop" in option) {
+      opt.top += option.addTop
+    }
+    if (!("observerDic" in option)) {
+      option.observerDic = 100
+    }
+    // 滚动
+    window.scrollTo(opt);
+    // 监视器
+    // 监视并矫正元素滚动到指定位置
+    // 用于处理 lazyload 引起的 cls 导致的定位失败问题
+    // option.observer = false
+    if (option.observer) {
+      setTimeout(() => {
+        if (volantis.scroll.ele != ele) {
+          return
+        }
+        volantis.scroll.unengine.push(() => {
+          let me = ele.getBoundingClientRect().top
+          if (!(me >= -option.observerDic && me <= option.observerDic)) {
+            volantis.scroll.to(ele, option)
+          }
+          volantis.scroll.unengine.remove("unengineObserver")
+        }, "unengineObserver")
+      }, 1000)
+    }
+  }
+  /********************** Content Visibility ********************************/
+  // 见 source/css/first.styl 如果遇到任何问题 删除 .post-story 即可
+  // 一个元素被声明 content-visibility 属性后 如果元素不在 viewport 中 浏览器不会计算其后代元素样式和属性 从而节省 Style & Layout 耗时
+  // content-visibility 的副作用: 锚点失效 等等(实验初期 暂不明确), 使用此方法清除样式
+  volantis.cleanContentVisibility = () => {
+    if (document.querySelector(".post-story")) {
+      console.log("cleanContentVisibility");
+      document.querySelectorAll(".post-story").forEach(e => {
+        e.classList.remove("post-story")
+      })
+    }
+  }
+  /******************************************************************************/
+  /******************************************************************************/
+  /******************************************************************************/
+  //图像加载出错时的处理
+  function errorImgAvatar(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg";
+    img.onerror = null;
+  }
+  function errorImgCover(img) {
+    img.src = "https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg";
+    img.onerror = null;
+  }
+  /******************************************************************************/
+</script>
+<script>
+  volantis.GLOBAL_CONFIG ={
+    root: '/',
+    debug: "env",
+    default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
+    lastupdate: new Date(1792690087254),
+    cdn: {
+      izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
+      izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
+      fancybox_css: 'https://cdn.bootcdn.net/ajax/libs/fancyapps-ui/4.0.31/fancybox.min.css',
+      fancybox_js: 'https://cdn.bootcdn.net/ajax/libs/fancyapps-ui/4.0.31/fancybox.umd.min.js'
+    },
+    sidebar: {
+      for_page: ["blogger","category","tagcloud"],
+      for_post: ["toc"],
+      webinfo: {
+        lastupd: {
+          enable: true,
+          friendlyShow: true
+        },
+        runtime: {
+          data: "2020/01/01",
+          unit: "天"
+        }
+      }
+    },
+    plugins: {
+      message: {"enable":true,"icon":{"default":"fa-solid fa-info-circle light-blue","quection":"fa-solid fa-question-circle light-blue"},"time":{"default":5000,"quection":20000},"position":"topRight","transitionIn":"bounceInLeft","transitionOut":"fadeOutRight","titleColor":"var(--color-text)","messageColor":"var(--color-text)","backgroundColor":"var(--color-card)","zindex":2147483647,"copyright":{"enable":true,"title":"知识共享许可协议","message":"请遵守 CC BY-NC-SA 4.0 协议。","icon":"far fa-copyright light-blue"},"aplayer":{"enable":true,"play":"fa-solid fa-play","pause":"fa-solid fa-pause"},"rightmenu":{"enable":true,"notice":true}},
+      
+      
+    },
+    search: {
+      
+
+      
+        dataPath: (("/" || "/").endsWith("/") ? "/" || "/" : "//" || "/") + "content.json",
+      
+
+      
+    },
+    languages: {
+      
+        search: {
+          hits_empty: "找不到您查询的内容：${query}",
+          hits_stats: "找到 ${hits} 条结果，用时 ${time} 毫秒",
+        }
+      
+    }
+  }
+</script>
+
+  
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/SRE/","name":"SRE"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2026/混沌工程与故障演练/","name":"混沌工程与故障演练"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"混沌工程与故障演练","description":"混沌工程不是“随机搞破坏”，而是用受控实验验证系统在真实故障下是否还能守住 SLO。本文按 Principles of Chaos、Google SRE、Chaos Mesh、ChaosBlade、LitmusChaos 的官方资料，讲清实验设计、故障类型、工具选型、生产安全、Game Day、自动化和组织治理。\n最后更新：2026-10-22","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2026/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E4%B8%8E%E6%95%85%E9%9A%9C%E6%BC%94%E7%BB%83/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2026/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E4%B8%8E%E6%95%85%E9%9A%9C%E6%BC%94%E7%BB%83/","wordCount":173,"datePublished":"2026-10-22T09:10:00.000Z","dateModified":"2026-10-22T17:01:09.552Z","articleSection":"SRE","keywords":"Kubernetes,SRE,混沌工程,故障演练,可靠性","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  
+  <!-- import head_end begin -->
+  <!-- import head_end end -->
+  <!-- Custom Files headEnd begin-->
+  
+  <!-- Custom Files headEnd end-->
+</head>
+  <body itemscope itemtype="http://schema.org/WebPage">
+    <!-- import body_begin begin-->
+    <!-- import body_begin end-->
+    <!-- Custom Files bodyBegin begin-->
+    
+    <!-- Custom Files bodyBegin end-->
+    <header itemscope itemtype="http://schema.org/WPHeader" id="l_header" class="l_header auto shadow floatable blur show" style='opacity: 0' >
+  <div class='container'>
+  <div id='wrapper'>
+    <div class='nav-sub'>
+      <p class="title"></p>
+      <ul class='switcher nav-list-h m-phone' id="pjax-header-nav-list">
+        <li><a id="s-comment" class="fa-solid fa-comments fa-fw" target="_self" title="comment"></a></li>
+        
+          <li><a id="s-toc" class="s-toc fa-solid fa-list fa-fw" target="_self" title="toc"></a></li>
+        
+      </ul>
+    </div>
+		<div class="nav-main">
+      
+
+			<div class='menu navigation'>
+				<ul class='nav-list-h m-pc'>
+          
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+          
+            
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+          
+				</ul>
+			</div>
+      
+      <div class="m_search">
+        <form name="searchform" class="form u-search-form">
+          <i class="icon fa-solid fa-search fa-fw"></i>
+          <input type="text" class="input u-search-input" placeholder="Search..." />
+        </form>
+      </div>
+      
+
+			<ul class='switcher nav-list-h m-phone'>
+				
+					<li><a class="s-search fa-solid fa-search fa-fw" target="_self" title="search"></a></li>
+				
+				<li>
+          <a class="s-menu fa-solid fa-bars fa-fw" target="_self" title="menu"></a>
+          <ul class="menu-phone list-v navigation white-box">
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/" title="文档"
+                  
+                  
+                  
+                    active-action="action-home"
+                  >
+                  <i class='fa-sharp fa-solid fa-book fa-fw'></i>文档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/categories/" title="分类"
+                  
+                  
+                  
+                    active-action="action-categories"
+                  >
+                  <i class='fa-solid fa-folder-open fa-fw'></i>分类
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/tags/" title="标签"
+                  
+                  
+                  
+                    active-action="action-tags"
+                  >
+                  <i class='fa-solid fa-tags fa-fw'></i>标签
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/archives/" title="归档"
+                  
+                  
+                  
+                    active-action="action-archives"
+                  >
+                  <i class='fa-solid fa-archive fa-fw'></i>归档
+                </a>
+                
+              </li>
+            
+          
+            
+              
+            
+              <li>
+                <a class="menuitem flat-box faa-parent animated-hover"
+                href="/friends/" title="友链"
+                  
+                  
+                  
+                    active-action="action-friends"
+                  >
+                  <i class='fa-solid fa-link fa-fw'></i>友链
+                </a>
+                
+              </li>
+            
+          
+            
+          </ul>
+        </li>
+			</ul>
+
+      <!-- Custom Files header begin -->
+      
+      <!-- Custom Files header end -->
+		</div>
+	</div>
+  </div>
+</header>
+
+    <div id="l_body">
+      <div id="l_cover">
+  
+    
+      <!-- see: /layout/_partial/scripts/_ctrl.ejs -->
+      <div id="none" class='cover-wrapper post dock' style="display: none;">
+        
+  <div class='cover-bg lazyload placeholder' data-bg="https://gcore.jsdelivr.net/gh/MHG-LAB/cron@gh-pages/bing/bing.jpg"></div>
+
+<div class='cover-body'>
+  <div class='top'>
+    
+    
+      <p class="title">Volantis</p>
+    
+    
+  </div>
+  <div class='bottom'>
+    <div class='menu navigation'>
+      <div class='list-h'>
+        
+          
+            <a href="/v4/getting-started/"
+              
+              
+              active-action="action-v4getting-started">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f5c3.svg'><p>文档</p>
+            </a>
+          
+            <a href="/faqs/"
+              
+              
+              active-action="action-faqs">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f516.svg'><p>帮助</p>
+            </a>
+          
+            <a href="/examples/"
+              
+              
+              active-action="action-examples">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f396.svg'><p>示例</p>
+            </a>
+          
+            <a href="/contributors/"
+              
+              
+              active-action="action-contributors">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f389.svg'><p>社区</p>
+            </a>
+          
+            <a href="/archives/"
+              
+              
+              active-action="action-archives">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f4f0.svg'><p>博客</p>
+            </a>
+          
+            <a target="_blank" rel="noopener" href="https://github.com/volantis-x/hexo-theme-volantis/"
+              
+              
+              active-action="action-https:githubcomvolantis-xhexo-theme-volantis">
+              <img src='https://unpkg.com/volantis-static@0.0.1660614606622/media/twemoji/assets/svg/1f9ec.svg'><p>源码</p>
+            </a>
+          
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+        <div id="scroll-down" style="display: none;"><i class="fa fa-chevron-down scroll-down-effects"></i></div>
+      </div>
+    
+  
+</div>
+
+      <div id="safearea">
+        <div class="body-wrapper">
+          
+<div id="l_main" class=''>
+  <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow floatable blur article-type-post" id="post" itemscope itemprop="blogPost">
+  <link itemprop="mainEntityOfPage" href="https://tianyigu.top/2026/混沌工程与故障演练/">
+  <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Tianyi的技术随笔">
+  </span>
+  <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+    <meta itemprop="name" content="混沌工程与故障演练">
+    <meta itemprop="description" content="Tianyi的技术随笔">
+  </span>
+  
+
+
+  
+    <span hidden>
+      <meta itemprop="image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
+    </span>
+  
+  <div class="article-meta" id="top">
+    
+    
+    
+      <h1 class="title" itemprop="name headline">
+        混沌工程与故障演练
+      </h1>
+      <div class='new-meta-box'>
+        
+          
+            
+  
+  
+  
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/SRE/">SRE</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/SRE/" itemprop="url"><span itemprop="name">SRE</span></a>
+      </span>
+    
+  </div>
+  
+
+
+
+          
+        
+          
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2026-10-22T18:10:00+09:00">
+  <a class='notlink'>
+    <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
+    <p>发布于：2026年10月22日</p>
+  </a>
+</div>
+
+          
+        
+        <!-- Custom Files topMeta begin-->
+        
+        <!-- Custom Files topMeta end-->
+      </div>
+    
+  </div>
+
+
+  <div id="layoutHelper-page-plugins"></div>
+  <div id="post-body" itemprop="articleBody">
+    <p>混沌工程不是“随机搞破坏”，而是用受控实验验证系统在真实故障下是否还能守住 SLO。本文按 Principles of Chaos、Google SRE、Chaos Mesh、ChaosBlade、LitmusChaos 的官方资料，讲清实验设计、故障类型、工具选型、生产安全、Game Day、自动化和组织治理。</p>
+<p>最后更新：2026-10-22</p>
+<span id="more"></span>
+
+<ul>
+<li><a href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B">什么是混沌工程</a></li>
+<li><a href="#%E4%BA%94%E4%B8%AA%E6%A0%B8%E5%BF%83%E5%8E%9F%E5%88%99">五个核心原则</a></li>
+<li><a href="#%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E4%B8%8E%E7%9B%B8%E5%85%B3%E5%AE%9E%E8%B7%B5%E7%9A%84%E5%8C%BA%E5%88%AB">混沌工程与相关实践的区别</a></li>
+<li><a href="#%E6%88%90%E7%86%9F%E5%BA%A6%E6%A8%A1%E5%9E%8B">成熟度模型</a></li>
+<li><a href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95">实验设计方法</a></li>
+<li><a href="#%E7%A8%B3%E6%80%81%E6%8C%87%E6%A0%87">稳态指标</a></li>
+<li><a href="#%E6%95%85%E9%9A%9C%E7%B1%BB%E5%9E%8B%E5%85%A8%E6%99%AF">故障类型全景</a></li>
+<li><a href="#%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B">工具选型</a></li>
+<li><a href="#kubernetes-%E5%AE%9E%E9%AA%8C%E5%AE%9E%E6%88%98">Kubernetes 实验实战</a></li>
+<li><a href="#%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E5%AE%89%E5%85%A8">生产环境安全</a></li>
+<li><a href="#game-day">Game Day</a></li>
+<li><a href="#%E6%95%85%E9%9A%9C%E6%BC%94%E7%BB%83%E7%9F%A9%E9%98%B5">故障演练矩阵</a></li>
+<li><a href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E8%A6%81%E6%B1%82">可观测性要求</a></li>
+<li><a href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%8E-cicd">自动化与 CI&#x2F;CD</a></li>
+<li><a href="#%E5%BA%A6%E9%87%8F%E4%BD%93%E7%B3%BB">度量体系</a></li>
+<li><a href="#%E7%BB%84%E7%BB%87%E4%B8%8E%E6%B2%BB%E7%90%86">组织与治理</a></li>
+<li><a href="#%E5%B8%B8%E8%A7%81%E5%8F%8D%E6%A8%A1%E5%BC%8F">常见反模式</a></li>
+<li><a href="#%E6%A8%A1%E6%9D%BF">模板</a></li>
+<li><a href="#%E6%A1%88%E4%BE%8B">案例</a></li>
+<li><a href="#%E9%99%84%E5%BD%95">附录</a></li>
+</ul>
+<h1 id="什么是混沌工程"><a href="#什么是混沌工程" class="headerlink" title="什么是混沌工程"></a>什么是混沌工程</h1><p>Principles of Chaos 的定义：</p>
+<blockquote>
+<p>Chaos Engineering is the discipline of experimenting on a system in order to build confidence in the system’s capability to withstand turbulent conditions in production.</p>
+</blockquote>
+<p>翻译：混沌工程是对系统做实验，以建立“系统能在生产环境动荡条件下存活”的信心。</p>
+<p>关键词：</p>
+<ul>
+<li><strong>实验</strong>：不是随机破坏，而是有假设、有观测、有结论</li>
+<li><strong>信心</strong>：目标是减少未知，不是制造事故</li>
+<li><strong>生产条件</strong>：真实流量、真实依赖、真实配置</li>
+<li><strong>受控</strong>：有范围、有中止条件、有回滚</li>
+</ul>
+<p>混沌工程解决的是分布式系统的“未知未知”：</p>
+<ul>
+<li>单服务都正常，但服务间交互导致级联失败</li>
+<li>超时&#x2F;重试配置不当导致重试风暴</li>
+<li>下游变慢导致线程池耗尽</li>
+<li>单点故障导致雪崩</li>
+<li>故障转移没演练过，真出事时切不过去</li>
+</ul>
+<p>它不是：</p>
+<ul>
+<li>随机杀 Pod 的“破坏性测试”</li>
+<li>只做一次就结束的演练</li>
+<li>用生产事故来“验证”系统</li>
+<li>替代单元&#x2F;集成&#x2F;压测&#x2F;灾备演练</li>
+</ul>
+<h1 id="五个核心原则"><a href="#五个核心原则" class="headerlink" title="五个核心原则"></a>五个核心原则</h1><h2 id="1-围绕稳态建立假设"><a href="#1-围绕稳态建立假设" class="headerlink" title="1. 围绕稳态建立假设"></a>1. 围绕稳态建立假设</h2><p>先定义“系统正常”是什么：</p>
+<ul>
+<li>成功率、延迟、错误率</li>
+<li>数据新鲜度</li>
+<li>队列 lag</li>
+<li>SLO&#x2F;错误预算</li>
+</ul>
+<p>然后提出可证伪的假设：</p>
+<blockquote>
+<p>在注入 100ms 网络延迟、持续 5 分钟的情况下，核心下单接口成功率仍 ≥ 99.9%，P95 延迟 &lt; 500ms。</p>
+</blockquote>
+<p>没有稳态指标和假设，就不是实验。</p>
+<h2 id="2-变化真实世界事件"><a href="#2-变化真实世界事件" class="headerlink" title="2. 变化真实世界事件"></a>2. 变化真实世界事件</h2><p>故障变量要对应真实事件：</p>
+<ul>
+<li>服务器宕机</li>
+<li>磁盘满</li>
+<li>网络分区&#x2F;延迟&#x2F;丢包</li>
+<li>DNS 故障</li>
+<li>依赖超时</li>
+<li>流量突增</li>
+<li>证书过期</li>
+<li>可用区故障</li>
+</ul>
+<p>按“影响大”或“发生频率高”排序，不要只做最简单的 Pod kill。</p>
+<h2 id="3-在生产环境做实验"><a href="#3-在生产环境做实验" class="headerlink" title="3. 在生产环境做实验"></a>3. 在生产环境做实验</h2><p>系统的行为依赖真实流量、真实数据和真实依赖。预发环境很难复制：</p>
+<ul>
+<li>流量模式</li>
+<li>数据规模和分布</li>
+<li>网络拓扑</li>
+<li>依赖的真实延迟</li>
+<li>配置漂移</li>
+</ul>
+<p>生产实验必须配合最小爆炸半径、审批、监控和中止条件。不能一上来就全量。</p>
+<h2 id="4-自动化实验以持续运行"><a href="#4-自动化实验以持续运行" class="headerlink" title="4. 自动化实验以持续运行"></a>4. 自动化实验以持续运行</h2><p>一次性演练会过期。系统、流量、依赖都在变，实验要：</p>
+<ul>
+<li>定期调度</li>
+<li>进入 CI&#x2F;CD</li>
+<li>自动判定成功&#x2F;失败</li>
+<li>自动恢复</li>
+<li>结果可追踪</li>
+</ul>
+<p>Chaos Mesh 的 <code>Schedule</code>、<code>Workflow</code>、<code>StatusCheck</code> 就是为持续实验设计的。</p>
+<h2 id="5-最小化爆炸半径"><a href="#5-最小化爆炸半径" class="headerlink" title="5. 最小化爆炸半径"></a>5. 最小化爆炸半径</h2><p>生产实验可能造成真实影响，必须：</p>
+<ul>
+<li>只选少量实例&#x2F;租户&#x2F;流量</li>
+<li>设置短持续时间</li>
+<li>明确中止条件</li>
+<li>有 kill switch</li>
+<li>通知 on-call 和业务</li>
+<li>从非核心业务开始</li>
+</ul>
+<p>原则不是“必须炸生产”，而是“在生产中学习，同时把影响控制在可接受范围”。</p>
+<h1 id="混沌工程与相关实践的区别"><a href="#混沌工程与相关实践的区别" class="headerlink" title="混沌工程与相关实践的区别"></a>混沌工程与相关实践的区别</h1><table>
+<thead>
+<tr>
+<th>实践</th>
+<th>目的</th>
+<th>范围</th>
+<th>是否有假设</th>
+<th>典型产出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单元&#x2F;集成测试</td>
+<td>验证代码逻辑</td>
+<td>开发&#x2F;CI</td>
+<td>是</td>
+<td>测试报告</td>
+</tr>
+<tr>
+<td>故障注入</td>
+<td>注入一个故障</td>
+<td>组件&#x2F;环境</td>
+<td>不一定</td>
+<td>故障行为</td>
+</tr>
+<tr>
+<td>混沌实验</td>
+<td>验证系统在故障下的稳态</td>
+<td>受控范围</td>
+<td>是</td>
+<td>假设是否成立</td>
+</tr>
+<tr>
+<td>压测</td>
+<td>找容量上限</td>
+<td>环境&#x2F;生产</td>
+<td>是</td>
+<td>容量曲线</td>
+</tr>
+<tr>
+<td>Game Day</td>
+<td>组织级演练</td>
+<td>多团队</td>
+<td>是</td>
+<td>协作和恢复能力</td>
+</tr>
+<tr>
+<td>灾备演练</td>
+<td>验证 RTO&#x2F;RPO</td>
+<td>机房&#x2F;区域</td>
+<td>是</td>
+<td>恢复报告</td>
+</tr>
+<tr>
+<td>混沌工程</td>
+<td>持续建立系统韧性信心</td>
+<td>组织级</td>
+<td>是</td>
+<td>实验体系和文化</td>
+</tr>
+</tbody></table>
+<p>混沌工程可以包含故障注入、压测、Game Day、灾备演练，但不等同于其中任何一个。</p>
+<h1 id="成熟度模型"><a href="#成熟度模型" class="headerlink" title="成熟度模型"></a>成熟度模型</h1><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>特征</th>
+<th>风险</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>L0 手工故障注入</td>
+<td>手动杀 Pod、断网</td>
+<td>高，难复现</td>
+</tr>
+<tr>
+<td>L1 预发实验</td>
+<td>预发环境跑固定场景</td>
+<td>低，但真实性不足</td>
+</tr>
+<tr>
+<td>L2 生产小范围</td>
+<td>生产 canary 租户&#x2F;实例</td>
+<td>中，需要 guardrail</td>
+</tr>
+<tr>
+<td>L3 持续实验</td>
+<td>定时&#x2F;流水线自动实验</td>
+<td>中，需要自动化判定</td>
+</tr>
+<tr>
+<td>L4 混沌即代码</td>
+<td>GitOps 管理实验、CI 门禁</td>
+<td>低，可审计</td>
+</tr>
+<tr>
+<td>L5 组织韧性</td>
+<td>多团队 Game Day、灾备、持续改进</td>
+<td>低，形成文化</td>
+</tr>
+</tbody></table>
+<p>不要跳级。没有可观测性、SLO 和中止机制，直接做生产混沌会把故障放大。</p>
+<h1 id="实验设计方法"><a href="#实验设计方法" class="headerlink" title="实验设计方法"></a>实验设计方法</h1><h2 id="实验文档"><a href="#实验文档" class="headerlink" title="实验文档"></a>实验文档</h2><p>每个实验至少写清：</p>
+<ul>
+<li>实验名称、owner、日期</li>
+<li>目标服务和依赖</li>
+<li>稳态指标和基线</li>
+<li>假设</li>
+<li>故障类型和参数</li>
+<li>影响范围（namespace&#x2F;label&#x2F;流量比例）</li>
+<li>持续时间</li>
+<li>中止条件</li>
+<li>回滚&#x2F;恢复步骤</li>
+<li>通知对象</li>
+<li>观测看板</li>
+<li>结果和 action</li>
+</ul>
+<h2 id="设计步骤"><a href="#设计步骤" class="headerlink" title="设计步骤"></a>设计步骤</h2><ol>
+<li><strong>选目标</strong>：核心链路、最近故障、高风险依赖</li>
+<li><strong>定稳态</strong>：SLI&#x2F;SLO、错误率、延迟、lag、数据新鲜度</li>
+<li><strong>写假设</strong>：可证伪，例如“P95 延迟不会超过 500ms”</li>
+<li><strong>选故障</strong>：对应真实事件，不要为了工具而工具</li>
+<li><strong>定范围</strong>：从 1 个实例&#x2F;1 个租户&#x2F;5% 流量开始</li>
+<li><strong>定时间</strong>：短、可中止、避开高峰</li>
+<li><strong>准备观测</strong>：看板、告警、日志、trace</li>
+<li><strong>准备恢复</strong>：kill switch、回滚、扩容、切流</li>
+<li><strong>执行</strong>：记录开始&#x2F;结束、注入参数、观察结果</li>
+<li><strong>复盘</strong>：假设是否成立、系统哪里弱、action 是什么</li>
+</ol>
+<h2 id="中止条件"><a href="#中止条件" class="headerlink" title="中止条件"></a>中止条件</h2><ul>
+<li>SLO 跌破阈值</li>
+<li>错误率&#x2F;延迟超过红线</li>
+<li>影响范围超出预期</li>
+<li>出现数据丢失&#x2F;安全事件</li>
+<li>on-call 无法及时响应</li>
+<li>业务方要求停止</li>
+</ul>
+<p>中止条件要在实验前写死，不能临场“再看看”。</p>
+<h2 id="实验分级"><a href="#实验分级" class="headerlink" title="实验分级"></a>实验分级</h2><table>
+<thead>
+<tr>
+<th>级别</th>
+<th>范围</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>组件级</td>
+<td>单 Pod&#x2F;单实例</td>
+<td>杀一个 Pod</td>
+</tr>
+<tr>
+<td>服务级</td>
+<td>单服务&#x2F;单租户</td>
+<td>服务网络延迟</td>
+</tr>
+<tr>
+<td>依赖级</td>
+<td>数据库&#x2F;缓存&#x2F;MQ</td>
+<td>主库切换、Redis 超时</td>
+</tr>
+<tr>
+<td>区域级</td>
+<td>AZ&#x2F;机房</td>
+<td>可用区故障</td>
+</tr>
+<tr>
+<td>组织级</td>
+<td>多团队&#x2F;多系统</td>
+<td>Game Day、灾备</td>
+</tr>
+</tbody></table>
+<h1 id="稳态指标"><a href="#稳态指标" class="headerlink" title="稳态指标"></a>稳态指标</h1><h2 id="黄金信号"><a href="#黄金信号" class="headerlink" title="黄金信号"></a>黄金信号</h2><ul>
+<li>Latency：P50&#x2F;P95&#x2F;P99</li>
+<li>Traffic：QPS、吞吐</li>
+<li>Errors：错误率、失败请求</li>
+<li>Saturation：CPU、内存、磁盘、连接池、队列</li>
+</ul>
+<h2 id="SLO-指标"><a href="#SLO-指标" class="headerlink" title="SLO 指标"></a>SLO 指标</h2><ul>
+<li>可用性</li>
+<li>请求成功率</li>
+<li>数据新鲜度</li>
+<li>作业 SLA 完成率</li>
+<li>消费 lag</li>
+</ul>
+<h2 id="业务指标"><a href="#业务指标" class="headerlink" title="业务指标"></a>业务指标</h2><ul>
+<li>下单成功率</li>
+<li>支付成功率</li>
+<li>登录成功率</li>
+<li>核心报表按时率</li>
+</ul>
+<h2 id="基线"><a href="#基线" class="headerlink" title="基线"></a>基线</h2><p>实验前至少采集：</p>
+<ul>
+<li>最近 1 小时&#x2F;1 天的基线</li>
+<li>同时段对比</li>
+<li>依赖的健康状态</li>
+<li>容量水位</li>
+</ul>
+<p>没有基线，就无法判断“变慢”是实验导致还是正常波动。</p>
+<h1 id="故障类型全景"><a href="#故障类型全景" class="headerlink" title="故障类型全景"></a>故障类型全景</h1><h2 id="资源类"><a href="#资源类" class="headerlink" title="资源类"></a>资源类</h2><ul>
+<li>CPU 打满</li>
+<li>内存耗尽&#x2F;OOM</li>
+<li>磁盘满&#x2F;inode 耗尽</li>
+<li>磁盘 IO 延迟&#x2F;错误</li>
+<li>文件系统只读</li>
+<li>线程池&#x2F;连接池耗尽</li>
+</ul>
+<h2 id="网络类"><a href="#网络类" class="headerlink" title="网络类"></a>网络类</h2><ul>
+<li>延迟</li>
+<li>丢包</li>
+<li>重复包</li>
+<li>乱序</li>
+<li>带宽限制</li>
+<li>网络分区</li>
+<li>DNS 解析失败&#x2F;错误</li>
+<li>TLS 握手失败</li>
+<li>端口不可达</li>
+</ul>
+<h2 id="进程-x2F-容器类"><a href="#进程-x2F-容器类" class="headerlink" title="进程&#x2F;容器类"></a>进程&#x2F;容器类</h2><ul>
+<li>杀 Pod</li>
+<li>容器重启</li>
+<li>容器 OOM</li>
+<li>镜像拉取失败</li>
+<li>进程暂停</li>
+<li>信号错误</li>
+</ul>
+<h2 id="节点类"><a href="#节点类" class="headerlink" title="节点类"></a>节点类</h2><ul>
+<li>节点宕机</li>
+<li>节点 drain</li>
+<li>kubelet 故障</li>
+<li>容器运行时故障</li>
+<li>内核 panic</li>
+<li>时钟偏移</li>
+</ul>
+<h2 id="中间件类"><a href="#中间件类" class="headerlink" title="中间件类"></a>中间件类</h2><ul>
+<li>数据库主库切换</li>
+<li>从库延迟</li>
+<li>连接数耗尽</li>
+<li>缓存击穿&#x2F;雪崩</li>
+<li>消息队列分区不可用</li>
+<li>消费者 lag</li>
+<li>锁冲突&#x2F;死锁</li>
+</ul>
+<h2 id="云与基础设施"><a href="#云与基础设施" class="headerlink" title="云与基础设施"></a>云与基础设施</h2><ul>
+<li>可用区故障</li>
+<li>负载均衡故障</li>
+<li>对象存储限流</li>
+<li>网络 ACL&#x2F;安全组错误</li>
+<li>证书过期</li>
+<li>IAM 权限失效</li>
+</ul>
+<h2 id="数据类"><a href="#数据类" class="headerlink" title="数据类"></a>数据类</h2><ul>
+<li>数据损坏</li>
+<li>数据重复</li>
+<li>数据延迟</li>
+<li>schema 不兼容</li>
+<li>分区丢失</li>
+</ul>
+<h2 id="安全类"><a href="#安全类" class="headerlink" title="安全类"></a>安全类</h2><ul>
+<li>证书过期</li>
+<li>Kerberos&#x2F;Token 失效</li>
+<li>权限拒绝</li>
+<li>密钥轮换失败</li>
+<li>审计中断</li>
+</ul>
+<h1 id="工具选型"><a href="#工具选型" class="headerlink" title="工具选型"></a>工具选型</h1><h2 id="Chaos-Mesh"><a href="#Chaos-Mesh" class="headerlink" title="Chaos Mesh"></a>Chaos Mesh</h2><p>版本：2.8.x（当前 2.8.6）</p>
+<p>特点：</p>
+<ul>
+<li>Kubernetes CRD：PodChaos、NetworkChaos、StressChaos、IOChaos、DNSChaos、TimeChaos、HTTPChaos、KernelChaos、JVMChaos、云厂商 Chaos 等</li>
+<li>组件：Chaos Dashboard、Chaos Controller Manager、Chaos Daemon（DaemonSet，默认 privileged）</li>
+<li>Workflow&#x2F;Schedule&#x2F;StatusCheck 支持编排和持续实验</li>
+<li>适合 Kubernetes 原生、GitOps、多集群</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>Chaos Daemon 权限较高，必须限制 namespace&#x2F;RBAC</li>
+<li>默认 privileged，生产要评估安全边界</li>
+<li>网络&#x2F;内核故障依赖节点权限</li>
+</ul>
+<h2 id="ChaosBlade"><a href="#ChaosBlade" class="headerlink" title="ChaosBlade"></a>ChaosBlade</h2><p>版本：1.8.x（当前 1.8.2）</p>
+<p><img src="https://chaosblade.io/assets/images/overall-architecture-7e874671c3f84bc5392272edad1453dc.png" class="lazyload" data-srcset="https://chaosblade.io/assets/images/overall-architecture-7e874671c3f84bc5392272edad1453dc.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="ChaosBlade 架构"></p>
+<p><em>图 1：ChaosBlade 官方整体架构</em></p>
+<p>特点：</p>
+<ul>
+<li>阿里开源，CLI + chaosblade-box 平台</li>
+<li>支持主机、容器、Kubernetes、多语言（Java&#x2F;Go&#x2F;C++ 等）</li>
+<li>故障类型丰富，适合混合环境</li>
+<li>学习曲线比 Chaos Mesh 稍高</li>
+</ul>
+<h2 id="LitmusChaos"><a href="#LitmusChaos" class="headerlink" title="LitmusChaos"></a>LitmusChaos</h2><p>版本：3.33.0</p>
+<p><img src="https://litmuschaos.io/landing_images/about_litmus/overview.png" class="lazyload" data-srcset="https://litmuschaos.io/landing_images/about_litmus/overview.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="LitmusChaos 概览"></p>
+<p><em>图 2：LitmusChaos 官方概览</em></p>
+<p>特点：</p>
+<ul>
+<li>CNCF 托管</li>
+<li>ChaosHub、实验模板、Workflow、Probes</li>
+<li>适合 Kubernetes、GitOps、CI&#x2F;CD</li>
+<li>有商业版和社区版</li>
+</ul>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><ul>
+<li><strong>Chaosd</strong>：物理机&#x2F;节点级故障注入</li>
+<li><strong>AWS FIS</strong>：AWS 资源级故障注入</li>
+<li><strong>Gremlin</strong>：商业混沌工程平台</li>
+<li><strong>自研</strong>：脚本&#x2F;Operator，适合特定场景</li>
+</ul>
+<h2 id="选型对比"><a href="#选型对比" class="headerlink" title="选型对比"></a>选型对比</h2><table>
+<thead>
+<tr>
+<th>工具</th>
+<th>范围</th>
+<th>优势</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chaos Mesh</td>
+<td>Kubernetes</td>
+<td>CRD、Workflow、生态好</td>
+<td>Daemon 权限高</td>
+</tr>
+<tr>
+<td>ChaosBlade</td>
+<td>主机&#x2F;容器&#x2F;K8s</td>
+<td>故障类型多、混合环境</td>
+<td>平台化需额外建设</td>
+</tr>
+<tr>
+<td>LitmusChaos</td>
+<td>Kubernetes</td>
+<td>CNCF、ChaosHub、Probes</td>
+<td>实验模板需维护</td>
+</tr>
+<tr>
+<td>AWS FIS</td>
+<td>AWS</td>
+<td>云资源原生</td>
+<td>绑定 AWS</td>
+</tr>
+<tr>
+<td>Gremlin</td>
+<td>商业</td>
+<td>托管、易用</td>
+<td>成本</td>
+</tr>
+</tbody></table>
+<h1 id="Kubernetes-实验实战"><a href="#Kubernetes-实验实战" class="headerlink" title="Kubernetes 实验实战"></a>Kubernetes 实验实战</h1><h2 id="安装-Chaos-Mesh"><a href="#安装-Chaos-Mesh" class="headerlink" title="安装 Chaos Mesh"></a>安装 Chaos Mesh</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">helm repo add chaos-mesh https://charts.chaos-mesh.org</span><br><span class="line">helm repo update</span><br><span class="line">helm install chaos-mesh chaos-mesh/chaos-mesh \</span><br><span class="line">  --namespace chaos-mesh \</span><br><span class="line">  --create-namespace \</span><br><span class="line">  --<span class="built_in">set</span> chaosDaemon.runtime=containerd \</span><br><span class="line">  --<span class="built_in">set</span> chaosDaemon.socketPath=/run/containerd/containerd.sock</span><br></pre></td></tr></table></figure>
+
+<p>生产要固定版本、限制 RBAC、配置资源限制和 NetworkPolicy。</p>
+<h2 id="Pod-Kill"><a href="#Pod-Kill" class="headerlink" title="Pod Kill"></a>Pod Kill</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">chaos-mesh.org/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">PodChaos</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">pod-kill</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">chaos-mesh</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">action:</span> <span class="string">pod-kill</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">one</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">    <span class="attr">labelSelectors:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">duration:</span> <span class="string">&quot;30s&quot;</span></span><br><span class="line">  <span class="attr">scheduler:</span></span><br><span class="line">    <span class="attr">cron:</span> <span class="string">&quot;@every 10m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="网络延迟"><a href="#网络延迟" class="headerlink" title="网络延迟"></a>网络延迟</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">chaos-mesh.org/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NetworkChaos</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">net-delay</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">chaos-mesh</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">action:</span> <span class="string">delay</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">one</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">    <span class="attr">labelSelectors:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">delay:</span></span><br><span class="line">    <span class="attr">latency:</span> <span class="string">&quot;100ms&quot;</span></span><br><span class="line">    <span class="attr">correlation:</span> <span class="string">&quot;100&quot;</span></span><br><span class="line">    <span class="attr">jitter:</span> <span class="string">&quot;10ms&quot;</span></span><br><span class="line">  <span class="attr">direction:</span> <span class="string">to</span></span><br><span class="line">  <span class="attr">target:</span></span><br><span class="line">    <span class="attr">mode:</span> <span class="string">all</span></span><br><span class="line">    <span class="attr">selector:</span></span><br><span class="line">      <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">      <span class="attr">labelSelectors:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">db</span></span><br><span class="line">  <span class="attr">duration:</span> <span class="string">&quot;5m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="网络分区"><a href="#网络分区" class="headerlink" title="网络分区"></a>网络分区</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">chaos-mesh.org/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">NetworkChaos</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">net-partition</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">chaos-mesh</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">action:</span> <span class="string">partition</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">all</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">    <span class="attr">labelSelectors:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">direction:</span> <span class="string">both</span></span><br><span class="line">  <span class="attr">target:</span></span><br><span class="line">    <span class="attr">mode:</span> <span class="string">all</span></span><br><span class="line">    <span class="attr">selector:</span></span><br><span class="line">      <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">      <span class="attr">labelSelectors:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">db</span></span><br><span class="line">  <span class="attr">duration:</span> <span class="string">&quot;2m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="CPU-x2F-内存压力"><a href="#CPU-x2F-内存压力" class="headerlink" title="CPU&#x2F;内存压力"></a>CPU&#x2F;内存压力</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">chaos-mesh.org/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">StressChaos</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">stress</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">chaos-mesh</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">one</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">    <span class="attr">labelSelectors:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">stressors:</span></span><br><span class="line">    <span class="attr">cpu:</span></span><br><span class="line">      <span class="attr">workers:</span> <span class="number">2</span></span><br><span class="line">      <span class="attr">load:</span> <span class="number">80</span></span><br><span class="line">    <span class="attr">memory:</span></span><br><span class="line">      <span class="attr">workers:</span> <span class="number">1</span></span><br><span class="line">      <span class="attr">size:</span> <span class="string">&quot;256MB&quot;</span></span><br><span class="line">  <span class="attr">duration:</span> <span class="string">&quot;5m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="DNS-故障"><a href="#DNS-故障" class="headerlink" title="DNS 故障"></a>DNS 故障</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">chaos-mesh.org/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">DNSChaos</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">dns-error</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">chaos-mesh</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">action:</span> <span class="string">error</span></span><br><span class="line">  <span class="attr">mode:</span> <span class="string">all</span></span><br><span class="line">  <span class="attr">patterns:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">&quot;db.prod.svc.cluster.local&quot;</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">    <span class="attr">labelSelectors:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">  <span class="attr">duration:</span> <span class="string">&quot;2m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Workflow-编排"><a href="#Workflow-编排" class="headerlink" title="Workflow 编排"></a>Workflow 编排</h2><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">chaos-mesh.org/v1alpha1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Workflow</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">game-day</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">chaos-mesh</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">entry:</span> <span class="string">entry</span></span><br><span class="line">  <span class="attr">templates:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">entry</span></span><br><span class="line">    <span class="attr">templateType:</span> <span class="string">Serial</span></span><br><span class="line">    <span class="attr">deadline:</span> <span class="string">&quot;30m&quot;</span></span><br><span class="line">    <span class="attr">children:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">delay</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">kill</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">delay</span></span><br><span class="line">    <span class="attr">templateType:</span> <span class="string">NetworkChaos</span></span><br><span class="line">    <span class="attr">deadline:</span> <span class="string">&quot;5m&quot;</span></span><br><span class="line">    <span class="attr">networkChaos:</span></span><br><span class="line">      <span class="attr">action:</span> <span class="string">delay</span></span><br><span class="line">      <span class="attr">mode:</span> <span class="string">one</span></span><br><span class="line">      <span class="attr">selector:</span></span><br><span class="line">        <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">        <span class="attr">labelSelectors:</span></span><br><span class="line">          <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">      <span class="attr">delay:</span></span><br><span class="line">        <span class="attr">latency:</span> <span class="string">&quot;100ms&quot;</span></span><br><span class="line">      <span class="attr">duration:</span> <span class="string">&quot;5m&quot;</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">kill</span></span><br><span class="line">    <span class="attr">templateType:</span> <span class="string">PodChaos</span></span><br><span class="line">    <span class="attr">deadline:</span> <span class="string">&quot;2m&quot;</span></span><br><span class="line">    <span class="attr">podChaos:</span></span><br><span class="line">      <span class="attr">action:</span> <span class="string">pod-kill</span></span><br><span class="line">      <span class="attr">mode:</span> <span class="string">one</span></span><br><span class="line">      <span class="attr">selector:</span></span><br><span class="line">        <span class="attr">namespaces:</span> [<span class="string">&quot;prod&quot;</span>]</span><br><span class="line">        <span class="attr">labelSelectors:</span></span><br><span class="line">          <span class="attr">app:</span> <span class="string">web</span></span><br><span class="line">      <span class="attr">duration:</span> <span class="string">&quot;30s&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="生产环境安全"><a href="#生产环境安全" class="headerlink" title="生产环境安全"></a>生产环境安全</h1><p>生产实验的底线：<strong>影响可控、可观测、可中止、可回滚</strong>。</p>
+<h2 id="Guardrail"><a href="#Guardrail" class="headerlink" title="Guardrail"></a>Guardrail</h2><ul>
+<li>只允许指定 namespace&#x2F;label</li>
+<li>禁止选择 kube-system、chaos-mesh、监控、etcd、Ingress 等关键组件</li>
+<li>设置最大持续时间、最大影响实例数</li>
+<li>生产实验必须审批</li>
+<li>实验期间 on-call 必须在岗</li>
+<li>有 kill switch</li>
+<li>有业务方确认</li>
+</ul>
+<h2 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h2><ul>
+<li>Chaos 工具使用独立 ServiceAccount</li>
+<li>最小 RBAC，只允许目标 namespace&#x2F;resource</li>
+<li>限制 CRD 创建权限</li>
+<li>审计所有实验创建&#x2F;删除</li>
+</ul>
+<h2 id="爆炸半径"><a href="#爆炸半径" class="headerlink" title="爆炸半径"></a>爆炸半径</h2><ul>
+<li>从 1 个实例开始</li>
+<li>用 canary 租户&#x2F;流量</li>
+<li>避开高峰和大促</li>
+<li>设置短持续时间</li>
+<li>先做只读&#x2F;低风险故障</li>
+</ul>
+<h2 id="中止与恢复"><a href="#中止与恢复" class="headerlink" title="中止与恢复"></a>中止与恢复</h2><ul>
+<li>中止条件写进实验文档</li>
+<li>一键停止&#x2F;删除 Chaos 资源</li>
+<li>确认恢复：Pod 重建、网络恢复、数据一致</li>
+<li>观察 SLO 回到基线</li>
+</ul>
+<h2 id="不要做的事"><a href="#不要做的事" class="headerlink" title="不要做的事"></a>不要做的事</h2><ul>
+<li>在生产随机杀节点</li>
+<li>对控制面&#x2F;存储核心组件做未演练的故障</li>
+<li>没有监控就注入</li>
+<li>没有回滚就注入</li>
+<li>用混沌实验“惩罚”团队</li>
+</ul>
+<h1 id="Game-Day"><a href="#Game-Day" class="headerlink" title="Game Day"></a>Game Day</h1><p>Game Day 是组织级故障演练，不只是技术注入。</p>
+<h2 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h2><ul>
+<li>验证跨团队协作</li>
+<li>验证监控、告警、on-call</li>
+<li>验证 runbook 和升级路径</li>
+<li>验证故障转移和恢复</li>
+<li>发现流程和组织问题</li>
+</ul>
+<h2 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h2><ul>
+<li>Coordinator：整体计划和安全</li>
+<li>Incident Commander：事故指挥</li>
+<li>Ops Lead：执行恢复</li>
+<li>Comms Lead：沟通</li>
+<li>Scribe：记录</li>
+<li>Observers：业务&#x2F;安全&#x2F;管理层</li>
+</ul>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><ol>
+<li>选题和范围</li>
+<li>写场景和假设</li>
+<li>准备监控、runbook、回滚</li>
+<li>通知参与方</li>
+<li>注入故障</li>
+<li>观察、沟通、恢复</li>
+<li>复盘和 action</li>
+</ol>
+<h2 id="场景示例"><a href="#场景示例" class="headerlink" title="场景示例"></a>场景示例</h2><ul>
+<li>核心服务 Pod 全部被杀</li>
+<li>数据库主库切换</li>
+<li>可用区故障</li>
+<li>DNS 故障</li>
+<li>证书过期</li>
+<li>Kafka 分区不可用</li>
+<li>HDFS NameNode 切换</li>
+</ul>
+<h2 id="复盘"><a href="#复盘" class="headerlink" title="复盘"></a>复盘</h2><ul>
+<li>时间线</li>
+<li>检测时间、响应时间、恢复时间</li>
+<li>哪些告警有效&#x2F;无效</li>
+<li>runbook 是否准确</li>
+<li>协作问题</li>
+<li>action item 和 owner</li>
+</ul>
+<h1 id="故障演练矩阵"><a href="#故障演练矩阵" class="headerlink" title="故障演练矩阵"></a>故障演练矩阵</h1><table>
+<thead>
+<tr>
+<th>层级</th>
+<th>场景</th>
+<th>验证点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pod</td>
+<td>杀 Pod、OOM、镜像拉取失败</td>
+<td>重启、探针、PDB</td>
+</tr>
+<tr>
+<td>Service</td>
+<td>网络延迟&#x2F;丢包&#x2F;分区、DNS 失败</td>
+<td>超时、重试、熔断、降级</td>
+</tr>
+<tr>
+<td>Node</td>
+<td>drain、宕机、kubelet 故障</td>
+<td>迁移、PDB、容量</td>
+</tr>
+<tr>
+<td>依赖</td>
+<td>DB 主从切换、Redis 超时、MQ 不可用</td>
+<td>连接池、重试、降级</td>
+</tr>
+<tr>
+<td>区域</td>
+<td>AZ 故障</td>
+<td>多活、DNS 切流、RTO&#x2F;RPO</td>
+</tr>
+<tr>
+<td>平台</td>
+<td>NameNode&#x2F;RM&#x2F;Kafka Controller&#x2F;ZK Leader</td>
+<td>HA 切换、客户端恢复</td>
+</tr>
+<tr>
+<td>安全</td>
+<td>证书过期、Token 失效</td>
+<td>告警、轮换、恢复</td>
+</tr>
+<tr>
+<td>数据</td>
+<td>数据损坏、重复、延迟</td>
+<td>校验、补偿、恢复</td>
+</tr>
+</tbody></table>
+<p>Hadoop 平台的具体演练项可参考《Hadoop大数据平台运维》中的 NameNode&#x2F;DataNode&#x2F;RM&#x2F;RegionServer&#x2F;Kafka&#x2F;ZK 演练。</p>
+<h1 id="可观测性要求"><a href="#可观测性要求" class="headerlink" title="可观测性要求"></a>可观测性要求</h1><p>没有可观测性，混沌实验就是“盲炸”。</p>
+<h2 id="实验前"><a href="#实验前" class="headerlink" title="实验前"></a>实验前</h2><ul>
+<li>基线：延迟、错误率、吞吐、容量</li>
+<li>看板：服务、依赖、基础设施</li>
+<li>告警：SLO burn rate、错误率、延迟、lag</li>
+<li>Trace：关键链路</li>
+<li>日志：错误、超时、重试</li>
+</ul>
+<h2 id="实验中"><a href="#实验中" class="headerlink" title="实验中"></a>实验中</h2><ul>
+<li>标记实验开始&#x2F;结束</li>
+<li>记录注入参数和目标</li>
+<li>观察 SLO、错误率、延迟、饱和度</li>
+<li>观察依赖和下游</li>
+<li>记录异常和恢复动作</li>
+</ul>
+<h2 id="实验后"><a href="#实验后" class="headerlink" title="实验后"></a>实验后</h2><ul>
+<li>对比基线</li>
+<li>确认恢复</li>
+<li>归档实验记录</li>
+<li>更新 runbook 和监控</li>
+</ul>
+<h2 id="告警处理"><a href="#告警处理" class="headerlink" title="告警处理"></a>告警处理</h2><p>实验期间可以临时调整告警，但不要完全静音：</p>
+<ul>
+<li>保留 SLO&#x2F;业务告警</li>
+<li>抑制已知的实验噪音</li>
+<li>确保真实故障仍能触发</li>
+</ul>
+<h1 id="自动化与-CI-x2F-CD"><a href="#自动化与-CI-x2F-CD" class="headerlink" title="自动化与 CI&#x2F;CD"></a>自动化与 CI&#x2F;CD</h1><h2 id="混沌即代码"><a href="#混沌即代码" class="headerlink" title="混沌即代码"></a>混沌即代码</h2><ul>
+<li>实验定义进 Git</li>
+<li>通过 GitOps 部署</li>
+<li>版本化、可审计、可回滚</li>
+<li>代码评审实验范围和风险</li>
+</ul>
+<h2 id="流水线"><a href="#流水线" class="headerlink" title="流水线"></a>流水线</h2><ul>
+<li>预发：每次发布后跑基础实验</li>
+<li>生产：定时&#x2F;灰度跑低风险实验</li>
+<li>灾备：定期跑切换&#x2F;恢复</li>
+<li>结果自动判定，失败阻断发布</li>
+</ul>
+<h2 id="调度"><a href="#调度" class="headerlink" title="调度"></a>调度</h2><ul>
+<li>Chaos Mesh <code>Schedule</code></li>
+<li>Litmus Workflow</li>
+<li>CI cron</li>
+<li>避开业务高峰</li>
+</ul>
+<h2 id="防止“自动化事故”"><a href="#防止“自动化事故”" class="headerlink" title="防止“自动化事故”"></a>防止“自动化事故”</h2><ul>
+<li>实验有最大范围&#x2F;时长</li>
+<li>有 kill switch</li>
+<li>有审批和审计</li>
+<li>失败自动停止</li>
+<li>不要在没有监控的环境自动跑</li>
+</ul>
+<h1 id="度量体系"><a href="#度量体系" class="headerlink" title="度量体系"></a>度量体系</h1><h2 id="实验覆盖"><a href="#实验覆盖" class="headerlink" title="实验覆盖"></a>实验覆盖</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">覆盖率 = 有混沌实验的核心服务数 / 核心服务总数</span><br></pre></td></tr></table></figure>
+
+<p>按服务、依赖、故障类型分别看。</p>
+<h2 id="故障响应"><a href="#故障响应" class="headerlink" title="故障响应"></a>故障响应</h2><ul>
+<li>检测时间（MTTD）</li>
+<li>响应时间</li>
+<li>恢复时间（MTTR）</li>
+<li>SLO 影响</li>
+<li>错误预算消耗</li>
+</ul>
+<h2 id="实验效果"><a href="#实验效果" class="headerlink" title="实验效果"></a>实验效果</h2><ul>
+<li>假设成立率</li>
+<li>发现问题数</li>
+<li>action 完成率</li>
+<li>复发率</li>
+<li>事故数量&#x2F;严重度趋势</li>
+</ul>
+<h2 id="不要用的指标"><a href="#不要用的指标" class="headerlink" title="不要用的指标"></a>不要用的指标</h2><ul>
+<li>实验次数（容易刷）</li>
+<li>注入故障数（不看价值）</li>
+<li>“杀了多少 Pod”</li>
+<li>用实验数量排名团队</li>
+</ul>
+<h1 id="组织与治理"><a href="#组织与治理" class="headerlink" title="组织与治理"></a>组织与治理</h1><h2 id="团队模型"><a href="#团队模型" class="headerlink" title="团队模型"></a>团队模型</h2><ul>
+<li>SRE&#x2F;平台团队负责工具、标准、guardrail</li>
+<li>业务团队负责自己的实验和修复</li>
+<li>安全团队审查权限和高风险实验</li>
+<li>管理层支持时间和资源</li>
+</ul>
+<h2 id="风险分级"><a href="#风险分级" class="headerlink" title="风险分级"></a>风险分级</h2><table>
+<thead>
+<tr>
+<th>级别</th>
+<th>范围</th>
+<th>审批</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>低</td>
+<td>预发&#x2F;单实例</td>
+<td>团队自审</td>
+</tr>
+<tr>
+<td>中</td>
+<td>生产 canary</td>
+<td>SRE + 业务</td>
+</tr>
+<tr>
+<td>高</td>
+<td>核心链路&#x2F;区域</td>
+<td>平台负责人 + 业务负责人</td>
+</tr>
+<tr>
+<td>极高</td>
+<td>控制面&#x2F;全量</td>
+<td>变更委员会</td>
+</tr>
+</tbody></table>
+<h2 id="文化"><a href="#文化" class="headerlink" title="文化"></a>文化</h2><ul>
+<li>复盘无指责</li>
+<li>鼓励主动发现问题</li>
+<li>不把实验失败当绩效问题</li>
+<li>把 action 跟踪到底</li>
+<li>共享故障案例</li>
+</ul>
+<h1 id="常见反模式"><a href="#常见反模式" class="headerlink" title="常见反模式"></a>常见反模式</h1><ul>
+<li>没有假设，直接杀 Pod</li>
+<li>没有稳态指标</li>
+<li>没有中止条件</li>
+<li>生产实验不通知</li>
+<li>没有监控和 trace</li>
+<li>只做 Pod kill，不做网络&#x2F;依赖&#x2F;区域</li>
+<li>实验后不修复</li>
+<li>自动化没有 guardrail</li>
+<li>用混沌实验惩罚团队</li>
+<li>把 Game Day 做成表演</li>
+<li>只做一次，不做持续实验</li>
+</ul>
+<h1 id="模板"><a href="#模板" class="headerlink" title="模板"></a>模板</h1><h2 id="实验文档模板"><a href="#实验文档模板" class="headerlink" title="实验文档模板"></a>实验文档模板</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">实验名称：</span><br><span class="line">Owner：</span><br><span class="line">日期/时间：</span><br><span class="line">目标服务：</span><br><span class="line">依赖：</span><br><span class="line">稳态指标与基线：</span><br><span class="line">假设：</span><br><span class="line">故障类型/参数：</span><br><span class="line">影响范围：</span><br><span class="line">持续时间：</span><br><span class="line">中止条件：</span><br><span class="line">回滚/恢复：</span><br><span class="line">通知对象：</span><br><span class="line">看板/告警：</span><br><span class="line">结果：</span><br><span class="line">Action：</span><br></pre></td></tr></table></figure>
+
+<h2 id="Game-Day-Runbook"><a href="#Game-Day-Runbook" class="headerlink" title="Game Day Runbook"></a>Game Day Runbook</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">目标：</span><br><span class="line">范围：</span><br><span class="line">参与角色：</span><br><span class="line">场景：</span><br><span class="line">时间线：</span><br><span class="line">注入步骤：</span><br><span class="line">观测指标：</span><br><span class="line">沟通渠道：</span><br><span class="line">中止条件：</span><br><span class="line">恢复步骤：</span><br><span class="line">复盘时间：</span><br></pre></td></tr></table></figure>
+
+<h2 id="复盘模板"><a href="#复盘模板" class="headerlink" title="复盘模板"></a>复盘模板</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">标题：</span><br><span class="line">影响：</span><br><span class="line">时间线：</span><br><span class="line">检测：</span><br><span class="line">响应：</span><br><span class="line">恢复：</span><br><span class="line">根因：</span><br><span class="line">促成因素：</span><br><span class="line">做得好的：</span><br><span class="line">需要改进：</span><br><span class="line">Action（owner/日期）：</span><br></pre></td></tr></table></figure>
+
+<h1 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h1><h2 id="案例-1：Pod-Kill-验证高可用"><a href="#案例-1：Pod-Kill-验证高可用" class="headerlink" title="案例 1：Pod Kill 验证高可用"></a>案例 1：Pod Kill 验证高可用</h2><ul>
+<li>假设：杀掉 1 个 web Pod，成功率仍 ≥ 99.9%</li>
+<li>注入：PodChaos pod-kill，mode one</li>
+<li>观察：Service Endpoint 摘除、Pod 重建、错误率</li>
+<li>结果：成功率短时下降到 99.5%，1 分钟后恢复</li>
+<li>改进：增加 readinessProbe、PDB、预热</li>
+</ul>
+<h2 id="案例-2：数据库网络延迟"><a href="#案例-2：数据库网络延迟" class="headerlink" title="案例 2：数据库网络延迟"></a>案例 2：数据库网络延迟</h2><ul>
+<li>假设：DB 延迟 100ms，接口 P95 &lt; 500ms</li>
+<li>注入：NetworkChaos delay</li>
+<li>观察：连接池、超时、重试、熔断</li>
+<li>结果：连接池耗尽，P95 超过 2s</li>
+<li>改进：调连接池、超时、熔断、降级</li>
+</ul>
+<h2 id="案例-3：可用区故障"><a href="#案例-3：可用区故障" class="headerlink" title="案例 3：可用区故障"></a>案例 3：可用区故障</h2><ul>
+<li>假设：一个 AZ 不可用，服务仍可用</li>
+<li>注入：Node drain&#x2F;AZ 隔离</li>
+<li>观察：Pod 迁移、PDB、DNS 切流、RTO</li>
+<li>结果：部分有状态服务恢复超时</li>
+<li>改进：多 AZ 部署、PDB、备份恢复演练</li>
+</ul>
+<h2 id="案例-4：Kafka-Broker-故障"><a href="#案例-4：Kafka-Broker-故障" class="headerlink" title="案例 4：Kafka Broker 故障"></a>案例 4：Kafka Broker 故障</h2><ul>
+<li>假设：停 1 个 Broker，生产&#x2F;消费不中断</li>
+<li>注入：Pod kill&#x2F;网络隔离</li>
+<li>观察：ISR、leader 选举、lag</li>
+<li>结果：ISR 收缩，短时延迟升高</li>
+<li>改进：副本因子、min.insync.replicas、容量</li>
+</ul>
+<h2 id="案例-5：NameNode-切换"><a href="#案例-5：NameNode-切换" class="headerlink" title="案例 5：NameNode 切换"></a>案例 5：NameNode 切换</h2><ul>
+<li>假设：Active NameNode 宕机，HDFS 自动切换</li>
+<li>注入：停 Active NameNode</li>
+<li>观察：ZKFC、JournalNode、客户端重试</li>
+<li>结果：切换成功，部分作业重试</li>
+<li>改进：客户端重试配置、监控、演练频率</li>
+</ul>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Chaos Mesh</span></span><br><span class="line">kubectl get podchaos,networkchaos,stresschaos -A</span><br><span class="line">kubectl describe podchaos &lt;name&gt; -n chaos-mesh</span><br><span class="line">kubectl delete podchaos &lt;name&gt; -n chaos-mesh</span><br><span class="line"></span><br><span class="line"><span class="comment"># ChaosBlade</span></span><br><span class="line">blade create cpu load --cpu-percent 80</span><br><span class="line">blade create network delay --time 3000 --interface eth0</span><br><span class="line">blade status &lt;uid&gt;</span><br><span class="line">blade destroy &lt;uid&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># Litmus</span></span><br><span class="line">kubectl get chaosengine -A</span><br><span class="line">kubectl get chaosresult -A</span><br></pre></td></tr></table></figure>
+
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://principlesofchaos.org/">Principles of Chaos Engineering</a></li>
+<li><a target="_blank" rel="noopener" href="https://chaos-mesh.org/docs/">Chaos Mesh</a></li>
+<li><a target="_blank" rel="noopener" href="https://chaosblade.io/docs/">ChaosBlade</a></li>
+<li><a target="_blank" rel="noopener" href="https://litmuschaos.io/">LitmusChaos</a></li>
+<li><a target="_blank" rel="noopener" href="https://sre.google/sre-book/testing-reliability/">Google SRE - Testing for Reliability</a></li>
+<li><a target="_blank" rel="noopener" href="https://sre.google/workbook/table-of-contents/">Google SRE Workbook - Disaster Recovery</a></li>
+</ul>
+
+  </div>
+  
+  
+    
+    <div class='footer'>
+       <!-- 参考资料、相关资料等 -->
+      
+       <!-- 相关文章 -->
+      
+      <!-- 版权声明组件 -->
+      
+      <!-- 打赏组件 -->
+      
+    </div>
+  
+  
+    
+
+
+  <div class='article-meta' id="bottom">
+    <div class='new-meta-box'>
+      
+        
+          
+  
+  
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/SRE/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>SRE</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>混沌工程</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E6%95%85%E9%9A%9C%E6%BC%94%E7%BB%83/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>故障演练</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%8F%AF%E9%9D%A0%E6%80%A7/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>可靠性</p></a></div>
+  <span hidden itemprop="keywords">Kubernetes SRE 混沌工程 故障演练 可靠性</span>
+  
+
+
+        
+      
+    </div>
+    <!-- Custom Files bottomMeta begin -->
+    
+    <!-- Custom Files bottomMeta end -->
+  </div>
+
+
+  
+  
+
+  
+    <div class="prev-next">
+      
+        <a class='prev' href='/2026/SpringBoot%E6%B7%B1%E5%BA%A6%E7%AC%94%E8%AE%B0/'>
+          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Spring Boot 深度笔记</p>
+          <p class='content'>本文基于 Spring Boot 4.1.2 官方文档重写，面向有生产经验的 Java 开发，讲清自动配置、配置体系、Bean 生命周期、Web、数据访问、事务、安全、可观测性、测试、原生镜像、...</p>
+        </a>
+      
+      
+        <a class='next' href='/2026/Kubernetes-Operator%E5%BC%80%E5%8F%91/'>
+          <p class='title'>Kubernetes Operator 开发<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
+          <p class='content'>本文基于 Kubernetes v1.37、Kubebuilder v4.16.0、controller-runtime v0.25.2 官方文档编写，讲清 Operator 的原理、CRD 设...</p>
+        </a>
+      
+    </div>
+  
+  <!-- 文章推荐 -->
+  
+  
+  <!-- Custom Files postEnd begin-->
+  
+  <!-- Custom Files postEnd end-->
+</article>
+
+
+
+
+</div>
+<aside id='l_side' itemscope itemtype="http://schema.org/WPSideBar">
+  
+
+  
+    
+    
+      
+    
+  
+
+
+<div class="widget-sticky pjax">
+
+  
+  
+
+
+  <section class="widget toc-wrapper desktop mobile " id="toc-div" >
+    
+  <header>
+    
+      <i class="fas fa-list fa-fw" aria-hidden="true"></i><span class='name'>本文目录</span>
+    
+  </header>
+
+
+    <div class='content'>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B"><span class="toc-text">什么是混沌工程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%94%E4%B8%AA%E6%A0%B8%E5%BF%83%E5%8E%9F%E5%88%99"><span class="toc-text">五个核心原则</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%9B%B4%E7%BB%95%E7%A8%B3%E6%80%81%E5%BB%BA%E7%AB%8B%E5%81%87%E8%AE%BE"><span class="toc-text">1. 围绕稳态建立假设</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%8F%98%E5%8C%96%E7%9C%9F%E5%AE%9E%E4%B8%96%E7%95%8C%E4%BA%8B%E4%BB%B6"><span class="toc-text">2. 变化真实世界事件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%9C%A8%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E5%81%9A%E5%AE%9E%E9%AA%8C"><span class="toc-text">3. 在生产环境做实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E8%87%AA%E5%8A%A8%E5%8C%96%E5%AE%9E%E9%AA%8C%E4%BB%A5%E6%8C%81%E7%BB%AD%E8%BF%90%E8%A1%8C"><span class="toc-text">4. 自动化实验以持续运行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E6%9C%80%E5%B0%8F%E5%8C%96%E7%88%86%E7%82%B8%E5%8D%8A%E5%BE%84"><span class="toc-text">5. 最小化爆炸半径</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B7%E6%B2%8C%E5%B7%A5%E7%A8%8B%E4%B8%8E%E7%9B%B8%E5%85%B3%E5%AE%9E%E8%B7%B5%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">混沌工程与相关实践的区别</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%88%90%E7%86%9F%E5%BA%A6%E6%A8%A1%E5%9E%8B"><span class="toc-text">成熟度模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E8%AE%BE%E8%AE%A1%E6%96%B9%E6%B3%95"><span class="toc-text">实验设计方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E6%96%87%E6%A1%A3"><span class="toc-text">实验文档</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E6%AD%A5%E9%AA%A4"><span class="toc-text">设计步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E6%AD%A2%E6%9D%A1%E4%BB%B6"><span class="toc-text">中止条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E5%88%86%E7%BA%A7"><span class="toc-text">实验分级</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%A8%B3%E6%80%81%E6%8C%87%E6%A0%87"><span class="toc-text">稳态指标</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%BB%84%E9%87%91%E4%BF%A1%E5%8F%B7"><span class="toc-text">黄金信号</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLO-%E6%8C%87%E6%A0%87"><span class="toc-text">SLO 指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%9A%E5%8A%A1%E6%8C%87%E6%A0%87"><span class="toc-text">业务指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%BA%BF"><span class="toc-text">基线</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E7%B1%BB%E5%9E%8B%E5%85%A8%E6%99%AF"><span class="toc-text">故障类型全景</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%E7%B1%BB"><span class="toc-text">资源类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E7%B1%BB"><span class="toc-text">网络类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B-x2F-%E5%AE%B9%E5%99%A8%E7%B1%BB"><span class="toc-text">进程&#x2F;容器类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%8A%82%E7%82%B9%E7%B1%BB"><span class="toc-text">节点类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%B1%BB"><span class="toc-text">中间件类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%91%E4%B8%8E%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD"><span class="toc-text">云与基础设施</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E7%B1%BB"><span class="toc-text">数据类</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E7%B1%BB"><span class="toc-text">安全类</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B"><span class="toc-text">工具选型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Chaos-Mesh"><span class="toc-text">Chaos Mesh</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ChaosBlade"><span class="toc-text">ChaosBlade</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LitmusChaos"><span class="toc-text">LitmusChaos</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-text">其他</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%89%E5%9E%8B%E5%AF%B9%E6%AF%94"><span class="toc-text">选型对比</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubernetes-%E5%AE%9E%E9%AA%8C%E5%AE%9E%E6%88%98"><span class="toc-text">Kubernetes 实验实战</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E8%A3%85-Chaos-Mesh"><span class="toc-text">安装 Chaos Mesh</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Pod-Kill"><span class="toc-text">Pod Kill</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F"><span class="toc-text">网络延迟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%88%86%E5%8C%BA"><span class="toc-text">网络分区</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CPU-x2F-%E5%86%85%E5%AD%98%E5%8E%8B%E5%8A%9B"><span class="toc-text">CPU&#x2F;内存压力</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DNS-%E6%95%85%E9%9A%9C"><span class="toc-text">DNS 故障</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Workflow-%E7%BC%96%E6%8E%92"><span class="toc-text">Workflow 编排</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E5%AE%89%E5%85%A8"><span class="toc-text">生产环境安全</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Guardrail"><span class="toc-text">Guardrail</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%99%90"><span class="toc-text">权限</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%88%86%E7%82%B8%E5%8D%8A%E5%BE%84"><span class="toc-text">爆炸半径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%AD%E6%AD%A2%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">中止与恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E8%A6%81%E5%81%9A%E7%9A%84%E4%BA%8B"><span class="toc-text">不要做的事</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Game-Day"><span class="toc-text">Game Day</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E6%A0%87"><span class="toc-text">目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%92%E8%89%B2"><span class="toc-text">角色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-text">流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%BA%E6%99%AF%E7%A4%BA%E4%BE%8B"><span class="toc-text">场景示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98"><span class="toc-text">复盘</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%BC%94%E7%BB%83%E7%9F%A9%E9%98%B5"><span class="toc-text">故障演练矩阵</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7%E8%A6%81%E6%B1%82"><span class="toc-text">可观测性要求</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E5%89%8D"><span class="toc-text">实验前</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E4%B8%AD"><span class="toc-text">实验中</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E5%90%8E"><span class="toc-text">实验后</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6%E5%A4%84%E7%90%86"><span class="toc-text">告警处理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%8E-CI-x2F-CD"><span class="toc-text">自动化与 CI&#x2F;CD</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B7%E6%B2%8C%E5%8D%B3%E4%BB%A3%E7%A0%81"><span class="toc-text">混沌即代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-text">流水线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6"><span class="toc-text">调度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B2%E6%AD%A2%E2%80%9C%E8%87%AA%E5%8A%A8%E5%8C%96%E4%BA%8B%E6%95%85%E2%80%9D"><span class="toc-text">防止“自动化事故”</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%A6%E9%87%8F%E4%BD%93%E7%B3%BB"><span class="toc-text">度量体系</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E8%A6%86%E7%9B%96"><span class="toc-text">实验覆盖</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E5%93%8D%E5%BA%94"><span class="toc-text">故障响应</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E6%95%88%E6%9E%9C"><span class="toc-text">实验效果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E8%A6%81%E7%94%A8%E7%9A%84%E6%8C%87%E6%A0%87"><span class="toc-text">不要用的指标</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BB%84%E7%BB%87%E4%B8%8E%E6%B2%BB%E7%90%86"><span class="toc-text">组织与治理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%A2%E9%98%9F%E6%A8%A1%E5%9E%8B"><span class="toc-text">团队模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A3%8E%E9%99%A9%E5%88%86%E7%BA%A7"><span class="toc-text">风险分级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E5%8C%96"><span class="toc-text">文化</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">常见反模式</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A8%A1%E6%9D%BF"><span class="toc-text">模板</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E6%96%87%E6%A1%A3%E6%A8%A1%E6%9D%BF"><span class="toc-text">实验文档模板</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Game-Day-Runbook"><span class="toc-text">Game Day Runbook</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E7%9B%98%E6%A8%A1%E6%9D%BF"><span class="toc-text">复盘模板</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B"><span class="toc-text">案例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-1%EF%BC%9APod-Kill-%E9%AA%8C%E8%AF%81%E9%AB%98%E5%8F%AF%E7%94%A8"><span class="toc-text">案例 1：Pod Kill 验证高可用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-2%EF%BC%9A%E6%95%B0%E6%8D%AE%E5%BA%93%E7%BD%91%E7%BB%9C%E5%BB%B6%E8%BF%9F"><span class="toc-text">案例 2：数据库网络延迟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-3%EF%BC%9A%E5%8F%AF%E7%94%A8%E5%8C%BA%E6%95%85%E9%9A%9C"><span class="toc-text">案例 3：可用区故障</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-4%EF%BC%9AKafka-Broker-%E6%95%85%E9%9A%9C"><span class="toc-text">案例 4：Kafka Broker 故障</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B-5%EF%BC%9ANameNode-%E5%88%87%E6%8D%A2"><span class="toc-text">案例 5：NameNode 切换</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
+    </div>
+  </section>
+
+  
+
+</div>
+
+
+<!-- 没有 pjax 占位会报错 万恶的 pjax -->
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <div class="pjax">
+    <!-- pjax占位 -->
+  </div>
+
+  <!-- Custom Files side begin -->
+  
+  <!-- Custom Files side end -->
+</aside>
+
+
+
+          <!--此文件用来存放一些不方便取值的变量-->
+<!--思路大概是将值藏到重加载的区域内-->
+
+<pjax>
+<script>
+  window.pdata={}
+  pdata.ispage=true;
+  pdata.commentPath="";
+  pdata.commentPlaceholder="";
+  pdata.commentConfig={};
+  //  see: /layout/_partial/scripts/_ctrl.ejs
+  
+    // header
+    var l_header=document.getElementById("l_header");
+    
+    l_header.classList.add("show");
+    
+    
+      // cover
+      var cover_wrapper=document.querySelector('#l_cover .cover-wrapper');
+      var scroll_down=document.getElementById('scroll-down');
+      cover_wrapper.id="none";
+      cover_wrapper.style.display="none";
+      scroll_down.style.display="none";
+    
+  
+</script>
+</pjax>
+        </div>
+        
+  
+  <footer class="footer clearfix"  itemscope itemtype="http://schema.org/WPFooter">
+    <br><br>
+    
+      
+        <div class="aplayer-container">
+          
+
+
+        </div>
+      
+    
+      
+        <br>
+        <div class="social-wrapper" itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          
+            
+              <a href="https://github.com/serchaofan"
+                class="social fab fa-github flat-btn"
+                target="_blank"
+                rel="external nofollow noopener noreferrer" itemprop="url">
+                
+              </a>
+            
+          
+        </div>
+      
+    
+      
+        <div><p>博客内容遵循 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans">署名-非商业性使用-相同方式共享 4.0 国际 (CC BY-NC-SA 4.0) 协议</a></p>
+</div>
+      
+    
+    <!-- Custom Files footer begin-->
+    
+    <!-- Custom Files footer end-->
+  </footer>
+
+
+        <a id="s-top" class="fa-solid fa-arrow-up fa-fw" title="top"></a>
+      </div>
+    </div>
+    <div>
+      <script>
+  /******************** volantis.dom ********************************/
+  // 页面选择器 将dom对象缓存起来 see: /source/js/app.js etc.
+  volantis.dom.bodyAnchor = volantis.dom.$(document.getElementById("safearea")); // 页面主体
+  volantis.dom.topBtn = volantis.dom.$(document.getElementById('s-top')); // 向上
+  volantis.dom.wrapper = volantis.dom.$(document.getElementById('wrapper')); // 整个导航栏
+  volantis.dom.coverAnchor = volantis.dom.$(document.querySelector('#l_cover .cover-wrapper')); // 1个
+  volantis.dom.switcher = volantis.dom.$(document.querySelector('#l_header .switcher .s-search')); // 搜索按钮   移动端 1个
+  volantis.dom.header = volantis.dom.$(document.getElementById('l_header')); // 移动端导航栏
+  volantis.dom.search = volantis.dom.$(document.querySelector('#l_header .m_search')); // 搜索框 桌面端 移动端 1个
+  volantis.dom.mPhoneList = volantis.dom.$(document.querySelectorAll('#l_header .m-phone .list-v')); //  手机端 子菜单 多个
+</script>
+
+<script>
+  
+  volantis.css("https://cdn.bootcdn.net/ajax/libs/font-awesome/6.1.1/css/all.min.css");
+  
+  
+  
+</script>
+
+<!-- required -->
+
+
+<!-- internal -->
+<script src="/js/app.js"></script>
+
+
+
+<!-- rightmenu要在darkmode之前（ToggleButton） darkmode要在comments之前（volantis.dark.push）-->
+
+
+
+<script>
+  function loadIssuesJS() {
+    
+      const sites_api = document.getElementById('sites-api');
+      if (sites_api != undefined && typeof SitesJS === 'undefined') {
+        volantis.js("/js/plugins/tags/sites.js")
+      }
+    
+    
+      const friends_api = document.getElementById('friends-api');
+      if (friends_api != undefined && typeof FriendsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/friends.js")
+      }
+    
+    
+      const contributors_api = document.getElementById('contributors-api');
+      if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
+        volantis.js("/js/plugins/tags/contributors.js")
+      }
+    
+  };
+  loadIssuesJS()
+  volantis.pjax.push(()=>{
+    loadIssuesJS();
+  })
+
+</script>
+
+
+
+
+  <script defer src="https://cdn.bootcdn.net/ajax/libs/vanilla-lazyload/17.1.0/lazyload.min.js"></script>
+<script>
+  // https://www.npmjs.com/package/vanilla-lazyload
+  // Set the options globally
+  // to make LazyLoad self-initialize
+  window.lazyLoadOptions = {
+    elements_selector: ".lazyload",
+    threshold: 0
+  };
+  // Listen to the initialization event
+  // and get the instance of LazyLoad
+  window.addEventListener(
+    "LazyLoad::Initialized",
+    function (event) {
+      window.lazyLoadInstance = event.detail.instance;
+    },
+    false
+  );
+  document.addEventListener('DOMContentLoaded', function () {
+    lazyLoadInstance.update();
+  });
+  document.addEventListener('pjax:complete', function () {
+    lazyLoadInstance.update();
+  });
+</script>
+
+
+
+
+  
+
+<script>
+  window.FPConfig = {
+	delay: 0,
+	ignoreKeywords: ["#"],
+	maxRPS: 6,
+	hoverDelay: 0
+  };
+</script>
+<script defer src="https://unpkg.com/volantis-static@0.0.1660614606622/libs/flying-pages/flying-pages.min.js"></script>
+
+
+
+
+
+
+
+
+
+      <script>
+  volantis.layoutHelper("comments",`<div id="giscus_container"></div>`)
+
+  volantis.giscus = {};
+
+  function check_giscus() {
+    if (volantis.dark.mode === "dark") {
+      volantis.giscus.Theme = 'dark';
+    } else {
+      volantis.giscus.Theme = 'light';
+    }
+
+    return document.getElementById("giscus_container");
+  }
+
+  function pjax_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+    let cfg = Object.assign({"theme":{"light":"light","dark":"dark"}},pdata.commentConfig)
+    const script = document.createElement('script');
+    script.setAttribute('src', 'https://giscus.app/client.js');
+    Object.keys(cfg).forEach(k=>{
+      if (k != "theme") {
+        script.setAttribute('data-'+k, cfg[k]);
+      }
+    })
+    script.setAttribute('data-theme', volantis.giscus.Theme);
+    script.setAttribute('crossorigin', "anonymous");
+    HEAD.appendChild(script);
+  }
+
+  function dark_giscus() {
+    const HEAD = check_giscus();
+    if (!HEAD) return;
+
+    const message = {
+      setConfig: {
+        theme: volantis.giscus.Theme
+      }
+    };
+    const giscusIframe = document.querySelector('iframe.giscus-frame');
+    giscusIframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+  }
+  pjax_giscus();
+  volantis.pjax.push(pjax_giscus);
+  volantis.dark.push(dark_giscus);
+</script>
+
+    
+
+
+
+
+
+<!-- optional -->
+
+  <script>
+  async function loadSearchScript() {
+    
+        
+    
+    return volantis.js("/js/search/hexo.js");
+  }
+
+  function loadSearchService() {
+    loadSearchScript();
+    document.querySelectorAll(".input.u-search-input").forEach((e) => {
+      e.removeEventListener("focus", loadSearchService, false);
+    });
+
+    document.querySelectorAll(".u-search-form").forEach((e) => {
+      e.addEventListener("submit", (event) => {
+        event.preventDefault();
+      }, false);
+    });
+  }
+
+  // 打开并搜索 字符串 s
+  function OpenSearch(s) {
+    if (typeof SearchService === 'undefined')
+      loadSearchScript().then(() => {
+        SearchService.setQueryText(s);
+        SearchService.search();
+      });
+    else {
+      SearchService.setQueryText(s);
+      SearchService.search();
+    }
+  }
+
+  // 访问含有 ?s=xxx  的链接时打开搜索 // 与搜索引擎 structured data 相关: /scripts/helpers/structured-data/lib/config.js
+  if (window.location.search && /^\?s=/g.test(window.location.search)) {
+    let queryText = decodeURI(window.location.search)
+      .replace(/\ /g, "-")
+      .replace(/^\?s=/g, "");
+    OpenSearch(queryText);
+  }
+
+  // 搜索输入框获取焦点时加载搜索
+  document.querySelectorAll(".input.u-search-input").forEach((e) => {
+    e.addEventListener("focus", loadSearchService, false);
+  });
+</script>
+
+
+
+
+
+
+
+  <script>
+
+
+
+  function pjax_highlightjs_copyCode(){
+    if (!(document.querySelector(".highlight .code pre") ||
+      document.querySelector(".article pre code"))) {
+      return;
+    }
+    VolantisApp.utilCopyCode(".highlight .code pre, .article pre code")
+  }
+  volantis.requestAnimationFrame(pjax_highlightjs_copyCode)
+  volantis.pjax.push(pjax_highlightjs_copyCode)
+
+</script>
+
+
+
+
+
+
+
+
+
+
+  <script>
+  function load_swiper() {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    volantis.css("https://cdn.bootcdn.net/ajax/libs/Swiper/8.3.2/swiper-bundle.min.css");
+    volantis.js("https://cdn.bootcdn.net/ajax/libs/Swiper/8.3.2/swiper-bundle.min.js").then(() => {
+      pjax_swiper();
+    });
+  }
+
+  load_swiper();
+
+  function pjax_swiper() {
+    volantis.swiper = new Swiper('.swiper-container', {
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      centeredSlides: true,
+      loop: true,
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+    });
+  }
+
+  volantis.pjax.push(() => {
+    if (!document.querySelectorAll(".swiper-container")[0]) return;
+    if (typeof volantis.swiper === "undefined") {
+      load_swiper();
+    } else {
+      pjax_swiper();
+    }
+  });
+</script>
+
+
+
+  <script>
+  volantis.css("https://cdn.bootcdn.net/ajax/libs/pace/1.2.4/themes/blue/pace-theme-minimal.min.css");
+  volantis.js("https://cdn.bootcdn.net/ajax/libs/pace/1.2.4/pace.min.js").then(() => {
+    Pace.options.restartOnPushState = false;
+    volantis.pjax.send(Pace.restart);
+    // 阅读进度
+    volantis.scroll.push(() => {
+      Pace.stop();
+      Pace.trigger('start');
+      Pace.bar.update(volantis.scroll.progress() * 100);
+      document.body.className = document.body.className.replaceAll("pace-running ","");
+    },"阅读进度")
+    // todo：配置项开关, 哪些页面添加阅读进度
+  })
+</script>
+
+
+<!-- pjax 标签必须存在于所有页面 否则 pjax error -->
+<pjax>
+
+</pjax>
+
+<script>
+  function listenSidebarTOC() {
+    const navItems = document.querySelectorAll(".toc li");
+    if (!navItems.length) return;
+    const targets = []
+    const sections = Array.from(navItems).forEach((element) => {
+      const link = element.querySelector(".toc-link");
+      const target = document.getElementById(
+        link.getAttribute("href") ? decodeURI(link.getAttribute("href")).replace("#", "") : link.getAttribute("toc-action").split("toc-")[1] // 兼容 hexo-blog-encrypt
+      );
+      targets.push(target)
+      // 解除 a 标签 href 的 锚点定位, a 标签 href 的 锚点定位 会随机启用?? 产生错位???
+      if (link.getAttribute("href")) {
+        link.setAttribute("toc-action", "toc-" + decodeURI(link.getAttribute("href")).replace("#", ""))
+        link.removeAttribute("href")
+      }
+      // 配置 点击 触发新的锚点定位
+      if (target && target.id) {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          // 这里的 addTop 是通过错位使得 toc 自动展开.
+          volantis.scroll.to(target, { addTop: 5, observer: true })
+          // Anchor id
+          history.pushState(null, document.title, "#" + target.id);
+        });
+      }
+      return target;
+    });
+
+    function activateNavByIndex(target) {
+      if (target.classList.contains("active-current")) return;
+
+      document.querySelectorAll(".toc .active").forEach((element) => {
+        element.classList.remove("active", "active-current");
+      });
+      target.classList.add("active", "active-current");
+      let parent = target.parentNode;
+      while (!parent.matches(".toc")) {
+        if (parent.matches("li")) parent.classList.add("active");
+        parent = parent.parentNode;
+      }
+    }
+
+    // 方案一：
+    volantis.activateNavIndex = 0
+    activateNavByIndex(navItems[volantis.activateNavIndex])
+    if (targets[0]) {
+      volantis.scroll.push(() => {
+        if (targets[0].getBoundingClientRect().top >= 0) {
+          volantis.activateNavIndex = 0
+        } else if (targets[targets.length - 1].getBoundingClientRect().top < 0) {
+          volantis.activateNavIndex = targets.length - 1
+        } else {
+          for (let index = 0; index < targets.length; index++) {
+            const target0 = targets[index];
+            const target1 = targets[(index + 1) % targets.length];
+            if (target0.getBoundingClientRect().top < 0 && target1.getBoundingClientRect().top >= 0) {
+              volantis.activateNavIndex = index
+              break;
+            }
+          }
+        }
+        activateNavByIndex(navItems[volantis.activateNavIndex])
+      })
+    }
+
+    // 方案二：
+    // IntersectionObserver 不是完美精确到像素级别 也不是低延时性的
+    // function findIndex(entries) {
+    //   let index = 0;
+    //   let entry = entries[index];
+    //   if (entry.boundingClientRect.top > 0) {
+    //     index = sections.indexOf(entry.target);
+    //     return index === 0 ? 0 : index - 1;
+    //   }
+    //   for (; index < entries.length; index++) {
+    //     if (entries[index].boundingClientRect.top <= 0) {
+    //       entry = entries[index];
+    //     } else {
+    //       return sections.indexOf(entry.target);
+    //     }
+    //   }
+    //   return sections.indexOf(entry.target);
+    // }
+    // function createIntersectionObserver(marginTop) {
+    //   marginTop = Math.floor(marginTop + 10000);
+    //   let intersectionObserver = new IntersectionObserver(
+    //     (entries, observe) => {
+    //       let scrollHeight = document.documentElement.scrollHeight;
+    //       if (scrollHeight > marginTop) {
+    //         observe.disconnect();
+    //         createIntersectionObserver(scrollHeight);
+    //         return;
+    //       }
+    //       let index = findIndex(entries);
+    //       activateNavByIndex(navItems[index]);
+    //     }, {
+    //       rootMargin: marginTop + "px 0px -100% 0px",
+    //       threshold: 0,
+    //     }
+    //   );
+    //   sections.forEach((element) => {
+    //     element && intersectionObserver.observe(element);
+    //   });
+    // }
+    // createIntersectionObserver(document.documentElement.scrollHeight);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    volantis.requestAnimationFrame(listenSidebarTOC)
+  });
+  volantis.pjax.push(listenSidebarTOC);
+</script>
+
+
+
+
+
+<script>
+  document.onreadystatechange = function () {
+    if (document.readyState == 'complete') {
+      // 页面加载完毕 样式加载失败，或是当前网速慢，或是开启了省流模式
+      const { saveData, effectiveType } = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {}
+      if (getComputedStyle(document.querySelector("#safearea"), null)["display"] == "none" || saveData || /2g/.test(effectiveType)) {
+        document.querySelectorAll(".reveal").forEach(function (e) {
+          e.style["opacity"] = "1";
+        });
+        document.querySelector("#safearea").style["display"] = "block";
+      }
+    }
+  }
+</script>
+
+
+
+      
+        <!--
+  pjax重载区域接口：
+  1.  <pjax></pjax> 标签 pjax 标签必须存在于所有页面 否则 pjax error
+  2.  script[data-pjax]
+  3.  .pjax-reload script
+  4.  .pjax
+-->
+
+
+
+<script src="https://cdn.bootcdn.net/ajax/libs/pjax/0.2.8/pjax.min.js"></script>
+
+<script>
+// 性能监控与降级控制
+const performanceMonitor = {
+  slowThreshold: 800,     // 慢请求阈值(毫秒)
+  slowCount: 0,           // 连续慢请求计数
+  maxSlowAllowed: 2,      // 允许的最大连续慢请求数
+  requestStartTime: 0,    // 请求开始时间戳
+
+  // 记录请求开始时间
+  start() {
+    this.requestStartTime = Date.now();
+  },
+
+  // 计算请求耗时并判断
+  check() {
+    const duration = Date.now() - this.requestStartTime;
+    
+    if (duration > this.slowThreshold) {
+      this.slowCount++;
+    } else {
+      this.slowCount = 0;    // 耗时正常，重置计数
+    }
+  },
+  // 测试结果
+  res(){
+    // 连续慢请求达到阈值，强制刷新
+    if (this.slowCount >= this.maxSlowAllowed) {         
+      return true;    // 需要降级
+    }
+    return false;     // 无需降级
+  }
+};
+    var pjax;
+    document.addEventListener('DOMContentLoaded', function () {
+      pjax = new Pjax({
+        elements: 'a[href]:not([href^="#"]):not([href="javascript:void(0)"]):not([pjax-fancybox]):not([onclick="return false;"]):not([onclick="return!1"]):not([target="_blank"]):not([target="view_window"]):not([href$=".xml"])',
+        // 这里的 selectors 需要保证每个页面都含有相同的数目
+        selectors: [
+          "head title",
+          "head meta[name=keywords]",
+          "head meta[name=description]",
+          
+          "#l_main",
+          "#pjax-header-nav-list",
+          ".pjax",
+          "pjax", // <pjax></pjax> 标签
+          // 临时测试
+          "meta[name=robots]",
+          "link[rel=canonical]",
+          "meta[property='og:title']",
+          "meta[property='og:description']",
+          "meta[property='og:url']",
+          "meta[property='og:image']",
+          "script[type='application/ld+json']",
+        ],
+        cacheBust: false,   // url 地址追加时间戳，用以避免浏览器缓存
+        timeout: 5000,
+        
+      });
+    });
+
+    document.addEventListener('pjax:send', function (e) {
+      window.stop(); // 相当于点击了浏览器的停止按钮
+      performanceMonitor.start();  // 请求开始计时
+
+      try {
+        var currentUrl = window.location.pathname;
+        var targetUrl = e.triggerElement.href;
+        var excludeList = [""];
+        if (excludeList[0] != "") {
+          excludeList.forEach(item => {
+            if(currentUrl.indexOf(item) != -1 || targetUrl.indexOf(item) != -1) {
+              window.location.href = targetUrl;
+            }
+          });
+        }
+        if (performanceMonitor.res()){
+          window.location.href = targetUrl;
+        }
+      } catch (error) {}
+
+      // 使用 volantis.pjax.send 方法传入pjax:send回调函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.send.start();
+    });
+
+    document.addEventListener('pjax:complete', function () {
+      // 降级控制检测
+      performanceMonitor.check()
+      // 这里的 script 不需要保证每个页面都含有相同的数目
+      document.querySelectorAll('script[data-pjax], .pjax-reload script').forEach(e=>{
+        const code = e.text || e.textContent || e.innerHTML || '';
+        const script = document.createElement('script');
+        Object.keys(e.attributes).forEach(i=>{
+          script.setAttribute(e.attributes[i].nodeName,e.attributes[i].nodeValue)
+        })
+        if (code) {
+          script.appendChild(document.createTextNode(code));
+        }
+        e.parentNode.replaceChild(script, e);
+      });
+
+      // 使用 volantis.pjax.push 方法传入重载函数 参见layout/_partial/scripts/global.ejs
+      volantis.pjax.method.complete.start();
+    });
+
+    document.addEventListener('pjax:error', function (e) {
+      if(volantis.debug === "pjax") {
+        console.error(e);
+        console.log('pjax error: \n' + JSON.stringify(e));
+      }else{
+        // 使用 volantis.pjax.error 方法传入pjax:error回调函数 参见layout/_partial/scripts/global.ejs
+        volantis.pjax.method.error.start();
+        window.location.href = e.triggerElement.href;
+      }
+    });
+</script>
+
+      
+    </div>
+    <!-- import body_end begin-->
+    <!-- import body_end end-->
+    <!-- Custom Files bodyEnd begin-->
+    
+    <!-- Custom Files bodyEnd end-->
+  </body>
+</html>

@@ -35,27 +35,24 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>Kafka基础笔记 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="消息中间件, Kafka,undefined">
-  <meta desc name="description" content="
-消息队列
-Kafka 介绍
-架构
-
-
-搭建
- - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="消息中间件, 运维,Kafka,消息队列,KRaft,undefined">
+  <meta desc name="description" content="本文按 Apache Kafka 4.3.1 官方文档重写，面向生产运维，讲清 KRaft、分区副本、ISR、生产消费、分层存储、监控、容量、升级和故障排查。Kafka 4.x 已移除 ZooKeeper，旧笔记里的 ZK 搭建方式不再适用。
+最后更新：2026-10-22 - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kafka基础笔记">
 <meta property="og:url" content="https://tianyigu.top/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="消息队列 Kafka 介绍 架构   搭建">
+<meta property="og:description" content="本文按 Apache Kafka 4.3.1 官方文档重写，面向生产运维，讲清 KRaft、分区副本、ISR、生产消费、分层存储、监控、容量、升级和故障排查。Kafka 4.x 已移除 ZooKeeper，旧笔记里的 ZK 搭建方式不再适用。 最后更新：2026-10-22">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-01-07T14:45:38.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.836Z">
+<meta property="article:modified_time" content="2026-10-22T17:24:36.383Z">
 <meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="运维">
 <meta property="article:tag" content="Kafka">
+<meta property="article:tag" content="消息队列">
+<meta property="article:tag" content="KRaft">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
   <style>
@@ -2258,7 +2255,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792686289207),
+    lastupdate: new Date(1792690087254),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2305,7 +2302,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/消息中间件/","name":"消息中间件"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kafka基础笔记/","name":"Kafka基础笔记"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kafka基础笔记","description":"\n消息队列\nKafka 介绍\n架构\n\n\n搭建\n","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/","wordCount":23,"datePublished":"2020-01-07T14:45:38.000Z","dateModified":"2026-03-11T19:05:28.836Z","articleSection":"消息中间件","keywords":"Kafka","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/消息中间件/","name":"消息中间件"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Kafka基础笔记/","name":"Kafka基础笔记"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Kafka基础笔记","description":"本文按 Apache Kafka 4.3.1 官方文档重写，面向生产运维，讲清 KRaft、分区副本、ISR、生产消费、分层存储、监控、容量、升级和故障排查。Kafka 4.x 已移除 ZooKeeper，旧笔记里的 ZK 搭建方式不再适用。\n最后更新：2026-10-22","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Kafka%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/","wordCount":137,"datePublished":"2020-01-07T14:45:38.000Z","dateModified":"2026-10-22T17:24:36.383Z","articleSection":"消息中间件","keywords":"运维,Kafka,消息队列,KRaft","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2686,125 +2683,681 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <ul>
-<li><a href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97">消息队列</a></li>
-<li><a href="#kafka-%E4%BB%8B%E7%BB%8D">Kafka 介绍</a><ul>
-<li><a href="#%E6%9E%B6%E6%9E%84">架构</a></li>
-</ul>
-</li>
-<li><a href="#%E6%90%AD%E5%BB%BA">搭建</a></li>
-</ul>
+    <p>本文按 Apache Kafka 4.3.1 官方文档重写，面向生产运维，讲清 KRaft、分区副本、ISR、生产消费、分层存储、监控、容量、升级和故障排查。Kafka 4.x 已移除 ZooKeeper，旧笔记里的 ZK 搭建方式不再适用。</p>
+<p>最后更新：2026-10-22</p>
 <span id="more"></span>
 
-<h1 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h1><p>消息队列（Message Queue）是一种进程间通信或同一进程的不同线程间的通信方式，软件的队列用来处理一系列的输入，通常是来自用户。<br>消息队列提供了异步的通信协议，每一个队列中的纪录包含详细说明的数据，包含发生的时间，输入设备的种类，以及特定的输入参数，也就是说：消息的发送者和接收者不需要同时与消息队列交互。消息会保存在队列中，直到接收者取回它。</p>
-<p>消息队列各个角色：</p>
 <ul>
-<li>Producer：消息生产者。负责产生和发送消息到 Broker</li>
-<li>Broker：消息处理中心。负责消息存储、确认、重试等，一般其中会包含多个 queue</li>
-<li>Consumer：消息消费者。负责从 Broker 中获取消息，并进行相应处理</li>
+<li><a href="#%E7%89%88%E6%9C%AC%E4%B8%8E%E5%AE%9A%E4%BD%8D">版本与定位</a></li>
+<li><a href="#%E6%9E%B6%E6%9E%84%E4%B8%8E-kraft">架构与 KRaft</a></li>
+<li><a href="#%E6%97%A5%E5%BF%97%E5%AD%98%E5%82%A8">日志存储</a></li>
+<li><a href="#%E5%A4%8D%E5%88%B6%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7">复制与一致性</a></li>
+<li><a href="#%E7%94%9F%E4%BA%A7%E8%80%85">生产者</a></li>
+<li><a href="#%E6%B6%88%E8%B4%B9%E8%80%85%E4%B8%8E%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84">消费者与消费者组</a></li>
+<li><a href="#%E5%88%86%E5%8C%BA%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1">分区与负载均衡</a></li>
+<li><a href="#%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8">分层存储</a></li>
+<li><a href="#%E5%AE%89%E5%85%A8">安全</a></li>
+<li><a href="#%E8%BF%90%E7%BB%B4%E6%93%8D%E4%BD%9C">运维操作</a></li>
+<li><a href="#%E7%9B%91%E6%8E%A7">监控</a></li>
+<li><a href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%AE%B9%E9%87%8F">性能与容量</a></li>
+<li><a href="#%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5">故障排查</a></li>
+<li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
+<li><a href="#%E9%99%84%E5%BD%95">附录</a></li>
 </ul>
-<p>消息队列种类：</p>
+<h1 id="版本与定位"><a href="#版本与定位" class="headerlink" title="版本与定位"></a>版本与定位</h1><h2 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h2><ul>
+<li>当前版本：<strong>Kafka 4.3.1</strong>（2026-06）</li>
+<li>4.x 只支持 <strong>KRaft</strong>，ZooKeeper 已移除</li>
+<li>Broker 需要 Java 17+</li>
+<li>4.x 继续演进分层存储、新消费者协议、Share Groups 等能力</li>
+</ul>
+<h2 id="定位"><a href="#定位" class="headerlink" title="定位"></a>定位</h2><p>Kafka 是分布式事件流平台：</p>
 <ul>
-<li><p>Peer—To-Peer：消息生产者生产消息发送到 queue 中，然后消息消费者从 queue 中取出并且消费消息。消息被消费以后，queue 中不再有存储，所以消息消费者不可能消费到已经被消费的消息。queue 支持存在多个消费者，但是对一个消息而言，只会有一个消费者可以消费。</p>
+<li><strong>消息系统</strong>：解耦、削峰、异步、重放</li>
+<li><strong>存储系统</strong>：持久化日志、多副本、保留策略</li>
+<li><strong>流处理平台</strong>：Kafka Streams、Connect、生态集成</li>
+</ul>
+<p>核心保证：</p>
 <ul>
-<li>一般基于 Pull 或 Polling 接收消息</li>
-<li>支持异步”即发即弃“的消息传送方式，支持同步请求&#x2F;应答传送方式</li>
-<li>支持一对一、一对多、多对多、多对一等多种配置方式，支持树状、网状等多种拓扑结构。</li>
+<li>分区内有序</li>
+<li>副本冗余</li>
+<li>可水平扩展</li>
+<li>可重放</li>
+<li>可配置持久性（acks&#x2F;ISR）</li>
 </ul>
-</li>
-<li><p>发布&#x2F;订阅：消息生产者将消息发布到 topic 中，同时有多个消息消费者消费该消息。和点对点方式不同，发布到 topic 的消息会被所有订阅者消费。</p>
+<p>Kafka 不保证：</p>
 <ul>
-<li>发布到一个主题的信息，可被多个订阅者所接收</li>
-<li>发布&#x2F;订阅可基于 Push 消费数据，也可基于 Polling 消费数据</li>
-<li>解耦能力比 P2P 模型更强</li>
+<li>全局有序（除非单分区）</li>
+<li>跨分区事务的读隔离对普通消费者透明</li>
+<li>低延迟一定优于其他 MQ（取决于配置）</li>
 </ul>
-</li>
-<li><p>多点广播：能够将消息发送到多个目标站点 (Destination List)。可以使用一条 MQ 指令将单一消息发送到多个目标站点，并确保为每一站点可靠地提供信息。</p>
+<h1 id="架构与-KRaft"><a href="#架构与-KRaft" class="headerlink" title="架构与 KRaft"></a>架构与 KRaft</h1><h2 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h2><ul>
+<li><strong>Broker</strong>：存储和读写消息</li>
+<li><strong>Controller</strong>：管理集群元数据、Leader 选举、Topic&#x2F;Partition 变更</li>
+<li><strong>KRaft Quorum</strong>：控制器组成元数据共识组</li>
+<li><strong>Producer&#x2F;Consumer</strong>：客户端</li>
+</ul>
+<p>KRaft 架构：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">+-------------------+       +-------------------+</span><br><span class="line">| Controller 1      |&lt;-----&gt;| Controller 2      |</span><br><span class="line">| metadata log      |       | metadata log      |</span><br><span class="line">+---------+---------+       +---------+---------+</span><br><span class="line">          ^                           ^</span><br><span class="line">          |     metadata quorum       |</span><br><span class="line">          +-------------+-------------+</span><br><span class="line">                        |</span><br><span class="line">          +-------------+-------------+</span><br><span class="line">          |                           |</span><br><span class="line">   +------+------+             +------+------+</span><br><span class="line">   | Broker 1    |             | Broker 2    |</span><br><span class="line">   | partitions  |             | partitions  |</span><br><span class="line">   +-------------+             +-------------+</span><br></pre></td></tr></table></figure>
+
+<h2 id="KRaft-配置"><a href="#KRaft-配置" class="headerlink" title="KRaft 配置"></a>KRaft 配置</h2><p>控制器：</p>
+<figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">process.roles</span>=<span class="string">controller</span></span><br><span class="line"><span class="attr">node.id</span>=<span class="string">1</span></span><br><span class="line"><span class="attr">listeners</span>=<span class="string">CONTROLLER://controller1:9093</span></span><br><span class="line"><span class="attr">controller.listener.names</span>=<span class="string">CONTROLLER</span></span><br><span class="line"><span class="attr">controller.quorum.bootstrap.servers</span>=<span class="string">controller1:9093,controller2:9093,controller3:9093</span></span><br></pre></td></tr></table></figure>
+
+<p>Broker：</p>
+<figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">process.roles</span>=<span class="string">broker</span></span><br><span class="line"><span class="attr">node.id</span>=<span class="string">101</span></span><br><span class="line"><span class="attr">listeners</span>=<span class="string">PLAINTEXT://broker1:9092</span></span><br><span class="line"><span class="attr">advertised.listeners</span>=<span class="string">PLAINTEXT://broker1:9092</span></span><br><span class="line"><span class="attr">controller.listener.names</span>=<span class="string">CONTROLLER</span></span><br><span class="line"><span class="attr">controller.quorum.bootstrap.servers</span>=<span class="string">controller1:9093,controller2:9093,controller3:9093</span></span><br></pre></td></tr></table></figure>
+
+<p>说明：</p>
 <ul>
-<li>MQ 不仅提供了多点广播的功能，而且还拥有智能消息分发功能，在将一条消息发送到同一系统上的多个用户时，MQ 将消息的一个复制版本和该系统上接收者的名单发送到目标 MQ 系统。目标 MQ 系统在本地复制这些消息，并将它们发送到名单上的队列，从而尽可能减少网络的传输量。</li>
+<li><code>controller.quorum.bootstrap.servers</code> 是 4.x 动态 quorum 的推荐写法</li>
+<li><code>controller.quorum.voters</code> 是旧静态 quorum 写法，KRaft version 1 起已废弃</li>
+<li>所有 broker&#x2F;controller 都要能解析控制器地址</li>
+<li><code>controller.listener.names</code> 要和 <code>listeners</code> 中的 listener 名称一致</li>
 </ul>
-</li>
-<li><p>群集 (Cluster)：为了简化点对点通讯模式中的系统配置，MQ 提供 Cluster(群集) 的解决方案。群集类似于一个域 (Domain)，群集内部的队列管理器之间通讯时，不需要两两之间建立消息通道，而是采用群集 (Cluster) 通道与其它成员通讯，从而大大简化了系统配置。</p>
+<h2 id="控制器数量"><a href="#控制器数量" class="headerlink" title="控制器数量"></a>控制器数量</h2><ul>
+<li>生产用 3 或 5 个控制器</li>
+<li>3 个容忍 1 个故障；5 个容忍 2 个</li>
+<li>要容忍 N 个故障，需要 <code>2N+1</code> 个控制器</li>
+<li>控制器保存元数据在内存和磁盘，典型 5GB 内存&#x2F;磁盘足够，按集群规模评估</li>
+<li>不要把 controller 和 broker 混部在关键生产环境（combined mode 仅适合开发&#x2F;小规模）</li>
+</ul>
+<h2 id="格式化与启动"><a href="#格式化与启动" class="headerlink" title="格式化与启动"></a>格式化与启动</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">CLUSTER_ID=$(bin/kafka-storage.sh random-uuid)</span><br><span class="line">bin/kafka-storage.sh format --cluster-id <span class="string">&quot;<span class="variable">$CLUSTER_ID</span>&quot;</span> --config config/controller.properties</span><br><span class="line">bin/kafka-storage.sh format --cluster-id <span class="string">&quot;<span class="variable">$CLUSTER_ID</span>&quot;</span> --config config/server.properties</span><br><span class="line"></span><br><span class="line">bin/kafka-server-start.sh -daemon config/controller.properties</span><br><span class="line">bin/kafka-server-start.sh -daemon config/server.properties</span><br></pre></td></tr></table></figure>
+
+<p>多控制器 bootstrap 可用 <code>--initial-controllers</code>，保证所有控制器使用同一集群 ID 和初始 voters。</p>
+<h2 id="元数据"><a href="#元数据" class="headerlink" title="元数据"></a>元数据</h2><ul>
+<li>KRaft 用 <code>__cluster_metadata</code> 日志保存元数据</li>
+<li>控制器定期生成 snapshot</li>
+<li>查看 quorum：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-metadata-quorum.sh --bootstrap-controller controller1:9093 describe --status</span><br><span class="line">bin/kafka-metadata-quorum.sh --bootstrap-controller controller1:9093 describe --replication</span><br></pre></td></tr></table></figure>
+
 <ul>
-<li>此外，群集中的队列管理器之间能够自动进行负载均衡，当某一队列管理器出现故障时，其它队列管理器可以接管它的工作，从而大大提高系统的高可靠性。</li>
+<li>查看 metadata shell：</li>
 </ul>
-</li>
-</ul>
-<p>消息队列特性：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-metadata-shell.sh --snapshot metadata_dir/__cluster_metadata-0/00000000000000000000-0000000000.checkpoint</span><br></pre></td></tr></table></figure>
+
 <ul>
-<li>异步性：将耗时的同步操作，通过以发送消息的方式，进行了<strong>异步化处理。减少了同步等待的时间</strong>。</li>
-<li>松耦合：<strong>消息队列减少了服务之间的耦合性</strong>，不同的服务可以通过消息队列进行通信，而不用关心彼此的实现细节，只要定义好消息的格式就行。</li>
-<li>分布式：通过<strong>对消费者的横向扩展</strong>，降低了消息队列阻塞的风险，以及单个消费者产生单点故障的可能性（当然消息队列本身也可以做成分布式集群）。</li>
-<li>可靠性：消息队列一般会<strong>把接收到的消息存储到本地硬盘上</strong>（当消息被处理完之后，存储信息根据不同的消息队列实现，有可能将其删除），这样即使应用挂掉或者消息队列本身挂掉，消息也能够重新加载。</li>
-<li>可恢复性：系统的一部分组件失效时，不会影响到整个系统。消息队列降低了进程间的耦合度，所以<strong>即使一个处理消息的进程挂掉，加入队列中的消息仍然可以在系统恢复后被处理。</strong></li>
-<li>顺序保证：在大多使用场景下，数据处理的顺序都很重要。<strong>大部分消息队列本来就是排序的，并且能保证数据会按照特定的顺序来处理。</strong></li>
-<li>缓冲：在任何重要的系统中，都会有需要不同的处理时间的元素。例如，加载一张图片比应用过滤器花费更少的时间。消息队列通过一个缓冲层来帮助任务最高效率的执行———写入队列的处理会尽可能的快速。该缓冲有助于控制和优化数据流经过系统的速度。</li>
+<li>解码 metadata 日志：</li>
 </ul>
-<h1 id="Kafka-介绍"><a href="#Kafka-介绍" class="headerlink" title="Kafka 介绍"></a>Kafka 介绍</h1><p>Kafka 最初是由 LinkedIn 采用 scala 编写的多分区、多副本且基于 Zookeeper 协调的分布式消息系统，目前为 Apache 的项目。<br>目前，kafka 定位为一个分布式流式处理平台，可提供消息持久化，即使 TB 级别的消息存储也能保持长时间的稳定性能，以高吞吐、可持久化、可水平扩展、支持流数据处理等特性被广泛使用。</p>
-<p>Kafka 扮演了三大角色：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-dump-log.sh --cluster-metadata-decoder --files metadata_dir/__cluster_metadata-0/00000000000000000000.<span class="built_in">log</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="从-ZooKeeper-迁移"><a href="#从-ZooKeeper-迁移" class="headerlink" title="从 ZooKeeper 迁移"></a>从 ZooKeeper 迁移</h2><ul>
+<li>3.x ZooKeeper 集群需要先迁移到 KRaft</li>
+<li>4.x 不再支持 ZooKeeper 模式</li>
+<li>迁移前备份、演练、确认客户端兼容</li>
+<li>迁移后 <code>controller.quorum.voters</code>&#x2F;ZK 配置全部移除</li>
+</ul>
+<h1 id="日志存储"><a href="#日志存储" class="headerlink" title="日志存储"></a>日志存储</h1><h2 id="分区日志"><a href="#分区日志" class="headerlink" title="分区日志"></a>分区日志</h2><p>每个 Partition 是一个追加日志：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">segment-0.log</span><br><span class="line">segment-0.index</span><br><span class="line">segment-0.timeindex</span><br><span class="line">segment-1.log</span><br><span class="line">segment-1.index</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
 <ul>
-<li>消息系统：Kafka 和传统的消息系统（消息中间件）都具备系统解耦、冗余存储、流量削峰、缓存、异步通信、扩展性、可恢复性等功能。同时，kafka 还提供大多数消息系统难以实现的消息顺序性保障及回溯消费功能</li>
-<li>存储系统：Kafka 把消息持久化到磁盘，相比于其他基于内存存储的系统而言，有效降低了数据丢失的风险，得益于 Kafka 的消息持久化和多副本，可以把 Kafka 作为长期的数据存储系统来使用，只需要把对应的数据保留策略设置为永久或启动主题的日志压缩功能即可。</li>
-<li>流式处理平台：Kafka 不仅为每个流行的流式处理框架提供了可靠的数据来源，还提供了一个完整的流式处理类库，如窗口、连接、变换和聚合等操作。</li>
+<li><code>.log</code>：消息数据</li>
+<li><code>.index</code>：offset 索引</li>
+<li><code>.timeindex</code>：时间索引</li>
+<li><code>.txnindex</code>：事务索引</li>
+<li><code>.snapshot</code>：幂等&#x2F;事务 producer 快照</li>
 </ul>
-<p>Kafka 设计目标：</p>
+<h2 id="Segment"><a href="#Segment" class="headerlink" title="Segment"></a>Segment</h2><ul>
+<li><code>segment.bytes</code>：单 segment 大小，默认 1GB</li>
+<li><code>segment.ms</code>：滚动时间</li>
+<li><code>log.roll.hours</code> 等</li>
+<li>小 segment 增加文件数和索引开销</li>
+<li>大 segment 增加删除&#x2F;压缩粒度</li>
+</ul>
+<h2 id="保留"><a href="#保留" class="headerlink" title="保留"></a>保留</h2><ul>
+<li><code>retention.ms</code> &#x2F; <code>retention.bytes</code>：按时间&#x2F;大小删除</li>
+<li><code>cleanup.policy=delete|compact|compact,delete</code></li>
+<li><code>delete.retention.ms</code>：tombstone 保留时间</li>
+<li><code>min.cleanable.dirty.ratio</code>：compaction 触发比例</li>
+<li><code>max.compaction.lag.ms</code>：最大延迟</li>
+<li>compaction 适合 changelog&#x2F;状态类 topic，不适合普通事件流</li>
+</ul>
+<h2 id="Page-Cache"><a href="#Page-Cache" class="headerlink" title="Page Cache"></a>Page Cache</h2><p>Kafka 依赖 OS page cache：</p>
 <ul>
-<li>高吞吐率：在廉价的商用机器上单机可支持每秒 100 万条消息的读写</li>
-<li>消息持久化：所有消息均被持久化到磁盘，无消息丢失，支持消息重放</li>
-<li>完全分布式：Producer，Broker，Consumer 均支持水平扩展</li>
-<li>同时适应在线流处理和离线批处理</li>
+<li>写入先到 page cache，再刷盘</li>
+<li>读取命中 page cache 时非常快</li>
+<li>不要用 <code>O_DIRECT</code>（Kafka 不使用）</li>
+<li>预留足够内存给 page cache</li>
+<li>监控 <code>dirty</code>、<code>writeback</code>、磁盘 await</li>
 </ul>
-<h2 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h2>
+<h2 id="磁盘"><a href="#磁盘" class="headerlink" title="磁盘"></a>磁盘</h2><ul>
+<li>JBOD：多个 <code>log.dirs</code>，Kafka 自己管理</li>
+<li>RAID：硬件 RAID 也可，但 JBOD + 副本更常见</li>
+<li>SSD 提升随机 IO 和恢复速度</li>
+<li>磁盘满会导致 broker 不可写，必须提前告警</li>
+<li>单盘故障时 JBOD 只影响该盘上的分区</li>
+</ul>
+<h1 id="复制与一致性"><a href="#复制与一致性" class="headerlink" title="复制与一致性"></a>复制与一致性</h1><h2 id="Leader-x2F-Follower"><a href="#Leader-x2F-Follower" class="headerlink" title="Leader &#x2F; Follower"></a>Leader &#x2F; Follower</h2><ul>
+<li>每个分区一个 leader，多个 follower</li>
+<li>生产和消费默认走 leader</li>
+<li>follower 从 leader fetch</li>
+<li>ISR：与 leader 保持同步的副本集合</li>
+</ul>
+<h2 id="LEO-x2F-HW"><a href="#LEO-x2F-HW" class="headerlink" title="LEO &#x2F; HW"></a>LEO &#x2F; HW</h2><ul>
+<li><strong>LEO</strong>（Log End Offset）：日志末尾 offset</li>
+<li><strong>HW</strong>（High Watermark）：已提交、对消费者可见的 offset</li>
+<li>消费者只能读到 HW 之前的消息</li>
+<li>follower 追平后 leader 推进 HW</li>
+</ul>
+<h2 id="ISR-与-min-insync-replicas"><a href="#ISR-与-min-insync-replicas" class="headerlink" title="ISR 与 min.insync.replicas"></a>ISR 与 min.insync.replicas</h2><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">default.replication.factor</span>=<span class="string">3</span></span><br><span class="line"><span class="attr">min.insync.replicas</span>=<span class="string">2</span></span><br></pre></td></tr></table></figure>
 
-<p>常见术语：</p>
 <ul>
-<li>Topic：主题，特指 Kafka 处理的消息源（feeds of messages）的不同分类，Kafka 中消息以主题为单位进行归类，生产者负责将消息发送到特定的主题，然后消费者负责订阅主题并消费。物理上不同 topic 的消息分开存储，逻辑上一个 topic 的消息虽然保存于一个或多个 broker 上但用户只需指定消息的 topic 即可生产或消费数据而不必关心数据存于何处。</li>
-<li>Partition：分区，Topic 物理上的分组，一个 topic 可以分为多个 partition，每个 partition 是一个有序的队列。<ul>
-<li>分区在存储层面可以看作一个可追加的日志文件，消息被追加到分区日志文件时都会分配一个特定的偏移量（offset），offset 是消息在分区中的唯一标识，Kafka 通过它保证消息在分区内的有序性，且 offset 不跨分区，就是说 Kafka 保证分区有序而不是主题有序。</li>
-<li>创建 topic 时可指定 parition 数量。每个 partition 对应于一个文件夹，该文件夹下存储该 partition 的数据和索引文件。</li>
-<li>Kafka 的分区可分布在不同的服务器（Broker）上，也就是说，一个主题可横跨多个 Broker，一次提供比单个 Broker 更强大的性能。</li>
+<li><code>acks=all</code> + <code>min.insync.replicas=2</code> + RF&#x3D;3：允许 1 个副本故障仍可写</li>
+<li>ISR 小于 min.insync 时，<code>acks=all</code> 写入会失败（<code>NotEnoughReplicas</code>）</li>
+<li>这是“宁可不可写，也不丢数据”的取舍</li>
+<li>可用性优先的场景可降低 min.insync，但要接受数据风险</li>
 </ul>
-</li>
-<li>Message：消息，是通信的基本单位，每个 producer 可以向一个 topic（主题）发布一些消息。</li>
-<li>Producers：一个动词，向 Kafka 的一个 topic 发布消息的过程叫做 producers。</li>
-<li>Consumers：一个动词，订阅 topics 并处理其发布的消息的过程叫做 consumers。</li>
-<li>Consumer Group：消费者组，可以并行消费 Topic 中 partition 的消息</li>
+<h2 id="acks"><a href="#acks" class="headerlink" title="acks"></a>acks</h2><table>
+<thead>
+<tr>
+<th>acks</th>
+<th>行为</th>
+<th>风险</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0</td>
+<td>不等确认</td>
+<td>可能丢</td>
+</tr>
+<tr>
+<td>1</td>
+<td>leader 写入即确认</td>
+<td>leader 故障可能丢</td>
+</tr>
+<tr>
+<td>all</td>
+<td>ISR 满足 min.insync 才确认</td>
+<td>最安全，延迟更高</td>
+</tr>
+</tbody></table>
+<p>Kafka 3.0+ 默认 <code>acks=all</code>、<code>enable.idempotence=true</code>。</p>
+<h2 id="unclean-选举"><a href="#unclean-选举" class="headerlink" title="unclean 选举"></a>unclean 选举</h2><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">unclean.leader.election.enable</span>=<span class="string">false</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>false</code>：只在 ISR 中选 leader，优先一致性</li>
+<li><code>true</code>：允许非 ISR 副本当 leader，优先可用性，可能丢数据</li>
+<li>生产默认关闭</li>
 </ul>
-<p>每条消息被发送到 Broker 前，会根据分区规划选择存储到哪个具体分区。若分区规则设置地合理，则所有消息都可均匀地分配到不同分区中。若一个主题只对应一个文件，那么这个文件所在的机器 I&#x2F;O 将会成为这个主题的性能瓶颈，而分区解决了这个问题。</p>
-<h1 id="搭建"><a href="#搭建" class="headerlink" title="搭建"></a>搭建</h1><p>需要先安装 JAVA 环境</p>
-<p>从官网下载最新的 Kafka 的 tar 包，解压放到<code>/usr/local/</code>下。</p>
-<p>先配置启动 Zookeeper，Kafka 包简易集成了 Zookeeper。首先修改<code>config/</code>中的<code>&quot;zookeeper.properties&quot;</code>配置文件</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dataDir=/data/zookeeper    # zookeeper的数据存放，最好专门放一个目录</span><br><span class="line">clientPort=2181       # 启动端口，默认2181</span><br></pre></td></tr></table></figure>
+<h2 id="Leader-选举"><a href="#Leader-选举" class="headerlink" title="Leader 选举"></a>Leader 选举</h2><ul>
+<li>broker 停止&#x2F;故障，controller 选新 leader</li>
+<li>preferred leader：副本列表第一个</li>
+<li><code>auto.leader.rebalance.enable=true</code> 会逐步恢复 preferred leader</li>
+<li>手动：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-leader-election.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --election-type preferred --all-topic-partitions</span><br></pre></td></tr></table></figure>
 
-<p>kafka 包的<code>bin/</code>中有一个脚本启动 zookeeper，为<code>zookeeper-server-start.sh</code>。<br>在 kafka 包中，执行以下命令即可启动单机 zookeeper</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bin/zookeeper-server-start.sh config/zookeeper.properties</span><br></pre></td></tr></table></figure>
+<h2 id="副本同步"><a href="#副本同步" class="headerlink" title="副本同步"></a>副本同步</h2><ul>
+<li>follower 定期 fetch</li>
+<li><code>replica.fetch.max.bytes</code>、<code>replica.fetch.wait.max.ms</code></li>
+<li><code>num.replica.fetchers</code> 提升并行</li>
+<li>网络&#x2F;磁盘慢会导致 ISR 收缩</li>
+<li>监控 <code>UnderReplicatedPartitions</code>、<code>IsrShrinksPerSec</code>、<code>MaxLag</code></li>
+</ul>
+<h1 id="生产者"><a href="#生产者" class="headerlink" title="生产者"></a>生产者</h1><h2 id="核心配置"><a href="#核心配置" class="headerlink" title="核心配置"></a>核心配置</h2><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">acks</span>=<span class="string">all</span></span><br><span class="line"><span class="attr">enable.idempotence</span>=<span class="string">true</span></span><br><span class="line"><span class="attr">compression.type</span>=<span class="string">zstd</span></span><br><span class="line"><span class="attr">linger.ms</span>=<span class="string">5</span></span><br><span class="line"><span class="attr">batch.size</span>=<span class="string">32768</span></span><br><span class="line"><span class="attr">max.in.flight.requests.per.connection</span>=<span class="string">5</span></span><br><span class="line"><span class="attr">delivery.timeout.ms</span>=<span class="string">120000</span></span><br></pre></td></tr></table></figure>
 
-<p>查看 zookeeper 是否启动</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lsof -i:2181</span><br><span class="line">COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME</span><br><span class="line">java    21999 root  116u  IPv6 771206      0t0  TCP *:eforward (LISTEN)</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>batch.size</code> 和 <code>linger.ms</code> 提升吞吐，但增加延迟</li>
+<li><code>compression.type</code> 降低网络和磁盘，增加 CPU</li>
+<li><code>max.in.flight</code> 与幂等&#x2F;顺序有关</li>
+<li><code>delivery.timeout.ms</code> 包含重试和等待</li>
+<li><code>retries</code> 默认很大，靠 timeout 控制</li>
+</ul>
+<h2 id="幂等与事务"><a href="#幂等与事务" class="headerlink" title="幂等与事务"></a>幂等与事务</h2><p>幂等：</p>
+<ul>
+<li><code>enable.idempotence=true</code>（默认）</li>
+<li>避免重试导致重复</li>
+<li>需要 <code>acks=all</code>、<code>max.in.flight&lt;=5</code> 等约束</li>
+</ul>
+<p>事务：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">producer.initTransactions();</span><br><span class="line">producer.beginTransaction();</span><br><span class="line">producer.send(...);</span><br><span class="line">producer.sendOffsetsToTransaction(...);</span><br><span class="line">producer.commitTransaction();</span><br></pre></td></tr></table></figure>
 
-<p>然后启动 kafka，先配置文件<code>config/server.properties</code></p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">broker.id=0    # Broker的id</span><br><span class="line">listeners=PLAINTEXT://localhost:9092   # 监听端口，默认9092</span><br><span class="line">log.dirs=/data/kafka-logs   # 将数据持久化到哪个目录</span><br><span class="line">num.partitions=3    # 默认的partition数量</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>transactional.id</code> 唯一</li>
+<li>用于 consume-transform-produce 的 exactly-once</li>
+<li>事务超时、<code>transaction.timeout.ms</code>、<code>transaction.state.log.*</code> 要规划</li>
+<li>事务 topic 的 RF&#x2F;minISR 不能太低</li>
+</ul>
+<h2 id="分区器"><a href="#分区器" class="headerlink" title="分区器"></a>分区器</h2><ul>
+<li>有 key：按 key hash 到分区，保证同 key 有序</li>
+<li>无 key：sticky partitioner 批量写一个分区，提升吞吐</li>
+<li>自定义 partitioner 要避免热点</li>
+<li>key 设计决定分区分布</li>
+</ul>
+<h2 id="顺序"><a href="#顺序" class="headerlink" title="顺序"></a>顺序</h2><ul>
+<li>分区内有序</li>
+<li>需要全局有序：单分区或应用层排序</li>
+<li>重试 + <code>max.in.flight&gt;1</code> 可能乱序，幂等会处理</li>
+<li>事务可保证跨分区原子写，但不保证读顺序</li>
+</ul>
+<h1 id="消费者与消费者组"><a href="#消费者与消费者组" class="headerlink" title="消费者与消费者组"></a>消费者与消费者组</h1><h2 id="拉模型"><a href="#拉模型" class="headerlink" title="拉模型"></a>拉模型</h2><ul>
+<li>consumer 主动 fetch</li>
+<li><code>fetch.min.bytes</code>、<code>fetch.max.wait.ms</code>、<code>max.partition.fetch.bytes</code></li>
+<li><code>max.poll.records</code> 控制单次处理量</li>
+<li><code>max.poll.interval.ms</code> 控制处理超时</li>
+</ul>
+<h2 id="消费者组"><a href="#消费者组" class="headerlink" title="消费者组"></a>消费者组</h2><ul>
+<li>同一 group 内一个分区只分配给一个 consumer</li>
+<li>分区数决定最大并行度</li>
+<li>offset 存在 <code>__consumer_offsets</code></li>
+<li><code>group.id</code> 相同即同一组</li>
+</ul>
+<h2 id="Rebalance"><a href="#Rebalance" class="headerlink" title="Rebalance"></a>Rebalance</h2><p>触发：</p>
+<ul>
+<li>consumer 加入&#x2F;离开</li>
+<li>订阅变化</li>
+<li>分区数变化</li>
+<li>coordinator 变化</li>
+<li>心跳超时</li>
+</ul>
+<p>关键配置：</p>
+<figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">session.timeout.ms</span>=<span class="string">45000</span></span><br><span class="line"><span class="attr">heartbeat.interval.ms</span>=<span class="string">3000</span></span><br><span class="line"><span class="attr">max.poll.interval.ms</span>=<span class="string">300000</span></span><br><span class="line"><span class="attr">group.instance.id</span>=<span class="string">consumer-1</span></span><br><span class="line"><span class="attr">partition.assignment.strategy</span>=<span class="string">org.apache.kafka.clients.consumer.CooperativeStickyAssignor</span></span><br></pre></td></tr></table></figure>
 
-<p>然后通过脚本<code>kafka-server-start.sh</code>启动 Kafka，并指定<code>-daemon</code>后台启动</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">bin/kafka-server-start.sh -daemon config/server.properties</span><br></pre></td></tr></table></figure>
+<ul>
+<li>静态成员 <code>group.instance.id</code> 减少滚动重启 rebalance</li>
+<li>cooperative sticky 减少全量 rebalance</li>
+<li><code>max.poll.interval.ms</code> 太小会导致频繁 rebalance</li>
+<li>rebalance storm 会导致消费暂停和 lag 飙升</li>
+</ul>
+<h2 id="新消费者协议"><a href="#新消费者协议" class="headerlink" title="新消费者协议"></a>新消费者协议</h2><p>Kafka 4.x 提供新一代消费者 rebalance 协议（KIP-848），减少 rebalance 停顿。使用前确认 broker、客户端和框架支持，生产先灰度。</p>
+<h2 id="Offset-提交"><a href="#Offset-提交" class="headerlink" title="Offset 提交"></a>Offset 提交</h2><ul>
+<li>自动提交：简单，可能重复&#x2F;丢</li>
+<li>手动提交：至少一次，处理成功后提交</li>
+<li>幂等消费：业务去重</li>
+<li>exactly-once：事务 + 幂等 + 下游支持</li>
+</ul>
+<h2 id="Lag"><a href="#Lag" class="headerlink" title="Lag"></a>Lag</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-consumer-groups.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --describe --group my-group</span><br></pre></td></tr></table></figure>
 
-<p>再查看一下 Kafka 是否启动</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># lsof -i:9092</span><br><span class="line">COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME</span><br><span class="line">java    5199 root  121u  IPv6  81847      0t0  TCP localhost:XmlIpcRegSvc (LISTEN)</span><br><span class="line">java    5199 root  137u  IPv6  82158      0t0  TCP localhost:54104-&gt;localhost:XmlIpcRegSvc (ESTABLISHED)</span><br><span class="line">java    5199 root  138u  IPv6  82159      0t0  TCP localhost:XmlIpcRegSvc-&gt;localhost:54104 (ESTABLISHED)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># lsof -i:2181</span><br><span class="line">COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME</span><br><span class="line">java    3080 root  116u  IPv6  72020      0t0  TCP *:eforward (LISTEN)</span><br><span class="line">java    3080 root  122u  IPv6  82155      0t0  TCP localhost:eforward-&gt;localhost:55208 (ESTABLISHED)</span><br><span class="line">java    5199 root  116u  IPv6  82154      0t0  TCP localhost:55208-&gt;localhost:eforward (ESTABLISHED)</span><br><span class="line"></span><br><span class="line"># Zookeeper和Kafka也建立了连接</span><br></pre></td></tr></table></figure>
+<p>关注：</p>
+<ul>
+<li><code>CURRENT-OFFSET</code></li>
+<li><code>LOG-END-OFFSET</code></li>
+<li><code>LAG</code></li>
+<li>consumer 成员和分配</li>
+</ul>
+<p>Lag 持续增长说明消费能力不足、下游慢、分区倾斜或 rebalance。</p>
+<h1 id="分区与负载均衡"><a href="#分区与负载均衡" class="headerlink" title="分区与负载均衡"></a>分区与负载均衡</h1><h2 id="分区数"><a href="#分区数" class="headerlink" title="分区数"></a>分区数</h2><ul>
+<li>分区是并行度上限</li>
+<li>分区过多增加 controller&#x2F;metadata&#x2F;文件句柄&#x2F;选举开销</li>
+<li>分区过少限制吞吐</li>
+<li>按峰值吞吐、单分区能力、消费者并行度规划</li>
+<li>避免频繁改分区数（key 分布会变）</li>
+</ul>
+<h2 id="Key-设计"><a href="#Key-设计" class="headerlink" title="Key 设计"></a>Key 设计</h2><ul>
+<li>key 决定分区</li>
+<li>热点 key 会导致单分区打满</li>
+<li>需要均匀分布时加盐&#x2F;复合 key</li>
+<li>业务顺序要求和并行度要平衡</li>
+</ul>
+<h2 id="副本分布"><a href="#副本分布" class="headerlink" title="副本分布"></a>副本分布</h2><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">broker.rack</span>=<span class="string">rack-a</span></span><br></pre></td></tr></table></figure>
 
-<p>创建一个 Topic</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic test</span><br><span class="line"></span><br><span class="line">--bootstrap-server 指定Kafka位置（也可以 --zookeeper 指定zookeeper的位置，两者只能选一个）</span><br><span class="line">--create   创建topic</span><br><span class="line">--topic 指定topic的名字</span><br><span class="line">--partitions  指定分区数量</span><br><span class="line">--replication-factor  指定复制因子</span><br><span class="line"></span><br><span class="line">查看该topic</span><br><span class="line"># bin/kafka-topics.sh --describe --bootstrap-server localhost:9092</span><br><span class="line">Topic: test     PartitionCount: 1       ReplicationFactor: 1    Configs: segment.bytes=1073741824</span><br><span class="line">        Topic: test     Partition: 0    Leader: 0       Replicas: 0     Isr: 0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">必须指定zookeeper和topic名</span><br><span class="line">--describe 查看具体topic的情况</span><br></pre></td></tr></table></figure>
+<ul>
+<li>机架感知，副本跨机架</li>
+<li><code>replica.selector.class</code> 可自定义</li>
+<li>避免所有副本在同一机架&#x2F;可用区</li>
+</ul>
+<h2 id="重分配"><a href="#重分配" class="headerlink" title="重分配"></a>重分配</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 生成</span></span><br><span class="line">bin/kafka-reassign-partitions.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --topics-to-move-json-file topics.json --broker-list <span class="string">&quot;1,2,3&quot;</span> --generate</span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行（限速）</span></span><br><span class="line">bin/kafka-reassign-partitions.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --reassignment-json-file plan.json --execute \</span><br><span class="line">  --throttle 50000000 --replica-alter-log-dirs-throttle 100000000</span><br><span class="line"></span><br><span class="line"><span class="comment"># 验证</span></span><br><span class="line">bin/kafka-reassign-partitions.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --reassignment-json-file plan.json --verify</span><br></pre></td></tr></table></figure>
 
-<p>启动一个 Console Consumer，是一个挂起状态的监听 Consumer</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning</span><br></pre></td></tr></table></figure>
+<ul>
+<li>限速避免打满网络&#x2F;磁盘</li>
+<li>重分配期间注意 ISR 和延迟</li>
+<li>完成后清理 throttle</li>
+<li>大量分区用 Cruise Control 做均衡</li>
+</ul>
+<h2 id="Broker-退役"><a href="#Broker-退役" class="headerlink" title="Broker 退役"></a>Broker 退役</h2><ol>
+<li><code>cordon</code> broker：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-configs.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --alter --add-config cordoned.log.dirs=<span class="string">&quot;*&quot;</span> \</span><br><span class="line">  --entity-type brokers --entity-name 1</span><br></pre></td></tr></table></figure>
 
-<p>然后在另一个终端启动一个 Console Producer，是一个消息的发送端</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># bin/kafka-console-producer.sh --broker-list localhost:9092 --topic test</span><br><span class="line">&gt;hello  # 发送一个hello消息</span><br><span class="line"></span><br><span class="line">于是，consumer也能接受到这个消息</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>生成并执行重分配</li>
+<li>确认无分区</li>
+<li>停止 broker</li>
+<li>注销：</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-cluster.sh unregister --bootstrap-server broker:9092 --<span class="built_in">id</span> 1</span><br></pre></td></tr></table></figure>
 
-<blockquote>
-<p>参考资料<br><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/kafka-analysis-part-1">Kafka 设计解析（一）：Kafka 背景及架构介绍</a></p>
-<p><a target="_blank" rel="noopener" href="http://www.jasongj.com/2015/01/02/Kafka%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90/">Kafka 深度解析</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/cn/opensource/os-cn-kafka/index.html">Apache kafka 工作原理介绍</a></p>
-</blockquote>
+<h1 id="分层存储"><a href="#分层存储" class="headerlink" title="分层存储"></a>分层存储</h1><p>Kafka 4.x 支持 Tiered Storage，把旧 segment 放到远程存储，降低本地磁盘。</p>
+<p>Broker 配置：</p>
+<figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">remote.log.storage.system.enable</span>=<span class="string">true</span></span><br><span class="line"><span class="attr">remote.log.storage.manager.class.name</span>=<span class="string">com.example.RemoteStorageManager</span></span><br><span class="line"><span class="attr">remote.log.storage.manager.class.path</span>=<span class="string">/opt/kafka/plugins/*</span></span><br><span class="line"><span class="attr">remote.log.metadata.manager.listener.name</span>=<span class="string">INTERNAL</span></span><br></pre></td></tr></table></figure>
+
+<p>Topic 配置：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-configs.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --alter --entity-type topics --entity-name tieredTopic \</span><br><span class="line">  --add-config <span class="string">&#x27;remote.storage.enable=true,local.retention.ms=3600000,local.retention.bytes=1073741824&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>Kafka 不提供开箱的 <code>RemoteStorageManager</code>，需要自行实现或使用厂商插件</li>
+<li>默认 <code>RemoteLogMetadataManager</code> 使用内部 topic，<code>remote.log.metadata.manager.listener.name</code> 必填</li>
+<li>不支持 compacted topic</li>
+<li>broker 级关闭前要先在所有 topic 上关闭</li>
+<li>客户端管理操作需要 3.0+</li>
+<li>旧 topic 缺少 producer snapshot 可能不兼容</li>
+<li>分层存储降低本地磁盘，但不降低跨区域网络和远程存储成本</li>
+</ul>
+<h1 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h1><h2 id="Listener"><a href="#Listener" class="headerlink" title="Listener"></a>Listener</h2><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">listeners</span>=<span class="string">INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9094,CONTROLLER://0.0.0.0:9093</span></span><br><span class="line"><span class="attr">advertised.listeners</span>=<span class="string">INTERNAL://broker1:9092,EXTERNAL://kafka.example.com:9094</span></span><br><span class="line"><span class="attr">listener.security.protocol.map</span>=<span class="string">INTERNAL:PLAINTEXT,EXTERNAL:SASL_SSL,CONTROLLER:PLAINTEXT</span></span><br><span class="line"><span class="attr">inter.broker.listener.name</span>=<span class="string">INTERNAL</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>advertised.listeners</code> 必须客户端可达</li>
+<li>controller listener 不要暴露公网</li>
+<li>内外网 listener 分离</li>
+</ul>
+<h2 id="TLS-x2F-SASL"><a href="#TLS-x2F-SASL" class="headerlink" title="TLS &#x2F; SASL"></a>TLS &#x2F; SASL</h2><ul>
+<li>TLS：<code>ssl.keystore.location</code>、<code>ssl.truststore.location</code></li>
+<li>SASL&#x2F;SCRAM：<code>SASL_SSL</code> + SCRAM-SHA-256&#x2F;512</li>
+<li>SASL&#x2F;GSSAPI（Kerberos）</li>
+<li>复制、controller 通信也要安全配置</li>
+</ul>
+<h2 id="ACL"><a href="#ACL" class="headerlink" title="ACL"></a>ACL</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-acls.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --add --allow-principal User:alice \</span><br><span class="line">  --operation Read --topic orders</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>KRaft 使用 <code>StandardAuthorizer</code></li>
+<li><code>super.users</code> 只放管理员</li>
+<li>按 topic&#x2F;group&#x2F;cluster 授权</li>
+<li>最小权限，定期审计</li>
+<li>生产禁用匿名访问</li>
+</ul>
+<h2 id="Quotas"><a href="#Quotas" class="headerlink" title="Quotas"></a>Quotas</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-configs.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --alter --add-config <span class="string">&#x27;producer_byte_rate=10485760,consumer_byte_rate=20971520&#x27;</span> \</span><br><span class="line">  --entity-type clients --entity-name alice</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>防止单客户端打满</li>
+<li>限流会导致客户端 throttle</li>
+<li>监控 throttle 时间和请求延迟</li>
+</ul>
+<h2 id="静态加密"><a href="#静态加密" class="headerlink" title="静态加密"></a>静态加密</h2><p>Kafka 本身不加密磁盘数据，依赖：</p>
+<ul>
+<li>云盘加密</li>
+<li>LUKS&#x2F;dm-crypt</li>
+<li>存储阵列加密</li>
+<li>应用层加密</li>
+</ul>
+<h1 id="运维操作"><a href="#运维操作" class="headerlink" title="运维操作"></a>运维操作</h1><h2 id="Topic"><a href="#Topic" class="headerlink" title="Topic"></a>Topic</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-topics.sh --bootstrap-server broker:9092 --list</span><br><span class="line">bin/kafka-topics.sh --bootstrap-server broker:9092 --describe --topic orders</span><br><span class="line">bin/kafka-topics.sh --bootstrap-server broker:9092 --create \</span><br><span class="line">  --topic orders --partitions 12 --replication-factor 3 \</span><br><span class="line">  --config min.insync.replicas=2</span><br><span class="line">bin/kafka-topics.sh --bootstrap-server broker:9092 --alter --topic orders --partitions 24</span><br><span class="line">bin/kafka-topics.sh --bootstrap-server broker:9092 --delete --topic orders</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-configs.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --describe --entity-type topics --entity-name orders</span><br><span class="line">bin/kafka-configs.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --alter --entity-type topics --entity-name orders \</span><br><span class="line">  --add-config retention.ms=604800000</span><br></pre></td></tr></table></figure>
+
+<h2 id="滚动重启"><a href="#滚动重启" class="headerlink" title="滚动重启"></a>滚动重启</h2><ol>
+<li>确认 RF&#x2F;minISR 健康</li>
+<li>一次重启一个 broker</li>
+<li>等待 ISR 恢复</li>
+<li>观察 under-replicated、延迟、controller</li>
+<li>使用 controlled shutdown</li>
+<li>避免同时重启多个副本所在 broker</li>
+</ol>
+<h2 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h2><ul>
+<li>4.x 只支持 KRaft，先完成 ZK→KRaft 迁移</li>
+<li>升级前确认 <code>inter.broker.protocol.version</code>&#x2F;<code>log.message.format.version</code>（如适用）</li>
+<li>先升级 broker，再升级客户端</li>
+<li>用 <code>kafka-features.sh upgrade</code> 管理 metadata version</li>
+<li>升级 controller quorum 要谨慎，保持多数派</li>
+<li>备份元数据、配置、ACL、topic 配置</li>
+<li>保留回滚方案</li>
+</ul>
+<h2 id="备份与容灾"><a href="#备份与容灾" class="headerlink" title="备份与容灾"></a>备份与容灾</h2><ul>
+<li>Kafka 数据靠副本，不是备份</li>
+<li>跨集群复制用 MirrorMaker 2</li>
+<li>关键 topic 做异地复制</li>
+<li>元数据&#x2F;ACL&#x2F;topic 配置纳入配置管理</li>
+<li>定期演练切换和恢复</li>
+</ul>
+<h1 id="监控"><a href="#监控" class="headerlink" title="监控"></a>监控</h1><h2 id="关键指标"><a href="#关键指标" class="headerlink" title="关键指标"></a>关键指标</h2><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>MBean&#x2F;含义</th>
+<th>告警</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>UnderReplicatedPartitions</td>
+<td><code>kafka.server:type=ReplicaManager,name=UnderReplicatedPartitions</code></td>
+<td>&gt;0 持续</td>
+</tr>
+<tr>
+<td>UnderMinIsrPartitionCount</td>
+<td>同上</td>
+<td>&gt;0</td>
+</tr>
+<tr>
+<td>OfflinePartitionsCount</td>
+<td><code>kafka.controller:type=KafkaController,name=OfflinePartitionsCount</code></td>
+<td>&gt;0</td>
+</tr>
+<tr>
+<td>ActiveControllerCount</td>
+<td>每集群应为 1</td>
+<td>0 或 &gt;1</td>
+</tr>
+<tr>
+<td>IsrShrinksPerSec</td>
+<td>ISR 收缩</td>
+<td>异常升高</td>
+</tr>
+<tr>
+<td>IsrExpandsPerSec</td>
+<td>ISR 恢复</td>
+<td>异常</td>
+</tr>
+<tr>
+<td>MaxLag</td>
+<td>follower 落后</td>
+<td>持续增长</td>
+</tr>
+<tr>
+<td>RequestQueueSize</td>
+<td>请求队列</td>
+<td>持续高</td>
+</tr>
+<tr>
+<td>RequestLatency</td>
+<td>请求延迟</td>
+<td>P99 超阈值</td>
+</tr>
+<tr>
+<td>DiskUsage</td>
+<td>磁盘使用率</td>
+<td>&gt;75%</td>
+</tr>
+<tr>
+<td>LogDirOffline</td>
+<td>日志目录离线</td>
+<td>&gt;0</td>
+</tr>
+<tr>
+<td>ControllerEventQueueTime</td>
+<td>controller 队列</td>
+<td>高</td>
+</tr>
+</tbody></table>
+<h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><ul>
+<li>JMX + Prometheus JMX Exporter</li>
+<li>Kafka Exporter（consumer lag）</li>
+<li>Cruise Control（均衡&#x2F;容量）</li>
+<li>Grafana Dashboard</li>
+<li>Kafka Manager&#x2F;CMAK（社区）</li>
+<li><code>kafka-log-dirs.sh</code> 看磁盘</li>
+<li><code>kafka-consumer-groups.sh</code> 看 lag</li>
+</ul>
+<h2 id="告警"><a href="#告警" class="headerlink" title="告警"></a>告警</h2><ul>
+<li>UnderReplicated&#x2F;Offline 持续</li>
+<li>ISR 频繁收缩</li>
+<li>Controller 选举频繁</li>
+<li>磁盘 &gt;75%&#x2F;80%</li>
+<li>请求延迟 P99</li>
+<li>消费者 lag 持续增长</li>
+<li>网络&#x2F;磁盘错误</li>
+<li>证书&#x2F;ACL 异常</li>
+</ul>
+<h1 id="性能与容量"><a href="#性能与容量" class="headerlink" title="性能与容量"></a>性能与容量</h1><h2 id="硬件"><a href="#硬件" class="headerlink" title="硬件"></a>硬件</h2><ul>
+<li>网络优先：万兆起步</li>
+<li>磁盘：JBOD + SSD&#x2F;NVMe，或 RAID10</li>
+<li>内存：page cache 越大越好</li>
+<li>CPU：压缩&#x2F;加密&#x2F;TLS 需要余量</li>
+<li>独立磁盘给 Kafka，避免和日志&#x2F;其他服务抢 IO</li>
+</ul>
+<h2 id="Broker-配置"><a href="#Broker-配置" class="headerlink" title="Broker 配置"></a>Broker 配置</h2><figure class="highlight properties"><table><tr><td class="code"><pre><span class="line"><span class="attr">num.network.threads</span>=<span class="string">8</span></span><br><span class="line"><span class="attr">num.io.threads</span>=<span class="string">16</span></span><br><span class="line"><span class="attr">num.replica.fetchers</span>=<span class="string">4</span></span><br><span class="line"><span class="attr">socket.send.buffer.bytes</span>=<span class="string">1048576</span></span><br><span class="line"><span class="attr">socket.receive.buffer.bytes</span>=<span class="string">1048576</span></span><br><span class="line"><span class="attr">replica.fetch.max.bytes</span>=<span class="string">1048576</span></span><br><span class="line"><span class="attr">message.max.bytes</span>=<span class="string">1048576</span></span><br></pre></td></tr></table></figure>
+
+<p>按硬件和压测调整，不要盲目复制。</p>
+<h2 id="OS"><a href="#OS" class="headerlink" title="OS"></a>OS</h2><ul>
+<li><code>vm.swappiness</code> 低（避免换出 page cache）</li>
+<li><code>vm.dirty_background_ratio</code>&#x2F;<code>vm.dirty_ratio</code> 调整</li>
+<li><code>vm.max_map_count</code> 足够（索引 mmap）</li>
+<li>文件句柄 <code>ulimit -n</code> 足够</li>
+<li>关闭 THP 或评估（延迟敏感场景）</li>
+<li>时间同步</li>
+<li>XFS&#x2F;ext4，mount <code>noatime</code></li>
+</ul>
+<h2 id="容量"><a href="#容量" class="headerlink" title="容量"></a>容量</h2><ul>
+<li>磁盘 &#x3D; 吞吐 × 保留时间 × 副本因子 &#x2F; 压缩比</li>
+<li>预留 30% 余量</li>
+<li>网络 &#x3D; 生产 + 复制 + 消费 + 重分配</li>
+<li>分区数按单分区吞吐和消费者并行度</li>
+<li>控制器&#x2F;元数据规模</li>
+<li>分层存储降低本地磁盘，但增加远程成本</li>
+</ul>
+<h2 id="压测"><a href="#压测" class="headerlink" title="压测"></a>压测</h2><ul>
+<li>生产相似消息大小、压缩、acks、RF</li>
+<li>测生产吞吐、消费吞吐、延迟、ISR</li>
+<li>观察 broker CPU、网络、磁盘 await</li>
+<li>记录基线，升级&#x2F;扩容后复跑</li>
+</ul>
+<h1 id="故障排查"><a href="#故障排查" class="headerlink" title="故障排查"></a>故障排查</h1><h2 id="UnderReplicated"><a href="#UnderReplicated" class="headerlink" title="UnderReplicated"></a>UnderReplicated</h2><ul>
+<li>broker 宕机&#x2F;慢</li>
+<li>磁盘满&#x2F;IO 慢</li>
+<li>网络分区</li>
+<li>follower fetch 失败</li>
+<li>ISR 频繁收缩</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">bin/kafka-topics.sh --bootstrap-server broker:9092 --describe --under-replicated-partitions</span><br><span class="line">bin/kafka-log-dirs.sh --bootstrap-server broker:9092 --describe</span><br></pre></td></tr></table></figure>
+
+<h2 id="Offline-Partitions"><a href="#Offline-Partitions" class="headerlink" title="Offline Partitions"></a>Offline Partitions</h2><ul>
+<li>所有副本不可用</li>
+<li>controller 无法选 leader</li>
+<li>检查 broker、磁盘、元数据</li>
+<li>不要强行 unclean 选举，除非接受丢数据</li>
+</ul>
+<h2 id="Controller-问题"><a href="#Controller-问题" class="headerlink" title="Controller 问题"></a>Controller 问题</h2><ul>
+<li>ActiveControllerCount 不是 1</li>
+<li>controller quorum 失去多数派</li>
+<li>metadata log 损坏</li>
+<li>查看 <code>kafka-metadata-quorum.sh describe --status</code></li>
+<li>恢复多数派后再操作</li>
+</ul>
+<h2 id="磁盘满"><a href="#磁盘满" class="headerlink" title="磁盘满"></a>磁盘满</h2><ul>
+<li>清理过期 segment&#x2F;调整 retention</li>
+<li>扩容&#x2F;迁移分区</li>
+<li>检查 log dirs 分布</li>
+<li>不要让磁盘到 100%，会触发 broker 故障</li>
+</ul>
+<h2 id="请求队列满"><a href="#请求队列满" class="headerlink" title="请求队列满"></a>请求队列满</h2><ul>
+<li><code>RequestQueueSize</code> 高</li>
+<li>IO 线程不足&#x2F;磁盘慢</li>
+<li>网络瓶颈</li>
+<li>增加 <code>num.io.threads</code>、扩容、限流</li>
+</ul>
+<h2 id="消费者-Lag"><a href="#消费者-Lag" class="headerlink" title="消费者 Lag"></a>消费者 Lag</h2><ul>
+<li>消费能力不足</li>
+<li>下游慢</li>
+<li>rebalance</li>
+<li>分区倾斜</li>
+<li>检查 consumer group、线程数、<code>max.poll.records</code></li>
+</ul>
+<h2 id="Rebalance-Storm"><a href="#Rebalance-Storm" class="headerlink" title="Rebalance Storm"></a>Rebalance Storm</h2><ul>
+<li><code>max.poll.interval.ms</code> 太小</li>
+<li>消费者频繁重启</li>
+<li>网络&#x2F;心跳</li>
+<li>使用静态成员&#x2F;cooperative sticky</li>
+<li>减少滚动重启频率</li>
+</ul>
+<h2 id="事务错误"><a href="#事务错误" class="headerlink" title="事务错误"></a>事务错误</h2><ul>
+<li><code>transaction.timeout.ms</code></li>
+<li>事务 topic RF&#x2F;minISR</li>
+<li>producer 重启&#x2F;幂等状态</li>
+<li>检查 <code>__transaction_state</code></li>
+</ul>
+<h2 id="数据丢失风险"><a href="#数据丢失风险" class="headerlink" title="数据丢失风险"></a>数据丢失风险</h2><ul>
+<li><code>acks=1/0</code></li>
+<li><code>min.insync.replicas=1</code></li>
+<li><code>unclean.leader.election.enable=true</code></li>
+<li>副本不足</li>
+<li>磁盘故障 + 无备份</li>
+<li>误删 topic</li>
+</ul>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="多集群与容灾"><a href="#多集群与容灾" class="headerlink" title="多集群与容灾"></a>多集群与容灾</h2><ul>
+<li>同城&#x2F;异地双集群</li>
+<li>MirrorMaker 2 做跨集群复制</li>
+<li>明确 RPO&#x2F;RTO</li>
+<li>主题命名、ACL、schema 统一</li>
+<li>定期切换演练</li>
+</ul>
+<h2 id="多租户"><a href="#多租户" class="headerlink" title="多租户"></a>多租户</h2><ul>
+<li>按业务&#x2F;团队分 topic 命名空间</li>
+<li>配额限制生产&#x2F;消费速率</li>
+<li>ACL 最小权限</li>
+<li>监控租户 lag&#x2F;流量</li>
+<li>避免单租户打满 broker</li>
+</ul>
+<h2 id="SLO"><a href="#SLO" class="headerlink" title="SLO"></a>SLO</h2><ul>
+<li>生产成功率</li>
+<li>端到端延迟 P99</li>
+<li>消费 lag</li>
+<li>ISR 健康</li>
+<li>可用性&#x2F;错误率</li>
+<li>恢复时间</li>
+</ul>
+<h2 id="变更"><a href="#变更" class="headerlink" title="变更"></a>变更</h2><ul>
+<li>topic 配置&#x2F;分区变更走审批</li>
+<li>重分配限速</li>
+<li>升级&#x2F;重启一次一个 broker</li>
+<li>变更窗口避开高峰</li>
+<li>保留回滚</li>
+</ul>
+<h2 id="成本"><a href="#成本" class="headerlink" title="成本"></a>成本</h2><ul>
+<li>分层存储降低本地磁盘</li>
+<li>压缩减少网络&#x2F;磁盘</li>
+<li>合理保留时间</li>
+<li>避免过度副本&#x2F;分区</li>
+<li>按租户做成本分摊</li>
+</ul>
+<h2 id="反模式"><a href="#反模式" class="headerlink" title="反模式"></a>反模式</h2><ul>
+<li>用 ZooKeeper 搭 4.x（不支持）</li>
+<li><code>acks=1</code> 还宣称不丢</li>
+<li><code>min.insync.replicas=1</code></li>
+<li>单分区追求全局有序</li>
+<li>分区数过多&#x2F;过少</li>
+<li>不监控 ISR&#x2F;lag</li>
+<li>不做跨集群复制</li>
+<li>直接删 topic 不确认</li>
+<li>用 Kafka 当数据库做随机查询</li>
+</ul>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="常用端口"><a href="#常用端口" class="headerlink" title="常用端口"></a>常用端口</h2><table>
+<thead>
+<tr>
+<th>端口</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>9092</td>
+<td>Broker 内部&#x2F;客户端</td>
+</tr>
+<tr>
+<td>9093</td>
+<td>KRaft Controller</td>
+</tr>
+<tr>
+<td>9094</td>
+<td>外部客户端（示例）</td>
+</tr>
+</tbody></table>
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># Topic</span></span><br><span class="line">kafka-topics.sh --bootstrap-server broker:9092 --list</span><br><span class="line">kafka-topics.sh --bootstrap-server broker:9092 --describe --topic orders</span><br><span class="line"></span><br><span class="line"><span class="comment"># 消费组</span></span><br><span class="line">kafka-consumer-groups.sh --bootstrap-server broker:9092 --list</span><br><span class="line">kafka-consumer-groups.sh --bootstrap-server broker:9092 --describe --group my-group</span><br><span class="line"></span><br><span class="line"><span class="comment"># 配置</span></span><br><span class="line">kafka-configs.sh --bootstrap-server broker:9092 --describe --entity-type topics --entity-name orders</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重分配</span></span><br><span class="line">kafka-reassign-partitions.sh --bootstrap-server broker:9092 \</span><br><span class="line">  --reassignment-json-file plan.json --verify</span><br><span class="line"></span><br><span class="line"><span class="comment"># KRaft</span></span><br><span class="line">kafka-metadata-quorum.sh --bootstrap-controller controller1:9093 describe --status</span><br><span class="line">kafka-features.sh --bootstrap-controller controller1:9093 describe</span><br><span class="line"></span><br><span class="line"><span class="comment"># 日志目录</span></span><br><span class="line">kafka-log-dirs.sh --bootstrap-server broker:9092 --describe</span><br></pre></td></tr></table></figure>
+
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/getting-started/introduction/">Kafka 4.3 Documentation</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/operations/kraft/">KRaft</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/operations/basic-kafka-operations/">Basic Kafka Operations</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/operations/monitoring/">Monitoring</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/operations/tiered-storage/">Tiered Storage</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/getting-started/upgrade/">Upgrading</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/configuration/">Configuration</a></li>
+<li><a target="_blank" rel="noopener" href="https://kafka.apache.org/43/security/">Security</a></li>
+</ul>
 
   </div>
   
@@ -2833,8 +3386,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kafka/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kafka</p></a></div>
-  <span hidden itemprop="keywords">Kafka</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E8%BF%90%E7%BB%B4/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>运维</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kafka/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kafka</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>消息队列</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/KRaft/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>KRaft</p></a></div>
+  <span hidden itemprop="keywords">运维 Kafka 消息队列 KRaft</span>
   
 
 
@@ -2855,14 +3408,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
         <a class='prev' href='/2020/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/'>
           <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>分布式系统架构</p>
-          <p class='content'>
-分布式系统基础
-什么是分布式系统？
-分布式系统是若干独立计算机的集合，这些计算机对于用户来说就是单个系统。
-
-分布式系统面临什么挑战？
-
-异构性：分布式系统由不通网络、操作系统、硬件和编程语言...</p>
+          <p class='content'>分布式系统不是“把单体拆成多个服务”，而是在不可靠网络、部分失败、无全局时钟、并发执行的前提下，仍然让系统对外表现出可预测的行为。架构师的工作不是消灭故障，而是设计故障发生时的行为、边界和恢复路...</p>
         </a>
       
       
@@ -2912,7 +3458,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97"><span class="toc-text">消息队列</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kafka-%E4%BB%8B%E7%BB%8D"><span class="toc-text">Kafka 介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84"><span class="toc-text">架构</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%90%AD%E5%BB%BA"><span class="toc-text">搭建</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E4%B8%8E%E5%AE%9A%E4%BD%8D"><span class="toc-text">版本与定位</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%88%E6%9C%AC"><span class="toc-text">版本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9A%E4%BD%8D"><span class="toc-text">定位</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%9E%B6%E6%9E%84%E4%B8%8E-KRaft"><span class="toc-text">架构与 KRaft</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%92%E8%89%B2"><span class="toc-text">角色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#KRaft-%E9%85%8D%E7%BD%AE"><span class="toc-text">KRaft 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E5%99%A8%E6%95%B0%E9%87%8F"><span class="toc-text">控制器数量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%BC%E5%BC%8F%E5%8C%96%E4%B8%8E%E5%90%AF%E5%8A%A8"><span class="toc-text">格式化与启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%83%E6%95%B0%E6%8D%AE"><span class="toc-text">元数据</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E-ZooKeeper-%E8%BF%81%E7%A7%BB"><span class="toc-text">从 ZooKeeper 迁移</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E5%AD%98%E5%82%A8"><span class="toc-text">日志存储</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%8C%BA%E6%97%A5%E5%BF%97"><span class="toc-text">分区日志</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Segment"><span class="toc-text">Segment</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BF%9D%E7%95%99"><span class="toc-text">保留</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Page-Cache"><span class="toc-text">Page Cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A3%81%E7%9B%98"><span class="toc-text">磁盘</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A4%8D%E5%88%B6%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">复制与一致性</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Leader-x2F-Follower"><span class="toc-text">Leader &#x2F; Follower</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LEO-x2F-HW"><span class="toc-text">LEO &#x2F; HW</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ISR-%E4%B8%8E-min-insync-replicas"><span class="toc-text">ISR 与 min.insync.replicas</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#acks"><span class="toc-text">acks</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#unclean-%E9%80%89%E4%B8%BE"><span class="toc-text">unclean 选举</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Leader-%E9%80%89%E4%B8%BE"><span class="toc-text">Leader 选举</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%AF%E6%9C%AC%E5%90%8C%E6%AD%A5"><span class="toc-text">副本同步</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%94%9F%E4%BA%A7%E8%80%85"><span class="toc-text">生产者</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE"><span class="toc-text">核心配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%82%E7%AD%89%E4%B8%8E%E4%BA%8B%E5%8A%A1"><span class="toc-text">幂等与事务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%8C%BA%E5%99%A8"><span class="toc-text">分区器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%BA%E5%BA%8F"><span class="toc-text">顺序</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E4%B8%8E%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84"><span class="toc-text">消费者与消费者组</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%89%E6%A8%A1%E5%9E%8B"><span class="toc-text">拉模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84"><span class="toc-text">消费者组</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rebalance"><span class="toc-text">Rebalance</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%B0%E6%B6%88%E8%B4%B9%E8%80%85%E5%8D%8F%E8%AE%AE"><span class="toc-text">新消费者协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Offset-%E6%8F%90%E4%BA%A4"><span class="toc-text">Offset 提交</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lag"><span class="toc-text">Lag</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%86%E5%8C%BA%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-text">分区与负载均衡</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%8C%BA%E6%95%B0"><span class="toc-text">分区数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Key-%E8%AE%BE%E8%AE%A1"><span class="toc-text">Key 设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%AF%E6%9C%AC%E5%88%86%E5%B8%83"><span class="toc-text">副本分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E5%88%86%E9%85%8D"><span class="toc-text">重分配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Broker-%E9%80%80%E5%BD%B9"><span class="toc-text">Broker 退役</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%86%E5%B1%82%E5%AD%98%E5%82%A8"><span class="toc-text">分层存储</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E5%85%A8"><span class="toc-text">安全</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Listener"><span class="toc-text">Listener</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TLS-x2F-SASL"><span class="toc-text">TLS &#x2F; SASL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ACL"><span class="toc-text">ACL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Quotas"><span class="toc-text">Quotas</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E5%8A%A0%E5%AF%86"><span class="toc-text">静态加密</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4%E6%93%8D%E4%BD%9C"><span class="toc-text">运维操作</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Topic"><span class="toc-text">Topic</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE"><span class="toc-text">配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%BB%9A%E5%8A%A8%E9%87%8D%E5%90%AF"><span class="toc-text">滚动重启</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7"><span class="toc-text">升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD%E4%B8%8E%E5%AE%B9%E7%81%BE"><span class="toc-text">备份与容灾</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%91%E6%8E%A7"><span class="toc-text">监控</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E6%8C%87%E6%A0%87"><span class="toc-text">关键指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7"><span class="toc-text">工具</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6"><span class="toc-text">告警</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%AE%B9%E9%87%8F"><span class="toc-text">性能与容量</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A1%AC%E4%BB%B6"><span class="toc-text">硬件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Broker-%E9%85%8D%E7%BD%AE"><span class="toc-text">Broker 配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OS"><span class="toc-text">OS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F"><span class="toc-text">容量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8E%8B%E6%B5%8B"><span class="toc-text">压测</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5"><span class="toc-text">故障排查</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#UnderReplicated"><span class="toc-text">UnderReplicated</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Offline-Partitions"><span class="toc-text">Offline Partitions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Controller-%E9%97%AE%E9%A2%98"><span class="toc-text">Controller 问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A3%81%E7%9B%98%E6%BB%A1"><span class="toc-text">磁盘满</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%B7%E6%B1%82%E9%98%9F%E5%88%97%E6%BB%A1"><span class="toc-text">请求队列满</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85-Lag"><span class="toc-text">消费者 Lag</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Rebalance-Storm"><span class="toc-text">Rebalance Storm</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E9%94%99%E8%AF%AF"><span class="toc-text">事务错误</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E9%A3%8E%E9%99%A9"><span class="toc-text">数据丢失风险</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E9%9B%86%E7%BE%A4%E4%B8%8E%E5%AE%B9%E7%81%BE"><span class="toc-text">多集群与容灾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E7%A7%9F%E6%88%B7"><span class="toc-text">多租户</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLO"><span class="toc-text">SLO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%98%E6%9B%B4"><span class="toc-text">变更</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E6%9C%AC"><span class="toc-text">成本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">反模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E7%AB%AF%E5%8F%A3"><span class="toc-text">常用端口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 

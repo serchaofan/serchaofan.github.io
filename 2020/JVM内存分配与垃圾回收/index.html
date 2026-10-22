@@ -35,21 +35,23 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>JVM内存分配与垃圾回收 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="Java, JVM,Java,undefined">
-  <meta desc name="description" content="本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。 - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="Java, SRE,JVM,Java,GC,undefined">
+  <meta desc name="description" content="本文以资深 Java 开发视角重写，参考 JDK 25 LTS &#x2F; JDK 27 官方文档，讲清 JVM 内存布局、对象分配、堆 sizing、GC 原理、G1&#x2F;ZGC&#x2F;Shenandoah&#x2F;Parallel&#x2F;Serial 的取舍、GC 日志与排障，并在最后给出 ... - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM内存分配与垃圾回收">
 <meta property="og:url" content="https://tianyigu.top/2020/JVM%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E4%B8%8E%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。">
+<meta property="og:description" content="本文以资深 Java 开发视角重写，参考 JDK 25 LTS &#x2F; JDK 27 官方文档，讲清 JVM 内存布局、对象分配、堆 sizing、GC 原理、G1&#x2F;ZGC&#x2F;Shenandoah&#x2F;Parallel&#x2F;Serial 的取舍、GC 日志与排障，并在最后给出 SRE 视角的专业见解。 最后更新：2026-10-22">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-01-07T13:50:08.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.833Z">
+<meta property="article:modified_time" content="2026-10-22T17:17:55.875Z">
 <meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="SRE">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="Java">
+<meta property="article:tag" content="GC">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
   <style>
@@ -2252,7 +2254,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792686289207),
+    lastupdate: new Date(1792690087254),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2299,7 +2301,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Java/","name":"Java"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/JVM内存分配与垃圾回收/","name":"JVM内存分配与垃圾回收"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"JVM内存分配与垃圾回收","description":"本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/JVM%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E4%B8%8E%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/JVM%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E4%B8%8E%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/","wordCount":51,"datePublished":"2020-01-07T13:50:08.000Z","dateModified":"2026-03-11T19:05:28.833Z","articleSection":"Java","keywords":"JVM,Java","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/Java/","name":"Java"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/JVM内存分配与垃圾回收/","name":"JVM内存分配与垃圾回收"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"JVM内存分配与垃圾回收","description":"本文以资深 Java 开发视角重写，参考 JDK 25 LTS &#x2F; JDK 27 官方文档，讲清 JVM 内存布局、对象分配、堆 sizing、GC 原理、G1&#x2F;ZGC&#x2F;Shenandoah&#x2F;Parallel&#x2F;Serial 的取舍、GC 日志与排障，并在最后给出 SRE 视角的专业见解。\n最后更新：2026-10-22","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/JVM%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E4%B8%8E%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/JVM%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E4%B8%8E%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/","wordCount":185,"datePublished":"2020-01-07T13:50:08.000Z","dateModified":"2026-10-22T17:17:55.875Z","articleSection":"Java","keywords":"SRE,JVM,Java,GC","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2680,15 +2682,653 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <p>本篇笔记不包含具体如何调优，只记录相关JVM内存分配与垃圾回收机制概念，以及常见的jvm工具使用方法。</p>
+    <p>本文以资深 Java 开发视角重写，参考 JDK 25 LTS &#x2F; JDK 27 官方文档，讲清 JVM 内存布局、对象分配、堆 sizing、GC 原理、G1&#x2F;ZGC&#x2F;Shenandoah&#x2F;Parallel&#x2F;Serial 的取舍、GC 日志与排障，并在最后给出 SRE 视角的专业见解。</p>
+<p>最后更新：2026-10-22</p>
 <span id="more"></span>
 
-<h1 id="JVM概念"><a href="#JVM概念" class="headerlink" title="JVM概念"></a>JVM概念</h1><p>JVM（Java Virtual Machine，Java虚拟机）为Java的核心技术，所有Java程序都运行在JVM内部，JVM相当于一个虚拟计算机，常见的JVM为Sun公司Hotspot VM，是jdk与openjdk的默认自带的虚拟机。</p>
-<p>JVM是JRE（Java Runtime Environment）的一部分，因此安装了Jre后，也就有了JVM。</p>
-<h1 id="JVM运行时内存区结构"><a href="#JVM运行时内存区结构" class="headerlink" title="JVM运行时内存区结构"></a>JVM运行时内存区结构</h1><p>JVM中每个区域都有各自的用途，存储各自的数据类型，但都有一个本质，就是存储程序的运行时数据。<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207010324443.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202207010324443.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
-<p>JVM中的内存区可根据受访权限的不同定义为<strong>线程共享</strong>与<strong>线程私有</strong>两大类，<strong>线程共享内存区</strong>指的是可以允许被所有线程共享访问的一类内存区，包含<strong>堆区</strong>、<strong>方法区</strong>和<strong>运行时常量池</strong>三个内存区。</p>
-<h2 id="堆区"><a href="#堆区" class="headerlink" title="堆区"></a>堆区</h2><p>Java堆区在JVM启动的时候被创建，且在实际的内存空间中可以是不连续的，堆区是一块用于存储对象实例的内存区，也是GC（Garbage Collection，垃圾收集器）执行垃圾回收的重点区域。</p>
-<p>存储在JVM中的java对象可以被划分为两类，一类是生命周期较短的瞬时对象，这类对象的创建与消亡都非常迅速；另一类是生命周期较长的对象。对于不同生命周几的java对象，应该采取不用的垃圾收集策略，因此分代收集诞生。</p>
+<ul>
+<li><a href="#%E7%89%88%E6%9C%AC%E4%B8%8E%E8%8C%83%E5%9B%B4">版本与范围</a></li>
+<li><a href="#jvm-%E8%BF%90%E8%A1%8C%E6%97%B6%E5%86%85%E5%AD%98">JVM 运行时内存</a></li>
+<li><a href="#%E5%AF%B9%E8%B1%A1%E5%88%86%E9%85%8D%E4%B8%8E%E5%B8%83%E5%B1%80">对象分配与布局</a></li>
+<li><a href="#%E5%A0%86-sizing-%E4%B8%8E%E5%AE%B9%E5%99%A8">堆 sizing 与容器</a></li>
+<li><a href="#gc-%E5%9F%BA%E7%A1%80%E5%8E%9F%E7%90%86">GC 基础原理</a></li>
+<li><a href="#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8">垃圾收集器</a></li>
+<li><a href="#g1-%E6%B7%B1%E6%8C%96">G1 深挖</a></li>
+<li><a href="#zgc-%E6%B7%B1%E6%8C%96">ZGC 深挖</a></li>
+<li><a href="#%E5%85%B6%E4%BB%96%E6%94%B6%E9%9B%86%E5%99%A8">其他收集器</a></li>
+<li><a href="#gc-%E9%80%89%E5%9E%8B">GC 选型</a></li>
+<li><a href="#gc-%E6%97%A5%E5%BF%97%E4%B8%8E%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7">GC 日志与诊断工具</a></li>
+<li><a href="#%E8%B0%83%E4%BC%98%E6%96%B9%E6%B3%95%E8%AE%BA">调优方法论</a></li>
+<li><a href="#%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C">常见故障</a></li>
+<li><a href="#sre-%E8%A7%86%E8%A7%92">SRE 视角</a></li>
+<li><a href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5">企业实践</a></li>
+<li><a href="#%E9%99%84%E5%BD%95">附录</a></li>
+</ul>
+<h1 id="版本与范围"><a href="#版本与范围" class="headerlink" title="版本与范围"></a>版本与范围</h1><ul>
+<li><strong>JDK 25 LTS</strong>：2025-09 GA，生产基线</li>
+<li><strong>JDK 27</strong>：2026-09 GA，当前最新非 LTS</li>
+<li>默认收集器：server-class 机器上是 G1，否则 Serial</li>
+<li>ZGC 从 JDK 23 起默认分代（JEP 474）；JDK 21 起分代 ZGC 可用（JEP 439）</li>
+<li>本文以 HotSpot 为主，OpenJDK 发行版通用</li>
+</ul>
+<p>GC 选型没有“最佳”，只有“匹配业务”：</p>
+<ul>
+<li>吞吐优先：Parallel</li>
+<li>通用平衡：G1（默认）</li>
+<li>极低延迟：ZGC &#x2F; Shenandoah</li>
+<li>小堆&#x2F;单核：Serial</li>
+<li>性能测试&#x2F;特殊场景：Epsilon</li>
+</ul>
+<h1 id="JVM-运行时内存"><a href="#JVM-运行时内存" class="headerlink" title="JVM 运行时内存"></a>JVM 运行时内存</h1><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">+--------------------------------------------------+</span><br><span class="line">|                  JVM Process                     |</span><br><span class="line">|                                                  |</span><br><span class="line">|  Heap        Metaspace      Code Cache           |</span><br><span class="line">|  Young/Old   Class metadata JIT code             |</span><br><span class="line">|                                                  |</span><br><span class="line">|  Thread Stacks   Direct Buffers   GC structures  |</span><br><span class="line">|  PC/Registers    NIO/Netty        Card/RS/bitmap |</span><br><span class="line">|                                                  |</span><br><span class="line">|  Native memory: malloc, mmap, JNI, zip, crypto   |</span><br><span class="line">+--------------------------------------------------+</span><br></pre></td></tr></table></figure>
+
+<h2 id="Heap"><a href="#Heap" class="headerlink" title="Heap"></a>Heap</h2><ul>
+<li>所有线程共享</li>
+<li>存放对象实例和数组</li>
+<li>分代：Young（Eden&#x2F;Survivor）、Old</li>
+<li>GC 的主要区域</li>
+<li>由 <code>-Xms</code>&#x2F;<code>-Xmx</code> 控制</li>
+</ul>
+<h2 id="Metaspace"><a href="#Metaspace" class="headerlink" title="Metaspace"></a>Metaspace</h2><ul>
+<li>类元数据、方法、常量池、注解等</li>
+<li>JDK 8 起取代 PermGen</li>
+<li>默认不设上限，受本机内存限制</li>
+<li><code>-XX:MetaspaceSize</code> 初始阈值，<code>-XX:MaxMetaspaceSize</code> 上限</li>
+<li>类加载泄漏会表现为 Metaspace 持续增长</li>
+</ul>
+<h2 id="Code-Cache"><a href="#Code-Cache" class="headerlink" title="Code Cache"></a>Code Cache</h2><ul>
+<li>JIT 编译后的机器码</li>
+<li><code>-XX:ReservedCodeCacheSize</code>、<code>-XX:InitialCodeCacheSize</code></li>
+<li>满了会停止 JIT，性能下降</li>
+<li>关注 <code>CodeCache</code> 使用率和编译线程</li>
+</ul>
+<h2 id="Thread-Stack"><a href="#Thread-Stack" class="headerlink" title="Thread Stack"></a>Thread Stack</h2><ul>
+<li>每个线程私有</li>
+<li>存放栈帧、局部变量、操作数栈</li>
+<li><code>-Xss</code> 控制，Linux x64 默认通常 1MB</li>
+<li>线程数 × 栈大小是常被忽略的 native 内存</li>
+</ul>
+<h2 id="Direct-Memory"><a href="#Direct-Memory" class="headerlink" title="Direct Memory"></a>Direct Memory</h2><ul>
+<li><code>ByteBuffer.allocateDirect</code>、Netty、NIO</li>
+<li>不走 Heap，但受 <code>-XX:MaxDirectMemorySize</code> 限制</li>
+<li>未设置时默认上限约等于最大堆</li>
+<li>泄漏表现为堆正常但进程 RSS 持续上涨</li>
+</ul>
+<h2 id="Native-Memory"><a href="#Native-Memory" class="headerlink" title="Native Memory"></a>Native Memory</h2><ul>
+<li>JNI、zip、crypto、GC 元数据、线程栈、mmap</li>
+<li><code>-XX:NativeMemoryTracking=summary</code> + <code>jcmd VM.native_memory</code> 排查</li>
+<li>容器 OOM 往往不是 Heap 超限，而是 Heap + Metaspace + Direct + Thread + Native 总和超限</li>
+</ul>
+<h1 id="对象分配与布局"><a href="#对象分配与布局" class="headerlink" title="对象分配与布局"></a>对象分配与布局</h1><h2 id="对象布局"><a href="#对象布局" class="headerlink" title="对象布局"></a>对象布局</h2><p>HotSpot 对象通常包括：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">+----------------+----------------+---------------------+</span><br><span class="line">| Mark Word      | Klass Pointer  | Instance Fields     |</span><br><span class="line">| hash/GC/锁状态 | 类元数据指针   | 字段 + padding      |</span><br><span class="line">+----------------+----------------+---------------------+</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>对象按 8 字节对齐</li>
+<li>压缩指针（Compressed Oops）在堆 &lt; 32GB 时常用</li>
+<li>数组多一个 length 字段</li>
+<li>对象头大小影响小对象内存占用</li>
+<li>字段重排（field layout）由 JVM 优化</li>
+</ul>
+<h2 id="分配路径"><a href="#分配路径" class="headerlink" title="分配路径"></a>分配路径</h2><ol>
+<li><strong>TLAB</strong>：线程本地分配缓冲区，绝大多数对象在 TLAB 内指针碰撞分配</li>
+<li><strong>慢路径</strong>：TLAB 不足，申请新 TLAB 或直接在 Eden 分配</li>
+<li><strong>大对象</strong>：超过阈值直接进入 Old 或 Humongous Region（G1）</li>
+<li><strong>逃逸分析</strong>：JIT 可能做标量替换&#x2F;栈上分配，减少堆分配</li>
+</ol>
+<p>TLAB 的意义：</p>
+<ul>
+<li>避免多线程竞争堆指针</li>
+<li>提升分配速度</li>
+<li>TLAB 大小自适应，关注 <code>-XX:TLABSize</code>、<code>-XX:TLABWasteTargetPercent</code></li>
+</ul>
+<h2 id="分配速率"><a href="#分配速率" class="headerlink" title="分配速率"></a>分配速率</h2><ul>
+<li>分配速率高会加快 Young GC</li>
+<li>晋升速率高会加快 Old GC</li>
+<li>大对象&#x2F;大数组会造成碎片和 Humongous 压力</li>
+<li>短生命周期对象多，G1&#x2F;ZGC 的分代假设更有效</li>
+</ul>
+<h1 id="堆-sizing-与容器"><a href="#堆-sizing-与容器" class="headerlink" title="堆 sizing 与容器"></a>堆 sizing 与容器</h1><h2 id="默认值"><a href="#默认值" class="headerlink" title="默认值"></a>默认值</h2><p>Oracle 文档的 ergonomics：</p>
+<ul>
+<li>初始堆：物理内存的 1&#x2F;64</li>
+<li>最大堆：物理内存的 1&#x2F;4</li>
+<li>server-class：2+ CPU 且内存 ≥ 1792MB</li>
+<li>server-class 默认 G1，否则 Serial</li>
+</ul>
+<p>这些默认值不适合生产容器，必须显式设置。</p>
+<h2 id="容器"><a href="#容器" class="headerlink" title="容器"></a>容器</h2><ul>
+<li><code>-XX:+UseContainerSupport</code> 默认开启（JDK 10+，8u191+）</li>
+<li>JVM 读取 cgroup 内存限制</li>
+<li><code>-XX:MaxRAMPercentage</code> 默认 25%</li>
+<li><code>-XX:InitialRAMPercentage</code> 默认 1.5625%</li>
+<li><code>-XX:MinRAMPercentage</code> 用于小堆</li>
+<li><code>-Xmx</code> 会覆盖百分比</li>
+<li><code>-XX:ActiveProcessorCount</code> 可覆盖 CPU 数</li>
+</ul>
+<p>推荐：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-XX:MaxRAMPercentage=75.0</span><br><span class="line">-XX:InitialRAMPercentage=50.0</span><br><span class="line">-XX:+ExitOnOutOfMemoryError</span><br><span class="line">-XX:+HeapDumpOnOutOfMemoryError</span><br><span class="line">-XX:HeapDumpPath=/logs/heapdump.hprof</span><br></pre></td></tr></table></figure>
+
+<p>为什么不是 100%：</p>
+<ul>
+<li>Metaspace</li>
+<li>Direct Memory</li>
+<li>线程栈</li>
+<li>Code Cache</li>
+<li>GC 自身结构</li>
+<li>JNI&#x2F;native</li>
+<li>容器 page cache 也会计入 cgroup</li>
+</ul>
+<h2 id="堆大小公式"><a href="#堆大小公式" class="headerlink" title="堆大小公式"></a>堆大小公式</h2><p>粗略估算：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">容器内存 ≥ 堆 × 1.3 ~ 1.5 + 固定开销</span><br></pre></td></tr></table></figure>
+
+<p>更准确：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">容器 limit ≥ Heap + Metaspace + Direct + Threads×Xss + CodeCache + GC overhead + Native + 余量</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>堆不是越大越好：大堆会增加 GC 停顿&#x2F;并发回收压力</li>
+<li>小堆会增加 GC 频率和 CPU 开销</li>
+<li>先测 live set，再定堆大小</li>
+<li><code>-Xms=-Xmx</code> 可减少堆伸缩，但会提高常驻内存</li>
+</ul>
+<h2 id="容器-OOM"><a href="#容器-OOM" class="headerlink" title="容器 OOM"></a>容器 OOM</h2><ul>
+<li><code>OOMKilled</code> &#x2F; exit 137：cgroup 内存超限</li>
+<li>JVM 堆 OOM：<code>java.lang.OutOfMemoryError</code>，进程可能不退出</li>
+<li>两者排查路径不同</li>
+<li>看 <code>docker inspect</code> 的 <code>OOMKilled</code>、<code>/sys/fs/cgroup/memory.events</code>、<code>dmesg</code></li>
+</ul>
+<h1 id="GC-基础原理"><a href="#GC-基础原理" class="headerlink" title="GC 基础原理"></a>GC 基础原理</h1><h2 id="什么是垃圾"><a href="#什么是垃圾" class="headerlink" title="什么是垃圾"></a>什么是垃圾</h2><p>从 GC Roots 不可达的对象：</p>
+<ul>
+<li>栈帧局部变量</li>
+<li>静态变量</li>
+<li>JNI 引用</li>
+<li>活动线程</li>
+<li>类加载器&#x2F;常量</li>
+</ul>
+<h2 id="GC-动作"><a href="#GC-动作" class="headerlink" title="GC 动作"></a>GC 动作</h2><ul>
+<li><strong>Mark</strong>：标记存活对象</li>
+<li><strong>Sweep</strong>：回收未标记对象</li>
+<li><strong>Copy</strong>：把存活对象复制到新区域</li>
+<li><strong>Compact</strong>：压缩，减少碎片</li>
+<li><strong>Evacuate</strong>：G1 的复制&#x2F;疏散</li>
+</ul>
+<h2 id="STW"><a href="#STW" class="headerlink" title="STW"></a>STW</h2><p>Stop-The-World：暂停应用线程完成某些阶段。暂停时间直接影响尾延迟。</p>
+<h2 id="三色标记"><a href="#三色标记" class="headerlink" title="三色标记"></a>三色标记</h2><ul>
+<li>白：未访问</li>
+<li>灰：已访问，引用未扫描完</li>
+<li>黑：已访问，引用扫描完</li>
+</ul>
+<p>并发标记要解决“对象消失”问题：</p>
+<ul>
+<li><strong>SATB</strong>（Snapshot-At-The-Beginning）：G1 使用，记录标记开始时的引用快照</li>
+<li><strong>增量更新</strong>：CMS 历史方案</li>
+</ul>
+<h2 id="写屏障与读屏障"><a href="#写屏障与读屏障" class="headerlink" title="写屏障与读屏障"></a>写屏障与读屏障</h2><ul>
+<li>写屏障：对象引用写入时记录，维护卡表&#x2F;记忆集</li>
+<li>读屏障：读取引用时处理，ZGC&#x2F;Shenandoah 使用</li>
+<li>屏障有 CPU 开销，是并发收集器吞吐下降的原因之一</li>
+</ul>
+<h2 id="分代假设"><a href="#分代假设" class="headerlink" title="分代假设"></a>分代假设</h2><ul>
+<li>大多数对象朝生夕死</li>
+<li>存活越久的对象越可能继续存活</li>
+</ul>
+<p>分代收集利用这个假设，降低每次 GC 的扫描范围。</p>
+<h2 id="Card-Table-与-Remembered-Set"><a href="#Card-Table-与-Remembered-Set" class="headerlink" title="Card Table 与 Remembered Set"></a>Card Table 与 Remembered Set</h2><ul>
+<li>卡表：把堆分成固定大小 card（G1 常用 512B），记录跨代引用</li>
+<li>Remembered Set：记录从其他 Region 指向当前 Region 的引用</li>
+<li>避免每次 Young GC 扫描整个 Old</li>
+<li>记忆集占用内存，跨代引用多时开销大</li>
+</ul>
+<h1 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h1><h2 id="Serial"><a href="#Serial" class="headerlink" title="Serial"></a>Serial</h2><ul>
+<li>单线程 STW</li>
+<li>适合小堆、单核、客户端</li>
+<li><code>-XX:+UseSerialGC</code></li>
+<li>简单、开销小</li>
+</ul>
+<h2 id="Parallel"><a href="#Parallel" class="headerlink" title="Parallel"></a>Parallel</h2><ul>
+<li>多线程 STW，吞吐优先</li>
+<li>分代，Young&#x2F;Old 并行</li>
+<li>适合批处理、离线计算、可接受停顿</li>
+<li><code>-XX:+UseParallelGC</code></li>
+<li>关注 <code>-XX:ParallelGCThreads</code>、<code>MaxGCPauseMillis</code></li>
+</ul>
+<h2 id="G1"><a href="#G1" class="headerlink" title="G1"></a>G1</h2><ul>
+<li>默认收集器</li>
+<li>Region 化、分代、并发标记、增量回收</li>
+<li>目标：可预测停顿 + 较高吞吐</li>
+<li>适合大多数服务端应用</li>
+<li><code>-XX:+UseG1GC</code></li>
+</ul>
+<h2 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h2><ul>
+<li>并发标记&#x2F;转移&#x2F;重定位</li>
+<li>停顿通常 &lt; 1ms，几乎与堆大小无关</li>
+<li>适合低延迟、大堆</li>
+<li><code>-XX:+UseZGC</code></li>
+<li>需要更多 CPU 和内存余量</li>
+</ul>
+<h2 id="Shenandoah"><a href="#Shenandoah" class="headerlink" title="Shenandoah"></a>Shenandoah</h2><ul>
+<li>低延迟并发压缩收集器</li>
+<li>OpenJDK 发行版支持</li>
+<li><code>-XX:+UseShenandoahGC</code></li>
+<li>适合对停顿敏感的场景，生态&#x2F;调优资料少于 G1&#x2F;ZGC</li>
+</ul>
+<h2 id="Epsilon"><a href="#Epsilon" class="headerlink" title="Epsilon"></a>Epsilon</h2><ul>
+<li>不做垃圾回收，只分配</li>
+<li>用于性能测试&#x2F;短生命周期任务</li>
+<li><code>-XX:+UseEpsilonGC</code></li>
+<li>堆满即 OOM，不适合生产常驻服务</li>
+</ul>
+<h1 id="G1-深挖"><a href="#G1-深挖" class="headerlink" title="G1 深挖"></a>G1 深挖</h1><h2 id="Region"><a href="#Region" class="headerlink" title="Region"></a>Region</h2><p>G1 把堆分成大小相等的 Region：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">+----+----+----+----+----+----+</span><br><span class="line">| E  | S  | O  | O  | H  | H  |</span><br><span class="line">+----+----+----+----+----+----+</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Region 大小 1–32MB，2 的幂</li>
+<li>默认目标约 2048 个 Region</li>
+<li>Eden&#x2F;Survivor&#x2F;Old 是逻辑角色，不是连续空间</li>
+<li>Humongous：对象 ≥ Region 的一半，分配在连续 Humongous Region</li>
+<li>Humongous 回收代价高，容易造成碎片和 Full GC</li>
+</ul>
+<h2 id="收集周期"><a href="#收集周期" class="headerlink" title="收集周期"></a>收集周期</h2><ol>
+<li>Young-Only 阶段：普通 Young GC，对象晋升</li>
+<li>Old 占用达到 IHOP，触发 Concurrent Start</li>
+<li>并发标记</li>
+<li>Remark</li>
+<li>Cleanup</li>
+<li>Space-Reclamation：Mixed GC，回收部分 Old Region</li>
+<li>回到 Young-Only</li>
+</ol>
+<p>关键参数：</p>
+<ul>
+<li><code>-XX:MaxGCPauseMillis=200</code>：目标，不是保证</li>
+<li><code>-XX:G1HeapRegionSize</code></li>
+<li><code>-XX:InitiatingHeapOccupancyPercent=45</code>（Adaptive IHOP 开启时是初始值）</li>
+<li><code>-XX:G1NewSizePercent</code>、<code>-XX:G1MaxNewSizePercent</code></li>
+<li><code>-XX:G1MixedGCLiveThresholdPercent</code></li>
+<li><code>-XX:G1HeapWastePercent</code></li>
+<li><code>-XX:G1MixedGCCountTarget</code></li>
+<li><code>-XX:G1ReservePercent</code></li>
+<li><code>-XX:+UseStringDeduplication</code></li>
+</ul>
+<h2 id="记忆集与卡表"><a href="#记忆集与卡表" class="headerlink" title="记忆集与卡表"></a>记忆集与卡表</h2><ul>
+<li>每个 Region 有 Remembered Set</li>
+<li>卡表 512B</li>
+<li>跨 Region 引用多时，记忆集开销大</li>
+<li>大量跨代引用会导致 GC 变慢</li>
+</ul>
+<h2 id="Evacuation-Failure"><a href="#Evacuation-Failure" class="headerlink" title="Evacuation Failure"></a>Evacuation Failure</h2><ul>
+<li>目标 Region 不够，对象无法复制</li>
+<li>日志：<code>Evacuation Failure: Allocation/Pinned</code></li>
+<li><code>Pinned</code>：JNI <code>GetPrimitiveArrayCritical</code>&#x2F;<code>GetStringCritical</code> 等导致对象被钉住</li>
+<li>可能触发 Full GC</li>
+<li>处理：增大堆&#x2F;Region、减少大对象、避免长时间 JNI critical、调 <code>G1ReservePercent</code></li>
+</ul>
+<h2 id="Full-GC"><a href="#Full-GC" class="headerlink" title="Full GC"></a>Full GC</h2><ul>
+<li>G1 的兜底，整堆压缩</li>
+<li>通常意味着晋升失败、Humongous 碎片、并发标记跟不上</li>
+<li>频繁 Full GC 要看 allocation rate、live set、IHOP、Region 大小</li>
+<li>不要用 <code>-XX:+DisableExplicitGC</code> 掩盖问题，先查 <code>System.gc</code> 来源</li>
+</ul>
+<h2 id="日志"><a href="#日志" class="headerlink" title="日志"></a>日志</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-Xlog:gc*:file=/logs/gc.log:time,<span class="built_in">uptime</span>,level,tags:filecount=5,filesize=50m</span><br><span class="line">-Xlog:gc+phases=debug</span><br><span class="line">-Xlog:gc+heap=debug</span><br><span class="line">-Xlog:safepoint</span><br></pre></td></tr></table></figure>
+
+<p>关注：</p>
+<ul>
+<li>Young&#x2F;Mixed&#x2F;Full GC 频率</li>
+<li>每次停顿时间</li>
+<li>回收前后堆占用</li>
+<li>Humongous 分配</li>
+<li>Evacuation Failure</li>
+<li>并发标记周期</li>
+<li>晋升速率</li>
+</ul>
+<h1 id="ZGC-深挖"><a href="#ZGC-深挖" class="headerlink" title="ZGC 深挖"></a>ZGC 深挖</h1><h2 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h2><ul>
+<li>并发标记、并发转移、并发重定位</li>
+<li>停顿通常 &lt; 1ms</li>
+<li>停顿与堆大小基本无关</li>
+<li>支持几百 MB 到 16TB 堆</li>
+<li>JDK 23 起默认分代</li>
+<li>需要更多 CPU 余量</li>
+</ul>
+<h2 id="核心机制"><a href="#核心机制" class="headerlink" title="核心机制"></a>核心机制</h2><ul>
+<li><strong>Colored Pointers</strong>：64 位指针中带元数据位</li>
+<li><strong>Load Barrier</strong>：读取引用时修正&#x2F;标记</li>
+<li><strong>Store Barrier</strong>：分代 ZGC 维护记忆集和标记</li>
+<li><strong>并发转移</strong>：对象在应用运行时移动</li>
+<li><strong>Region</strong>：ZGC 自己的 Region 管理</li>
+</ul>
+<p>分代 ZGC 的目标：</p>
+<ul>
+<li>降低分配停顿风险</li>
+<li>降低堆内存开销</li>
+<li>降低 GC CPU 开销</li>
+<li>保持 &lt;1ms 停顿</li>
+</ul>
+<h2 id="堆-sizing"><a href="#堆-sizing" class="headerlink" title="堆 sizing"></a>堆 sizing</h2><ul>
+<li><code>-Xmx</code> 是最重要的参数</li>
+<li>需要容纳 live set + 分配余量</li>
+<li>分配速率越高，需要越多余量</li>
+<li><code>-XX:SoftMaxHeapSize</code> 软上限，避免过早增长</li>
+<li><code>-XX:-ZUncommit</code> 禁止归还未用内存</li>
+<li><code>-XX:ZUncommitDelay=300</code> 归还延迟</li>
+<li><code>-Xms=-Xmx</code> + <code>-XX:+AlwaysPreTouch</code> 可降低运行时缺页&#x2F;归还未内存的抖动</li>
+</ul>
+<h2 id="大页"><a href="#大页" class="headerlink" title="大页"></a>大页</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">echo</span> 9216 &gt; /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages</span><br><span class="line">java -XX:+UseZGC -Xms16G -Xmx16G -XX:+UseLargePages ...</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>大页提升 TLB 命中，降低延迟</li>
+<li>需要 root 配置 huge page pool</li>
+<li>容器环境要确认宿主&#x2F;容器 huge page 可见性</li>
+</ul>
+<h2 id="适用"><a href="#适用" class="headerlink" title="适用"></a>适用</h2><ul>
+<li>低延迟 API&#x2F;交易&#x2F;网关</li>
+<li>大堆且停顿敏感</li>
+<li>能接受一定吞吐下降和更高 CPU&#x2F;内存开销</li>
+<li>不适合 CPU 已经很紧张、吞吐优先的批处理</li>
+</ul>
+<h1 id="其他收集器"><a href="#其他收集器" class="headerlink" title="其他收集器"></a>其他收集器</h1><h2 id="Parallel-1"><a href="#Parallel-1" class="headerlink" title="Parallel"></a>Parallel</h2><ul>
+<li>吞吐优先，STW</li>
+<li>适合离线批处理、ETL、可接受秒级停顿</li>
+<li>调 <code>-XX:ParallelGCThreads</code>、<code>-XX:MaxGCPauseMillis</code></li>
+<li>大堆 Full GC 可能很长</li>
+</ul>
+<h2 id="Shenandoah-1"><a href="#Shenandoah-1" class="headerlink" title="Shenandoah"></a>Shenandoah</h2><ul>
+<li>并发压缩，低延迟</li>
+<li>适合对停顿敏感、使用 OpenJDK 的场景</li>
+<li>调优资料和生态不如 G1&#x2F;ZGC</li>
+<li>关注 <code>-XX:ShenandoahGCHeuristics</code> 等发行版特定参数</li>
+</ul>
+<h2 id="Serial-1"><a href="#Serial-1" class="headerlink" title="Serial"></a>Serial</h2><ul>
+<li>小堆、单核、容器边车&#x2F;工具</li>
+<li>简单可靠</li>
+<li>不适合大堆服务端</li>
+</ul>
+<h1 id="GC-选型"><a href="#GC-选型" class="headerlink" title="GC 选型"></a>GC 选型</h1><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>通用 Web&#x2F;API</td>
+<td>G1</td>
+<td>默认、平衡</td>
+</tr>
+<tr>
+<td>低延迟交易&#x2F;网关</td>
+<td>ZGC</td>
+<td>停顿 &lt;1ms</td>
+</tr>
+<tr>
+<td>大堆且停顿敏感</td>
+<td>ZGC</td>
+<td>停顿与堆大小无关</td>
+</tr>
+<tr>
+<td>批处理&#x2F;离线</td>
+<td>Parallel</td>
+<td>吞吐高</td>
+</tr>
+<tr>
+<td>小堆&#x2F;单核</td>
+<td>Serial</td>
+<td>开销小</td>
+</tr>
+<tr>
+<td>性能测试</td>
+<td>Epsilon</td>
+<td>排除 GC 干扰</td>
+</tr>
+<tr>
+<td>OpenJDK 低延迟</td>
+<td>Shenandoah</td>
+<td>并发压缩</td>
+</tr>
+</tbody></table>
+<p>选型步骤：</p>
+<ol>
+<li>明确 SLO：吞吐、P50&#x2F;P99&#x2F;P999 延迟、可用性</li>
+<li>先跑默认 G1，采集基线</li>
+<li>有明确证据再换收集器</li>
+<li>一次只改一个变量</li>
+<li>用生产相似流量压测</li>
+<li>灰度发布，观察 GC 日志和业务指标</li>
+<li>保留回滚</li>
+</ol>
+<p>不要凭“网上说 ZGC 最快”就换。ZGC 的 CPU&#x2F;内存成本、GC 线程、容器限制都要评估。</p>
+<h1 id="GC-日志与诊断工具"><a href="#GC-日志与诊断工具" class="headerlink" title="GC 日志与诊断工具"></a>GC 日志与诊断工具</h1><h2 id="启动参数"><a href="#启动参数" class="headerlink" title="启动参数"></a>启动参数</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-Xlog:gc*:file=/logs/gc.log:time,<span class="built_in">uptime</span>,level,tags:filecount=5,filesize=50m</span><br><span class="line">-XX:+HeapDumpOnOutOfMemoryError</span><br><span class="line">-XX:HeapDumpPath=/logs/heapdump.hprof</span><br><span class="line">-XX:NativeMemoryTracking=summary</span><br></pre></td></tr></table></figure>
+
+<h2 id="jcmd"><a href="#jcmd" class="headerlink" title="jcmd"></a>jcmd</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">jcmd &lt;pid&gt; GC.heap_info</span><br><span class="line">jcmd &lt;pid&gt; GC.class_histogram</span><br><span class="line">jcmd &lt;pid&gt; GC.heap_dump /logs/heap.hprof</span><br><span class="line">jcmd &lt;pid&gt; Thread.<span class="built_in">print</span></span><br><span class="line">jcmd &lt;pid&gt; VM.native_memory summary</span><br><span class="line">jcmd &lt;pid&gt; JFR.start name=profile duration=60s filename=/logs/profile.jfr</span><br></pre></td></tr></table></figure>
+
+<h2 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">jstat -gcutil &lt;pid&gt; 1000</span><br><span class="line">jstat -gc &lt;pid&gt; 1000</span><br><span class="line">jstat -gccause &lt;pid&gt; 1000</span><br></pre></td></tr></table></figure>
+
+<p>关注：</p>
+<ul>
+<li>Eden&#x2F;Survivor&#x2F;Old 使用率</li>
+<li>YGC&#x2F;FGC 次数和时间</li>
+<li>GCT 总 GC 时间</li>
+<li>最近 GC 原因</li>
+</ul>
+<h2 id="jmap-x2F-jstack"><a href="#jmap-x2F-jstack" class="headerlink" title="jmap &#x2F; jstack"></a>jmap &#x2F; jstack</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">jmap -histo:live &lt;pid&gt;</span><br><span class="line">jmap -dump:live,format=b,file=/logs/heap.hprof &lt;pid&gt;</span><br><span class="line">jstack &lt;pid&gt; &gt; /logs/thread.txt</span><br></pre></td></tr></table></figure>
+
+<h2 id="JFR"><a href="#JFR" class="headerlink" title="JFR"></a>JFR</h2><ul>
+<li>低开销持续采集</li>
+<li>记录 GC、分配、锁、IO、线程、异常</li>
+<li>用 JMC 或 <code>jfr</code> 工具分析</li>
+<li>生产建议常开或按需开启</li>
+</ul>
+<h2 id="NMT"><a href="#NMT" class="headerlink" title="NMT"></a>NMT</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">java -XX:NativeMemoryTracking=summary ...</span><br><span class="line">jcmd &lt;pid&gt; VM.native_memory summary</span><br><span class="line">jcmd &lt;pid&gt; VM.native_memory baseline</span><br><span class="line">jcmd &lt;pid&gt; VM.native_memory summary.diff</span><br></pre></td></tr></table></figure>
+
+<p>用于区分 Heap、Metaspace、Thread、Code、GC、Internal、Other。</p>
+<h2 id="OS-工具"><a href="#OS-工具" class="headerlink" title="OS 工具"></a>OS 工具</h2><ul>
+<li><code>top</code>&#x2F;<code>ps</code>：RSS、CPU</li>
+<li><code>pmap</code>&#x2F;<code>smaps</code>：进程内存映射</li>
+<li><code>perf</code>：CPU 热点</li>
+<li><code>async-profiler</code>：CPU&#x2F;分配&#x2F;锁火焰图</li>
+<li><code>dmesg</code>&#x2F;<code>journalctl</code>：OOM killer、cgroup</li>
+<li><code>docker inspect</code>&#x2F;cgroup：OOMKilled</li>
+</ul>
+<h1 id="调优方法论"><a href="#调优方法论" class="headerlink" title="调优方法论"></a>调优方法论</h1><h2 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h2><ol>
+<li><strong>定义目标</strong>：P99 延迟、GC 停顿、吞吐、内存上限</li>
+<li><strong>建立基线</strong>：默认参数、生产相似流量、至少 30 分钟</li>
+<li><strong>采集证据</strong>：GC 日志、JFR、NMT、heap histogram、线程栈</li>
+<li><strong>提出假设</strong>：例如“Humongous 分配导致 Mixed GC 频繁”</li>
+<li><strong>一次改一个变量</strong>：堆、Region、IHOP、收集器</li>
+<li><strong>验证</strong>：对比 P99、GC 时间、CPU、RSS</li>
+<li><strong>灰度&#x2F;回滚</strong>：小流量验证，保留旧参数</li>
+</ol>
+<h2 id="常见调优方向"><a href="#常见调优方向" class="headerlink" title="常见调优方向"></a>常见调优方向</h2><ul>
+<li>延迟高：先看 GC 停顿、 safepoint、锁、下游</li>
+<li>吞吐低：看 GC 频率、CPU、分配速率</li>
+<li>内存高：看 live set、Metaspace、Direct、线程栈、Native</li>
+<li>Full GC 频繁：看晋升失败、Humongous、IHOP、堆不足</li>
+<li>容器 OOM：看总内存，不只看 Heap</li>
+</ul>
+<h2 id="不要做的事"><a href="#不要做的事" class="headerlink" title="不要做的事"></a>不要做的事</h2><ul>
+<li>复制网上参数</li>
+<li>同时改多个参数</li>
+<li>用 <code>-Xmn</code> 硬编码 Young 大小（G1 不推荐）</li>
+<li>用 <code>-XX:+DisableExplicitGC</code> 掩盖 <code>System.gc</code></li>
+<li>只看 GC 次数，不看停顿和业务影响</li>
+<li>用 <code>nobarrier</code>&#x2F;关闭一致性换性能</li>
+</ul>
+<h1 id="常见故障"><a href="#常见故障" class="headerlink" title="常见故障"></a>常见故障</h1><h2 id="频繁-Full-GC"><a href="#频繁-Full-GC" class="headerlink" title="频繁 Full GC"></a>频繁 Full GC</h2><p>原因：</p>
+<ul>
+<li>堆不足&#x2F;live set 太大</li>
+<li>晋升失败</li>
+<li>Humongous 碎片</li>
+<li>并发标记跟不上分配速率</li>
+<li>显式 <code>System.gc</code></li>
+<li>Metaspace&#x2F;ClassLoader 泄漏</li>
+</ul>
+<p>处理：</p>
+<ul>
+<li>看 GC 日志和 heap histogram</li>
+<li>增大堆&#x2F;Region，减少大对象</li>
+<li>调 IHOP&#x2F;Reserve</li>
+<li>排查泄漏</li>
+<li>必要时换 ZGC</li>
+</ul>
+<h2 id="长停顿"><a href="#长停顿" class="headerlink" title="长停顿"></a>长停顿</h2><ul>
+<li>Young&#x2F;Mixed GC 停顿超目标</li>
+<li>大对象&#x2F;Humongous</li>
+<li>记忆集过大</li>
+<li>线程数过多&#x2F;CPU 争抢</li>
+<li>safepoint 长时间等待</li>
+<li>换 ZGC&#x2F;Shenandoah 评估</li>
+</ul>
+<h2 id="Metaspace-OOM"><a href="#Metaspace-OOM" class="headerlink" title="Metaspace OOM"></a>Metaspace OOM</h2><ul>
+<li>动态生成类（CGLIB&#x2F;ByteBuddy&#x2F;脚本）</li>
+<li>ClassLoader 泄漏</li>
+<li>热部署&#x2F;OSGi</li>
+<li>设置 <code>MaxMetaspaceSize</code> 并监控</li>
+<li>用 <code>jcmd GC.class_histogram</code>&#x2F;<code>jmap -clstats</code></li>
+</ul>
+<h2 id="Direct-Memory-泄漏"><a href="#Direct-Memory-泄漏" class="headerlink" title="Direct Memory 泄漏"></a>Direct Memory 泄漏</h2><ul>
+<li>Netty <code>ByteBuf</code> 未释放</li>
+<li>NIO DirectBuffer</li>
+<li>堆正常但 RSS 上涨</li>
+<li><code>-XX:MaxDirectMemorySize</code> 限制</li>
+<li>NMT 看 Internal&#x2F;Other</li>
+</ul>
+<h2 id="线程泄漏"><a href="#线程泄漏" class="headerlink" title="线程泄漏"></a>线程泄漏</h2><ul>
+<li>线程池未关闭</li>
+<li>阻塞&#x2F;死锁</li>
+<li>线程数 × Xss 占 native</li>
+<li><code>jstack</code>、<code>Thread.print</code>、JFR</li>
+</ul>
+<h2 id="容器-OOM-1"><a href="#容器-OOM-1" class="headerlink" title="容器 OOM"></a>容器 OOM</h2><ul>
+<li>exit 137&#x2F;OOMKilled</li>
+<li>堆 + 非堆 + native 超 cgroup</li>
+<li><code>MaxRAMPercentage</code> 设太高</li>
+<li>线程&#x2F;直接内存&#x2F;元空间增长</li>
+<li>用 <code>memory.events</code>、<code>dmesg</code>、NMT 排查</li>
+</ul>
+<h2 id="JVM-堆-OOM"><a href="#JVM-堆-OOM" class="headerlink" title="JVM 堆 OOM"></a>JVM 堆 OOM</h2><ul>
+<li><code>Java heap space</code></li>
+<li><code>GC overhead limit exceeded</code></li>
+<li><code>Metaspace</code></li>
+<li><code>Direct buffer memory</code></li>
+<li><code>unable to create native thread</code></li>
+</ul>
+<p>不同 OOM 类型对应不同排查路径。</p>
+<h1 id="SRE-视角"><a href="#SRE-视角" class="headerlink" title="SRE 视角"></a>SRE 视角</h1><p>以下是从 SRE 角度对 JVM 服务的专业见解。</p>
+<h2 id="JVM-是服务的一部分，不是黑盒"><a href="#JVM-是服务的一部分，不是黑盒" class="headerlink" title="JVM 是服务的一部分，不是黑盒"></a>JVM 是服务的一部分，不是黑盒</h2><ul>
+<li>GC 停顿会直接变成用户延迟</li>
+<li>Heap&#x2F;非堆&#x2F;native 会直接影响容器 OOM</li>
+<li>JVM 参数是配置，要版本化、评审、灰度</li>
+<li>不要把 JVM 调优当成“上线后再说”</li>
+</ul>
+<h2 id="SLI-x2F-SLO"><a href="#SLI-x2F-SLO" class="headerlink" title="SLI&#x2F;SLO"></a>SLI&#x2F;SLO</h2><p>建议监控：</p>
+<ul>
+<li>请求成功率</li>
+<li>P50&#x2F;P95&#x2F;P99&#x2F;P999 延迟</li>
+<li>GC 停顿 P99&#x2F;最大值</li>
+<li>GC 时间占比</li>
+<li>Heap after GC &#x2F; live set</li>
+<li>分配速率、晋升速率</li>
+<li>Full GC 次数</li>
+<li>Metaspace&#x2F;Direct&#x2F;Thread&#x2F;CodeCache</li>
+<li>容器 RSS 与 limit</li>
+<li>重启次数、OOMKilled</li>
+</ul>
+<p>SLO 要包含 GC 影响：</p>
+<ul>
+<li>不要用“排除 GC 的延迟”自欺欺人</li>
+<li>GC 导致的超时也算错误预算</li>
+<li>尾延迟比平均值更重要</li>
+</ul>
+<h2 id="告警"><a href="#告警" class="headerlink" title="告警"></a>告警</h2><ul>
+<li>Full GC 频率&#x2F;时长超阈值</li>
+<li>Heap after GC 持续 &gt; 70%–80%</li>
+<li>容器 RSS 接近 limit</li>
+<li>Metaspace&#x2F;Direct 持续增长</li>
+<li>GC 停顿导致 SLO burn</li>
+<li>频繁重启&#x2F;OOMKilled</li>
+<li>safepoint 时间异常</li>
+</ul>
+<p>告警要可行动，附 Dashboard、GC 日志、runbook。</p>
+<h2 id="容量"><a href="#容量" class="headerlink" title="容量"></a>容量</h2><ul>
+<li>按 live set + 分配速率 + 余量定堆</li>
+<li>预留 non-heap&#x2F;native&#x2F;线程栈</li>
+<li>ZGC 需要更多 CPU&#x2F;内存余量</li>
+<li>G1 大堆要关注停顿和记忆集</li>
+<li>容器 limit 不是“越大越好”，要成本约束</li>
+<li>定期 rightsizing，避免长期超配</li>
+</ul>
+<h2 id="变更"><a href="#变更" class="headerlink" title="变更"></a>变更</h2><ul>
+<li>JVM 参数进 Git，按服务&#x2F;环境管理</li>
+<li>一次只改一个变量</li>
+<li>灰度&#x2F;金丝雀发布</li>
+<li>对比 GC 日志、P99、错误率、RSS</li>
+<li>保留回滚参数</li>
+<li>升级 JDK 要回归 GC 行为和依赖兼容</li>
+</ul>
+<h2 id="可观测性"><a href="#可观测性" class="headerlink" title="可观测性"></a>可观测性</h2><ul>
+<li>GC 日志集中采集，带 pod&#x2F;服务标签</li>
+<li>JFR 按需&#x2F;持续采样</li>
+<li>Micrometer&#x2F;OTel 暴露 JVM 指标</li>
+<li>Dashboard 分服务、实例、版本</li>
+<li>关联 GC 停顿与请求延迟&#x2F;trace</li>
+<li>保留 heap dump 和 thread dump 的采集流程</li>
+</ul>
+<h2 id="事故响应"><a href="#事故响应" class="headerlink" title="事故响应"></a>事故响应</h2><ul>
+<li>OOMKilled：先看 cgroup 和 NMT，不要盲目加内存</li>
+<li>Heap OOM：拿 heap dump，分析 dominator tree</li>
+<li>GC 风暴：看 Full GC、Humongous、分配速率</li>
+<li>线程泄漏：thread dump&#x2F;JFR</li>
+<li>回滚最近变更，保留现场</li>
+</ul>
+<h2 id="成本"><a href="#成本" class="headerlink" title="成本"></a>成本</h2><ul>
+<li>过度堆配置浪费内存</li>
+<li>ZGC 的并发线程和内存余量有成本</li>
+<li>用 rightsizing 和分层 SLO 控制成本</li>
+<li>不是所有服务都需要 ZGC&#x2F;大堆</li>
+</ul>
+<h2 id="SRE-反模式"><a href="#SRE-反模式" class="headerlink" title="SRE 反模式"></a>SRE 反模式</h2><ul>
+<li>只监控 Heap，不看 RSS&#x2F;native</li>
+<li>用平均延迟掩盖尾延迟</li>
+<li>复制别人的 JVM 参数</li>
+<li>没有 GC 日志</li>
+<li>OOM 后直接重启，不保留现场</li>
+<li>把 GC 调优当一次性任务</li>
+<li>没有容量模型，靠报警扩容</li>
+</ul>
+<h1 id="企业实践"><a href="#企业实践" class="headerlink" title="企业实践"></a>企业实践</h1><h2 id="服务分层"><a href="#服务分层" class="headerlink" title="服务分层"></a>服务分层</h2><ul>
+<li>核心低延迟：ZGC&#x2F;G1 + 严格 SLO + 持续 JFR</li>
+<li>通用服务：G1 + 75% 堆 + 监控</li>
+<li>批处理：Parallel + 吞吐优先</li>
+<li>边车&#x2F;工具：Serial&#x2F;小堆</li>
+<li>性能测试：Epsilon（隔离 GC）</li>
+</ul>
+<h2 id="容器基线"><a href="#容器基线" class="headerlink" title="容器基线"></a>容器基线</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-XX:MaxRAMPercentage=75.0</span><br><span class="line">-XX:InitialRAMPercentage=50.0</span><br><span class="line">-XX:+ExitOnOutOfMemoryError</span><br><span class="line">-XX:+HeapDumpOnOutOfMemoryError</span><br><span class="line">-XX:HeapDumpPath=/logs/heapdump.hprof</span><br><span class="line">-Xlog:gc*:file=/logs/gc.log:time,<span class="built_in">uptime</span>,level,tags:filecount=5,filesize=50m</span><br></pre></td></tr></table></figure>
+
+<p>按服务调整，不要一刀切。</p>
+<h2 id="JDK-升级"><a href="#JDK-升级" class="headerlink" title="JDK 升级"></a>JDK 升级</h2><ul>
+<li>25 LTS 作为生产基线</li>
+<li>27 非 LTS 先评估</li>
+<li>升级前跑 GC&#x2F;性能回归</li>
+<li>关注默认 GC、容器支持、JFR、弃用参数</li>
+<li>保留旧 JDK 回滚</li>
+</ul>
+<h2 id="反模式"><a href="#反模式" class="headerlink" title="反模式"></a>反模式</h2><ul>
+<li>堆设成容器 limit 的 100%</li>
+<li>只看 GC 次数不看停顿</li>
+<li>用 <code>-Xmn</code> 硬调 G1 Young</li>
+<li>用 <code>-XX:+DisableExplicitGC</code> 掩盖问题</li>
+<li>不保留 heap dump</li>
+<li>没有基线就调参</li>
+<li>所有服务复制同一套参数</li>
+</ul>
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="常用参数"><a href="#常用参数" class="headerlink" title="常用参数"></a>常用参数</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 堆</span></span><br><span class="line">-Xms4g -Xmx4g</span><br><span class="line">-XX:MaxRAMPercentage=75.0</span><br><span class="line">-XX:InitialRAMPercentage=50.0</span><br><span class="line"></span><br><span class="line"><span class="comment"># GC</span></span><br><span class="line">-XX:+UseG1GC</span><br><span class="line">-XX:MaxGCPauseMillis=200</span><br><span class="line">-XX:InitiatingHeapOccupancyPercent=45</span><br><span class="line">-XX:+UseZGC</span><br><span class="line">-XX:SoftMaxHeapSize=4g</span><br><span class="line"></span><br><span class="line"><span class="comment"># 诊断</span></span><br><span class="line">-Xlog:gc*:file=/logs/gc.log:time,<span class="built_in">uptime</span>,level,tags:filecount=5,filesize=50m</span><br><span class="line">-XX:+HeapDumpOnOutOfMemoryError</span><br><span class="line">-XX:HeapDumpPath=/logs/heapdump.hprof</span><br><span class="line">-XX:NativeMemoryTracking=summary</span><br><span class="line"></span><br><span class="line"><span class="comment"># 容器</span></span><br><span class="line">-XX:+UseContainerSupport</span><br><span class="line">-XX:ActiveProcessorCount=4</span><br></pre></td></tr></table></figure>
+
+<h2 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">jcmd &lt;pid&gt; GC.heap_info</span><br><span class="line">jcmd &lt;pid&gt; GC.class_histogram</span><br><span class="line">jcmd &lt;pid&gt; GC.heap_dump /logs/heap.hprof</span><br><span class="line">jcmd &lt;pid&gt; Thread.<span class="built_in">print</span></span><br><span class="line">jcmd &lt;pid&gt; VM.native_memory summary</span><br><span class="line">jcmd &lt;pid&gt; JFR.start name=profile duration=60s filename=/logs/profile.jfr</span><br><span class="line"></span><br><span class="line">jstat -gcutil &lt;pid&gt; 1000</span><br><span class="line">jmap -histo:live &lt;pid&gt;</span><br><span class="line">jstack &lt;pid&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="官方参考"><a href="#官方参考" class="headerlink" title="官方参考"></a>官方参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://openjdk.org/projects/jdk/25/">JDK 25</a></li>
+<li><a target="_blank" rel="noopener" href="https://openjdk.org/projects/jdk/27/">JDK 27</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.oracle.com/en/java/javase/25/gctuning/">HotSpot GC Tuning Guide (JDK 25)</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.oracle.com/en/java/javase/25/docs/specs/man/java.html">java command (JDK 25)</a></li>
+<li><a target="_blank" rel="noopener" href="https://openjdk.org/jeps/439">JEP 439: Generational ZGC</a></li>
+<li><a target="_blank" rel="noopener" href="https://openjdk.org/jeps/474">JEP 474: ZGC Generational Mode by Default</a></li>
+</ul>
 
   </div>
   
@@ -2717,8 +3357,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/JVM/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>JVM</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Java/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Java</p></a></div>
-  <span hidden itemprop="keywords">JVM Java</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/SRE/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>SRE</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/JVM/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>JVM</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Java/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Java</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/GC/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>GC</p></a></div>
+  <span hidden itemprop="keywords">SRE JVM Java GC</span>
   
 
 
@@ -2789,7 +3429,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#JVM%E6%A6%82%E5%BF%B5"><span class="toc-text">JVM概念</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JVM%E8%BF%90%E8%A1%8C%E6%97%B6%E5%86%85%E5%AD%98%E5%8C%BA%E7%BB%93%E6%9E%84"><span class="toc-text">JVM运行时内存区结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E5%8C%BA"><span class="toc-text">堆区</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E4%B8%8E%E8%8C%83%E5%9B%B4"><span class="toc-text">版本与范围</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#JVM-%E8%BF%90%E8%A1%8C%E6%97%B6%E5%86%85%E5%AD%98"><span class="toc-text">JVM 运行时内存</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Heap"><span class="toc-text">Heap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Metaspace"><span class="toc-text">Metaspace</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Code-Cache"><span class="toc-text">Code Cache</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Thread-Stack"><span class="toc-text">Thread Stack</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct-Memory"><span class="toc-text">Direct Memory</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Native-Memory"><span class="toc-text">Native Memory</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E5%88%86%E9%85%8D%E4%B8%8E%E5%B8%83%E5%B1%80"><span class="toc-text">对象分配与布局</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E5%B8%83%E5%B1%80"><span class="toc-text">对象布局</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E8%B7%AF%E5%BE%84"><span class="toc-text">分配路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E9%85%8D%E9%80%9F%E7%8E%87"><span class="toc-text">分配速率</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A0%86-sizing-%E4%B8%8E%E5%AE%B9%E5%99%A8"><span class="toc-text">堆 sizing 与容器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%BB%98%E8%AE%A4%E5%80%BC"><span class="toc-text">默认值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8"><span class="toc-text">容器</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E5%A4%A7%E5%B0%8F%E5%85%AC%E5%BC%8F"><span class="toc-text">堆大小公式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8-OOM"><span class="toc-text">容器 OOM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#GC-%E5%9F%BA%E7%A1%80%E5%8E%9F%E7%90%86"><span class="toc-text">GC 基础原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%9E%83%E5%9C%BE"><span class="toc-text">什么是垃圾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GC-%E5%8A%A8%E4%BD%9C"><span class="toc-text">GC 动作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#STW"><span class="toc-text">STW</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0"><span class="toc-text">三色标记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E5%B1%8F%E9%9A%9C%E4%B8%8E%E8%AF%BB%E5%B1%8F%E9%9A%9C"><span class="toc-text">写屏障与读屏障</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E4%BB%A3%E5%81%87%E8%AE%BE"><span class="toc-text">分代假设</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Card-Table-%E4%B8%8E-Remembered-Set"><span class="toc-text">Card Table 与 Remembered Set</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8"><span class="toc-text">垃圾收集器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Serial"><span class="toc-text">Serial</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Parallel"><span class="toc-text">Parallel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#G1"><span class="toc-text">G1</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ZGC"><span class="toc-text">ZGC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Shenandoah"><span class="toc-text">Shenandoah</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Epsilon"><span class="toc-text">Epsilon</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#G1-%E6%B7%B1%E6%8C%96"><span class="toc-text">G1 深挖</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Region"><span class="toc-text">Region</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B6%E9%9B%86%E5%91%A8%E6%9C%9F"><span class="toc-text">收集周期</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%B0%E5%BF%86%E9%9B%86%E4%B8%8E%E5%8D%A1%E8%A1%A8"><span class="toc-text">记忆集与卡表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Evacuation-Failure"><span class="toc-text">Evacuation Failure</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Full-GC"><span class="toc-text">Full GC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A5%E5%BF%97"><span class="toc-text">日志</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ZGC-%E6%B7%B1%E6%8C%96"><span class="toc-text">ZGC 深挖</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%B9%E7%82%B9"><span class="toc-text">特点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%9C%BA%E5%88%B6"><span class="toc-text">核心机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86-sizing"><span class="toc-text">堆 sizing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%A7%E9%A1%B5"><span class="toc-text">大页</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%82%E7%94%A8"><span class="toc-text">适用</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E6%94%B6%E9%9B%86%E5%99%A8"><span class="toc-text">其他收集器</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Parallel-1"><span class="toc-text">Parallel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Shenandoah-1"><span class="toc-text">Shenandoah</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Serial-1"><span class="toc-text">Serial</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#GC-%E9%80%89%E5%9E%8B"><span class="toc-text">GC 选型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#GC-%E6%97%A5%E5%BF%97%E4%B8%8E%E8%AF%8A%E6%96%AD%E5%B7%A5%E5%85%B7"><span class="toc-text">GC 日志与诊断工具</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0"><span class="toc-text">启动参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jcmd"><span class="toc-text">jcmd</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jstat"><span class="toc-text">jstat</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jmap-x2F-jstack"><span class="toc-text">jmap &#x2F; jstack</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JFR"><span class="toc-text">JFR</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NMT"><span class="toc-text">NMT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OS-%E5%B7%A5%E5%85%B7"><span class="toc-text">OS 工具</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%B0%83%E4%BC%98%E6%96%B9%E6%B3%95%E8%AE%BA"><span class="toc-text">调优方法论</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A5%E9%AA%A4"><span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E8%B0%83%E4%BC%98%E6%96%B9%E5%90%91"><span class="toc-text">常见调优方向</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8D%E8%A6%81%E5%81%9A%E7%9A%84%E4%BA%8B"><span class="toc-text">不要做的事</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C"><span class="toc-text">常见故障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%91%E7%B9%81-Full-GC"><span class="toc-text">频繁 Full GC</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%95%BF%E5%81%9C%E9%A1%BF"><span class="toc-text">长停顿</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Metaspace-OOM"><span class="toc-text">Metaspace OOM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct-Memory-%E6%B3%84%E6%BC%8F"><span class="toc-text">Direct Memory 泄漏</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B3%84%E6%BC%8F"><span class="toc-text">线程泄漏</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8-OOM-1"><span class="toc-text">容器 OOM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JVM-%E5%A0%86-OOM"><span class="toc-text">JVM 堆 OOM</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#SRE-%E8%A7%86%E8%A7%92"><span class="toc-text">SRE 视角</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#JVM-%E6%98%AF%E6%9C%8D%E5%8A%A1%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%8C%E4%B8%8D%E6%98%AF%E9%BB%91%E7%9B%92"><span class="toc-text">JVM 是服务的一部分，不是黑盒</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SLI-x2F-SLO"><span class="toc-text">SLI&#x2F;SLO</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%8A%E8%AD%A6"><span class="toc-text">告警</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F"><span class="toc-text">容量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%98%E6%9B%B4"><span class="toc-text">变更</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E8%A7%82%E6%B5%8B%E6%80%A7"><span class="toc-text">可观测性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E6%95%85%E5%93%8D%E5%BA%94"><span class="toc-text">事故响应</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E6%9C%AC"><span class="toc-text">成本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRE-%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">SRE 反模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BC%81%E4%B8%9A%E5%AE%9E%E8%B7%B5"><span class="toc-text">企业实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%88%86%E5%B1%82"><span class="toc-text">服务分层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E5%9F%BA%E7%BA%BF"><span class="toc-text">容器基线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JDK-%E5%8D%87%E7%BA%A7"><span class="toc-text">JDK 升级</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">反模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%99%84%E5%BD%95"><span class="toc-text">附录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%8F%82%E6%95%B0"><span class="toc-text">常用参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">常用命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%98%E6%96%B9%E5%8F%82%E8%80%83"><span class="toc-text">官方参考</span></a></li></ol></li></ol>
     </div>
   </section>
 

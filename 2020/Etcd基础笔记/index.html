@@ -35,34 +35,24 @@
   <!-- feed -->
   <!-- 页面元数据 -->
   <title>Etcd基础笔记 - Tianyi的技术随笔</title>
-  <meta name="keywords" content="数据库, Etcd,undefined">
-  <meta desc name="description" content="
-etcd 数据模型
-etcd 架构
-应用场景
-服务注册和发现
-消息发布与订阅
-负载均衡
-分布式通知与协调
-分布式锁
-分布式队列
-集群监控与 Leader 竞选
-etcd 与 zookeeper 的区别
-
-
- - Tianyi Gu - Tianyi的技术随笔">
+  <meta name="keywords" content="数据库, Kubernetes,Etcd,分布式,Raft,undefined">
+  <meta desc name="description" content="etcd 是一个强一致、高可用的分布式键值存储，使用 Raft 协议复制日志，常用于配置管理、服务发现、分布式锁、Leader 选举和 Kubernetes 集群状态存储。
+本文基于 etcd 3.7.2（2026-09）和官方 latest 文档重写，覆盖架构、数据模型、etcdctl、集群、TLS&#x2F;... - Tianyi Gu - Tianyi的技术随笔">
   
 <meta property="og:type" content="article">
 <meta property="og:title" content="Etcd基础笔记">
 <meta property="og:url" content="https://tianyigu.top/2020/Etcd%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/index.html">
 <meta property="og:site_name" content="Tianyi的技术随笔">
-<meta property="og:description" content="etcd 数据模型 etcd 架构 应用场景 服务注册和发现 消息发布与订阅 负载均衡 分布式通知与协调 分布式锁 分布式队列 集群监控与 Leader 竞选 etcd 与 zookeeper 的区别">
+<meta property="og:description" content="etcd 是一个强一致、高可用的分布式键值存储，使用 Raft 协议复制日志，常用于配置管理、服务发现、分布式锁、Leader 选举和 Kubernetes 集群状态存储。 本文基于 etcd 3.7.2（2026-09）和官方 latest 文档重写，覆盖架构、数据模型、etcdctl、集群、TLS&#x2F;RBAC、compaction&#x2F;defrag、备份恢复、监控调优、Kuber">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
 <meta property="article:published_time" content="2020-04-10T04:28:43.000Z">
-<meta property="article:modified_time" content="2026-03-11T19:05:28.824Z">
+<meta property="article:modified_time" content="2026-10-22T17:01:26.257Z">
 <meta property="article:author" content="Tianyi Gu">
+<meta property="article:tag" content="Kubernetes">
 <meta property="article:tag" content="Etcd">
+<meta property="article:tag" content="分布式">
+<meta property="article:tag" content="Raft">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png">
   <style>
@@ -2265,7 +2255,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     root: '/',
     debug: "env",
     default: {"avatar":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/avatar/round/3442075.svg","link":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/link/8f277b4ee0ecd.svg","cover":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/cover/76b86c0226ffd.svg","image":"https://unpkg.com/volantis-static@0.0.1660614606622/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date(1792686289207),
+    lastupdate: new Date(1792690087254),
     cdn: {
       izitoast_css: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/css/iziToast.min.css',
       izitoast_js: 'https://cdn.bootcdn.net/ajax/libs/izitoast/1.4.0/js/iziToast.min.js',
@@ -2312,7 +2302,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </script>
 
   
-    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/数据库/","name":"数据库"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Etcd基础笔记/","name":"Etcd基础笔记"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Etcd基础笔记","description":"\netcd 数据模型\netcd 架构\n应用场景\n服务注册和发现\n消息发布与订阅\n负载均衡\n分布式通知与协调\n分布式锁\n分布式队列\n集群监控与 Leader 竞选\netcd 与 zookeeper 的区别\n\n\n","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Etcd%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Etcd%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/","wordCount":104,"datePublished":"2020-04-10T04:28:43.000Z","dateModified":"2026-03-11T19:05:28.824Z","articleSection":"数据库","keywords":"Etcd","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+    <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","sameAs":["https://github.com/volantis-x"],"description":"Tianyi的技术随笔"},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://tianyigu.top/","name":"Tianyi的技术随笔"}},{"@type":"ListItem","position":2,"item":{"@id":"https://tianyigu.top/categories/数据库/","name":"数据库"}},{"@type":"ListItem","position":3,"item":{"@id":"https://tianyigu.top/2020/Etcd基础笔记/","name":"Etcd基础笔记"}}]},{"@context":"http://schema.org","@type":"WebSite","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","description":"Tianyi的技术随笔","author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/","description":"Tianyi的技术随笔"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","url":"https://tianyigu.top/","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"potentialAction":{"@type":"SearchAction","name":"Site Search","target":{"@type":"EntryPoint","urlTemplate":"https://tianyigu.top?s={search_term_string}"},"query-input":"required name=search_term_string"}},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Etcd基础笔记","description":"etcd 是一个强一致、高可用的分布式键值存储，使用 Raft 协议复制日志，常用于配置管理、服务发现、分布式锁、Leader 选举和 Kubernetes 集群状态存储。\n本文基于 etcd 3.7.2（2026-09）和官方 latest 文档重写，覆盖架构、数据模型、etcdctl、集群、TLS&#x2F;RBAC、compaction&#x2F;defrag、备份恢复、监控调优、Kubernetes 实践，以及 Raft&#x2F;MVCC&#x2F;Watch&#x2F;Lease 的深入机制。\n\n名字来源：etc 代表 /etc 配置目录，d 代表 distributed。etcd 适合存储控制面元数据，不适合当对象存储、日志库或大 Value 数据库。\n","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianyigu.top/2020/Etcd%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/"},"author":{"@type":"Person","name":"Tianyi Gu","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"https://tianyigu.top/"},"publisher":{"@type":"Organization","name":"Tianyi的技术随笔","logo":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"https://tianyigu.top/2020/Etcd%E5%9F%BA%E7%A1%80%E7%AC%94%E8%AE%B0/","wordCount":338,"datePublished":"2020-04-10T04:28:43.000Z","dateModified":"2026-10-22T17:01:26.257Z","articleSection":"数据库","keywords":"Kubernetes,Etcd,分布式,Raft","image":{"@type":"ImageObject","url":"https://unpkg.com/volantis-static@0.0.1660614606622/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
   
   <!-- import head_end begin -->
   <!-- import head_end end -->
@@ -2693,85 +2683,1456 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <ul>
-<li><a href="#etcd-%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B">etcd 数据模型</a></li>
-<li><a href="#etcd-%E6%9E%B6%E6%9E%84">etcd 架构</a></li>
-<li><a href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF">应用场景</a><ul>
-<li><a href="#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E5%92%8C%E5%8F%91%E7%8E%B0">服务注册和发现</a></li>
-<li><a href="#%E6%B6%88%E6%81%AF%E5%8F%91%E5%B8%83%E4%B8%8E%E8%AE%A2%E9%98%85">消息发布与订阅</a></li>
-<li><a href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1">负载均衡</a></li>
-<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%80%9A%E7%9F%A5%E4%B8%8E%E5%8D%8F%E8%B0%83">分布式通知与协调</a></li>
-<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81">分布式锁</a></li>
-<li><a href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%98%9F%E5%88%97">分布式队列</a></li>
-<li><a href="#%E9%9B%86%E7%BE%A4%E7%9B%91%E6%8E%A7%E4%B8%8E-leader-%E7%AB%9E%E9%80%89">集群监控与 Leader 竞选</a></li>
-<li><a href="#etcd-%E4%B8%8E-zookeeper-%E7%9A%84%E5%8C%BA%E5%88%AB">etcd 与 zookeeper 的区别</a></li>
-</ul>
-</li>
-</ul>
+    <p>etcd 是一个强一致、高可用的分布式键值存储，使用 Raft 协议复制日志，常用于配置管理、服务发现、分布式锁、Leader 选举和 Kubernetes 集群状态存储。</p>
+<p>本文基于 etcd 3.7.2（2026-09）和官方 latest 文档重写，覆盖架构、数据模型、etcdctl、集群、TLS&#x2F;RBAC、compaction&#x2F;defrag、备份恢复、监控调优、Kubernetes 实践，以及 Raft&#x2F;MVCC&#x2F;Watch&#x2F;Lease 的深入机制。</p>
+<blockquote>
+<p>名字来源：etc 代表 <code>/etc</code> 配置目录，d 代表 distributed。etcd 适合存储<strong>控制面元数据</strong>，不适合当对象存储、日志库或大 Value 数据库。</p>
+</blockquote>
 <span id="more"></span>
 
-<p>etcd 以一致和容错的方式存储元数据。分布式系统使用 etcd 作为一致性键值存储，用于<strong>配置管理，服务发现和协调分布式工作</strong>。etcd 内部采用 raft 协议作为一致性算法，etcd 基于 Go 语言实现。</p>
+<ul>
+<li><a href="#etcd-%E6%98%AF%E4%BB%80%E4%B9%88">etcd 是什么</a></li>
+<li><a href="#%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84">核心架构</a></li>
+<li><a href="#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B">数据模型</a></li>
+<li><a href="#%E4%B8%80%E8%87%B4%E6%80%A7%E8%AF%AD%E4%B9%89">一致性语义</a></li>
+<li><a href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E5%90%AF%E5%8A%A8">安装与启动</a></li>
+<li><a href="#etcdctl-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4">etcdctl 常用命令</a></li>
+<li><a href="#%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2">集群部署</a></li>
+<li><a href="#%E5%AE%89%E5%85%A8">安全</a></li>
+<li><a href="#%E8%BF%90%E7%BB%B4%E4%B8%8E%E5%A4%87%E4%BB%BD">运维与备份</a></li>
+<li><a href="#%E7%9B%91%E6%8E%A7%E4%B8%8E%E8%B0%83%E4%BC%98">监控与调优</a></li>
+<li><a href="#kubernetes-%E4%B8%AD%E7%9A%84-etcd">Kubernetes 中的 etcd</a></li>
+<li><a href="#%E5%85%B8%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF">典型应用场景</a></li>
+<li><a href="#etcd-%E4%B8%8E-zookeeper-consul">etcd 与 ZooKeeper Consul</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5-raft-%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7">深入 Raft 与一致性</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5-mvcc-%E4%B8%8E%E5%AD%98%E5%82%A8">深入 MVCC 与存储</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5-watch-%E4%B8%8E-lease">深入 Watch 与 Lease</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5%E9%9B%86%E7%BE%A4%E5%8F%98%E6%9B%B4%E4%B8%8E%E6%95%85%E9%9A%9C">深入集群变更与故障</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5%E6%80%A7%E8%83%BD%E4%B8%8E%E5%AE%B9%E9%87%8F">深入性能与容量</a></li>
+<li><a href="#%E6%B7%B1%E5%85%A5%E5%AE%89%E5%85%A8%E6%A8%A1%E5%9E%8B">深入安全模型</a></li>
+<li><a href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%BC%80%E5%8F%91%E5%AE%9E%E8%B7%B5">客户端开发实践</a></li>
+<li><a href="#%E8%BF%90%E7%BB%B4%E6%B7%B1%E6%B0%B4%E5%8C%BA">运维深水区</a></li>
+<li><a href="#kubernetes-etcd-%E6%B7%B1%E6%B0%B4%E5%8C%BA">Kubernetes etcd 深水区</a></li>
+<li><a href="#%E6%95%85%E9%9A%9C%E6%A1%88%E4%BE%8B">故障案例</a></li>
+<li><a href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98">常见问题</a></li>
+<li><a href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99">参考资料</a></li>
+</ul>
+<h1 id="etcd-是什么"><a href="#etcd-是什么" class="headerlink" title="etcd 是什么"></a>etcd 是什么</h1><h2 id="定位"><a href="#定位" class="headerlink" title="定位"></a>定位</h2><p>etcd 是一个分布式、强一致的 key-value 存储：</p>
+<ul>
+<li><strong>强一致</strong>：写入通过 Raft 复制，线性一致读默认从 Leader 获取最新数据。</li>
+<li><strong>高可用</strong>：多节点组成集群，少数节点故障不影响 quorum。</li>
+<li><strong>Watch</strong>：客户端可以监听 key&#x2F;prefix 的变化，支持历史 revision。</li>
+<li><strong>Lease</strong>：TTL 租约，适合服务注册、心跳、分布式锁。</li>
+<li><strong>事务</strong>：Compare-And-Swap、If&#x2F;Then&#x2F;Else 原子操作。</li>
+<li><strong>MVCC</strong>：多版本并发控制，支持按 revision 读取历史数据（在 compaction 之前）。</li>
+<li><strong>gRPC&#x2F;HTTP API</strong>：官方客户端和 grpc-gateway 提供 HTTP&#x2F;JSON 接口。</li>
+</ul>
+<h2 id="适合与不适合"><a href="#适合与不适合" class="headerlink" title="适合与不适合"></a>适合与不适合</h2><p>适合：</p>
+<ul>
+<li>Kubernetes 集群状态、配置、元数据。</li>
+<li>服务注册与发现、健康心跳。</li>
+<li>分布式锁、Leader 选举、选主。</li>
+<li>配置中心、动态配置下发。</li>
+<li>小规模、强一致的协调数据。</li>
+</ul>
+<p>不适合：</p>
+<ul>
+<li>大 Value、图片、日志、文件存储。</li>
+<li>高吞吐写入、海量 key。</li>
+<li>需要复杂查询、二级索引、SQL 的业务数据。</li>
+<li>作为消息队列或分析数据库。</li>
+</ul>
+<p>etcd 官方建议：<strong>存储的数据应较小，写入频繁但数据量可控</strong>。默认单次请求上限约 1.5 MiB，生产不建议存大对象。</p>
+<h2 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h2><ul>
+<li>当前官方 latest 文档为 <strong>etcd 3.7</strong>。</li>
+<li>v3 API 是主流；v2 API 已弃用，不要在新系统使用。</li>
+<li>Kubernetes 对 etcd 版本有兼容矩阵，升级前查看对应 Kubernetes 版本文档。</li>
+</ul>
+<h1 id="核心架构"><a href="#核心架构" class="headerlink" title="核心架构"></a>核心架构</h1><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Client (etcdctl / clientv3 / HTTP)</span><br><span class="line">        │ gRPC / HTTP</span><br><span class="line">        ▼</span><br><span class="line">┌─────────────────────────────────────┐</span><br><span class="line">│ etcd server                         │</span><br><span class="line">│  gRPC API / grpc-gateway            │</span><br><span class="line">│  Raft（Leader 选举、日志复制）       │</span><br><span class="line">│  WAL（预写日志）                     │</span><br><span class="line">│  MVCC / treeIndex                   │</span><br><span class="line">│  bbolt backend（key-value 存储）     │</span><br><span class="line">│  Lease / Watch / Auth               │</span><br><span class="line">└─────────────────────────────────────┘</span><br><span class="line">        │ peer 2380</span><br><span class="line">        ▼</span><br><span class="line">其他 etcd member</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Raft</td>
+<td>一致性算法，负责 Leader 选举、日志复制、quorum</td>
+</tr>
+<tr>
+<td>WAL</td>
+<td>预写日志，持久化 Raft entry，崩溃恢复</td>
+</tr>
+<tr>
+<td>Snapshot</td>
+<td>Raft 快照，避免 WAL 无限增长</td>
+</tr>
+<tr>
+<td>MVCC</td>
+<td>多版本 key-value，revision、历史读</td>
+</tr>
+<tr>
+<td>treeIndex</td>
+<td>内存中的 key 索引，映射到 revision</td>
+</tr>
+<tr>
+<td>bbolt</td>
+<td>嵌入式 KV 后端，存储 key-value 和元数据</td>
+</tr>
+<tr>
+<td>Lease</td>
+<td>TTL 租约，key 到期自动删除</td>
+</tr>
+<tr>
+<td>Watch</td>
+<td>监听 key&#x2F;prefix 变化</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>RBAC 用户&#x2F;角色&#x2F;权限</td>
+</tr>
+<tr>
+<td>grpc-gateway</td>
+<td>把 gRPC 暴露为 HTTP&#x2F;JSON</td>
+</tr>
+</tbody></table>
+<h2 id="写路径"><a href="#写路径" class="headerlink" title="写路径"></a>写路径</h2><ol>
+<li>客户端向 Leader 发起 Put&#x2F;Txn&#x2F;Delete。</li>
+<li>Leader 把请求转成 Raft log entry，写入本地 WAL。</li>
+<li>Leader 复制 entry 到 Follower。</li>
+<li>多数节点持久化后，entry 被 commit。</li>
+<li>各节点 apply 到 MVCC&#x2F;backend。</li>
+<li>返回客户端。</li>
+</ol>
+<h2 id="读路径"><a href="#读路径" class="headerlink" title="读路径"></a>读路径</h2><ul>
+<li><strong>线性一致读</strong>（默认）：通过 ReadIndex&#x2F;Leader 确认，保证读到已提交的最新数据。</li>
+<li><strong>串行化读</strong>（<code>serializable=true</code>）：从本地节点读，可能读到旧数据，但延迟更低、可用性更好。</li>
+<li>Watch 事件按 revision 有序，客户端可以从指定 revision 开始 watch。</li>
+</ul>
+<h1 id="数据模型"><a href="#数据模型" class="headerlink" title="数据模型"></a>数据模型</h1><h2 id="KeyValue"><a href="#KeyValue" class="headerlink" title="KeyValue"></a>KeyValue</h2><p>etcd v3 的 key 是字节数组，逻辑上是扁平的 key 空间：</p>
+<figure class="highlight protobuf"><table><tr><td class="code"><pre><span class="line"><span class="keyword">message </span><span class="title class_">KeyValue</span> &#123;</span><br><span class="line">  <span class="type">bytes</span> key = <span class="number">1</span>;</span><br><span class="line">  <span class="type">int64</span> create_revision = <span class="number">2</span>;</span><br><span class="line">  <span class="type">int64</span> mod_revision = <span class="number">3</span>;</span><br><span class="line">  <span class="type">int64</span> version = <span class="number">4</span>;</span><br><span class="line">  <span class="type">bytes</span> value = <span class="number">5</span>;</span><br><span class="line">  <span class="type">int64</span> lease = <span class="number">6</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>key</code></td>
+<td>key，不能为空</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>value，字节数组</td>
+</tr>
+<tr>
+<td><code>create_revision</code></td>
+<td>该 key 最后一次创建时的全局 revision</td>
+</tr>
+<tr>
+<td><code>mod_revision</code></td>
+<td>最后一次修改的 revision</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>key 的修改次数；删除后归零</td>
+</tr>
+<tr>
+<td><code>lease</code></td>
+<td>绑定的 lease ID，0 表示无租约</td>
+</tr>
+</tbody></table>
+<h2 id="Revision"><a href="#Revision" class="headerlink" title="Revision"></a>Revision</h2><ul>
+<li>每次写事务都会推进全局 revision。</li>
+<li>一个事务内的多个修改共享同一个 revision。</li>
+<li><code>get --rev=N</code> 可以读取历史版本（compaction 之前）。</li>
+<li>compaction 会删除旧 revision，之后读取会返回 <code>ErrCompacted</code>。</li>
+</ul>
+<h2 id="Range"><a href="#Range" class="headerlink" title="Range"></a>Range</h2><p><code>Range</code> 用于读取 key 或 key 范围：</p>
+<ul>
+<li><code>key</code> + <code>range_end</code>：范围查询。</li>
+<li><code>limit</code>：限制返回数量，0 表示不限制。</li>
+<li><code>revision</code>：按历史 revision 读。</li>
+<li><code>sort_order</code> &#x2F; <code>sort_target</code>：排序。</li>
+<li><code>serializable</code>：本地读，可能 stale。</li>
+<li><code>keys_only</code> &#x2F; <code>count_only</code>：只返回 key &#x2F; 只返回数量。</li>
+<li><code>min_mod_revision</code> &#x2F; <code>max_mod_revision</code> 等：按 revision 过滤。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl get /app/config --prefix</span><br><span class="line">etcdctl get /app/config --prefix --<span class="built_in">limit</span>=10</span><br><span class="line">etcdctl get /app/config --rev=100</span><br><span class="line">etcdctl get /app/config --prefix --keys-only</span><br><span class="line">etcdctl get /app/config --prefix --count-only</span><br></pre></td></tr></table></figure>
+
+<h2 id="Put-x2F-Delete"><a href="#Put-x2F-Delete" class="headerlink" title="Put &#x2F; Delete"></a>Put &#x2F; Delete</h2><ul>
+<li><code>Put</code>：写入 key；支持 <code>prev_kv</code>、<code>ignore_value</code>、<code>ignore_lease</code>、lease。</li>
+<li><code>Delete</code>：删除 key 或范围；支持 <code>prev_kv</code>。</li>
+<li>删除会生成 tombstone 事件，watcher 能收到 DELETE 事件。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl put /app/config <span class="string">&#x27;&#123;&quot;timeout&quot;:10&#125;&#x27;</span></span><br><span class="line">etcdctl put /app/config <span class="string">&#x27;&#123;&quot;timeout&quot;:20&#125;&#x27;</span> --prev-kv</span><br><span class="line">etcdctl del /app/config</span><br><span class="line">etcdctl del /app/config --prefix</span><br></pre></td></tr></table></figure>
+
+<h2 id="Transaction"><a href="#Transaction" class="headerlink" title="Transaction"></a>Transaction</h2><p>事务是原子的 If&#x2F;Then&#x2F;Else：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">if (compare) &#123;</span><br><span class="line">  success operations</span><br><span class="line">&#125; else &#123;</span><br><span class="line">  failure operations</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>所有 compare 必须同时为真才执行 success。</li>
+<li>一个事务内不能对同一个 key 多次修改。</li>
+<li>事务内的修改只推进一次 revision。</li>
+<li>适合 CAS、分布式锁、配置版本控制。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl txn --interactive</span><br></pre></td></tr></table></figure>
+
+<h2 id="Watch"><a href="#Watch" class="headerlink" title="Watch"></a>Watch</h2><p>Watch 是长连接 gRPC stream：</p>
+<ul>
+<li>监听单个 key 或范围。</li>
+<li><code>start_revision</code>：从指定 revision 开始。</li>
+<li><code>progress_notify</code>：无事件时周期性发送进度。</li>
+<li><code>filters</code>：<code>NOPUT</code>、<code>NODELETE</code>。</li>
+<li><code>prev_kv</code>：返回修改前的值。</li>
+<li>如果请求的 revision 已被 compaction，watch 会被取消并返回 compact revision。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl watch /app/config</span><br><span class="line">etcdctl watch --prefix /app/</span><br><span class="line">etcdctl watch --rev=100 /app/config</span><br><span class="line">etcdctl watch --prev-kv /app/config</span><br></pre></td></tr></table></figure>
+
+<h2 id="Lease"><a href="#Lease" class="headerlink" title="Lease"></a>Lease</h2><p>Lease 是 TTL 租约：</p>
+<ul>
+<li><code>LeaseGrant</code> 创建租约。</li>
+<li>客户端定期 <code>LeaseKeepAlive</code> 续约。</li>
+<li>租约过期或被 revoke 时，所有绑定 key 自动删除。</li>
+<li>每个 key 最多绑定一个 lease。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl lease grant 60</span><br><span class="line">etcdctl put /service/a <span class="string">&#x27;10.0.0.1:8080&#x27;</span> --lease=&lt;lease-id&gt;</span><br><span class="line">etcdctl lease keep-alive &lt;lease-id&gt;</span><br><span class="line">etcdctl lease timetolive &lt;lease-id&gt;</span><br><span class="line">etcdctl lease revoke &lt;lease-id&gt;</span><br><span class="line">etcdctl lease list</span><br></pre></td></tr></table></figure>
+
+<h1 id="一致性语义"><a href="#一致性语义" class="headerlink" title="一致性语义"></a>一致性语义</h1><h2 id="Raft-与-quorum"><a href="#Raft-与-quorum" class="headerlink" title="Raft 与 quorum"></a>Raft 与 quorum</h2><ul>
+<li>集群通常 3、5、7 个成员。</li>
+<li>3 节点容忍 1 个故障；5 节点容忍 2 个故障。</li>
+<li>写必须获得多数派确认。</li>
+<li>偶数节点不会提高容错能力，反而增加成本和延迟，通常不推荐。</li>
+<li>Leader 负责处理写请求；Follower 可以转发或提供串行化读。</li>
+</ul>
+<h2 id="线性一致读-vs-串行化读"><a href="#线性一致读-vs-串行化读" class="headerlink" title="线性一致读 vs 串行化读"></a>线性一致读 vs 串行化读</h2><table>
+<thead>
+<tr>
+<th>读模式</th>
+<th>语义</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>线性一致读（默认）</td>
+<td>读到最新已提交数据</td>
+<td>需要 Leader&#x2F;quorum 确认，延迟略高</td>
+</tr>
+<tr>
+<td>串行化读</td>
+<td>本地读，可能 stale</td>
+<td>性能好，适合可容忍旧数据的场景</td>
+</tr>
+</tbody></table>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl get /app/config --consistency=s</span><br></pre></td></tr></table></figure>
+
+<p><code>--consistency=s</code> 表示 serializable；默认是 linearizable。</p>
+<h2 id="Watch-保证"><a href="#Watch-保证" class="headerlink" title="Watch 保证"></a>Watch 保证</h2><ul>
+<li>事件按 revision 顺序发送。</li>
+<li>同一个 key 的修改不会乱序。</li>
+<li>断线重连后可以从上次 revision 继续 watch。</li>
+<li>如果 revision 已被 compaction，需要全量重新同步。</li>
+</ul>
+<h2 id="事务隔离"><a href="#事务隔离" class="headerlink" title="事务隔离"></a>事务隔离</h2><ul>
+<li>etcd 事务是串行化的，所有 compare 原子执行。</li>
+<li>事务内的修改共享一个 revision。</li>
+<li>不支持跨事务的交互式长事务。</li>
+</ul>
+<h1 id="安装与启动"><a href="#安装与启动" class="headerlink" title="安装与启动"></a>安装与启动</h1><h2 id="下载"><a href="#下载" class="headerlink" title="下载"></a>下载</h2><p>从官方 release 下载对应平台的 <code>etcd</code>、<code>etcdctl</code>、<code>etcdutl</code>：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ETCD_VER=v3.7.2</span><br><span class="line">curl -L -o etcd.tar.gz \</span><br><span class="line">  https://github.com/etcd-io/etcd/releases/download/<span class="variable">$&#123;ETCD_VER&#125;</span>/etcd-<span class="variable">$&#123;ETCD_VER&#125;</span>-linux-amd64.tar.gz</span><br><span class="line">tar xzf etcd.tar.gz</span><br><span class="line">sudo install -m 0755 etcd-<span class="variable">$&#123;ETCD_VER&#125;</span>-linux-amd64/etcd /usr/local/bin/</span><br><span class="line">sudo install -m 0755 etcd-<span class="variable">$&#123;ETCD_VER&#125;</span>-linux-amd64/etcdctl /usr/local/bin/</span><br><span class="line">sudo install -m 0755 etcd-<span class="variable">$&#123;ETCD_VER&#125;</span>-linux-amd64/etcdutl /usr/local/bin/</span><br></pre></td></tr></table></figure>
+
 <blockquote>
-<p>名字来源：etc 即 linux 的&#x2F;etc 目录，意为存放配置文件，d 为 distributed 即分布式</p>
+<p>版本号以官方最新 release 为准；生产固定版本并校验 checksum。</p>
 </blockquote>
-<p>etcd 的特点</p>
+<h2 id="单机启动"><a href="#单机启动" class="headerlink" title="单机启动"></a>单机启动</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcd \</span><br><span class="line">  --name etcd-1 \</span><br><span class="line">  --data-dir /var/lib/etcd \</span><br><span class="line">  --listen-client-urls http://127.0.0.1:2379,http://10.0.0.10:2379 \</span><br><span class="line">  --advertise-client-urls http://10.0.0.10:2379 \</span><br><span class="line">  --listen-peer-urls http://10.0.0.10:2380 \</span><br><span class="line">  --initial-advertise-peer-urls http://10.0.0.10:2380 \</span><br><span class="line">  --initial-cluster etcd-1=http://10.0.0.10:2380 \</span><br><span class="line">  --initial-cluster-token etcd-cluster-1 \</span><br><span class="line">  --initial-cluster-state new</span><br></pre></td></tr></table></figure>
+
+<p>常用端口：</p>
+<table>
+<thead>
+<tr>
+<th>端口</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2379</td>
+<td>客户端 gRPC&#x2F;HTTP</td>
+</tr>
+<tr>
+<td>2380</td>
+<td>成员之间 peer 通信</td>
+</tr>
+</tbody></table>
+<h2 id="健康检查"><a href="#健康检查" class="headerlink" title="健康检查"></a>健康检查</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl endpoint health</span><br><span class="line">etcdctl endpoint status --write-out=table</span><br><span class="line">etcdctl member list --write-out=table</span><br></pre></td></tr></table></figure>
+
+<h2 id="systemd-示例"><a href="#systemd-示例" class="headerlink" title="systemd 示例"></a>systemd 示例</h2><figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="section">[Unit]</span></span><br><span class="line"><span class="attr">Description</span>=etcd</span><br><span class="line"><span class="attr">After</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"><span class="attr">Wants</span>=network-<span class="literal">on</span>line.target</span><br><span class="line"></span><br><span class="line"><span class="section">[Service]</span></span><br><span class="line"><span class="attr">Type</span>=notify</span><br><span class="line"><span class="attr">ExecStart</span>=/usr/local/bin/etcd \</span><br><span class="line">  --name etcd-1 \</span><br><span class="line">  --data-dir /var/lib/etcd \</span><br><span class="line">  --listen-client-urls http://10.0.0.10:2379,http://127.0.0.1:2379 \</span><br><span class="line">  --advertise-client-urls http://10.0.0.10:2379 \</span><br><span class="line">  --listen-peer-urls http://10.0.0.10:2380 \</span><br><span class="line">  --initial-advertise-peer-urls http://10.0.0.10:2380 \</span><br><span class="line">  --initial-cluster <span class="attr">etcd-1</span>=http://<span class="number">10.0</span>.<span class="number">0.10</span>:<span class="number">2380</span> \</span><br><span class="line">  --initial-cluster-token etcd-cluster-1 \</span><br><span class="line">  --initial-cluster-state new</span><br><span class="line"><span class="attr">Restart</span>=<span class="literal">on</span>-failure</span><br><span class="line"><span class="attr">RestartSec</span>=<span class="number">5</span></span><br><span class="line"><span class="attr">LimitNOFILE</span>=<span class="number">65536</span></span><br><span class="line"></span><br><span class="line"><span class="section">[Install]</span></span><br><span class="line"><span class="attr">WantedBy</span>=multi-user.target</span><br></pre></td></tr></table></figure>
+
+<p>生产建议：</p>
 <ul>
-<li>安装配置简单，且提供了 HTTP API 进行交互</li>
-<li>支持 SSL 证书验证</li>
-<li>单实例支持每秒 2k+读操作</li>
-<li>采用 raft 算法，实现分布式系统数据的可用性和一致性</li>
+<li><code>data-dir</code> 使用独立 SSD，避免和业务日志&#x2F;数据库抢 IO。</li>
+<li><code>--wal-dir</code> 可以单独放 WAL（需要独立磁盘时）。</li>
+<li>设置 <code>LimitNOFILE</code>，避免文件描述符耗尽。</li>
+<li>开启 TLS 和认证，不要暴露公网。</li>
+<li>不要随意删除 <code>data-dir</code> 或 <code>member/snap</code>。</li>
 </ul>
-<p>分布式系统中的数据分为控制数据和应用数据，<strong>使用 etcd 的场景默认处理的数据都是控制数据</strong>，对于<strong>应用数据，只推荐数据量很小，但是更新访问频繁的情况</strong>。</p>
-<p>常见术语：</p>
+<h1 id="etcdctl-常用命令"><a href="#etcdctl-常用命令" class="headerlink" title="etcdctl 常用命令"></a>etcdctl 常用命令</h1><p>etcdctl 默认使用 v3 API。旧版本需要 <code>ETCDCTL_API=3</code>，v3.4+ 默认即 v3，通常不再需要。</p>
+<h2 id="连接参数"><a href="#连接参数" class="headerlink" title="连接参数"></a>连接参数</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">export</span> ENDPOINTS=https://10.0.0.10:2379,https://10.0.0.11:2379,https://10.0.0.12:2379</span><br><span class="line"><span class="built_in">export</span> ETCDCTL_API=3</span><br><span class="line"><span class="built_in">export</span> ETCDCTL_CACERT=/etc/etcd/ca.crt</span><br><span class="line"><span class="built_in">export</span> ETCDCTL_CERT=/etc/etcd/client.crt</span><br><span class="line"><span class="built_in">export</span> ETCDCTL_KEY=/etc/etcd/client.key</span><br></pre></td></tr></table></figure>
+
+<p>或每次指定：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl --endpoints=<span class="string">&quot;<span class="variable">$ENDPOINTS</span>&quot;</span> \</span><br><span class="line">  --cacert=ca.crt --cert=client.crt --key=client.key \</span><br><span class="line">  endpoint health</span><br></pre></td></tr></table></figure>
+
+<h2 id="KV"><a href="#KV" class="headerlink" title="KV"></a>KV</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl put /app/config <span class="string">&#x27;&#123;&quot;timeout&quot;:10&#125;&#x27;</span></span><br><span class="line">etcdctl get /app/config</span><br><span class="line">etcdctl get /app/config --print-value-only</span><br><span class="line">etcdctl get /app/ --prefix</span><br><span class="line">etcdctl get /app/ --prefix --<span class="built_in">limit</span>=20</span><br><span class="line">etcdctl get /app/config --rev=100</span><br><span class="line">etcdctl del /app/config</span><br><span class="line">etcdctl del /app/ --prefix</span><br></pre></td></tr></table></figure>
+
+<h2 id="Watch-1"><a href="#Watch-1" class="headerlink" title="Watch"></a>Watch</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl watch /app/config</span><br><span class="line">etcdctl watch --prefix /app/</span><br><span class="line">etcdctl watch --rev=100 /app/config</span><br><span class="line">etcdctl watch --prev-kv /app/config</span><br><span class="line">etcdctl watch -i</span><br></pre></td></tr></table></figure>
+
+<h2 id="Lease-1"><a href="#Lease-1" class="headerlink" title="Lease"></a>Lease</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl lease grant 60</span><br><span class="line">etcdctl lease keep-alive &lt;lease-id&gt;</span><br><span class="line">etcdctl lease timetolive &lt;lease-id&gt;</span><br><span class="line">etcdctl lease list</span><br><span class="line">etcdctl lease revoke &lt;lease-id&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl txn --interactive</span><br></pre></td></tr></table></figure>
+
+<p>交互式输入 compare、success、failure 操作；脚本中建议使用客户端库构造 Txn。</p>
+<h2 id="集群与状态"><a href="#集群与状态" class="headerlink" title="集群与状态"></a>集群与状态</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl member list --write-out=table</span><br><span class="line">etcdctl endpoint health --cluster</span><br><span class="line">etcdctl endpoint status --cluster --write-out=table</span><br><span class="line">etcdctl endpoint hashkv --cluster</span><br><span class="line">etcdctl move-leader &lt;member-id&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="维护"><a href="#维护" class="headerlink" title="维护"></a>维护</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl compact &lt;revision&gt;</span><br><span class="line">etcdctl defrag</span><br><span class="line">etcdctl defrag --cluster</span><br><span class="line">etcdctl alarm list</span><br><span class="line">etcdctl alarm disarm</span><br><span class="line">etcdctl check datascale</span><br><span class="line">etcdctl check perf</span><br></pre></td></tr></table></figure>
+
+<h2 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl snapshot save backup.db</span><br><span class="line">etcdutl snapshot status backup.db --write-out=table</span><br></pre></td></tr></table></figure>
+
+<p><code>etcdctl snapshot save</code> 用于在线备份；<code>etcdutl</code> 用于离线查看&#x2F;恢复&#x2F;defrag。</p>
+<h2 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl user add root</span><br><span class="line">etcdctl user grant-role root root</span><br><span class="line">etcdctl auth <span class="built_in">enable</span></span><br><span class="line"></span><br><span class="line">etcdctl role add app-reader</span><br><span class="line">etcdctl role grant-permission app-reader <span class="built_in">read</span> /app/ --prefix</span><br><span class="line">etcdctl user add app</span><br><span class="line">etcdctl user grant-role app app-reader</span><br></pre></td></tr></table></figure>
+
+<p>认证开启后，所有请求都要带 <code>--user/--password</code> 或客户端证书。</p>
+<h1 id="集群部署"><a href="#集群部署" class="headerlink" title="集群部署"></a>集群部署</h1><h2 id="静态集群"><a href="#静态集群" class="headerlink" title="静态集群"></a>静态集群</h2><p>三节点静态配置，每个节点使用相同的 <code>initial-cluster</code>：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcd \</span><br><span class="line">  --name infra0 \</span><br><span class="line">  --data-dir /var/lib/etcd \</span><br><span class="line">  --listen-client-urls http://10.0.1.10:2379,http://127.0.0.1:2379 \</span><br><span class="line">  --advertise-client-urls http://10.0.1.10:2379 \</span><br><span class="line">  --listen-peer-urls http://10.0.1.10:2380 \</span><br><span class="line">  --initial-advertise-peer-urls http://10.0.1.10:2380 \</span><br><span class="line">  --initial-cluster infra0=http://10.0.1.10:2380,infra1=http://10.0.1.11:2380,infra2=http://10.0.1.12:2380 \</span><br><span class="line">  --initial-cluster-token etcd-cluster-1 \</span><br><span class="line">  --initial-cluster-state new</span><br></pre></td></tr></table></figure>
+
+<p>另外两个节点替换 <code>--name</code>、IP、<code>data-dir</code> 即可。</p>
+<p>关键参数：</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--initial-cluster</code></td>
+<td>初始集群所有成员的 peer URL</td>
+</tr>
+<tr>
+<td><code>--initial-cluster-token</code></td>
+<td>集群唯一标识，避免误加入其他集群</td>
+</tr>
+<tr>
+<td><code>--initial-cluster-state</code></td>
+<td><code>new</code> 新建，<code>existing</code> 加入已有集群</td>
+</tr>
+<tr>
+<td><code>--initial-advertise-peer-urls</code></td>
+<td>其他成员访问本节点的 peer URL</td>
+</tr>
+<tr>
+<td><code>--advertise-client-urls</code></td>
+<td>客户端访问本节点的 URL</td>
+</tr>
+</tbody></table>
+<h2 id="动态发现"><a href="#动态发现" class="headerlink" title="动态发现"></a>动态发现</h2><p>云环境&#x2F;DHCP 场景可用：</p>
 <ul>
-<li><strong>Node</strong>：<strong>Raft 状态机实例</strong>。</li>
-<li><strong>Member</strong>：<strong>etcd 实例</strong>。它管理着一个 Node，并且可以为客户端请求提供服务。</li>
-<li><strong>Cluster</strong>：由多个 Member 构成可以协同工作的<strong>etcd 集群</strong>。</li>
-<li><strong>Peer</strong>：对<strong>同一个 etcd 集群中另外一个 Member</strong>的称呼。</li>
-<li><strong>Client</strong>：向 etcd 集群发送 HTTP 请求的客户端。</li>
-<li><strong>Proxy</strong>：etcd 的一种模式，<strong>为 etcd 集群提供反向代理服务</strong>。</li>
-<li><strong>Leader</strong>：Raft 算法中<strong>通过竞选而产生的处理所有数据提交的节点</strong>。</li>
-<li><strong>Follower</strong>：竞选失败的节点作为<strong>Raft 中的从属节点</strong>，为算法提供强一致性保证。</li>
-<li><strong>Candidate</strong>：当<strong>Follower 超过一定时间接收不到 Leader 的心跳时转变为 Candidate 开始竞选</strong>。</li>
-<li><strong>Term</strong>：<strong>某个节点成为 Leader 到下一次竞选时间</strong>，称为一个 Term。</li>
-<li><strong>Index</strong>：数据项编号。Raft 中<strong>通过 Term 和 Index 来定位数据</strong>。</li>
+<li>etcd discovery service。</li>
+<li>DNS SRV 记录。</li>
+<li>Kubernetes 等编排系统生成配置。</li>
 </ul>
-<p>为了保证数据的强一致性，etcd 集群中所有的数据流向都是一个方向，从 Leader（主节点）流向 Follower，也就是所有 Follower 的数据必须与 Leader 保持一致，如果不一致会被覆盖。</p>
+<p>DNS SRV 示例：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">_etcd-server._tcp.example.com. 300 IN SRV 0 0 2380 infra0.example.com.</span><br><span class="line">_etcd-server._tcp.example.com. 300 IN SRV 0 0 2380 infra1.example.com.</span><br><span class="line">_etcd-server._tcp.example.com. 300 IN SRV 0 0 2380 infra2.example.com.</span><br></pre></td></tr></table></figure>
+
+<h2 id="运行时增删成员"><a href="#运行时增删成员" class="headerlink" title="运行时增删成员"></a>运行时增删成员</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 添加成员</span></span><br><span class="line">etcdctl member add infra3 --peer-urls=http://10.0.1.13:2380</span><br><span class="line"></span><br><span class="line"><span class="comment"># 在新节点启动 etcd，使用 --initial-cluster-state existing</span></span><br><span class="line">etcd --name infra3 \</span><br><span class="line">  --initial-cluster-state existing \</span><br><span class="line">  --initial-cluster <span class="string">&#x27;infra0=http://10.0.1.10:2380,infra1=http://10.0.1.11:2380,infra2=http://10.0.1.12:2380,infra3=http://10.0.1.13:2380&#x27;</span> \</span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除成员</span></span><br><span class="line">etcdctl member remove &lt;member-id&gt;</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
 <ul>
-<li>读：由于集群所有节点数据是强一致性的，可以从集群中随便哪个节点进行读取数据</li>
-<li>写：etcd 集群有 leader，可以直接往 leader 写入，然后 Leader 节点会把写入分发给所有 Follower，如果往 follower 写入，则 Leader 节点会把写入分发给所有 Follower</li>
+<li>一次只变更一个成员，避免 quorum 丢失。</li>
+<li>删除成员前确认新集群仍有 quorum。</li>
+<li>成员 ID 用 <code>member list</code> 查看。</li>
+<li>不要同时添加多个成员。</li>
 </ul>
-<h1 id="etcd-数据模型"><a href="#etcd-数据模型" class="headerlink" title="etcd 数据模型"></a>etcd 数据模型</h1><h1 id="etcd-架构"><a href="#etcd-架构" class="headerlink" title="etcd 架构"></a>etcd 架构</h1><p><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038841.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038841.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></p>
+<h2 id="Learner"><a href="#Learner" class="headerlink" title="Learner"></a>Learner</h2><p>Learner 是非投票成员，先同步数据，再提升为正式成员：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl member add infra3 --peer-urls=http://10.0.1.13:2380 --learner</span><br><span class="line">etcdctl member promote &lt;member-id&gt;</span><br></pre></td></tr></table></figure>
+
+<p>适合大集群扩容，减少新节点加入对 quorum 的影响。</p>
+<h2 id="迁移-leader"><a href="#迁移-leader" class="headerlink" title="迁移 leader"></a>迁移 leader</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl move-leader &lt;member-id&gt;</span><br></pre></td></tr></table></figure>
+
+<p>用于维护、升级或平衡负载。</p>
+<h1 id="安全"><a href="#安全" class="headerlink" title="安全"></a>安全</h1><h2 id="TLS"><a href="#TLS" class="headerlink" title="TLS"></a>TLS</h2><p>etcd 支持客户端到服务端、成员到成员的 TLS：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcd \</span><br><span class="line">  --cert-file=/etc/etcd/server.crt \</span><br><span class="line">  --key-file=/etc/etcd/server.key \</span><br><span class="line">  --trusted-ca-file=/etc/etcd/ca.crt \</span><br><span class="line">  --client-cert-auth \</span><br><span class="line">  --peer-cert-file=/etc/etcd/peer.crt \</span><br><span class="line">  --peer-key-file=/etc/etcd/peer.key \</span><br><span class="line">  --peer-trusted-ca-file=/etc/etcd/ca.crt \</span><br><span class="line">  --peer-client-cert-auth \</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--cert-file</code> &#x2F; <code>--key-file</code></td>
+<td>服务端证书&#x2F;私钥</td>
+</tr>
+<tr>
+<td><code>--trusted-ca-file</code></td>
+<td>客户端证书 CA</td>
+</tr>
+<tr>
+<td><code>--client-cert-auth</code></td>
+<td>强制客户端证书</td>
+</tr>
+<tr>
+<td><code>--peer-cert-file</code> &#x2F; <code>--peer-key-file</code></td>
+<td>成员间 TLS</td>
+</tr>
+<tr>
+<td><code>--peer-trusted-ca-file</code></td>
+<td>peer CA</td>
+</tr>
+<tr>
+<td><code>--peer-client-cert-auth</code></td>
+<td>强制成员间双向 TLS</td>
+</tr>
+</tbody></table>
+<p>证书要求：</p>
 <ul>
-<li>HTTP Server：用于处理用户发送的 API 请求以及其它 etcd 节点的同步与心跳信息请求。</li>
-<li>Store：用于处理 etcd 支持的各类功能的事务，包括数据索引、节点状态变更、监控与反馈、事件处理与执行等等，是 etcd 对用户提供的大多数 API 功能的具体实现。</li>
-<li>Raft：Raft 强一致性算法的具体实现，是 etcd 的核心。</li>
-<li><strong>WAL</strong>：<strong>预写式日志</strong>，etcd 用于持久化存储的日志格式。除了在内存中存有所有数据的状态以及节点的索引以外，etcd 就通过 WAL 进行持久化存储。WAL 中，所有的数据提交前都会事先记录日志。<ul>
-<li><strong>Snapshot</strong>：etcd<strong>防止 WAL 文件过多而设置的快照</strong>，存储 etcd 数据状态。</li>
-<li><strong>Entry</strong>：存储的具体日志内容。</li>
+<li>服务端证书：<code>serverAuth</code>。</li>
+<li>客户端证书：<code>clientAuth</code>。</li>
+<li>peer 证书：同时包含 <code>serverAuth</code> 和 <code>clientAuth</code>。</li>
+<li>SAN 必须包含实际访问的 IP&#x2F;DNS。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl --endpoints=https://10.0.0.10:2379 \</span><br><span class="line">  --cacert=ca.crt --cert=client.crt --key=client.key \</span><br><span class="line">  endpoint health</span><br></pre></td></tr></table></figure>
+
+<h2 id="RBAC"><a href="#RBAC" class="headerlink" title="RBAC"></a>RBAC</h2><p>etcd v3 认证基于用户、角色、权限：</p>
+<ul>
+<li>先创建 root 用户，授予 root 角色。</li>
+<li>开启 auth 后，所有请求需要认证。</li>
+<li>角色权限按 key&#x2F;prefix 的 read&#x2F;write&#x2F;readwrite 授予。</li>
+<li>支持按 revision 控制权限（高级用法）。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl user add root</span><br><span class="line">etcdctl user grant-role root root</span><br><span class="line">etcdctl auth <span class="built_in">enable</span></span><br><span class="line"></span><br><span class="line">etcdctl role add app-reader</span><br><span class="line">etcdctl role grant-permission app-reader <span class="built_in">read</span> /app/ --prefix</span><br><span class="line">etcdctl user add app</span><br><span class="line">etcdctl user grant-role app app-reader</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>开启 auth 前务必确认 root 用户可用，否则可能锁死集群。</li>
+<li>生产建议同时启用 TLS + client cert auth + RBAC。</li>
+<li>etcd 不加密磁盘上的 key&#x2F;value；需要磁盘加密时使用 dm-crypt 或应用层加密。</li>
+<li>不要把 etcd 暴露到公网，使用内网、防火墙、安全组。</li>
+</ul>
+<h1 id="运维与备份"><a href="#运维与备份" class="headerlink" title="运维与备份"></a>运维与备份</h1><h2 id="Compaction"><a href="#Compaction" class="headerlink" title="Compaction"></a>Compaction</h2><p>etcd 保留历史 revision，长期不清理会导致存储膨胀：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl compact &lt;revision&gt;</span><br></pre></td></tr></table></figure>
+
+<p>自动压缩：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcd --auto-compaction-mode=periodic --auto-compaction-retention=10h</span><br><span class="line">etcd --auto-compaction-mode=revision --auto-compaction-retention=1000</span><br></pre></td></tr></table></figure>
+
+<p>建议：</p>
+<ul>
+<li>频繁更新同一批 key：<code>1h</code>&#x2F;<code>30m</code>。</li>
+<li>更新不频繁：<code>24h</code>&#x2F;<code>48h</code>&#x2F;<code>72h</code>。</li>
+<li>通用默认：<code>10h</code>。</li>
+<li>revision 模式适合明确知道 revision 增长速率的场景。</li>
+</ul>
+<h2 id="Defrag"><a href="#Defrag" class="headerlink" title="Defrag"></a>Defrag</h2><p>Compaction 只是逻辑删除，磁盘空间不会立即释放；需要 defrag：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl defrag</span><br><span class="line">etcdctl defrag --cluster</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>defrag 会阻塞该成员的读写，逐个成员执行，避免集群抖动。</li>
+<li>defrag 不会复制到其他成员，只作用于本地。</li>
+<li>离线 defrag：<code>etcdutl defrag --data-dir &lt;path&gt;</code>（etcd 停止时）。</li>
+</ul>
+<h2 id="空间配额与-NOSPACE"><a href="#空间配额与-NOSPACE" class="headerlink" title="空间配额与 NOSPACE"></a>空间配额与 NOSPACE</h2><p><code>--quota-backend-bytes</code> 控制 backend 配额。超过配额会触发集群级 NOSPACE alarm，集群进入只读&#x2F;只删模式。</p>
+<p>处理步骤：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 1. 删除不必要的数据</span></span><br><span class="line">etcdctl del /old/prefix --prefix</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. compact 到最新 revision</span></span><br><span class="line">rev=$(etcdctl get <span class="string">&quot;&quot;</span> --prefix --keys-only -w=json | jq -r <span class="string">&#x27;.header.revision&#x27;</span>)</span><br><span class="line">etcdctl compact <span class="string">&quot;<span class="variable">$rev</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 对每个成员 defrag</span></span><br><span class="line">etcdctl defrag --cluster</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 解除 alarm</span></span><br><span class="line">etcdctl alarm list</span><br><span class="line">etcdctl alarm disarm</span><br></pre></td></tr></table></figure>
+
+<p>生产建议：</p>
+<ul>
+<li>显式设置配额，不要无限增长。</li>
+<li>监控 <code>etcd_mvcc_db_total_size_in_bytes</code>、<code>etcd_mvcc_db_total_size_in_use_in_bytes</code>。</li>
+<li>配额通常控制在 8 GiB 以内，结合 compaction&#x2F;defrag。</li>
+<li>不要用 etcd 存大对象。</li>
+</ul>
+<h2 id="快照备份"><a href="#快照备份" class="headerlink" title="快照备份"></a>快照备份</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl snapshot save /backup/etcd-$(<span class="built_in">date</span> +%F-%H%M).db</span><br><span class="line">etcdutl snapshot status /backup/etcd-2026-10-23.db --write-out=table</span><br></pre></td></tr></table></figure>
+
+<p>建议：</p>
+<ul>
+<li>每个 etcd 成员都可以备份，选择 Leader 或任一健康成员。</li>
+<li>备份文件包含 key-value、revision 和集群元数据。</li>
+<li>同时备份证书、配置、启动参数。</li>
+<li>定期做恢复演练。</li>
+<li>备份文件要加密、异地保存、设置保留策略。</li>
+</ul>
+<h2 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h2><p>把快照恢复到一个新的 data-dir，再启动新集群：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdutl snapshot restore /backup/etcd.db \</span><br><span class="line">  --name infra0 \</span><br><span class="line">  --data-dir /var/lib/etcd-restore \</span><br><span class="line">  --initial-cluster infra0=http://10.0.1.10:2380 \</span><br><span class="line">  --initial-cluster-token etcd-cluster-restore \</span><br><span class="line">  --initial-advertise-peer-urls http://10.0.1.10:2380</span><br></pre></td></tr></table></figure>
+
+<p>然后：</p>
+<ol>
+<li>启动恢复后的节点。</li>
+<li>用 <code>member add</code> 加入其他节点，或按官方灾难恢复流程重建集群。</li>
+<li>验证 key、revision、endpoint health。</li>
+<li>更新客户端 endpoint&#x2F;证书。</li>
+</ol>
+<p>注意：</p>
+<ul>
+<li>不要把快照恢复到正在运行的 data-dir。</li>
+<li>恢复后是一个新集群，不要直接混入旧集群。</li>
+<li>恢复前确认 etcd 版本兼容。</li>
+<li>生产恢复要按官方 disaster recovery 文档执行。</li>
+</ul>
+<h2 id="升级"><a href="#升级" class="headerlink" title="升级"></a>升级</h2><ul>
+<li>3.6 → 3.7 按官方 upgrade 文档滚动升级。</li>
+<li>升级前备份快照。</li>
+<li>一次升级一个成员，确认健康后再升级下一个。</li>
+<li>检查 API&#x2F;客户端兼容性、弃用参数、监控指标。</li>
+<li>需要回滚时使用 <code>etcdctl downgrade enable &lt;version&gt;</code>，并按官方流程操作。</li>
+</ul>
+<h1 id="监控与调优"><a href="#监控与调优" class="headerlink" title="监控与调优"></a>监控与调优</h1><h2 id="关键指标"><a href="#关键指标" class="headerlink" title="关键指标"></a>关键指标</h2><table>
+<thead>
+<tr>
+<th>指标</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>etcd_server_has_leader</code></td>
+<td>是否有 Leader</td>
+</tr>
+<tr>
+<td><code>etcd_server_leader_changes_seen_total</code></td>
+<td>Leader 切换次数</td>
+</tr>
+<tr>
+<td><code>etcd_disk_wal_fsync_duration_seconds</code></td>
+<td>WAL fsync 延迟</td>
+</tr>
+<tr>
+<td><code>etcd_disk_backend_commit_duration_seconds</code></td>
+<td>backend commit 延迟</td>
+</tr>
+<tr>
+<td><code>etcd_mvcc_db_total_size_in_bytes</code></td>
+<td>DB 总大小（含碎片）</td>
+</tr>
+<tr>
+<td><code>etcd_mvcc_db_total_size_in_use_in_bytes</code></td>
+<td>实际使用大小</td>
+</tr>
+<tr>
+<td><code>etcd_server_slow_apply_total</code></td>
+<td>慢 apply 次数</td>
+</tr>
+<tr>
+<td><code>etcd_server_slow_read_indexes_total</code></td>
+<td>慢 ReadIndex 次数</td>
+</tr>
+<tr>
+<td><code>etcd_server_proposals_failed_total</code></td>
+<td>提案失败</td>
+</tr>
+<tr>
+<td><code>etcd_network_peer_round_trip_time_seconds</code></td>
+<td>peer RTT</td>
+</tr>
+<tr>
+<td><code>etcd_server_quota_backend_bytes</code></td>
+<td>配额</td>
+</tr>
+<tr>
+<td><code>etcd_alarm</code></td>
+<td>alarm 状态</td>
+</tr>
+</tbody></table>
+<p>告警重点：</p>
+<ul>
+<li>无 Leader 持续 &gt; 1 分钟。</li>
+<li>Leader 频繁切换。</li>
+<li>WAL fsync&#x2F;backend commit 延迟超过阈值（如 p99 &gt; 100ms）。</li>
+<li>DB 大小接近配额。</li>
+<li>NOSPACE&#x2F;CORRUPT alarm。</li>
+<li>peer RTT 抖动、提案失败。</li>
+</ul>
+<h2 id="硬件建议"><a href="#硬件建议" class="headerlink" title="硬件建议"></a>硬件建议</h2><ul>
+<li>SSD&#x2F;NVMe，低 fsync 延迟。</li>
+<li>专用磁盘，避免和日志&#x2F;业务抢 IO。</li>
+<li>2-4 核 CPU，8 GiB 内存起步；大规模按压测调整。</li>
+<li>低延迟网络，成员尽量同机房&#x2F;同区域。</li>
+<li>不要用 NFS 作为 data-dir。</li>
+<li>关注磁盘 IOPS、fsync 延迟、网络 RTT。</li>
+</ul>
+<h2 id="调优参数"><a href="#调优参数" class="headerlink" title="调优参数"></a>调优参数</h2><table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--heartbeat-interval</code></td>
+<td>Leader 心跳间隔，默认 100ms</td>
+</tr>
+<tr>
+<td><code>--election-timeout</code></td>
+<td>选举超时，默认 1000ms</td>
+</tr>
+<tr>
+<td><code>--snapshot-count</code></td>
+<td>触发快照的已提交事务数</td>
+</tr>
+<tr>
+<td><code>--max-request-bytes</code></td>
+<td>单请求最大字节，默认约 1.5 MiB</td>
+</tr>
+<tr>
+<td><code>--max-txn-ops</code></td>
+<td>单事务最大操作数</td>
+</tr>
+<tr>
+<td><code>--quota-backend-bytes</code></td>
+<td>backend 配额</td>
+</tr>
+<tr>
+<td><code>--auto-compaction-*</code></td>
+<td>自动 compaction</td>
+</tr>
+<tr>
+<td><code>--grpc-keepalive-*</code></td>
+<td>gRPC keepalive</td>
+</tr>
+</tbody></table>
+<p>调优原则：</p>
+<ul>
+<li>高延迟网络可适当增大 heartbeat&#x2F;election timeout，但会增加故障检测时间。</li>
+<li>不要盲目调大 <code>max-request-bytes</code>，大 Value 会放大复制和内存压力。</li>
+<li>写吞吐受 fsync 限制，优先提升磁盘性能。</li>
+<li>读多写少可以增加 serializable read，但要注意 stale 风险。</li>
+</ul>
+<h1 id="Kubernetes-中的-etcd"><a href="#Kubernetes-中的-etcd" class="headerlink" title="Kubernetes 中的 etcd"></a>Kubernetes 中的 etcd</h1><p>Kubernetes 使用 etcd 存储集群状态：</p>
+<ul>
+<li><code>kube-apiserver</code> 是 etcd 的主要客户端。</li>
+<li>etcd 通常以 static pod 或外部集群方式部署。</li>
+<li>控制面节点需要低延迟、可靠磁盘。</li>
+<li>etcd 故障会导致 API Server 无法读写集群状态。</li>
+</ul>
+<p>实践：</p>
+<ul>
+<li>使用独立磁盘，避免和容器日志&#x2F;镜像存储争 IO。</li>
+<li>3 或 5 个控制面节点，etcd 成员与控制面同机部署时注意资源隔离。</li>
+<li>开启 TLS 和 client cert auth。</li>
+<li>定期快照备份，并验证恢复。</li>
+<li>监控 WAL fsync、backend commit、DB size、Leader 变化。</li>
+<li>升级 Kubernetes 前确认 etcd 版本兼容矩阵。</li>
+<li>不要把业务数据写入 etcd。</li>
+</ul>
+<p>备份示例（kubeadm 环境通常有证书路径）：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ETCDCTL_API=3 etcdctl \</span><br><span class="line">  --endpoints=https://127.0.0.1:2379 \</span><br><span class="line">  --cacert=/etc/kubernetes/pki/etcd/ca.crt \</span><br><span class="line">  --cert=/etc/kubernetes/pki/etcd/server.crt \</span><br><span class="line">  --key=/etc/kubernetes/pki/etcd/server.key \</span><br><span class="line">  snapshot save /backup/etcd-snapshot.db</span><br></pre></td></tr></table></figure>
+
+<h1 id="典型应用场景"><a href="#典型应用场景" class="headerlink" title="典型应用场景"></a>典型应用场景</h1><h2 id="服务注册与发现"><a href="#服务注册与发现" class="headerlink" title="服务注册与发现"></a>服务注册与发现</h2><ul>
+<li>服务启动时写入 <code>/services/&lt;name&gt;/&lt;instance&gt;</code>，并绑定 lease。</li>
+<li>定期 keepalive 续约。</li>
+<li>客户端 watch 前缀，实时感知实例上下线。</li>
+<li>实例故障后 lease 过期，key 自动删除。</li>
+</ul>
+<h2 id="配置中心"><a href="#配置中心" class="headerlink" title="配置中心"></a>配置中心</h2><ul>
+<li>配置写入 <code>/config/&lt;app&gt;/&lt;env&gt;</code>。</li>
+<li>客户端 watch 配置变化。</li>
+<li>利用 revision 做配置版本和回滚。</li>
+<li>大配置不要放 etcd，放大对象存储并只存引用。</li>
+</ul>
+<h2 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h2><ul>
+<li>利用 lease + txn 实现互斥锁。</li>
+<li>利用 create_revision 实现公平锁&#x2F;队列。</li>
+<li>官方 clientv3 提供 <code>concurrency</code> 包。</li>
+</ul>
+<h2 id="Leader-选举"><a href="#Leader-选举" class="headerlink" title="Leader 选举"></a>Leader 选举</h2><ul>
+<li>候选人创建带 lease 的 key，比较 create_revision，最小者成为 Leader。</li>
+<li>Leader 定期续约；失败后 lease 过期，重新选举。</li>
+<li>Kubernetes controller、Operator 常用类似模式。</li>
+</ul>
+<h2 id="分布式队列"><a href="#分布式队列" class="headerlink" title="分布式队列"></a>分布式队列</h2><ul>
+<li>用有序 key + watch 实现 FIFO 队列。</li>
+<li>注意 etcd 不是高吞吐消息队列，适合控制面任务，不适合业务消息流。</li>
+</ul>
+<h1 id="etcd-与-ZooKeeper-Consul"><a href="#etcd-与-ZooKeeper-Consul" class="headerlink" title="etcd 与 ZooKeeper Consul"></a>etcd 与 ZooKeeper Consul</h1><table>
+<thead>
+<tr>
+<th>维度</th>
+<th>etcd</th>
+<th>ZooKeeper</th>
+<th>Consul</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一致性</td>
+<td>Raft</td>
+<td>ZAB</td>
+<td>Raft</td>
+</tr>
+<tr>
+<td>API</td>
+<td>gRPC&#x2F;HTTP&#x2F;JSON</td>
+<td>自定义协议</td>
+<td>HTTP&#x2F;DNS</td>
+</tr>
+<tr>
+<td>数据模型</td>
+<td>扁平 KV + revision</td>
+<td>ZNode 树</td>
+<td>KV + 服务目录</td>
+</tr>
+<tr>
+<td>Watch</td>
+<td>原生 watch</td>
+<td>Watch</td>
+<td>blocking query</td>
+</tr>
+<tr>
+<td>租约</td>
+<td>Lease</td>
+<td>Ephemeral node</td>
+<td>Session&#x2F;health check</td>
+</tr>
+<tr>
+<td>服务发现</td>
+<td>需自行实现</td>
+<td>需自行实现</td>
+<td>内置</td>
+</tr>
+<tr>
+<td>典型场景</td>
+<td>Kubernetes、配置、选主</td>
+<td>Hadoop&#x2F;HBase、ZK 生态</td>
+<td>多数据中心服务发现</td>
+</tr>
+<tr>
+<td>运维复杂度</td>
+<td>较低</td>
+<td>中等</td>
+<td>中等</td>
+</tr>
+</tbody></table>
+<p>选型建议：</p>
+<ul>
+<li>Kubernetes 生态、Go 技术栈、需要简单强一致 KV：etcd。</li>
+<li>已有 ZooKeeper 生态、需要 ZNode 语义：ZooKeeper。</li>
+<li>需要内置服务发现、健康检查、多数据中心：Consul。</li>
+</ul>
+<h1 id="深入-Raft-与一致性"><a href="#深入-Raft-与一致性" class="headerlink" title="深入 Raft 与一致性"></a>深入 Raft 与一致性</h1><h2 id="Raft-状态机"><a href="#Raft-状态机" class="headerlink" title="Raft 状态机"></a>Raft 状态机</h2><p>每个 etcd member 内部都有一个 Raft 状态机：</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Follower</td>
+<td>被动接收 Leader 日志和心跳</td>
+</tr>
+<tr>
+<td>PreCandidate</td>
+<td>Pre-Vote 阶段，先试探能否获得多数派支持</td>
+</tr>
+<tr>
+<td>Candidate</td>
+<td>发起正式选举</td>
+</tr>
+<tr>
+<td>Leader</td>
+<td>处理写请求、复制日志、发送心跳</td>
+</tr>
+</tbody></table>
+<p>关键变量：</p>
+<ul>
+<li><strong>term</strong>：任期，单调递增；每个 term 最多一个 Leader。</li>
+<li><strong>index</strong>：日志条目编号，单调递增。</li>
+<li><strong>commitIndex</strong>：已知被多数派持久化的最大 index。</li>
+<li><strong>appliedIndex</strong>：已经 apply 到状态机的最大 index。</li>
+<li><strong>lastLogIndex &#x2F; lastLogTerm</strong>：用于选举和日志一致性检查。</li>
+</ul>
+<p>Raft 的安全性不依赖时钟同步。时钟只影响选举超时、心跳和 lease 过期，因此 NTP 仍然重要，但时钟跳变不会让 Raft 选出两个 Leader。</p>
+<h2 id="Leader-选举-1"><a href="#Leader-选举-1" class="headerlink" title="Leader 选举"></a>Leader 选举</h2><ol>
+<li>Follower 在 election timeout 内没收到 Leader 心跳，转为 Candidate。</li>
+<li>term + 1，投票给自己，向其他成员发送 RequestVote。</li>
+<li>获得多数派投票的 Candidate 成为 Leader。</li>
+<li>Leader 定期发送心跳（AppendEntries）维持权威。</li>
+<li>其他成员收到合法 Leader 心跳后重置 election timeout。</li>
+</ol>
+<p>etcd 默认开启 <strong>Pre-Vote</strong>：分区恢复的节点先进行预投票，避免带着更高 term 强行打断健康集群。Leader 还会通过 check-quorum 检查是否还能联系多数派，失去多数派时主动 step down，减少脑裂窗口。</p>
+<p>时间参数：</p>
+<ul>
+<li><code>--heartbeat-interval</code>：Leader 心跳间隔，默认 100ms。</li>
+<li><code>--election-timeout</code>：选举超时，默认 1000ms。</li>
+<li>选举超时会加入随机抖动，降低同时竞选的概率。</li>
+<li>高延迟网络可以适当调大，但会增加故障检测和切换时间。</li>
+</ul>
+<h2 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h2><p>写请求的复制过程：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">Client -&gt; Leader</span><br><span class="line">Leader 追加 log entry 到本地 WAL</span><br><span class="line">Leader 并行发送 AppendEntries 给 Followers</span><br><span class="line">Follower 检查 prevLogIndex/prevLogTerm，追加并持久化</span><br><span class="line">多数派持久化后，Leader 推进 commitIndex</span><br><span class="line">Leader apply 到 MVCC，返回客户端</span><br><span class="line">Follower 在后续心跳中获知 commitIndex，apply</span><br></pre></td></tr></table></figure>
+
+<p>关键点：</p>
+<ul>
+<li>Leader 必须先持久化自己的日志，再向 Follower 复制。</li>
+<li>Follower 日志冲突时，会截断冲突后缀，以 Leader 为准。</li>
+<li>commit 需要多数派持久化，不是多数派“收到”。</li>
+<li>apply 是确定性的状态机操作；etcd 的 apply 主要是写 backend、更新 treeIndex、通知 watcher。</li>
+<li>慢 Follower 可能落后很多；Leader 会发送 snapshot 让它追上。</li>
+<li><code>--snapshot-count</code> 控制触发快照的已提交 entry 数；太小会频繁快照，太大则 WAL&#x2F;内存增长。</li>
+<li><code>--max-wals</code>、<code>--max-snapshots</code> 控制 WAL&#x2F;快照保留数量。</li>
+</ul>
+<h2 id="ReadIndex-与线性一致读"><a href="#ReadIndex-与线性一致读" class="headerlink" title="ReadIndex 与线性一致读"></a>ReadIndex 与线性一致读</h2><p>etcd 默认的线性一致读不是简单“读 Leader 内存”，而是：</p>
+<ol>
+<li>客户端请求到达 Leader（或 Follower 转发）。</li>
+<li>Leader 通过心跳&#x2F;ReadIndex 确认自己仍是多数派认可的 Leader。</li>
+<li>等待 appliedIndex 追上 read index。</li>
+<li>从 MVCC 读取该 revision 的数据。</li>
+</ol>
+<p>这样可以避免读到尚未 apply 的旧状态。代价是需要 quorum 确认，延迟高于本地读。</p>
+<p><code>serializable=true</code> 则直接从本地 member 读取，不经过 quorum：</p>
+<ul>
+<li>延迟低、可用性好。</li>
+<li>可能读到旧数据。</li>
+<li>适合配置展示、监控、可容忍 stale 的读。</li>
+</ul>
+<h2 id="成员变更与-quorum"><a href="#成员变更与-quorum" class="headerlink" title="成员变更与 quorum"></a>成员变更与 quorum</h2><p>etcd 的成员变更一次只允许一个：</p>
+<ul>
+<li>先 <code>member add</code>，新成员以 Learner 或普通成员加入。</li>
+<li>新成员追日志&#x2F;快照。</li>
+<li>确认健康后，再移除旧成员。</li>
+<li>同时变更多个成员可能破坏 quorum。</li>
+</ul>
+<p>Learner：</p>
+<ul>
+<li>不参与投票，不增加 quorum。</li>
+<li>先同步数据，避免新成员加入时拖慢集群。</li>
+<li>追上后 <code>member promote</code> 转为正式成员。</li>
+</ul>
+<h2 id="失败语义"><a href="#失败语义" class="headerlink" title="失败语义"></a>失败语义</h2><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Leader 故障</td>
+<td>剩余多数派在 election timeout 后选出新 Leader；客户端短暂失败后重试</td>
+</tr>
+<tr>
+<td>少数派分区</td>
+<td>少数派无法 commit 写；多数派继续服务</td>
+</tr>
+<tr>
+<td>多数派丢失</td>
+<td>集群不可写；线性一致读也失败；需要恢复 quorum 或从快照恢复</td>
+</tr>
+<tr>
+<td>慢 Follower</td>
+<td>Leader 保留日志&#x2F;发送 snapshot；可能增加网络和磁盘压力</td>
+</tr>
+<tr>
+<td>旧 Leader 恢复</td>
+<td>check-quorum&#x2F;Pre-Vote 使其 step down，避免双 Leader</td>
+</tr>
+<tr>
+<td>时钟跳变</td>
+<td>不影响 Raft 安全性，但可能影响 lease&#x2F;keepalive 过期判断</td>
+</tr>
+</tbody></table>
+<h1 id="深入-MVCC-与存储"><a href="#深入-MVCC-与存储" class="headerlink" title="深入 MVCC 与存储"></a>深入 MVCC 与存储</h1><h2 id="bbolt-与-treeIndex"><a href="#bbolt-与-treeIndex" class="headerlink" title="bbolt 与 treeIndex"></a>bbolt 与 treeIndex</h2><p>etcd 的持久化后端是 bbolt（B+ 树、单写者、mmap）：</p>
+<ul>
+<li><code>key</code> bucket：保存 key 的历史 revision 和 value。</li>
+<li><code>meta</code> bucket：保存 term、revision、cluster 元数据等。</li>
+<li><code>lease</code> bucket：lease 元数据。</li>
+<li><code>auth</code> bucket：用户、角色、权限。</li>
+<li><code>alarm</code> bucket：alarm 状态。</li>
+<li><code>members</code>&#x2F;<code>cluster</code> 等：集群成员信息。</li>
+</ul>
+<p>内存中的 <strong>treeIndex</strong> 把用户 key 映射到 revision 列表：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">/app/config -&gt; keyIndex</span><br><span class="line">  generations:</span><br><span class="line">    - created: 10, revisions: [10, 12, 15]</span><br><span class="line">    - created: 20, revisions: [20]   # 删除后重新创建</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>create_revision</code>、<code>mod_revision</code>、<code>version</code> 都来自这里。</li>
+<li>Range 查询先在 treeIndex 找到目标 revision，再读 backend。</li>
+<li>重启时 treeIndex 会从 backend 重建。</li>
+</ul>
+<h2 id="写路径-1"><a href="#写路径-1" class="headerlink" title="写路径"></a>写路径</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">gRPC Put</span><br><span class="line">  -&gt; 认证/权限</span><br><span class="line">  -&gt; quota 检查</span><br><span class="line">  -&gt; Raft 提案</span><br><span class="line">  -&gt; WAL fsync</span><br><span class="line">  -&gt; 多数派复制</span><br><span class="line">  -&gt; apply</span><br><span class="line">  -&gt; backend batch 写入</span><br><span class="line">  -&gt; treeIndex 更新</span><br><span class="line">  -&gt; watcher 通知</span><br><span class="line">  -&gt; 返回 response</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>WAL fsync 是写延迟的主要来源。</li>
+<li>backend 写入是批量的，但仍然是单写者。</li>
+<li>apply 是串行的；慢 apply 会拖慢整个节点。</li>
+<li>大 value 会放大 WAL、网络、backend 和 snapshot 成本。</li>
+</ul>
+<h2 id="读路径-1"><a href="#读路径-1" class="headerlink" title="读路径"></a>读路径</h2><figure class="highlight text"><table><tr><td class="code"><pre><span class="line">gRPC Range</span><br><span class="line">  -&gt; 认证/权限</span><br><span class="line">  -&gt; 线性一致读：ReadIndex/quorum 确认</span><br><span class="line">  -&gt; treeIndex 查找 revision</span><br><span class="line">  -&gt; backend 读取 KeyValue</span><br><span class="line">  -&gt; 返回</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>历史读 <code>--rev=N</code> 走 treeIndex + backend。</li>
+<li>如果 revision 已被 compaction，返回 <code>ErrCompacted</code>。</li>
+<li><code>serializable</code> 跳过 quorum 确认，直接本地读。</li>
+<li><code>keys_only</code>&#x2F;<code>count_only</code> 减少数据传输。</li>
+</ul>
+<h2 id="Compaction-1"><a href="#Compaction-1" class="headerlink" title="Compaction"></a>Compaction</h2><p>MVCC 保留历史 revision，写入越多，历史越多：</p>
+<ul>
+<li><code>compact(rev)</code> 删除 &lt;&#x3D; rev 的历史版本。</li>
+<li>compaction 后，旧 revision 不可读，旧 watcher 会被取消。</li>
+<li>只做 compaction 不会立即释放磁盘空间，只会释放 backend 内部空间。</li>
+<li>自动 compaction：<ul>
+<li>periodic：按时间保留，如 <code>--auto-compaction-retention=10h</code>。</li>
+<li>revision：按 revision 数保留，如 <code>--auto-compaction-retention=1000</code>。</li>
 </ul>
 </li>
 </ul>
-<h1 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h1><h2 id="服务注册和发现"><a href="#服务注册和发现" class="headerlink" title="服务注册和发现"></a>服务注册和发现</h2><p>提供<strong>服务发现</strong>功能的关键设计：</p>
+<p>compaction 的影响：</p>
 <ul>
-<li>强一致性、高可用的服务存储目录</li>
-<li>注册服务和监控服务健康状态的机制</li>
-<li>查找和连接服务的机制</li>
+<li>watcher 的 <code>start_revision</code> 小于 compact revision 时会收到 <code>CompactRevision</code>，需要全量重新同步。</li>
+<li>备份&#x2F;恢复后 revision 仍然保留，便于客户端继续 watch（在保留窗口内）。</li>
 </ul>
-<p>常见服务发现形式：</p>
+<h2 id="Defrag-1"><a href="#Defrag-1" class="headerlink" title="Defrag"></a>Defrag</h2><p>bbolt 删除数据后会产生空闲页，但文件不会自动缩小：</p>
 <ul>
-<li>前后端业务注册发现：中间件和后端服务在 etcd 中注册后，前端和中间件可以从 etcd 中找到相应服务器并根据调用关系进行绑定<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038532.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038532.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></li>
-<li>多组后端服务器注册发现：后端多个状态相同 APP 可同时注册到 etcd 中，前端可通过 HAProxy 从 etcd 获取到后端 IP 和端口然后请求转发，能够通过动态的配置域名解析实现实例故障重启透明化<br><img src="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038285.png" class="lazyload" data-srcset="https://gcore.jsdelivr.net/gh/serchaofan/picBed/blog/202203120038285.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></li>
+<li><code>etcdctl defrag</code> 重建 backend，释放磁盘空间。</li>
+<li>defrag 会阻塞该成员的读写，必须逐个成员执行。</li>
+<li>defrag 不会复制到其他成员，只作用于本地。</li>
+<li>etcd 停止时可以用 <code>etcdutl defrag --data-dir &lt;path&gt;</code>。</li>
+<li>建议先 compaction，再 defrag。</li>
 </ul>
-<h2 id="消息发布与订阅"><a href="#消息发布与订阅" class="headerlink" title="消息发布与订阅"></a>消息发布与订阅</h2><p>在分布式系统中，最适用的一种组件间通信方式就是消息发布与订阅，即构建一个配置共享中心，数据提供者在这个配置中心发布消息，而消息使用者则订阅他们关心的主题，一旦主题有消息发布，就会实时通知订阅者。通过这种方式可以做到分布式系统配置的集中式管理与动态更新。</p>
-<h2 id="负载均衡"><a href="#负载均衡" class="headerlink" title="负载均衡"></a>负载均衡</h2><h2 id="分布式通知与协调"><a href="#分布式通知与协调" class="headerlink" title="分布式通知与协调"></a>分布式通知与协调</h2><h2 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h2><h2 id="分布式队列"><a href="#分布式队列" class="headerlink" title="分布式队列"></a>分布式队列</h2><h2 id="集群监控与-Leader-竞选"><a href="#集群监控与-Leader-竞选" class="headerlink" title="集群监控与 Leader 竞选"></a>集群监控与 Leader 竞选</h2><h2 id="etcd-与-zookeeper-的区别"><a href="#etcd-与-zookeeper-的区别" class="headerlink" title="etcd 与 zookeeper 的区别"></a>etcd 与 zookeeper 的区别</h2><blockquote>
-<p>参考文章：</p>
-<p><a target="_blank" rel="noopener" href="https://mritd.me/2016/09/01/Etcd-%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/">Etcd 集群搭建</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.hi-linux.com/posts/40915.html">Etcd 使用入门</a></p>
-<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/4X7-tkrJ-rFYI7BqquK9Og">万字长文：etcd 从入门到放弃</a></p>
-<p><a target="_blank" rel="noopener" href="https://doczhcn.gitbook.io/etcd/">etcd 官方文档中文版</a></p>
-<p><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/etcd-interpretation-application-scenario-implement-principle">etcd：从应用场景到实现原理的全方位解读</a></p>
-</blockquote>
+<p>选择 defrag 时机：</p>
+<ul>
+<li>低峰期。</li>
+<li>一次一个成员，优先 Follower，最后 Leader。</li>
+<li>确认其他成员健康、quorum 稳定。</li>
+<li>预留足够磁盘空间（重建期间可能临时占用更多空间）。</li>
+</ul>
+<h2 id="Quota-与-NOSPACE"><a href="#Quota-与-NOSPACE" class="headerlink" title="Quota 与 NOSPACE"></a>Quota 与 NOSPACE</h2><p><code>--quota-backend-bytes</code> 限制 backend 大小。超过配额：</p>
+<ul>
+<li>触发集群级 NOSPACE alarm。</li>
+<li>集群进入维护模式，只接受读和删除。</li>
+<li>写入返回 <code>etcdserver: mvcc: database space exceeded</code>。</li>
+</ul>
+<p>处理顺序必须是：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">删除数据 -&gt; compaction -&gt; defrag -&gt; alarm disarm</span><br></pre></td></tr></table></figure>
+
+<p>只删除数据不 compact&#x2F;defrag，空间不会真正释放。</p>
+<p>关键指标：</p>
+<ul>
+<li><code>etcd_mvcc_db_total_size_in_bytes</code>：backend 总大小（含空闲页）。</li>
+<li><code>etcd_mvcc_db_total_size_in_use_in_bytes</code>：实际使用大小。</li>
+<li>两者差距大，说明需要 defrag。</li>
+<li>接近 quota 时提前告警。</li>
+</ul>
+<h2 id="Snapshot-与-WAL"><a href="#Snapshot-与-WAL" class="headerlink" title="Snapshot 与 WAL"></a>Snapshot 与 WAL</h2><ul>
+<li>WAL 保存未快照的 Raft entry；重启时 replay。</li>
+<li>Snapshot 保存某一 index 的完整状态，减少 WAL replay 时间。</li>
+<li>默认保留多个 WAL&#x2F;snapshot，供慢 Follower 追赶。</li>
+<li><code>etcdctl snapshot save</code> 通过 backend 一致性读生成快照。</li>
+<li><code>etcdutl snapshot status</code> 查看 revision、key 数、大小、hash。</li>
+<li>Snapshot 是恢复的基线，不是实时备份的替代；需要定期执行。</li>
+</ul>
+<h2 id="数据损坏"><a href="#数据损坏" class="headerlink" title="数据损坏"></a>数据损坏</h2><p>可能出现：</p>
+<ul>
+<li><code>CORRUPT</code> alarm。</li>
+<li>backend 文件损坏。</li>
+<li>WAL 损坏。</li>
+<li>磁盘满导致写入失败。</li>
+</ul>
+<p>处理：</p>
+<ol>
+<li>停止写入，保留现场。</li>
+<li>检查 <code>alarm list</code>、日志、磁盘。</li>
+<li>从最近的 snapshot 恢复到一个新集群。</li>
+<li>如果只是单个 Follower 损坏，可以删除该成员数据目录并重新加入（先确认 quorum 安全）。</li>
+<li>不要手工修改 bbolt&#x2F;WAL 文件。</li>
+</ol>
+<h1 id="深入-Watch-与-Lease"><a href="#深入-Watch-与-Lease" class="headerlink" title="深入 Watch 与 Lease"></a>深入 Watch 与 Lease</h1><h2 id="Watch-的内部模型"><a href="#Watch-的内部模型" class="headerlink" title="Watch 的内部模型"></a>Watch 的内部模型</h2><p>etcd 的 watchable store 维护：</p>
+<ul>
+<li><strong>synced watcher</strong>：已经追到当前 revision，事件从内存事件队列发送。</li>
+<li><strong>unsynced watcher</strong>：落后于当前 revision，需要从 backend 读取历史事件追赶。</li>
+<li><strong>minRev</strong>：watch 需要的最小 revision。</li>
+<li>慢 watcher 可能被取消，避免拖垮服务端。</li>
+</ul>
+<p>Watch 事件包含：</p>
+<ul>
+<li><code>type</code>：PUT&#x2F;DELETE。</li>
+<li><code>kv</code>：KeyValue。</li>
+<li><code>prev_kv</code>：如果请求了 <code>prev_kv</code>。</li>
+</ul>
+<p><code>progress_notify</code> 用于长时间没有事件时发送进度，帮助客户端确认 watch 仍然健康。</p>
+<h2 id="Watch-断线重连"><a href="#Watch-断线重连" class="headerlink" title="Watch 断线重连"></a>Watch 断线重连</h2><p>客户端必须处理：</p>
+<ul>
+<li>连接断开。</li>
+<li><code>wresp.Canceled</code>。</li>
+<li><code>wresp.CompactRevision</code> 非 0。</li>
+<li>revision 落后于 compaction。</li>
+</ul>
+<p>推荐逻辑：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">lastRev = 上次处理完的 revision</span><br><span class="line">循环:</span><br><span class="line">  watch(start_revision = lastRev + 1)</span><br><span class="line">  收到事件:</span><br><span class="line">    处理事件</span><br><span class="line">    lastRev = event.mod_revision</span><br><span class="line">  如果 canceled:</span><br><span class="line">    如果 compact_revision &gt; 0:</span><br><span class="line">      全量 Get --prefix 当前状态</span><br><span class="line">      lastRev = header.revision</span><br><span class="line">    否则:</span><br><span class="line">      退避后重连</span><br></pre></td></tr></table></figure>
+
+<p>不要只依赖 watch 的实时性；关键状态要支持全量重建。</p>
+<h2 id="Lease-的内部模型"><a href="#Lease-的内部模型" class="headerlink" title="Lease 的内部模型"></a>Lease 的内部模型</h2><p>Lease 由 lessor 管理：</p>
+<ul>
+<li>Leader 负责 lease grant&#x2F;keepalive&#x2F;revoke。</li>
+<li>lease 有 TTL 和到期队列。</li>
+<li>客户端定期 keepalive，重置 TTL。</li>
+<li>lease 过期或 revoke 时，所有绑定 key 被删除，并产生 DELETE 事件。</li>
+<li>lease 的 checkpoint 会持久化，避免 Leader 切换后丢失全部 lease。</li>
+</ul>
+<p>实践：</p>
+<ul>
+<li>keepalive 间隔应小于 TTL，通常 TTL&#x2F;3。</li>
+<li>keepalive channel 关闭时，重新 grant + 重新绑定 key。</li>
+<li>不要为每个请求创建 lease。</li>
+<li>服务注册使用 lease + prefix watch。</li>
+<li>分布式锁使用 lease + txn，防止锁持有者崩溃后死锁。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl lease grant 30</span><br><span class="line">etcdctl put /service/a 10.0.0.1:8080 --lease=&lt;lease-id&gt;</span><br><span class="line">etcdctl lease keep-alive &lt;lease-id&gt;</span><br><span class="line">etcdctl lease timetolive &lt;lease-id&gt; --keys</span><br></pre></td></tr></table></figure>
+
+<h1 id="深入集群变更与故障"><a href="#深入集群变更与故障" class="headerlink" title="深入集群变更与故障"></a>深入集群变更与故障</h1><h2 id="成员变更原则"><a href="#成员变更原则" class="headerlink" title="成员变更原则"></a>成员变更原则</h2><ul>
+<li>一次只加&#x2F;删一个成员。</li>
+<li>变更前确认集群健康、quorum 稳定。</li>
+<li>新成员优先用 Learner 追数据，再 promote。</li>
+<li>删除成员前确认剩余成员仍满足 quorum。</li>
+<li>变更期间监控 Leader、WAL、RTT、apply 延迟。</li>
+<li>不要手工修改成员列表或 <code>initial-cluster</code>。</li>
+</ul>
+<h2 id="成员替换"><a href="#成员替换" class="headerlink" title="成员替换"></a>成员替换</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 1. 添加新成员/learner</span></span><br><span class="line">etcdctl member add infra4 --peer-urls=http://10.0.1.14:2380 --learner</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 在新节点启动 etcd</span></span><br><span class="line">etcd --name infra4 --initial-cluster-state existing ...</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 等待追上后提升</span></span><br><span class="line">etcdctl member promote &lt;member-id&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 移除旧成员</span></span><br><span class="line">etcdctl member remove &lt;old-member-id&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="网络分区"><a href="#网络分区" class="headerlink" title="网络分区"></a>网络分区</h2><ul>
+<li>多数派一侧继续选举和写入。</li>
+<li>少数派一侧无法 commit；线性一致读失败，serializable 读可能返回旧数据。</li>
+<li>分区恢复后，旧 Leader&#x2F;Follower 通过 term&#x2F;日志一致性回到集群。</li>
+<li>不要因为少数派“还能读”就认为集群健康。</li>
+</ul>
+<h2 id="Quorum-丢失"><a href="#Quorum-丢失" class="headerlink" title="Quorum 丢失"></a>Quorum 丢失</h2><p>现象：</p>
+<ul>
+<li>写入超时&#x2F;失败。</li>
+<li>线性一致读失败。</li>
+<li><code>endpoint health</code> 可能显示不健康。</li>
+<li>Leader 频繁变化或没有 Leader。</li>
+</ul>
+<p>处理：</p>
+<ol>
+<li>确认是网络、磁盘还是进程故障。</li>
+<li>尽量恢复多数派成员。</li>
+<li>如果无法恢复，使用最新 snapshot 恢复新集群。</li>
+<li>不要强行让少数派继续写入，否则可能造成数据分叉。</li>
+</ol>
+<h2 id="灾难恢复"><a href="#灾难恢复" class="headerlink" title="灾难恢复"></a>灾难恢复</h2><p>流程：</p>
+<ol>
+<li>找到最新、可用的 snapshot。</li>
+<li><code>etcdutl snapshot status</code> 校验 revision&#x2F;key 数。</li>
+<li>恢复到新的 data-dir。</li>
+<li>用新的 <code>initial-cluster-token</code> 启动新集群。</li>
+<li>逐个加入其他成员。</li>
+<li>验证 key、revision、健康状态。</li>
+<li>切换客户端&#x2F;DNS。</li>
+<li>隔离旧集群，避免双写。</li>
+</ol>
+<p>注意：</p>
+<ul>
+<li>恢复出来的集群 revision 可能落后，客户端需要重新同步。</li>
+<li><code>--skip-hash-check</code> 只在明确知道快照完整、但 hash 校验失败时使用。</li>
+<li>恢复前备份当前现场，保留日志。</li>
+</ul>
+<h2 id="升级与降级"><a href="#升级与降级" class="headerlink" title="升级与降级"></a>升级与降级</h2><p>升级：</p>
+<ul>
+<li>备份 snapshot。</li>
+<li>阅读 3.6 → 3.7 升级文档。</li>
+<li>一次升级一个成员，先 Follower 后 Leader。</li>
+<li>检查 API、客户端、监控、弃用参数。</li>
+<li>观察 Leader 稳定、WAL&#x2F;apply 延迟、错误率。</li>
+</ul>
+<p>降级：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl downgrade <span class="built_in">enable</span> 3.6</span><br><span class="line"><span class="comment"># 滚动降级</span></span><br><span class="line">etcdctl downgrade cancel</span><br></pre></td></tr></table></figure>
+
+<p>降级窗口和限制以官方文档为准，不要长期停留在降级状态。</p>
+<h1 id="深入性能与容量"><a href="#深入性能与容量" class="headerlink" title="深入性能与容量"></a>深入性能与容量</h1><h2 id="瓶颈在哪里"><a href="#瓶颈在哪里" class="headerlink" title="瓶颈在哪里"></a>瓶颈在哪里</h2><table>
+<thead>
+<tr>
+<th>资源</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>磁盘 fsync</td>
+<td>WAL 写入延迟，直接影响写吞吐和 Leader 稳定性</td>
+</tr>
+<tr>
+<td>磁盘 IOPS</td>
+<td>backend commit、compaction、defrag</td>
+</tr>
+<tr>
+<td>网络 RTT</td>
+<td>Raft 复制、ReadIndex、Leader 选举</td>
+</tr>
+<tr>
+<td>CPU</td>
+<td>TLS、序列化、watch、压缩</td>
+</tr>
+<tr>
+<td>内存</td>
+<td>treeIndex、bbolt cache、watch 队列、lease</td>
+</tr>
+<tr>
+<td>磁盘容量</td>
+<td>WAL、snapshot、backend、quota</td>
+</tr>
+</tbody></table>
+<p>etcd 对磁盘延迟非常敏感。WAL fsync 从 1ms 上升到 100ms，写性能和 Leader 稳定性都会明显下降。</p>
+<h2 id="容量估算"><a href="#容量估算" class="headerlink" title="容量估算"></a>容量估算</h2><p>粗略考虑：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">backend 大小 ≈ key/value 总量 + 历史 revision + 索引 + 空闲页</span><br><span class="line">内存 ≈ treeIndex + bbolt cache + watch/lease 状态 + Go runtime</span><br><span class="line">WAL ≈ 未快照的 Raft entry</span><br></pre></td></tr></table></figure>
+
+<p>影响因素：</p>
+<ul>
+<li>key 数量。</li>
+<li>value 大小。</li>
+<li>写入频率和 revision 增长速度。</li>
+<li>compaction 保留窗口。</li>
+<li>watcher 数量。</li>
+<li>lease 数量。</li>
+<li>集群成员数和复制流量。</li>
+</ul>
+<p>实践：</p>
+<ul>
+<li>单 value 控制在 KiB 级，不要存 MB 级对象。</li>
+<li>单集群 backend 建议控制在 8 GiB 以内。</li>
+<li>高频更新 key 要缩短 compaction 窗口。</li>
+<li>大量 watch 会增加内存和 CPU。</li>
+<li>用 <code>etcdctl check datascale</code> 估算。</li>
+<li>用 <code>etcdctl check perf</code> 做基础性能检查。</li>
+</ul>
+<h2 id="调优"><a href="#调优" class="headerlink" title="调优"></a>调优</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcd \</span><br><span class="line">  --heartbeat-interval=100 \</span><br><span class="line">  --election-timeout=1000 \</span><br><span class="line">  --snapshot-count=100000 \</span><br><span class="line">  --max-request-bytes=1572864 \</span><br><span class="line">  --max-txn-ops=128 \</span><br><span class="line">  --quota-backend-bytes=8589934592 \</span><br><span class="line">  --auto-compaction-mode=periodic \</span><br><span class="line">  --auto-compaction-retention=10h</span><br></pre></td></tr></table></figure>
+
+<p>原则：</p>
+<ul>
+<li>先解决磁盘，再调参数。</li>
+<li>不要把 <code>max-request-bytes</code> 调得过大。</li>
+<li>不要盲目增加成员数；成员越多，写放大和 RTT 影响越大。</li>
+<li>读多写少可以用 serializable 读，但要接受 stale。</li>
+<li>监控 p99 而非平均值。</li>
+</ul>
+<h1 id="深入安全模型"><a href="#深入安全模型" class="headerlink" title="深入安全模型"></a>深入安全模型</h1><h2 id="TLS-分层"><a href="#TLS-分层" class="headerlink" title="TLS 分层"></a>TLS 分层</h2><p>etcd 有两种 TLS：</p>
+<ul>
+<li><strong>client-to-server</strong>：客户端到 etcd 2379。</li>
+<li><strong>peer-to-peer</strong>：成员之间 2380。</li>
+</ul>
+<p>推荐全部启用，并开启双向认证：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">--cert-file=server.crt --key-file=server.key \</span><br><span class="line">--trusted-ca-file=ca.crt --client-cert-auth \</span><br><span class="line">--peer-cert-file=peer.crt --peer-key-file=peer.key \</span><br><span class="line">--peer-trusted-ca-file=ca.crt --peer-client-cert-auth</span><br></pre></td></tr></table></figure>
+
+<p>证书要求：</p>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>keyUsage</th>
+<th>extendedKeyUsage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>服务端</td>
+<td>digitalSignature, keyEncipherment</td>
+<td>serverAuth</td>
+</tr>
+<tr>
+<td>客户端</td>
+<td>digitalSignature, keyEncipherment</td>
+<td>clientAuth</td>
+</tr>
+<tr>
+<td>peer</td>
+<td>digitalSignature, keyEncipherment</td>
+<td>serverAuth + clientAuth</td>
+</tr>
+</tbody></table>
+<ul>
+<li>SAN 必须包含实际访问的 IP&#x2F;DNS。</li>
+<li>客户端证书用于认证，不是可选的“加密开关”。</li>
+<li>证书轮换要提前规划，避免过期导致集群失联。</li>
+</ul>
+<h2 id="RBAC-内部模型"><a href="#RBAC-内部模型" class="headerlink" title="RBAC 内部模型"></a>RBAC 内部模型</h2><ul>
+<li>认证信息存储在 auth store，带有 auth revision。</li>
+<li>用户、角色、权限变更会推进 auth revision。</li>
+<li>root 用户拥有全部权限。</li>
+<li>角色权限可以按 key&#x2F;range 授予 read&#x2F;write&#x2F;readwrite。</li>
+<li>权限检查在请求进入 Raft 之前完成。</li>
+</ul>
+<p>开启顺序：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl user add root</span><br><span class="line">etcdctl user grant-role root root</span><br><span class="line">etcdctl auth <span class="built_in">enable</span></span><br></pre></td></tr></table></figure>
+
+<p>常见错误：</p>
+<ul>
+<li>没有先创建 root 用户就 enable auth，导致无法管理。</li>
+<li>只给应用 read 权限，却让它 watch 并写入状态 key。</li>
+<li>证书 CN&#x2F;SAN 不匹配，客户端报 <code>x509: certificate is valid for ...</code>。</li>
+<li>peer 证书缺少 clientAuth，开启 peer-client-cert-auth 后成员无法通信。</li>
+</ul>
+<h2 id="威胁模型"><a href="#威胁模型" class="headerlink" title="威胁模型"></a>威胁模型</h2><ul>
+<li>能访问 etcd 的客户端可以读取其权限范围内的所有 key。</li>
+<li>etcd 不加密磁盘数据；磁盘泄露等于数据泄露。</li>
+<li>etcd 没有内置细粒度审计&#x2F;限流；需要网关、网络策略、日志。</li>
+<li>Docker&#x2F;Kubernetes 中挂载 etcd 证书的 Pod 需要严格 RBAC。</li>
+<li>不要把 etcd 暴露到公网，不要用自签名证书跳过校验。</li>
+</ul>
+<h1 id="客户端开发实践"><a href="#客户端开发实践" class="headerlink" title="客户端开发实践"></a>客户端开发实践</h1><h2 id="初始化-clientv3"><a href="#初始化-clientv3" class="headerlink" title="初始化 clientv3"></a>初始化 clientv3</h2><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;context&quot;</span></span><br><span class="line">    <span class="string">&quot;crypto/tls&quot;</span></span><br><span class="line">    <span class="string">&quot;log&quot;</span></span><br><span class="line">    <span class="string">&quot;time&quot;</span></span><br><span class="line"></span><br><span class="line">    clientv3 <span class="string">&quot;go.etcd.io/etcd/client/v3&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">cli, err := clientv3.New(clientv3.Config&#123;</span><br><span class="line">    Endpoints:   []<span class="type">string</span>&#123;<span class="string">&quot;https://10.0.0.10:2379&quot;</span>&#125;,</span><br><span class="line">    DialTimeout: <span class="number">5</span> * time.Second,</span><br><span class="line">    TLS:         tlsConfig, <span class="comment">// 根 CA、客户端证书</span></span><br><span class="line">&#125;)</span><br><span class="line"><span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    log.Fatal(err)</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">defer</span> cli.Close()</span><br></pre></td></tr></table></figure>
+
+<p>原则：</p>
+<ul>
+<li>客户端复用，不要每个请求新建。</li>
+<li>Endpoints 配置多个成员，clientv3 会自动负载均衡&#x2F;重连。</li>
+<li>设置 DialTimeout 和请求 Context 超时。</li>
+<li>生产必须配置 TLS；不要让 <code>InsecureSkipVerify</code> 进入生产。</li>
+</ul>
+<h2 id="KV-与-Watch"><a href="#KV-与-Watch" class="headerlink" title="KV 与 Watch"></a>KV 与 Watch</h2><figure class="highlight go"><table><tr><td class="code"><pre><span class="line">ctx, cancel := context.WithTimeout(context.Background(), <span class="number">3</span>*time.Second)</span><br><span class="line"><span class="keyword">defer</span> cancel()</span><br><span class="line"></span><br><span class="line">_, err = cli.Put(ctx, <span class="string">&quot;/app/config&quot;</span>, <span class="string">`&#123;&quot;timeout&quot;:10&#125;`</span>)</span><br><span class="line">resp, err := cli.Get(ctx, <span class="string">&quot;/app/&quot;</span>, clientv3.WithPrefix(), clientv3.WithLimit(<span class="number">100</span>))</span><br><span class="line"></span><br><span class="line">watchCtx, cancelWatch := context.WithCancel(context.Background())</span><br><span class="line"><span class="keyword">defer</span> cancelWatch()</span><br><span class="line"></span><br><span class="line">wch := cli.Watch(watchCtx, <span class="string">&quot;/app/&quot;</span>,</span><br><span class="line">    clientv3.WithPrefix(),</span><br><span class="line">    clientv3.WithRev(resp.Header.Revision+<span class="number">1</span>),</span><br><span class="line">    clientv3.WithProgressNotify(),</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> wresp := <span class="keyword">range</span> wch &#123;</span><br><span class="line">    <span class="keyword">if</span> wresp.Canceled &#123;</span><br><span class="line">        <span class="comment">// CompactRevision &gt; 0 表示历史被压缩，需要全量重建</span></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> _, ev := <span class="keyword">range</span> wresp.Events &#123;</span><br><span class="line">        log.Printf(<span class="string">&quot;%s %s %s&quot;</span>, ev.Type, ev.Kv.Key, ev.Kv.Value)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Lease-2"><a href="#Lease-2" class="headerlink" title="Lease"></a>Lease</h2><figure class="highlight go"><table><tr><td class="code"><pre><span class="line">lease, err := cli.Grant(ctx, <span class="number">30</span>)</span><br><span class="line">_, err = cli.Put(ctx, <span class="string">&quot;/service/a&quot;</span>, <span class="string">&quot;10.0.0.1:8080&quot;</span>, clientv3.WithLease(lease.ID))</span><br><span class="line"></span><br><span class="line">keepAlive, err := cli.KeepAlive(context.Background(), lease.ID)</span><br><span class="line"><span class="keyword">for</span> resp := <span class="keyword">range</span> keepAlive &#123;</span><br><span class="line">    <span class="keyword">if</span> resp == <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="comment">// keepalive 通道关闭，需要重新 grant 并绑定 key</span></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="事务与分布式锁"><a href="#事务与分布式锁" class="headerlink" title="事务与分布式锁"></a>事务与分布式锁</h2><p>CAS：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">txn, err := cli.Txn(ctx).</span><br><span class="line">    If(clientv3.Compare(clientv3.Version(<span class="string">&quot;/lock&quot;</span>), <span class="string">&quot;=&quot;</span>, <span class="number">0</span>)).</span><br><span class="line">    Then(clientv3.OpPut(<span class="string">&quot;/lock&quot;</span>, <span class="string">&quot;owner-a&quot;</span>, clientv3.WithLease(lease.ID))).</span><br><span class="line">    Commit()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> !txn.Succeeded &#123;</span><br><span class="line">    <span class="comment">// 锁已被占用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用官方 concurrency 包：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">session, _ := concurrency.NewSession(cli, concurrency.WithTTL(<span class="number">10</span>))</span><br><span class="line"><span class="keyword">defer</span> session.Close()</span><br><span class="line"></span><br><span class="line">mutex := concurrency.NewMutex(session, <span class="string">&quot;/lock&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> err := mutex.Lock(ctx); err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">defer</span> mutex.Unlock(ctx)</span><br></pre></td></tr></table></figure>
+
+<p>Leader 选举：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">election := concurrency.NewElection(session, <span class="string">&quot;/election&quot;</span>)</span><br><span class="line"><span class="keyword">if</span> err := election.Campaign(ctx, <span class="string">&quot;node-1&quot;</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">defer</span> election.Resign(ctx)</span><br></pre></td></tr></table></figure>
+
+<h2 id="错误与重试"><a href="#错误与重试" class="headerlink" title="错误与重试"></a>错误与重试</h2><p>常见错误：</p>
+<table>
+<thead>
+<tr>
+<th>错误</th>
+<th>含义</th>
+<th>处理</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ErrCompacted</code></td>
+<td>revision 已被压缩</td>
+<td>全量重新同步，不要盲目重试</td>
+</tr>
+<tr>
+<td><code>ErrFutureRev</code></td>
+<td>请求 revision 大于当前</td>
+<td>等待&#x2F;重试</td>
+</tr>
+<tr>
+<td><code>ErrNoLeader</code></td>
+<td>没有 Leader</td>
+<td>退避重试</td>
+</tr>
+<tr>
+<td><code>ErrTimeout</code></td>
+<td>请求超时</td>
+<td>退避重试</td>
+</tr>
+<tr>
+<td><code>ErrLeaderChanged</code></td>
+<td>Leader 变化</td>
+<td>重试</td>
+</tr>
+<tr>
+<td><code>ErrPermissionDenied</code></td>
+<td>RBAC 拒绝</td>
+<td>修正权限</td>
+</tr>
+<tr>
+<td><code>ErrRequestTooLarge</code></td>
+<td>请求过大</td>
+<td>减小 value&#x2F;拆分</td>
+</tr>
+<tr>
+<td><code>ErrTooManyOps</code></td>
+<td>事务操作过多</td>
+<td>拆分事务</td>
+</tr>
+</tbody></table>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> errors.Is(err, rpctypes.ErrCompacted) &#123;</span><br><span class="line">    <span class="comment">// 重新 Get 最新状态，再基于新 revision watch</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="读一致性选择"><a href="#读一致性选择" class="headerlink" title="读一致性选择"></a>读一致性选择</h2><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 默认线性一致读</span></span><br><span class="line">resp, err := cli.Get(ctx, key)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 串行化本地读，可能 stale</span></span><br><span class="line">resp, err := cli.Get(ctx, key, clientv3.WithSerializable())</span><br><span class="line"></span><br><span class="line"><span class="comment">// 需要 Leader 时明确失败，而不是读到旧数据</span></span><br><span class="line">ctx = clientv3.WithRequireLeader(ctx)</span><br></pre></td></tr></table></figure>
+
+<h1 id="运维深水区"><a href="#运维深水区" class="headerlink" title="运维深水区"></a>运维深水区</h1><h2 id="Compaction-与-Defrag-的标准流程"><a href="#Compaction-与-Defrag-的标准流程" class="headerlink" title="Compaction 与 Defrag 的标准流程"></a>Compaction 与 Defrag 的标准流程</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 1. 查当前 revision</span></span><br><span class="line">rev=$(etcdctl get <span class="string">&quot;&quot;</span> --prefix --keys-only -w=json | jq -r <span class="string">&#x27;.header.revision&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 压缩</span></span><br><span class="line">etcdctl compact <span class="string">&quot;<span class="variable">$rev</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 查看空间</span></span><br><span class="line">etcdctl endpoint status --cluster --write-out=table</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 逐个成员 defrag</span></span><br><span class="line">etcdctl defrag --endpoints=https://10.0.0.10:2379</span><br><span class="line">etcdctl defrag --endpoints=https://10.0.0.11:2379</span><br><span class="line">etcdctl defrag --endpoints=https://10.0.0.12:2379</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li>defrag 会阻塞当前成员读写。</li>
+<li>不要同时 defrag 所有成员。</li>
+<li>先 Follower，最后 Leader。</li>
+<li>预留磁盘空间。</li>
+</ul>
+<h2 id="NOSPACE-处理"><a href="#NOSPACE-处理" class="headerlink" title="NOSPACE 处理"></a>NOSPACE 处理</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl alarm list</span><br><span class="line">etcdctl del /old/prefix --prefix</span><br><span class="line">etcdctl compact &lt;rev&gt;</span><br><span class="line">etcdctl defrag --cluster</span><br><span class="line">etcdctl alarm disarm</span><br></pre></td></tr></table></figure>
+
+<p>如果 <code>alarm disarm</code> 后仍然报错，检查是否所有成员都完成了 compaction&#x2F;defrag。</p>
+<h2 id="Snapshot-与-HashKV"><a href="#Snapshot-与-HashKV" class="headerlink" title="Snapshot 与 HashKV"></a>Snapshot 与 HashKV</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl snapshot save /backup/etcd.db</span><br><span class="line">etcdutl snapshot status /backup/etcd.db --write-out=table</span><br><span class="line">etcdctl endpoint hashkv --cluster</span><br></pre></td></tr></table></figure>
+
+<p><code>hashkv</code> 比较各成员的 KV 历史 hash，用于发现数据不一致。hash 不一致时：</p>
+<ul>
+<li>检查是否有成员落后。</li>
+<li>检查是否刚刚 compaction&#x2F;defrag。</li>
+<li>必要时从健康成员重建问题成员。</li>
+</ul>
+<h2 id="成员替换与磁盘故障"><a href="#成员替换与磁盘故障" class="headerlink" title="成员替换与磁盘故障"></a>成员替换与磁盘故障</h2><p>单成员数据损坏：</p>
+<ol>
+<li>确认其他成员仍有 quorum。</li>
+<li>停止问题成员。</li>
+<li>清理其 data-dir（确认不再需要）。</li>
+<li>用 <code>member add</code> 重新加入，或用已有成员 snapshot 恢复。</li>
+<li>等待追上，检查 health&#x2F;hashkv。</li>
+</ol>
+<p>多数派损坏：按灾难恢复流程从 snapshot 重建新集群。</p>
+<h2 id="监控告警"><a href="#监控告警" class="headerlink" title="监控告警"></a>监控告警</h2><p>建议告警：</p>
+<ul>
+<li><code>etcd_server_has_leader == 0</code> 持续 1 分钟。</li>
+<li>Leader 切换次数异常增长。</li>
+<li>WAL fsync p99 超过 100ms。</li>
+<li>backend commit p99 超过 100ms。</li>
+<li>DB 大小超过 quota 的 80%。</li>
+<li>NOSPACE&#x2F;CORRUPT alarm。</li>
+<li>peer RTT 异常。</li>
+<li>提案失败&#x2F;慢 apply 持续增长。</li>
+</ul>
+<h1 id="Kubernetes-etcd-深水区"><a href="#Kubernetes-etcd-深水区" class="headerlink" title="Kubernetes etcd 深水区"></a>Kubernetes etcd 深水区</h1><h2 id="静态-Pod-结构"><a href="#静态-Pod-结构" class="headerlink" title="静态 Pod 结构"></a>静态 Pod 结构</h2><p>kubeadm 集群中，etcd 通常是 static pod：</p>
+<figure class="highlight text"><table><tr><td class="code"><pre><span class="line">/etc/kubernetes/manifests/etcd.yaml</span><br><span class="line">/etc/kubernetes/pki/etcd/ca.crt</span><br><span class="line">/etc/kubernetes/pki/etcd/server.crt</span><br><span class="line">/etc/kubernetes/pki/etcd/server.key</span><br><span class="line">/var/lib/etcd</span><br></pre></td></tr></table></figure>
+
+<p>kube-apiserver 通过 <code>--etcd-servers=https://127.0.0.1:2379</code> 访问本地 etcd，并使用证书认证。</p>
+<h2 id="备份-1"><a href="#备份-1" class="headerlink" title="备份"></a>备份</h2><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ETCDCTL_API=3 etcdctl \</span><br><span class="line">  --endpoints=https://127.0.0.1:2379 \</span><br><span class="line">  --cacert=/etc/kubernetes/pki/etcd/ca.crt \</span><br><span class="line">  --cert=/etc/kubernetes/pki/etcd/server.crt \</span><br><span class="line">  --key=/etc/kubernetes/pki/etcd/server.key \</span><br><span class="line">  snapshot save /backup/etcd-$(<span class="built_in">date</span> +%F-%H%M).db</span><br></pre></td></tr></table></figure>
+
+<p>同时备份：</p>
+<ul>
+<li>etcd 证书。</li>
+<li>kube-apiserver 配置。</li>
+<li>kubeadm-config。</li>
+<li>集群版本信息。</li>
+</ul>
+<h2 id="恢复注意"><a href="#恢复注意" class="headerlink" title="恢复注意"></a>恢复注意</h2><ul>
+<li>恢复 etcd 会影响整个集群，必须按 Kubernetes 官方灾难恢复流程。</li>
+<li>恢复后 API Server 需要重新连接。</li>
+<li>不要在生产直接覆盖正在运行的 etcd data-dir。</li>
+<li>恢复前隔离旧集群，避免双写。</li>
+<li>恢复后检查 Node、Pod、CRD、RBAC 是否完整。</li>
+</ul>
+<h2 id="性能与磁盘"><a href="#性能与磁盘" class="headerlink" title="性能与磁盘"></a>性能与磁盘</h2><ul>
+<li>etcd 的 WAL fsync 延迟会直接放大到 kube-apiserver 请求延迟。</li>
+<li>控制面节点使用低延迟 SSD，避免和容器日志&#x2F;镜像存储共享磁盘。</li>
+<li>监控 <code>etcd_disk_wal_fsync_duration_seconds</code>、<code>etcd_disk_backend_commit_duration_seconds</code>。</li>
+<li>控制面节点数量 3 或 5，etcd 成员数与控制面节点数一致时要注意资源隔离。</li>
+<li>大规模集群关注 apiserver QPS、watch 数量、etcd DB 大小。</li>
+<li>升级 Kubernetes 前检查 etcd 版本兼容矩阵。</li>
+</ul>
+<h1 id="故障案例"><a href="#故障案例" class="headerlink" title="故障案例"></a>故障案例</h1><h2 id="案例一：Leader-频繁切换"><a href="#案例一：Leader-频繁切换" class="headerlink" title="案例一：Leader 频繁切换"></a>案例一：Leader 频繁切换</h2><p>现象：</p>
+<ul>
+<li><code>etcd_server_leader_changes_seen_total</code> 持续增长。</li>
+<li>客户端间歇性 <code>leader changed</code>。</li>
+<li>apiserver 偶发 5xx。</li>
+</ul>
+<p>排查：</p>
+<ul>
+<li>WAL fsync 是否抖动。</li>
+<li>网络 RTT 是否抖动&#x2F;丢包。</li>
+<li>CPU 是否被其他进程抢占。</li>
+<li>是否有成员频繁重启。</li>
+<li>是否跨机房部署导致 RTT 过高。</li>
+</ul>
+<p>处理：</p>
+<ul>
+<li>换本地 SSD。</li>
+<li>调整 heartbeat&#x2F;election timeout。</li>
+<li>修复网络。</li>
+<li>隔离高负载进程。</li>
+</ul>
+<h2 id="案例二：NOSPACE"><a href="#案例二：NOSPACE" class="headerlink" title="案例二：NOSPACE"></a>案例二：NOSPACE</h2><p>现象：</p>
+<ul>
+<li>写入报 <code>database space exceeded</code>。</li>
+<li><code>etcdctl alarm list</code> 显示 NOSPACE。</li>
+</ul>
+<p>处理：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">etcdctl del /old/prefix --prefix</span><br><span class="line">etcdctl compact &lt;rev&gt;</span><br><span class="line">etcdctl defrag --cluster</span><br><span class="line">etcdctl alarm disarm</span><br></pre></td></tr></table></figure>
+
+<p>复盘：</p>
+<ul>
+<li>是否缺少自动 compaction。</li>
+<li>是否存了大 value&#x2F;高频 revision。</li>
+<li>是否没有 quota&#x2F;空间告警。</li>
+</ul>
+<h2 id="案例三：慢磁盘导致-apply-落后"><a href="#案例三：慢磁盘导致-apply-落后" class="headerlink" title="案例三：慢磁盘导致 apply 落后"></a>案例三：慢磁盘导致 apply 落后</h2><p>现象：</p>
+<ul>
+<li><code>etcd_server_slow_apply_total</code> 增长。</li>
+<li>写入延迟高。</li>
+<li>Follower 落后，Leader 频繁发 snapshot。</li>
+</ul>
+<p>处理：</p>
+<ul>
+<li>检查磁盘 IOPS&#x2F;fsync 延迟。</li>
+<li>迁移到独立 SSD。</li>
+<li>降低写入频率&#x2F;大 value。</li>
+<li>调整 snapshot&#x2F;WAL 保留参数。</li>
+</ul>
+<h2 id="案例四：Quorum-丢失"><a href="#案例四：Quorum-丢失" class="headerlink" title="案例四：Quorum 丢失"></a>案例四：Quorum 丢失</h2><p>现象：</p>
+<ul>
+<li>无 Leader。</li>
+<li>写入和线性一致读失败。</li>
+<li>少数派节点仍能启动，但无法形成多数派。</li>
+</ul>
+<p>处理：</p>
+<ul>
+<li>恢复多数派节点。</li>
+<li>无法恢复时，用最新 snapshot 重建新集群。</li>
+<li>不要强行让少数派继续写入。</li>
+</ul>
+<h2 id="案例五：Kubernetes-API-超时"><a href="#案例五：Kubernetes-API-超时" class="headerlink" title="案例五：Kubernetes API 超时"></a>案例五：Kubernetes API 超时</h2><p>现象：</p>
+<ul>
+<li><code>kubectl</code> 超时、apiserver 5xx。</li>
+<li>etcd 健康检查失败或延迟高。</li>
+<li>控制面日志出现 etcd timeout。</li>
+</ul>
+<p>排查：</p>
+<ul>
+<li>etcd WAL fsync&#x2F;backend commit。</li>
+<li>控制面磁盘是否被打满。</li>
+<li>etcd DB 是否接近 quota。</li>
+<li>是否有大量 watch&#x2F;大对象。</li>
+<li>网络&#x2F;证书是否正常。</li>
+</ul>
+<p>处理：</p>
+<ul>
+<li>恢复磁盘性能。</li>
+<li>compaction&#x2F;defrag。</li>
+<li>扩容控制面&#x2F;etcd。</li>
+<li>修复异常客户端。</li>
+</ul>
+<h1 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h1><p><strong>Q：etcd 集群为什么推荐奇数节点？</strong></p>
+<p>A：quorum 需要多数派。3 节点容忍 1 个故障，4 节点也只能容忍 1 个；偶数节点增加成本但不增加容错，还增加复制延迟。</p>
+<p><strong>Q：etcd 能存多大的数据？</strong></p>
+<p>A：不适合大 Value。默认单请求约 1.5 MiB，生产建议控制 key&#x2F;value 大小，总数据量控制在几 GiB 以内，并配合 compaction&#x2F;defrag。大对象放对象存储。</p>
+<p><strong>Q：compaction 和 defrag 有什么区别？</strong></p>
+<p>A：compaction 删除历史 revision，逻辑释放；defrag 重写 backend，物理回收磁盘空间。先 compaction，再 defrag。</p>
+<p><strong>Q：为什么删除 key 后磁盘没变小？</strong></p>
+<p>A：删除只是写 tombstone，compaction 后才释放逻辑历史，defrag 才回收物理空间。</p>
+<p><strong>Q：NOSPACE alarm 怎么处理？</strong></p>
+<p>A：删除数据 → compaction → defrag → <code>alarm disarm</code>。不要只删数据不 compact&#x2F;defrag。</p>
+<p><strong>Q：etcd 会加密磁盘数据吗？</strong></p>
+<p>A：不会。TLS 只保护传输；磁盘加密需要 dm-crypt、云盘加密或应用层加密。</p>
+<p><strong>Q：可以只备份一个节点吗？</strong></p>
+<p>A：可以，etcd 快照包含完整 keyspace。选择健康成员备份，并定期验证恢复。生产建议多副本备份、异地保存。</p>
+<p><strong>Q：恢复快照后能直接加入旧集群吗？</strong></p>
+<p>A：不能。恢复出来的是一个新集群，必须按灾难恢复流程重建，避免 revision&#x2F;成员信息冲突。</p>
+<p><strong>Q：Kubernetes 的 etcd 怎么备份？</strong></p>
+<p>A：使用控制面证书调用 <code>etcdctl snapshot save</code>，备份文件 + 证书 + 配置，定期做恢复演练。</p>
+<p><strong>Q：v2 API 还能用吗？</strong></p>
+<p>A：v2 已弃用，新系统使用 v3 API。<code>etcdctl</code> 默认 v3；不要在新项目依赖 v2。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/">etcd 官方文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/learning/api/">etcd API</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/dev-guide/interacting_v3/">Interacting with etcd</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/configuration/">Configuration</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/clustering/">Clustering Guide</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/maintenance/">Maintenance</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/recovery/">Disaster Recovery</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/security/">Transport Security</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/monitoring/">Monitoring</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/op-guide/hardware/">Hardware Recommendations</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/upgrades/">Upgrading</a></li>
+<li><a target="_blank" rel="noopener" href="https://etcd.io/docs/latest/learning/why/">etcd vs other KV stores</a></li>
+</ul>
 
   </div>
   
@@ -2800,8 +4161,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Etcd/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Etcd</p></a></div>
-  <span hidden itemprop="keywords">Etcd</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Kubernetes/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Kubernetes</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Etcd/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Etcd</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>分布式</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Raft/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Raft</p></a></div>
+  <span hidden itemprop="keywords">Kubernetes Etcd 分布式 Raft</span>
   
 
 
@@ -2880,7 +4241,7 @@ kafka_exp...</p>
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#etcd-%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B"><span class="toc-text">etcd 数据模型</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#etcd-%E6%9E%B6%E6%9E%84"><span class="toc-text">etcd 架构</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E5%92%8C%E5%8F%91%E7%8E%B0"><span class="toc-text">服务注册和发现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B6%88%E6%81%AF%E5%8F%91%E5%B8%83%E4%B8%8E%E8%AE%A2%E9%98%85"><span class="toc-text">消息发布与订阅</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-text">负载均衡</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%80%9A%E7%9F%A5%E4%B8%8E%E5%8D%8F%E8%B0%83"><span class="toc-text">分布式通知与协调</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="toc-text">分布式锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%98%9F%E5%88%97"><span class="toc-text">分布式队列</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E7%9B%91%E6%8E%A7%E4%B8%8E-Leader-%E7%AB%9E%E9%80%89"><span class="toc-text">集群监控与 Leader 竞选</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#etcd-%E4%B8%8E-zookeeper-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">etcd 与 zookeeper 的区别</span></a></li></ol></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#etcd-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">etcd 是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9A%E4%BD%8D"><span class="toc-text">定位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%82%E5%90%88%E4%B8%8E%E4%B8%8D%E9%80%82%E5%90%88"><span class="toc-text">适合与不适合</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%88%E6%9C%AC"><span class="toc-text">版本</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84"><span class="toc-text">核心架构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E8%B7%AF%E5%BE%84"><span class="toc-text">写路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E8%B7%AF%E5%BE%84"><span class="toc-text">读路径</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%A8%A1%E5%9E%8B"><span class="toc-text">数据模型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#KeyValue"><span class="toc-text">KeyValue</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Revision"><span class="toc-text">Revision</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Range"><span class="toc-text">Range</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Put-x2F-Delete"><span class="toc-text">Put &#x2F; Delete</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Transaction"><span class="toc-text">Transaction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Watch"><span class="toc-text">Watch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lease"><span class="toc-text">Lease</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7%E8%AF%AD%E4%B9%89"><span class="toc-text">一致性语义</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Raft-%E4%B8%8E-quorum"><span class="toc-text">Raft 与 quorum</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E6%80%A7%E4%B8%80%E8%87%B4%E8%AF%BB-vs-%E4%B8%B2%E8%A1%8C%E5%8C%96%E8%AF%BB"><span class="toc-text">线性一致读 vs 串行化读</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Watch-%E4%BF%9D%E8%AF%81"><span class="toc-text">Watch 保证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB"><span class="toc-text">事务隔离</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E4%B8%8E%E5%90%AF%E5%8A%A8"><span class="toc-text">安装与启动</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD"><span class="toc-text">下载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E6%9C%BA%E5%90%AF%E5%8A%A8"><span class="toc-text">单机启动</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5"><span class="toc-text">健康检查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#systemd-%E7%A4%BA%E4%BE%8B"><span class="toc-text">systemd 示例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#etcdctl-%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="toc-text">etcdctl 常用命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9E%E6%8E%A5%E5%8F%82%E6%95%B0"><span class="toc-text">连接参数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#KV"><span class="toc-text">KV</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Watch-1"><span class="toc-text">Watch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lease-1"><span class="toc-text">Lease</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1"><span class="toc-text">事务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E4%B8%8E%E7%8A%B6%E6%80%81"><span class="toc-text">集群与状态</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%B4%E6%8A%A4"><span class="toc-text">维护</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD"><span class="toc-text">备份</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A4%E8%AF%81"><span class="toc-text">认证</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9B%86%E7%BE%A4%E9%83%A8%E7%BD%B2"><span class="toc-text">集群部署</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E9%9B%86%E7%BE%A4"><span class="toc-text">静态集群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%8F%91%E7%8E%B0"><span class="toc-text">动态发现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E5%A2%9E%E5%88%A0%E6%88%90%E5%91%98"><span class="toc-text">运行时增删成员</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Learner"><span class="toc-text">Learner</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%81%E7%A7%BB-leader"><span class="toc-text">迁移 leader</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%89%E5%85%A8"><span class="toc-text">安全</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TLS"><span class="toc-text">TLS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RBAC"><span class="toc-text">RBAC</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4%E4%B8%8E%E5%A4%87%E4%BB%BD"><span class="toc-text">运维与备份</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Compaction"><span class="toc-text">Compaction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Defrag"><span class="toc-text">Defrag</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A9%BA%E9%97%B4%E9%85%8D%E9%A2%9D%E4%B8%8E-NOSPACE"><span class="toc-text">空间配额与 NOSPACE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E5%A4%87%E4%BB%BD"><span class="toc-text">快照备份</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%81%A2%E5%A4%8D"><span class="toc-text">恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7"><span class="toc-text">升级</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%9B%91%E6%8E%A7%E4%B8%8E%E8%B0%83%E4%BC%98"><span class="toc-text">监控与调优</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E6%8C%87%E6%A0%87"><span class="toc-text">关键指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A1%AC%E4%BB%B6%E5%BB%BA%E8%AE%AE"><span class="toc-text">硬件建议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0"><span class="toc-text">调优参数</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubernetes-%E4%B8%AD%E7%9A%84-etcd"><span class="toc-text">Kubernetes 中的 etcd</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B8%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">典型应用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B3%A8%E5%86%8C%E4%B8%8E%E5%8F%91%E7%8E%B0"><span class="toc-text">服务注册与发现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83"><span class="toc-text">配置中心</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="toc-text">分布式锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Leader-%E9%80%89%E4%B8%BE"><span class="toc-text">Leader 选举</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%98%9F%E5%88%97"><span class="toc-text">分布式队列</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#etcd-%E4%B8%8E-ZooKeeper-Consul"><span class="toc-text">etcd 与 ZooKeeper Consul</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5-Raft-%E4%B8%8E%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-text">深入 Raft 与一致性</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Raft-%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="toc-text">Raft 状态机</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Leader-%E9%80%89%E4%B8%BE-1"><span class="toc-text">Leader 选举</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A5%E5%BF%97%E5%A4%8D%E5%88%B6"><span class="toc-text">日志复制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ReadIndex-%E4%B8%8E%E7%BA%BF%E6%80%A7%E4%B8%80%E8%87%B4%E8%AF%BB"><span class="toc-text">ReadIndex 与线性一致读</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E5%91%98%E5%8F%98%E6%9B%B4%E4%B8%8E-quorum"><span class="toc-text">成员变更与 quorum</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%B1%E8%B4%A5%E8%AF%AD%E4%B9%89"><span class="toc-text">失败语义</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5-MVCC-%E4%B8%8E%E5%AD%98%E5%82%A8"><span class="toc-text">深入 MVCC 与存储</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#bbolt-%E4%B8%8E-treeIndex"><span class="toc-text">bbolt 与 treeIndex</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E8%B7%AF%E5%BE%84-1"><span class="toc-text">写路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E8%B7%AF%E5%BE%84-1"><span class="toc-text">读路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Compaction-1"><span class="toc-text">Compaction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Defrag-1"><span class="toc-text">Defrag</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Quota-%E4%B8%8E-NOSPACE"><span class="toc-text">Quota 与 NOSPACE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Snapshot-%E4%B8%8E-WAL"><span class="toc-text">Snapshot 与 WAL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E6%8D%9F%E5%9D%8F"><span class="toc-text">数据损坏</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5-Watch-%E4%B8%8E-Lease"><span class="toc-text">深入 Watch 与 Lease</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Watch-%E7%9A%84%E5%86%85%E9%83%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">Watch 的内部模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Watch-%E6%96%AD%E7%BA%BF%E9%87%8D%E8%BF%9E"><span class="toc-text">Watch 断线重连</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lease-%E7%9A%84%E5%86%85%E9%83%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">Lease 的内部模型</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E9%9B%86%E7%BE%A4%E5%8F%98%E6%9B%B4%E4%B8%8E%E6%95%85%E9%9A%9C"><span class="toc-text">深入集群变更与故障</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E5%91%98%E5%8F%98%E6%9B%B4%E5%8E%9F%E5%88%99"><span class="toc-text">成员变更原则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E5%91%98%E6%9B%BF%E6%8D%A2"><span class="toc-text">成员替换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%88%86%E5%8C%BA"><span class="toc-text">网络分区</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Quorum-%E4%B8%A2%E5%A4%B1"><span class="toc-text">Quorum 丢失</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%81%BE%E9%9A%BE%E6%81%A2%E5%A4%8D"><span class="toc-text">灾难恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%87%E7%BA%A7%E4%B8%8E%E9%99%8D%E7%BA%A7"><span class="toc-text">升级与降级</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E6%80%A7%E8%83%BD%E4%B8%8E%E5%AE%B9%E9%87%8F"><span class="toc-text">深入性能与容量</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%93%B6%E9%A2%88%E5%9C%A8%E5%93%AA%E9%87%8C"><span class="toc-text">瓶颈在哪里</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%B9%E9%87%8F%E4%BC%B0%E7%AE%97"><span class="toc-text">容量估算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E4%BC%98"><span class="toc-text">调优</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E5%AE%89%E5%85%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">深入安全模型</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#TLS-%E5%88%86%E5%B1%82"><span class="toc-text">TLS 分层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#RBAC-%E5%86%85%E9%83%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">RBAC 内部模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A8%81%E8%83%81%E6%A8%A1%E5%9E%8B"><span class="toc-text">威胁模型</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%BC%80%E5%8F%91%E5%AE%9E%E8%B7%B5"><span class="toc-text">客户端开发实践</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96-clientv3"><span class="toc-text">初始化 clientv3</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#KV-%E4%B8%8E-Watch"><span class="toc-text">KV 与 Watch</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lease-2"><span class="toc-text">Lease</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E4%B8%8E%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="toc-text">事务与分布式锁</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E4%B8%8E%E9%87%8D%E8%AF%95"><span class="toc-text">错误与重试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%BB%E4%B8%80%E8%87%B4%E6%80%A7%E9%80%89%E6%8B%A9"><span class="toc-text">读一致性选择</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%BF%90%E7%BB%B4%E6%B7%B1%E6%B0%B4%E5%8C%BA"><span class="toc-text">运维深水区</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Compaction-%E4%B8%8E-Defrag-%E7%9A%84%E6%A0%87%E5%87%86%E6%B5%81%E7%A8%8B"><span class="toc-text">Compaction 与 Defrag 的标准流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NOSPACE-%E5%A4%84%E7%90%86"><span class="toc-text">NOSPACE 处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Snapshot-%E4%B8%8E-HashKV"><span class="toc-text">Snapshot 与 HashKV</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%90%E5%91%98%E6%9B%BF%E6%8D%A2%E4%B8%8E%E7%A3%81%E7%9B%98%E6%95%85%E9%9A%9C"><span class="toc-text">成员替换与磁盘故障</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%91%E6%8E%A7%E5%91%8A%E8%AD%A6"><span class="toc-text">监控告警</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Kubernetes-etcd-%E6%B7%B1%E6%B0%B4%E5%8C%BA"><span class="toc-text">Kubernetes etcd 深水区</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%99%E6%80%81-Pod-%E7%BB%93%E6%9E%84"><span class="toc-text">静态 Pod 结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E4%BB%BD-1"><span class="toc-text">备份</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%81%A2%E5%A4%8D%E6%B3%A8%E6%84%8F"><span class="toc-text">恢复注意</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E7%A3%81%E7%9B%98"><span class="toc-text">性能与磁盘</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%85%E9%9A%9C%E6%A1%88%E4%BE%8B"><span class="toc-text">故障案例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%B8%80%EF%BC%9ALeader-%E9%A2%91%E7%B9%81%E5%88%87%E6%8D%A2"><span class="toc-text">案例一：Leader 频繁切换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%BA%8C%EF%BC%9ANOSPACE"><span class="toc-text">案例二：NOSPACE</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%B8%89%EF%BC%9A%E6%85%A2%E7%A3%81%E7%9B%98%E5%AF%BC%E8%87%B4-apply-%E8%90%BD%E5%90%8E"><span class="toc-text">案例三：慢磁盘导致 apply 落后</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E5%9B%9B%EF%BC%9AQuorum-%E4%B8%A2%E5%A4%B1"><span class="toc-text">案例四：Quorum 丢失</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%88%E4%BE%8B%E4%BA%94%EF%BC%9AKubernetes-API-%E8%B6%85%E6%97%B6"><span class="toc-text">案例五：Kubernetes API 超时</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-text">常见问题</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol>
     </div>
   </section>
 
